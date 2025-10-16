@@ -42,6 +42,13 @@ Route::get('/objectives', [MstObjectiveController::class, 'index']);
 // Route::get('/objectives/{id}', [MstObjectiveController::class, 'show']);
 Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('cobit2019.objectives.show');
 
+// View aggregated data per component (server-side)
+Route::get('/objectives/component/{component}', [MstObjectiveController::class, 'byComponent'])
+    ->name('cobit2019.objectives.bycomponent');
+
+
+
+
 // Admin routes (auth + role check di controller)
 Route::prefix('admin')
      ->middleware('auth')

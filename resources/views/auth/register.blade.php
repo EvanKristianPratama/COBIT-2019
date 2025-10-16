@@ -68,7 +68,17 @@
                         <!-- Jabatan Field -->
                         <div id="jabatan-section" class="mb-4">
                             <label for="jabatan" class="form-label fw-bold text-primary">{{ __('Jabatan') }}</label>
-                            <input id="jabatan" type="text" class="form-control form-control-lg @error('jabatan') is-invalid @enderror" name="jabatan" required placeholder="Enter your position">
+                            <select id="jabatan" name="jabatan" class="form-select form-select-lg @error('jabatan') is-invalid @enderror" required>
+                                <option value="" disabled {{ old('jabatan') ? '' : 'selected' }}>-- Select Jabatan --</option>
+                                <option value="Board" {{ old('jabatan') === 'Board' ? 'selected' : '' }}>Board</option>
+                                <option value="Executive Management" {{ old('jabatan') === 'Executive Management' ? 'selected' : '' }}>Executive Management</option>
+                                <option value="Business Managers" {{ old('jabatan') === 'Business Managers' ? 'selected' : '' }}>Business Managers</option>
+                                <option value="IT Managers" {{ old('jabatan') === 'IT Managers' ? 'selected' : '' }}>IT Managers</option>
+                                <option value="Assurance Providers" {{ old('jabatan') === 'Assurance Providers' ? 'selected' : '' }}>Assurance Providers</option>
+                                <option value="Risk Management" {{ old('jabatan') === 'Risk Management' ? 'selected' : '' }}>Risk Management</option>
+                                <option value="Staff" {{ old('jabatan') === 'Staff' ? 'selected' : '' }}>Staff</option>
+                            </select>
+
                             @error('jabatan')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

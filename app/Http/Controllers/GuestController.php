@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\Assessment;
 
@@ -11,38 +13,51 @@ class GuestController extends Controller
 {
     public function loginGuest(Request $request)
     {
-        // Jika sudah login:
+        // jika sudah login
         if (Auth::check()) {
             $user = Auth::user();
 
-            // Admin tetap ke dashboard admin
-            if ($user->role === 'admin') {
+            // compact: pastikan session assessment terpasang untuk user yg sudah login
+            if (! session()->has('assessment_id')) {
+                $tempId = 'GUEST-' . strtoupper(Str::random(6)) . '-' . time();
+                session([
+                    'assessment_id' => $tempId,
+                    'instansi' => 'Guest Session',
+                    'is_guest' => true,
+                    'assessment_temp' => true,
+                    'assessment_created_at' => now()->toDateTimeString(),
+                ]);
+            }
+            // lanjutkan alur tanpa debug output
+            // Admin tetap ke dashboard admin (case-insensitive)
+            if (strtolower($user->role ?? '') === 'admin') {
                 return redirect()->route('admin.dashboard');
             }
-
-            // Jika user adalah guest atau user biasa → langsung ke assessment dengan ID 1
-            $assessment = Assessment::find(1);
-
-            // Simpan assessment_id ke session
-            session()->put('assessment_id', $assessment->assessment_id);
-            session()->put('instansi', $assessment->instansi);
-
-            return redirect()->route('df1.form', [
-                'id' => $assessment->assessment_id,
-            ]);
+            return redirect()->route('home');
         }
 
-        // Cari akun guest yang sudah ada
-        $guestUser = User::where('email', 'guest01@example.com')->first();
+        // buat/ambil akun guest dan login
+        $guestUser = User::firstOrCreate(
+            ['email' => 'guest01@example.com'],
+            [
+                'name' => 'Guest User',
+                'password' => bcrypt(Str::random(16)),
+                'role' => 'guest',
+                'jabatan' => 'guest'
+            ]
+        );
         Auth::login($guestUser);
-        $assessment = Assessment::find(1);
-        
-        // Simpan assessment_id ke session
-        session()->put('assessment_id', $assessment->assessment_id);
-        session()->put('instansi', $assessment->instansi);
-        
-        return redirect()->route('df1.form', [
-            'id' => $assessment->assessment_id,
+
+        // buat session assessment sementara dan lanjutkan tanpa debug
+        $tempId = 'GUEST-' . strtoupper(Str::random(6)) . '-' . time();
+        session([
+            'assessment_id' => $tempId,
+            'instansi' => 'Guest Session',
+            'is_guest' => true,
+            'assessment_temp' => true,
+            'assessment_created_at' => now()->toDateTimeString(),
         ]);
+
+        return redirect()->route('home');
     }
 }

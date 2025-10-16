@@ -38,16 +38,22 @@ class AssessmentEvalController extends Controller
     {
         try {
             $evaluation = $this->evaluationService->createNewEvaluation(Auth::id());
-
-            // pastikan kita punya identifier untuk redirect (eval_id jika ada, fallback ke primary key)
-            $evalId = $evaluation->eval_id ?? $evaluation->{$evaluation->getKeyName()};
-
-            // generate activity evaluations supaya halaman tidak kosong
-            if (method_exists($this->evaluationService, 'generateActivityEvaluations')) {
-                $this->evaluationService->generateActivityEvaluations($evalId);
+            
+            $verifyEvaluation = $this->evaluationService->getEvaluationById($evaluation->eval_id);
+            
+            if (!$verifyEvaluation || (string)$verifyEvaluation->user_id !== (string)Auth::id()) {
+                Log::error("Created evaluation verification failed", [
+                    'eval_id' => $evaluation->eval_id,
+                    'user_id' => Auth::id(),
+                    'user_id_type' => gettype(Auth::id()),
+                    'evaluation_user_id' => $verifyEvaluation ? $verifyEvaluation->user_id : null,
+                    'evaluation_user_id_type' => $verifyEvaluation ? gettype($verifyEvaluation->user_id) : null,
+                    'verification_result' => $verifyEvaluation ? 'found but wrong user' : 'not found'
+                ]);
+                throw new \Exception('Failed to verify created assessment');
             }
-
-            return redirect()->route('assessment-eval.show', ['evalId' => $evalId]);
+            
+            return redirect()->route('assessment-eval.show', ['evalId' => $evaluation->eval_id]);
         } catch (\Exception $e) {
             Log::error("Failed to create assessment", [
                 'user_id' => Auth::id(),
@@ -65,23 +71,35 @@ class AssessmentEvalController extends Controller
     {
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
-
-            // jangan langsung abort — kirim flag ke view agar frontend menampilkan alert
-            $accessDenied = false;
-            if (!$evaluation || $evaluation->user_id !== Auth::id()) {
-                \Illuminate\Support\Facades\Log::warning('Assessment access issue', [
+            
+            if (!$evaluation) {
+                Log::error("Assessment not found in database", [
                     'eval_id' => $evalId,
-                    'auth_id' => Auth::id(),
-                    'found_evaluation' => $evaluation ? $evaluation->toArray() : null
+                    'user_id' => Auth::id(),
+                    'all_evaluations' => $this->evaluationService->getUserEvaluations()
                 ]);
-                $accessDenied = true;
+                abort(404, 'Assessment not found');
+            }
+            
+            if ((string)$evaluation->user_id !== (string)Auth::id()) {
+                Log::error("Assessment access denied", [
+                    'eval_id' => $evalId,
+                    'requesting_user_id' => Auth::id(),
+                    'requesting_user_id_type' => gettype(Auth::id()),
+                    'owner_user_id' => $evaluation->user_id,
+                    'owner_user_id_type' => gettype($evaluation->user_id)
+                ]);
+                abort(404, 'Assessment not found');
             }
 
             $objectives = MstObjective::with(['practices.activities'])->get();
-            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation', 'accessDenied'));
+            return view('assessment-eval.show', compact('objectives', 'evalId'));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to load assessment', [
-                'eval_id' => $evalId, 'error' => $e->getMessage()
+            Log::error("Failed to load assessment", [
+                'eval_id' => $evalId,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Failed to load assessment: ' . $e->getMessage()]);
         }
@@ -103,10 +121,16 @@ class AssessmentEvalController extends Controller
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             
-            if (!$evaluation || $evaluation->user_id !== Auth::id()) {
+            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Assessment not found or access denied'
+                    'message' => 'Assessment not found or access denied',
+                    'debug' => [
+                        'auth_id' => Auth::id(),
+                        'auth_id_type' => gettype(Auth::id()),
+                        'evaluation_user_id' => $evaluation ? $evaluation->user_id : null,
+                        'evaluation_user_id_type' => $evaluation ? gettype($evaluation->user_id) : null
+                    ]
                 ], 404);
             }
 
@@ -137,11 +161,37 @@ class AssessmentEvalController extends Controller
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             
-            if (!$evaluation || $evaluation->user_id !== Auth::id()) {
+            // Separate checks for better debugging
+            if (!$evaluation) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Assessment not found or access denied'
+                    'message' => 'Assessment not found',
+                    'debug' => [
+                        'auth_id' => Auth::id(),
+                        'requested_eval_id' => $evalId,
+                        'evaluation_exists' => false
+                    ]
                 ], 404);
+            }
+            
+            // Convert to same type (string) before comparison
+            if ((string)$evaluation->user_id !== (string)Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied - you are not the owner of this assessment',
+                    'debug' => [
+                        'auth_id' => Auth::id(),
+                        'auth_id_type' => gettype(Auth::id()),
+                        'evaluation_user_id' => $evaluation->user_id,
+                        'evaluation_user_id_type' => gettype($evaluation->user_id),
+                        'requested_eval_id' => $evalId,
+                        'evaluation' => [
+                            'id' => $evaluation->id,
+                            'eval_id' => $evaluation->eval_id,
+                            'user_id' => $evaluation->user_id
+                        ]
+                    ]
+                ], 403);
             }
 
             $data = $this->evaluationService->loadEvaluation($evalId);
@@ -198,10 +248,16 @@ class AssessmentEvalController extends Controller
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             
-            if (!$evaluation || $evaluation->user_id !== Auth::id()) {
+            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Assessment not found or access denied'
+                    'message' => 'Assessment not found or access denied',
+                    'debug' => [
+                        'auth_id' => Auth::id(),
+                        'auth_id_type' => gettype(Auth::id()),
+                        'evaluation_user_id' => $evaluation ? $evaluation->user_id : null,
+                        'evaluation_user_id_type' => $evaluation ? gettype($evaluation->user_id) : null
+                    ]
                 ], 404);
             }
             

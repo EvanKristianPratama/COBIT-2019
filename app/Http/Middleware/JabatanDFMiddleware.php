@@ -7,12 +7,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class JabatanDFMiddleware
 {
-    // Mapping jabatan ke DF yang boleh diakses
+    
     protected $jabatanDF = [
         'Board' => [1,2,3,4,5,6],
         'Executive Management' => [1,2,3,4,5,6],
         'Business Managers' => [1,2,3,4,5,6],
         'IT Managers' => [1,2,3,4,5,6,7,8,9,10],
+        'Guest' => [1,2,3,4,5,6,7,8,9,10],
         'Assurance Providers' => [1,2,3,4,5,6],
         'Risk Management' => [1,2,3,4,5,6],
         'Staff' => [4],
@@ -20,7 +21,7 @@ class JabatanDFMiddleware
 
     public function handle(Request $request, Closure $next, $df = null): Response
     {
-        // Cek status on/off dari session (default: true/aktif)
+        
         $enabled = session('jabatan_df_middleware_enabled', true);
 
         if ($enabled && $df !== null) {

@@ -206,7 +206,12 @@ class EvaluationService
     public function getEvaluationById($evalId)
     {
         try {
-            return MstEval::where('eval_id', $evalId)->first();
+            // coba cari by eval_id (custom) lalu fallback ke primary key
+            $evaluation = MstEval::where('eval_id', $evalId)->first();
+            if (!$evaluation && is_numeric($evalId)) {
+                $evaluation = MstEval::find($evalId);
+            }
+            return $evaluation;
         } catch (\Exception $e) {
             Log::error("Failed to get evaluation by ID", [
                 'eval_id' => $evalId,

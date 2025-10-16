@@ -5,50 +5,28 @@ namespace App\Http\Controllers\cobit2019;
 use App\Models\MstObjective;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Arr;
+use App\Models\MstEntergoals;
+use App\Models\MstAligngoals;
 
 class MstObjectiveController extends Controller
 {
     /**
-     * Display a listing of objectives.
+     * Centralised relation sets so we don't repeat the same arrays in multiple methods.
      */
-    public function index()
-    {
-        // Fetch all objectives
-        // dd("aaa");
-        // print_r("index");
-        // $objectives = MstObjective::all();
-        $objectives = MstObjective::with(['domains',
-        'practices',
-        'practices.guidances', 
-        'policies',
-        's_i_a'])->get();
-
-        // Return as JSON (you could also pass to a view)
-        return response()->json($objectives);
-    }
-
-    /**
-     * Display the specified objective.
-     */
-    public function show($id)
-    {
-        // Find objective by primary key
-        $all = MstObjective::all();
-        // dd($all->pluck('objective_id')); 
-        $objective = MstObjective::with([
+    protected array $commonRelations = [
         'domains',
-        'aligngoals',
-        'aligngoals.aligngoalsmetr',
         'entergoals',
         'entergoals.entergoalsmetr',
+        'aligngoals',
+        'aligngoals.aligngoalsmetr',
         'practices',
-        'practices.guidances',
-        'practices.activities',
         'practices.practicemetr',
+        'practices.activities',
+        'practices.guidances',
         'practices.roles',
         'practices.infoflowinput',
         'practices.infoflowinput.connectedoutputs',
-        'practices.infoflowoutput',
         'policies',
         'policies.guidances',
         'skill',
@@ -56,11 +34,53 @@ class MstObjectiveController extends Controller
         'keyculture',
         'keyculture.guidances',
         's_i_a',
+    ];
+
+    /**
+     * Additional relations that are only required when rendering the detailed show view.
+     */
+    protected array $showExtraRelations = [
+        'practices.infoflowoutput',
         'guidance',
-        ])->findOrFail($id);
+    ];
+
+    /**
+     * Display a listing of objectives (JSON).
+     */
+    public function index()
+    {
+        $preferredOrderSql = "CASE WHEN UPPER(objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, objective_id";
+
+        $objectives = MstObjective::with($this->commonRelations)
+            ->orderByRaw($preferredOrderSql)
+            ->get();
+
+        return response()->json($objectives);
+    }
+
+    /**
+     * Display the specified objective (view).
+     *
+     * Keeping the method signature compatible with existing routes that pass an id.
+     */
+    public function show($id)
+    {
+        $relations = array_merge($this->commonRelations, $this->showExtraRelations);
+
+        $objective = MstObjective::with($relations)->findOrFail($id);
+
         $allObjectives = MstObjective::select('objective_id', 'objective')->get();
-        // return response()->json($objective);
-        return view('cobit2019.objectives.show', compact('objective','allObjectives'));
+
+        // allow an optional ?component=... query param so the show view can preselect a component
+        $component = request()->query('component', '');
+
+        // load master goal lists for MASTER view
+        $masterEnterGoals = MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get();
+        $masterAlignGoals = MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
+    // load master roles
+    $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
+
+    return view('cobit2019.objectives.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles'));
     }
 
     /**
@@ -68,15 +88,8 @@ class MstObjectiveController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate input
-        $data = $request->validate([
-            'objective_id'          => 'required|string|unique:mst_objective',
-            'objective'             => 'required|string',
-            'objective_description' => 'nullable|string',
-            'objective_purpose'     => 'nullable|string',
-        ]);
+        $data = $this->validateCreate($request);
 
-        // Create new record
         $objective = MstObjective::create($data);
 
         return response()->json($objective, 201);
@@ -89,11 +102,7 @@ class MstObjectiveController extends Controller
     {
         $objective = MstObjective::findOrFail($id);
 
-        $data = $request->validate([
-            'objective'             => 'sometimes|required|string',
-            'objective_description' => 'sometimes|nullable|string',
-            'objective_purpose'     => 'sometimes|nullable|string',
-        ]);
+        $data = $this->validateUpdate($request);
 
         $objective->update($data);
 
@@ -109,5 +118,138 @@ class MstObjectiveController extends Controller
         $objective->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Show aggregated data for a given component across all objectives.
+     * e.g. /cobit2019/objectives/component/skills
+     */
+    public function byComponent($component)
+    {
+        $valid = [
+            'overview', 'goals', 'domains', 'practices', 'infoflows', 'organizational',
+            'policies', 'skills', 'culture', 'services',
+        ];
+
+        if (! in_array($component, $valid, true)) {
+            abort(404, 'Invalid component');
+        }
+
+        // eager load relations once using the centralised list and apply preferred ordering
+        $preferredOrderSql = "CASE WHEN UPPER(objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, objective_id";
+
+        $objectives = MstObjective::with($this->commonRelations)
+            ->orderByRaw($preferredOrderSql)
+            ->get();
+
+        $items = $objectives->map(function ($o) use ($component) {
+            $payload = [
+                'objective_id' => $o->objective_id,
+                'objective' => $o->objective,
+            ];
+
+            switch ($component) {
+                case 'overview':
+                    $payload['description'] = $o->objective_description ?? '';
+                    $payload['purpose'] = $o->objective_purpose ?? '';
+                    $payload['domains'] = $o->domains ?? [];
+                    break;
+
+                case 'goals':
+                    // include both enterprise and alignment goals for this objective
+                    $payload['entergoals'] = $o->entergoals ?? [];
+                    $payload['aligngoals'] = $o->aligngoals ?? [];
+                    break;
+
+                case 'domains':
+                    $payload['domains'] = $o->domains ?? [];
+                    break;
+
+
+                case 'practices':
+                case 'organizational':
+                    $payload['practices'] = $o->practices ?? [];
+                    break;
+
+                case 'infoflows':
+                    $payload['infoflows'] = $this->extractInfoflows($o);
+                    break;
+
+                case 'policies':
+                    $payload['policies'] = $o->policies ?? [];
+                    break;
+
+                case 'skills':
+                    $payload['skills'] = $o->skill ?? [];
+                    break;
+
+                case 'culture':
+                    $payload['culture'] = $o->keyculture ?? [];
+                    break;
+
+                case 'services':
+                    $payload['s_i_a'] = $o->s_i_a ?? [];
+                    break;
+            }
+
+            return $payload;
+        });
+
+        $masterEnterGoals = \App\Models\MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get();
+        $masterAlignGoals = \App\Models\MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
+        $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
+
+        return view('cobit2019.objectives.show', [
+            'component' => $component,
+            'items' => $items,
+            'masterEnterGoals' => $masterEnterGoals,
+            'masterAlignGoals' => $masterAlignGoals,
+            'masterRoles' => $masterRoles,
+        ]);
+    }
+
+    /**
+     * Extract infoflows from an objective's practices in a consistent, null-safe way.
+     */
+    protected function extractInfoflows(MstObjective $objective)
+    {
+        $practices = $objective->practices ?? collect([]);
+
+        return $practices->flatMap(function ($p) {
+            $inputs = Arr::get($p, 'infoflowinput', $p->infoflowinput ?? []);
+
+            return collect($inputs)->map(function ($inp) use ($p) {
+                return [
+                    'practice_id' => $p->practice_id ?? null,
+                    'input' => $inp,
+                    'connectedoutputs' => Arr::get($inp, 'connectedoutputs', $inp['connectedoutputs'] ?? []),
+                ];
+            });
+        })->values();
+    }
+
+    /**
+     * Validation rules for creating an objective.
+     */
+    protected function validateCreate(Request $request): array
+    {
+        return $request->validate([
+            'objective_id' => 'required|string|unique:mst_objective',
+            'objective' => 'required|string',
+            'objective_description' => 'nullable|string',
+            'objective_purpose' => 'nullable|string',
+        ]);
+    }
+
+    /**
+     * Validation rules for updating an objective.
+     */
+    protected function validateUpdate(Request $request): array
+    {
+        return $request->validate([
+            'objective' => 'sometimes|required|string',
+            'objective_description' => 'sometimes|nullable|string',
+            'objective_purpose' => 'sometimes|nullable|string',
+        ]);
     }
 }

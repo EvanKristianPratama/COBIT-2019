@@ -27,7 +27,6 @@
           <!-- Logo dan Teks PORTAL -->
           <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
             <img src="{{ asset('images/logo.png') }}" alt="COBIT Logo" style="height: 40px;">
-            <span class="ms-2 fw-bold text-white">PORTAL</span>
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                   data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"

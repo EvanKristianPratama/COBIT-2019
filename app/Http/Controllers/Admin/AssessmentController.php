@@ -56,26 +56,49 @@ class AssessmentController extends Controller
      */
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'pic') {
+        // allow any authenticated user to create assessment (will be owned by creator)
+        if (! Auth::check()) {
             abort(403);
         }
 
         $data = $request->validate([
-            'kode_assessment' => 'required|string|unique:assessment,kode_assessment',
+            // table name corrected to plural 'assessments'
+            'kode_assessment' => 'required|string|unique:assessments,kode_assessment',
             'instansi'        => 'required|string|max:255',
         ]);
 
-        Assessment::create([
+        $assessment = Assessment::create([
             'kode_assessment' => $data['kode_assessment'],
             'instansi'        => $data['instansi'],
             'user_id'         => Auth::id(),
         ]);
+
+        // set session so user can immediately enter the assessment
+        session()->put('assessment_id', $assessment->assessment_id ?? $assessment->id);
+        session()->put('instansi', $assessment->instansi);
+        session()->put('is_guest', false);
+        session()->put('assessment_temp', false);
+
+        // redirect to df1.form if route exists, otherwise back to admin list
+        if (route_has('df1.form')) {
+            return redirect()->route('df1.form', ['id' => session('assessment_id')])
+                             ->with('success', 'Kode assessment berhasil dibuat dan siap digunakan.');
+        }
 
         return redirect()
             ->route('admin.assessments.index')
             ->with('success', 'Kode assessment berhasil dibuat');
     }
 
+    // helper to check route existence without throwing
+    protected function route_has($name)
+    {
+        try {
+            return \Illuminate\Support\Facades\Route::has($name);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 
     /**
      * Tampilkan daftar pending requests (status = 'pending') dari JSON

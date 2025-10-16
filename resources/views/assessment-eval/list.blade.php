@@ -178,6 +178,11 @@
             </div>
         </div>
     @endif
+
+    {{-- Debug: show current auth id --}}
+    <div class="mb-2 text-end small text-muted">
+        Debug Auth ID: {{ Auth::id() ?? 'null' }}
+    </div>
 </div>
 
 <script>
@@ -208,6 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         idToUse = evalId;
                     }
 
+                    console.log(`/assessment-eval/${encodeURIComponent(idToUse)}`);
                     const response = await fetch(`/assessment-eval/${encodeURIComponent(idToUse)}`, {
                         method: 'DELETE',
                         headers: {
