@@ -1,8 +1,10 @@
 @extends('cobit2019.cobitTools')
 @section('cobit-tools-content')
     @include('cobit2019.cobitPagination')
-
+    
     <div class="container">
+
+    {{-- Admin raw submissions removed per request --}}
         <!-- Card Utama -->
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -56,6 +58,10 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                                 <!-- Submit Button -->
+                            <div class="text-end mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">Save</button>
+                            </div>
                             </div>
 
                             <!-- Pie Chart -->
@@ -118,10 +124,7 @@
                                 </div>
                             </div>
 
-                            <!-- Submit Button -->
-                            <div class="text-center mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg px-5">Submit Assessment</button>
-                            </div>
+                           
                         </form>
                     </div>
                     <!-- end card-body -->
@@ -512,6 +515,17 @@
             const initResult = updateRelativeImportance();
             updateRelativeTable(initResult.score, initResult.relative);
             updateRelativeCharts(initResult.relative);
+
+            // --- Restore server-provided latest inputs (if any) ---
+            const serverHistoryInputs = @json($historyInputs ?? null);
+            const serverHistoryScoreArray = @json($historyScoreArray ?? null);
+            const serverHistoryRIArray = @json($historyRIArray ?? null);
+            if (serverHistoryInputs) {
+                // apply values and trigger update
+                document.getElementById('input1df5').value = serverHistoryInputs[0] ?? '';
+                document.getElementById('input2df5').value = serverHistoryInputs[1] ?? '';
+                updateChartsAndTable();
+            }
 
             // Jika ada input lain yang berubah (misalnya kelas .input-percentage)
             document.querySelectorAll('.input-percentage').forEach(input => {

@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -17,11 +16,21 @@
     // Default: empty collection
     $assessments = collect();
 
-    // Jika authenticated dan bukan guest => tampilkan assessment yang dibuat user ini
+    // Jika authenticated dan bukan guest => tampilkan assessment yang relevan
     if (Auth::check() && ! $isGuest) {
-        $query = Assessment::query()->where('user_id', $user->id);
+        $query = Assessment::query();
+        // Admin/PIC lihat semua assessment
+        if (! empty($user->role) && in_array(strtolower($user->role), ['admin','pic'])) {
+            // no extra where — admin/pic see all
+        } elseif (! empty($user->organisasi)) {
+            // Tampilkan semua assessment yg instansi/organisasi nya sesuai user
+            $query->where('instansi', 'like', '%' . $user->organisasi . '%');
+        } else {
+            // fallback: hanya milik user
+            $query->where('user_id', $user->id);
+        }
 
-        // optional filter by kode/instansi dari query string
+        // optional filter by kode/instansi from query string
         if (! empty(request('kode'))) {
             $query->where('kode_assessment', 'like', '%' . request('kode') . '%');
         }
@@ -40,8 +49,16 @@
   <div class="row g-4 justify-content-center">
     <div class="col-md-8">
       <div class="card shadow-sm rounded-3 overflow-hidden">
-        <div class="card-header bg-primary text-white text-center py-3">
-          <h3 class="mb-0">COBIT 2019 Design Toolkit</h3>
+        <div class="card-header bg-primary text-white py-3">
+          <div class="d-flex align-items-center">
+            <h3 class="mb-0 flex-grow-1 text-center text-md-start">COBIT 2019 Design Toolkit</h3>
+            <a href="{{ route('home') }}" class="home-btn btn btn-sm ms-3" aria-label="Kembali ke Home">
+              <span class="d-flex align-items-center">
+                <i class="fas fa-home me-2"></i>
+                <span class="fw-semibold">Kembali ke Home</span>
+              </span>
+            </a>
+          </div>
         </div>
 
         <div class="card-body p-4">
@@ -138,5 +155,27 @@
 
 <style>
   /* kalender dihapus => gaya terkait dihapus/dirapikan */
+  .home-btn {
+    --accent: #0d6efd; /* bootstrap primary */
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    color: var(--accent);
+    border: 1px solid rgba(13,110,253,0.08);
+    box-shadow: 0 2px 8px rgba(13,110,253,0.06);
+    border-radius: 999px;
+    padding: .38rem .9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    text-decoration: none;
+  }
+  .home-btn i.fas { color: var(--accent); }
+  .home-btn:hover, .home-btn:focus {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(13,110,253,0.12);
+    text-decoration: none;
+    background: linear-gradient(180deg, #ffffff 0%, #eef6ff 100%);
+  }
+  .home-btn:active { transform: translateY(-1px); }
 </style>
 @endsection

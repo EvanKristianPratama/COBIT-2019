@@ -15,7 +15,143 @@ class Df2Controller extends Controller
     // Method untuk menampilkan form Design Factor 2
     public function showDesignFactor2Form($id)
     {
-        return view('cobit2019.df2.design_factor2', compact('id'));
+        $assessment_id = session('assessment_id');
+
+        $history = null;
+        $historyInputs = null;
+        $historyScoreArray = null;
+        $historyRIArray = null;
+
+        // defaults untuk admin view
+        $allSubmissions = collect();
+        $users = [];
+        $userIds = session('respondent_ids', []);
+
+        if ($assessment_id) {
+            // history user saat ini (latest)
+            $history = \App\Models\DesignFactor2::where('assessment_id', $assessment_id)
+                ->where('df_id', $id)
+                ->where('id', Auth::id())
+                ->latest()
+                ->first();
+
+            if ($history) {
+                $historyInputs = [
+                    (int) ($history->input1df2 ?? 0),
+                    (int) ($history->input2df2 ?? 0),
+                    (int) ($history->input3df2 ?? 0),
+                    (int) ($history->input4df2 ?? 0),
+                    (int) ($history->input5df2 ?? 0),
+                    (int) ($history->input6df2 ?? 0),
+                    (int) ($history->input7df2 ?? 0),
+                    (int) ($history->input8df2 ?? 0),
+                    (int) ($history->input9df2 ?? 0),
+                    (int) ($history->input10df2 ?? 0),
+                    (int) ($history->input11df2 ?? 0),
+                    (int) ($history->input12df2 ?? 0),
+                    (int) ($history->input13df2 ?? 0),
+                ];
+            }
+
+            // last saved score untuk user ini
+            $historyScore = \App\Models\DesignFactor2Score::where('assessment_id', $assessment_id)
+                ->where('df2_id', $id)
+                ->where('id', Auth::id())
+                ->latest()
+                ->first();
+
+            if ($historyScore) {
+                $historyScoreArray = [];
+                for ($i = 1; $i <= 40; $i++) {
+                    $col = 's_df2_' . $i;
+                    $historyScoreArray[] = (float) ($historyScore->{$col} ?? 0);
+                }
+            }
+
+            // last saved relative importance untuk user ini
+            $historyRI = \App\Models\DesignFactor2RelativeImportance::where('assessment_id', $assessment_id)
+                ->where('df2_id', $id)
+                ->where('id', Auth::id())
+                ->latest()
+                ->first();
+
+            if ($historyRI) {
+                $historyRIArray = [];
+                for ($i = 1; $i <= 40; $i++) {
+                    $col = 'r_df2_' . $i;
+                    $historyRIArray[] = (float) ($historyRI->{$col} ?? 0);
+                }
+            }
+
+            // jika admin/pic: sediakan raw submissions latest-per-user (exclude admin accounts)
+            $currentRole = strtolower(trim((string) (Auth::user()->role ?? '')));
+            if (in_array($currentRole, ['admin', 'administrator', 'pic'], true)) {
+                $subs = \App\Models\DesignFactor2::where('assessment_id', $assessment_id)
+                    ->where('df_id', $id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                // deteksi kolom yang menyimpan submitter id (default: 'id')
+                $userKey = 'id';
+                if ($subs->isNotEmpty()) {
+                    $firstAttrs = $subs->first()->getAttributes();
+                    if (array_key_exists('user_id', $firstAttrs))
+                        $userKey = 'user_id';
+                    elseif (array_key_exists('id_user', $firstAttrs))
+                        $userKey = 'id_user';
+                    elseif (array_key_exists('respondent_id', $firstAttrs))
+                        $userKey = 'respondent_id';
+                }
+
+                // semua yang submit ke DF ini
+                $submitterIds = $subs->pluck($userKey)->filter()->map(fn($v) => (int) $v)->unique()->values()->toArray();
+
+                // jika session menyediakan respondent_ids, gunakan irisan supaya hanya tampil yang relevan
+                $sessionRespondentIds = session('respondent_ids', []);
+                $uids = !empty($sessionRespondentIds) ? array_values(array_intersect($submitterIds, $sessionRespondentIds)) : $submitterIds;
+
+                // exclude admin accounts dari listing (opsional, case-insensitive)
+                if (!empty($uids)) {
+                    try {
+                        $usersForUids = \App\Models\User::whereIn('id', $uids)->get(['id', 'role']);
+                        $excludeAdminIds = $usersForUids->filter(function ($u) {
+                            return in_array(strtolower(trim((string) $u->role)), ['admin', 'administrator']);
+                        })->pluck('id')->map(fn($v) => (int) $v)->toArray();
+
+                        if (!empty($excludeAdminIds)) {
+                            $uids = array_values(array_filter($uids, function ($id) use ($excludeAdminIds) {
+                                return !in_array($id, $excludeAdminIds, true);
+                            }));
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore and continue with original uids
+                    }
+                }
+
+                // build users map (id => name) jika ada uid
+                if (!empty($uids)) {
+                    $users = \App\Models\User::whereIn('id', $uids)->pluck('name', 'id')->toArray();
+                    // filter subs hanya untuk uids dan ambil latest-per-user
+                    $subs = $subs->filter(function ($r) use ($userKey, $uids) {
+                        return in_array((int) ($r->{$userKey} ?? 0), $uids, true);
+                    })->unique($userKey)->values();
+                }
+
+                $allSubmissions = $subs;
+                $userIds = $uids;
+            }
+        }
+
+        return view('cobit2019.df2.design_factor2', compact(
+            'id',
+            'history',
+            'historyInputs',
+            'historyScoreArray',
+            'historyRIArray',
+            'allSubmissions',
+            'users',
+            'userIds'
+        ));
     }
 
     public function store(Request $request)
@@ -46,22 +182,22 @@ class Df2Controller extends Controller
 
         // Simpan data ke tabel design_factor_2, termasuk assessment_id
         $designFactor2 = DesignFactor2::create([
-            'id'            => Auth::id(), // Ambil ID user yang sedang login
-            'df_id'         => $validated['df_id'],
+            'id' => Auth::id(), // Ambil ID user yang sedang login
+            'df_id' => $validated['df_id'],
             'assessment_id' => $assessment_id,  // simpan assessment_id di sini
-            'input1df2'     => $validated['input1df2'],
-            'input2df2'     => $validated['input2df2'],
-            'input3df2'     => $validated['input3df2'],
-            'input4df2'     => $validated['input4df2'],
-            'input5df2'     => $validated['input5df2'],
-            'input6df2'     => $validated['input6df2'],
-            'input7df2'     => $validated['input7df2'],
-            'input8df2'     => $validated['input8df2'],
-            'input9df2'     => $validated['input9df2'],
-            'input10df2'    => $validated['input10df2'],
-            'input11df2'    => $validated['input11df2'],
-            'input12df2'    => $validated['input12df2'],
-            'input13df2'    => $validated['input13df2'],
+            'input1df2' => $validated['input1df2'],
+            'input2df2' => $validated['input2df2'],
+            'input3df2' => $validated['input3df2'],
+            'input4df2' => $validated['input4df2'],
+            'input5df2' => $validated['input5df2'],
+            'input6df2' => $validated['input6df2'],
+            'input7df2' => $validated['input7df2'],
+            'input8df2' => $validated['input8df2'],
+            'input9df2' => $validated['input9df2'],
+            'input10df2' => $validated['input10df2'],
+            'input11df2' => $validated['input11df2'],
+            'input12df2' => $validated['input12df2'],
+            'input13df2' => $validated['input13df2'],
         ]);
 
         //==========================================================================
@@ -161,8 +297,8 @@ class Df2Controller extends Controller
         //==========================================================================
         // Siapkan data untuk tabel design_factor_2_score, termasuk assessment_id
         $dataForScore = [
-            'id'            => Auth::id(), 
-            'df2_id'        => $designFactor2->df_id,
+            'id' => Auth::id(),
+            'df2_id' => $designFactor2->df_id,
             'assessment_id' => $assessment_id  // tambah assessment_id di sini
         ];
         foreach ($DF2_SCORE as $index => $value) {
@@ -172,8 +308,8 @@ class Df2Controller extends Controller
 
         // Siapkan data untuk tabel design_factor_2_relative_importance, termasuk assessment_id
         $dataForRelativeImportance = [
-            'id'            => Auth::id(), 
-            'df2_id'        => $designFactor2->df_id,
+            'id' => Auth::id(),
+            'df2_id' => $designFactor2->df_id,
             'assessment_id' => $assessment_id  // tambah assessment_id juga di sini
         ];
         foreach ($RelativeImp as $index => $value) {
@@ -181,7 +317,18 @@ class Df2Controller extends Controller
         }
         DesignFactor2RelativeImportance::create($dataForRelativeImportance);
 
-        // Setelah berhasil disimpan, arahkan ke halaman output DF2
+        // If AJAX request, return computed arrays so front-end can update UI without reload
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil disimpan!',
+                'historyInputs' => array_map('floatval', array_column($DF2_INPUT, 0)),
+                'historyScoreArray' => $DF2_SCORE,
+                'historyRIArray' => $RelativeImp,
+            ]);
+        }
+
+        // Setelah berhasil disimpan, arahkan ke halaman output DF2 for non-AJAX
         return redirect()->route('df2.output', ['id' => $validated['df_id']])
             ->with('success', 'Data berhasil disimpan!');
     }

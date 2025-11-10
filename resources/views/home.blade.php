@@ -10,6 +10,13 @@
         <div class="card-header bg-primary text-white py-4 position-relative">
           <div class="d-flex justify-content-between align-items-center">
             <h3 class="mb-0 fw-semibold">{{ __('COBIT 2019') }}</h3>
+            @if(Auth::check() && in_array(Auth::user()->role, ['admin','pic']))
+              <a href="{{ route('admin.assessments.index') }}"
+                 class="btn btn-outline-light btn-sm shadow-sm ms-3"
+                 title="Admin Dashboard">
+                <i class="fas fa-tachometer-alt me-1"></i> Dashboard Admin
+              </a>
+            @endif
           </div>
         </div>
 

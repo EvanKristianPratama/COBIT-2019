@@ -65,8 +65,8 @@ class AssessmentController extends Controller
     public function requestAssessment(Request $request)
     {
         $data = $request->validate([
-            // gunakan nama tabel jamak
-            'kode_assessment' => 'required|string|exists:assessments,kode_assessment',
+            // gunakan nama tabel yang ada di DB (singular `assessment`)
+            'kode_assessment' => 'required|string|exists:assessment,kode_assessment',
         ]);
 
         if (!Auth::check()) {

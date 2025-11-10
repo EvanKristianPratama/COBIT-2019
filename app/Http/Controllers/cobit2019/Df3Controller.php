@@ -12,15 +12,197 @@ use App\Models\DesignFactor3Score;
 use App\Models\DesignFactor3RelativeImportance;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 
 class Df3Controller extends Controller
 {
     // Method to display the form for Design Factor 3
-    public function showDesignFactor3Form($id)
-    {
-        return view('cobit2019.df3.design_factor3', compact('id'));  // Adjust view to df3
+  public function showDesignFactor3Form($id)
+{
+    $assessment_id = session('assessment_id');
+
+    $historyInputs = null;
+    $historyScoreArray = null;
+    $historyRIArray = null;
+    $allSubmissions = null;
+    $users = [];
+    $userIds = session('respondent_ids', []);
+
+    if ($assessment_id) {
+        // history per bagian untuk user saat ini (latest)
+        $historyA = \App\Models\DesignFactor3a::where('assessment_id', $assessment_id)
+            ->where('df_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        $historyB = \App\Models\DesignFactor3b::where('assessment_id', $assessment_id)
+            ->where('df_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        $historyC = \App\Models\DesignFactor3c::where('assessment_id', $assessment_id)
+            ->where('df_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        // assemble historyInputs (keys: input1df3..input19df3, impact1..impact19, likelihood1..likelihood19)
+        $historyInputs = [];
+        if ($historyA) {
+            for ($i = 1; $i <= 19; $i++) {
+                $historyInputs['input' . $i . 'df3'] = (int) ($historyA->{'input' . $i . 'df3'} ?? 0);
+            }
+        }
+        if ($historyB) {
+            for ($i = 1; $i <= 19; $i++) {
+                $historyInputs['impact' . $i] = (float) ($historyB->{'impact' . $i} ?? 0);
+            }
+        }
+        if ($historyC) {
+            for ($i = 1; $i <= 19; $i++) {
+                $historyInputs['likelihood' . $i] = (float) ($historyC->{'likelihood' . $i} ?? 0);
+            }
+        }
+
+        // last saved score & relative importance for this user
+        $historyScore = \App\Models\DesignFactor3Score::where('assessment_id', $assessment_id)
+            ->where('df3_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        if ($historyScore) {
+            $historyScoreArray = [];
+            for ($i = 1; $i <= 40; $i++) {
+                $col = 's_df3_' . $i;
+                $historyScoreArray[] = (float) ($historyScore->{$col} ?? 0);
+            }
+        }
+
+        $historyRI = \App\Models\DesignFactor3RelativeImportance::where('assessment_id', $assessment_id)
+            ->where('df3_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        if ($historyRI) {
+            $historyRIArray = [];
+            for ($i = 1; $i <= 40; $i++) {
+                $col = 'r_df3_' . $i;
+                $historyRIArray[] = (float) ($historyRI->{$col} ?? 0);
+            }
+        }
+
+        // Admin/pic: siapkan per-user latest submissions (a/b/c)
+        $currentRole = strtolower(trim((string) (Auth::user()->role ?? '')));
+        if (in_array($currentRole, ['admin','administrator','pic'], true)) {
+            // ambil rows newest-first, lalu unique('id') mengambil latest per user
+            $rowsA = \App\Models\DesignFactor3a::where('assessment_id', $assessment_id)
+                ->where('df_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->unique('id');
+
+            $rowsB = \App\Models\DesignFactor3b::where('assessment_id', $assessment_id)
+                ->where('df_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->unique('id');
+
+            $rowsC = \App\Models\DesignFactor3c::where('assessment_id', $assessment_id)
+                ->where('df_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->unique('id');
+
+            // union user ids present in any part
+            $uids = collect([])
+                ->merge($rowsA->pluck('id'))
+                ->merge($rowsB->pluck('id'))
+                ->merge($rowsC->pluck('id'))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            // exclude admin accounts from listing (optional)
+            if (!empty($uids)) {
+                try {
+                    $adminIds = \App\Models\User::whereIn('role', ['admin','administrator'])->pluck('id')->toArray();
+                    if (!empty($adminIds)) {
+                        $uids = collect($uids)->reject(function ($id) use ($adminIds) {
+                            return in_array($id, $adminIds, true);
+                        })->values()->all();
+                    }
+                } catch (\Throwable $e) {
+                    // ignore and continue
+                }
+            }
+
+            // prefer respondent_ids from session if present: intersect so we only show relevant respondents
+            $sessionRespondentIds = session('respondent_ids', []);
+            if (!empty($sessionRespondentIds)) {
+                $uids = array_values(array_intersect($uids, $sessionRespondentIds));
+            }
+
+            if (!empty($uids)) {
+                // build users map and per-user submission object
+                $users = \App\Models\User::whereIn('id', $uids)->pluck('name','id')->toArray();
+
+                $allSubmissions = collect();
+                foreach ($uids as $uid) {
+                    $a = $rowsA->firstWhere('id', $uid);
+                    $b = $rowsB->firstWhere('id', $uid);
+                    $c = $rowsC->firstWhere('id', $uid);
+
+                    $submission = (object) [
+                        'user_id' => $uid,
+                        'name' => $users[$uid] ?? null,
+                        'inputs' => [],
+                        'impact' => [],
+                        'likelihood' => [],
+                    ];
+
+                    if ($a) {
+                        for ($i = 1; $i <= 19; $i++) {
+                            $submission->inputs[] = (int) ($a->{'input' . $i . 'df3'} ?? 0);
+                        }
+                    }
+                    if ($b) {
+                        for ($i = 1; $i <= 19; $i++) {
+                            $submission->impact[] = (float) ($b->{'impact' . $i} ?? 0);
+                        }
+                    }
+                    if ($c) {
+                        for ($i = 1; $i <= 19; $i++) {
+                            $submission->likelihood[] = (float) ($c->{'likelihood' . $i} ?? 0);
+                        }
+                    }
+
+                    $allSubmissions->push($submission);
+                }
+
+                $userIds = $uids;
+            } else {
+                $allSubmissions = collect();
+            }
+        }
     }
+
+    return view('cobit2019.df3.design_factor3', compact(
+        'id',
+        'historyInputs',
+        'historyScoreArray',
+        'historyRIArray',
+        'allSubmissions',
+        'users',
+        'userIds'
+    ));
+}
+
 
     public function store(Request $request)
     {
@@ -99,6 +281,8 @@ class Df3Controller extends Controller
  
 
         try {
+            // begin transaction so we can roll back on any failure
+            DB::beginTransaction();
             // Create DesignFactor3a
             $designFactor3a = DesignFactor3a::create([
                 'id' => Auth::id(),
@@ -373,11 +557,31 @@ class Df3Controller extends Controller
             DesignFactor3RelativeImportance::create($dataForRelativeImportance);
 
             // Redirect or return a response
+            // If AJAX, return computed arrays so frontend can update in-place
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Design Factor 3 data saved successfully.',
+                    'historyInputs' => $DF3_RESULT_INPUT[0],
+                    'historyScoreArray' => $DF3_SCORE,
+                    'historyRIArray' => $DF3_RELATIVE_IMPORTANT,
+                ]);
+            }
+
             return redirect()->route('df3.output', ['id' => $designFactor3a->df_id])
                 ->with('success', 'Design Factor 3 data saved successfully.');
         } catch (\Exception $e) {
             // Rollback the transaction if anything fails
             DB::rollBack();
+            // If AJAX request, return JSON error so frontend can surface it
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'There was an error saving the data. Please try again.',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+
             return redirect()->route('df3.form', ['id' => $validated['df_id']])
                 ->with('error', 'There was an error saving the data. Please try again.');
         }

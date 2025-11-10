@@ -5,8 +5,10 @@ namespace App\Http\Controllers\cobit2019;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\DesignFactor5;
+use App\Models\User;
 use App\Models\DesignFactor5Score;
 use App\Models\DesignFactor5RelativeImportance;
 
@@ -18,8 +20,88 @@ class Df5Controller extends Controller
      * ===================================================================*/
     public function showDesignFactor5Form($id)
     {
-        // Menampilkan form input untuk Design Factor 4 dengan ID yang diberikan
-        return view('cobit2019.df5.design_factor5', compact('id'));
+        // prepare history data (per-assessment + per-user) so front-end can prefill inputs and charts
+        $assessment_id = session('assessment_id');
+        $historyInputs = null;
+        $historyScoreArray = null;
+        $historyRIArray = null;
+
+        if ($assessment_id) {
+            $history = DesignFactor5::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($history) {
+                $historyInputs = [
+                    $history->input1df5 ?? null,
+                    $history->input2df5 ?? null,
+                ];
+            }
+
+            $historyScore = DesignFactor5Score::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($historyScore) {
+                $arr = [];
+                foreach ($historyScore->getAttributes() as $k => $v) {
+                    if (strpos($k, 's_df5_') === 0) {
+                        $idx = (int) str_replace('s_df5_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyScoreArray = array_values($arr);
+                }
+            }
+
+            $historyRI = DesignFactor5RelativeImportance::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($historyRI) {
+                $arr = [];
+                foreach ($historyRI->getAttributes() as $k => $v) {
+                    if (strpos($k, 'r_df5_') === 0) {
+                        $idx = (int) str_replace('r_df5_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyRIArray = array_values($arr);
+                }
+            }
+        }
+
+        // expose respondent ids/users (exclude admin via session respondent_ids)
+        $userIds = session('respondent_ids', []);
+        $users = [];
+        $aggregatedData = [];
+        $suggestedValues = [];
+        $allSubmissions = collect();
+
+        try {
+            if (!empty($userIds)) {
+                $users = User::whereIn('id', $userIds)->pluck('name', 'id')->toArray();
+            }
+        } catch (\Throwable $e) {
+            // ignore lookup failures
+        }
+
+        // Aggregator removed — keep defaults for backwards compatibility
+        $aggregatedData = [];
+        $suggestedValues = [];
+        $allSubmissions = collect();
+
+        return view('cobit2019.df5.design_factor5', compact('id', 'historyInputs', 'historyScoreArray', 'historyRIArray', 'userIds', 'users', 'aggregatedData', 'suggestedValues', 'allSubmissions'));
     }
 
     public function store(Request $request)
@@ -34,10 +116,13 @@ class Df5Controller extends Controller
         ]);
 
          // Ambil assessment_id dari session
-    $assessment_id = session('assessment_id');
-    if (!$assessment_id) {
-        return redirect()->back()->with('error', 'Assessment ID tidak ditemukan, silahkan join assessment terlebih dahulu.');
-    }
+        $assessment_id = session('assessment_id');
+        if (!$assessment_id) {
+            return redirect()->back()->with('error', 'Assessment ID tidak ditemukan, silahkan join assessment terlebih dahulu.');
+        }
+
+        DB::beginTransaction();
+        try {
 
         // ===================================================================
         // Simpan data ke tabel design_factor_5
@@ -238,14 +323,36 @@ class Df5Controller extends Controller
         // ===================================================================
         // Simpan data ke tabel design_factor_5_relative_importance
         // ===================================================================
-        DesignFactor5RelativeImportance::create($dataForRelativeImportance);
+            DesignFactor5RelativeImportance::create($dataForRelativeImportance);
 
+            // If AJAX request, return computed arrays so front-end can update UI without reload
+            if ($request->ajax() || $request->wantsJson()) {
+                $historyInputs = [
+                    $validated['input1df5'],
+                    $validated['input2df5'],
+                ];
 
-    // ===================================================================
-        // Redirect ke halaman output setelah data berhasil disimpan
-        // ===================================================================
-        return redirect()->route('df5.output', ['id' => $designFactor5->df_id])
-            ->with('success', 'Data berhasil disimpan!');
+                // $DF5_SCORE and $DF5_RELATIVE_IMP are available here
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'historyInputs' => $historyInputs,
+                    'historyScoreArray' => $DF5_SCORE ?? null,
+                    'historyRIArray' => $DF5_RELATIVE_IMP ?? null,
+                ], 200);
+            }
+
+            DB::commit();
+            // Redirect to output for non-AJAX
+            return redirect()->route('df5.output', ['id' => $designFactor5->df_id])
+                ->with('success', 'Data berhasil disimpan!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan: ' . $e->getMessage());
+        }
     }
 
     /**  ===================================================================

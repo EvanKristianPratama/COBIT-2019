@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Assessment extends Model
 {
-    // Nama tabel
+    // Nama tabel (singular name in the database)
     protected $table = 'assessment';
     
     // Primary key

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\cobit2019;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\DesignFactor9;
+use App\Models\User;
 use App\Models\DesignFactor9Score;
 use App\Models\DesignFactor9RelativeImportance;
 
@@ -18,7 +20,97 @@ class Df9Controller extends Controller
      * ===================================================================*/
     public function showDesignFactor9Form($id)
     {
-        return view('cobit2019.df9.design_factor9', compact('id'));
+        $assessment_id = session('assessment_id');
+        $historyInputs = null;
+        $historyScoreArray = null;
+        $historyRIArray = null;
+
+        if ($assessment_id) {
+            $history = DesignFactor9::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($history) {
+                $historyInputs = [
+                    $history->input1df9 ?? null,
+                    $history->input2df9 ?? null,
+                    $history->input3df9 ?? null,
+                ];
+            }
+
+            $historyScore = DesignFactor9Score::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($historyScore) {
+                $arr = [];
+                foreach ($historyScore->getAttributes() as $k => $v) {
+                    if (strpos($k, 's_df9_') === 0) {
+                        $idx = (int) str_replace('s_df9_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyScoreArray = array_values($arr);
+                }
+            }
+
+            $historyRI = DesignFactor9RelativeImportance::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($historyRI) {
+                $arr = [];
+                foreach ($historyRI->getAttributes() as $k => $v) {
+                    if (strpos($k, 'r_df9_') === 0) {
+                        $idx = (int) str_replace('r_df9_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyRIArray = array_values($arr);
+                }
+            }
+        }
+
+        // expose respondent ids/users (exclude admin via session respondent_ids)
+        $userIds = session('respondent_ids', []);
+        $users = [];
+        $aggregatedData = [];
+        $suggestedValues = [];
+        $allSubmissions = collect();
+        try {
+            if (!empty($userIds)) {
+                $users = User::whereIn('id', $userIds)->pluck('name', 'id')->toArray();
+            }
+        } catch (\Throwable $e) {
+            // ignore lookup failures
+        }
+
+        try {
+            $excludeAdminIds = [];
+            if (!empty($userIds)) {
+                $excludeAdminIds = User::whereIn('id', $userIds)
+                    ->where(function($q){ $q->where('role', 'admin')->orWhere('role', 'Administrator'); })
+                    ->pluck('id')->map(fn($v)=>(int)$v)->toArray();
+            }
+            // Aggregator removed — keep defaults for backwards compatibility
+            $aggregatedData = [];
+            $suggestedValues = [];
+            $allSubmissions = collect();
+        } catch (\Throwable $e) {
+            $aggregatedData = [];
+            $suggestedValues = [];
+            $allSubmissions = collect();
+        }
+
+        return view('cobit2019.df9.design_factor9', compact('id', 'historyInputs', 'historyScoreArray', 'historyRIArray', 'userIds', 'users', 'aggregatedData', 'suggestedValues', 'allSubmissions'));
     }
 
     /** ===================================================================
@@ -40,6 +132,8 @@ class Df9Controller extends Controller
         }
 
         // Simpan data ke tabel design_factor_9
+        DB::beginTransaction();
+        try {
         $designFactor9 = DesignFactor9::create([
             'id' => Auth::id(), // ID user yang sedang login
             'df_id' => $validated['df_id'], // ID terkait Design Factor
@@ -235,10 +329,32 @@ class Df9Controller extends Controller
         }
         DesignFactor9RelativeImportance::create($dataForRelativeImportance);
 
+        if ($request->ajax() || $request->wantsJson()) {
+            $historyInputs = [
+                $validated['input1df9'],
+                $validated['input2df9'],
+                $validated['input3df9'],
+            ];
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'historyInputs' => $historyInputs,
+                'historyScoreArray' => $DF9_SCORE ?? null,
+                'historyRIArray' => $DF9_RELATIVE_IMP ?? null,
+            ], 200);
+        }
 
+        DB::commit();
         // Redirect atau respon setelah penyimpanan data berhasil
         return redirect()->route('df9.output', ['id' => $validated['df_id']])
             ->with('success', 'Data berhasil disimpan!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan: ' . $e->getMessage());
+        }
     }
 
     /** ===================================================================

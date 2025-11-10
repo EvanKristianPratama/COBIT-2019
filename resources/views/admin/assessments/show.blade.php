@@ -7,9 +7,28 @@
         <div class="card-header bg-primary text-white py-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">Detail Assessment {{ $assessment->assessment_id }}</h3>
-                <a href="{{ route('admin.assessments.index') }}" class="btn btn-light px-3 py-2">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                </a>
+                <div>
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-success dropdown-toggle px-3 py-2" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-edit me-2"></i>Fill Design Factors
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ route('df1.form', ['id' => 1, 'assessment' => $assessment->assessment_id]) }}">Design Factor 1</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df2.form', ['id' => 2, 'assessment' => $assessment->assessment_id]) }}">Design Factor 2</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df3.form', ['id' => 3, 'assessment' => $assessment->assessment_id]) }}">Design Factor 3</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df4.form', ['id' => 4, 'assessment' => $assessment->assessment_id]) }}">Design Factor 4</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df5.form', ['id' => 5, 'assessment' => $assessment->assessment_id]) }}">Design Factor 5</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df6.form', ['id' => 6, 'assessment' => $assessment->assessment_id]) }}">Design Factor 6</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df7.form', ['id' => 7, 'assessment' => $assessment->assessment_id]) }}">Design Factor 7</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df8.form', ['id' => 8, 'assessment' => $assessment->assessment_id]) }}">Design Factor 8</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df9.form', ['id' => 9, 'assessment' => $assessment->assessment_id]) }}">Design Factor 9</a></li>
+                                <li><a class="dropdown-item" href="{{ route('df10.form', ['id' => 10, 'assessment' => $assessment->assessment_id]) }}">Design Factor 10</a></li>
+                            </ul>
+                        </div>
+                    <a href="{{ route('admin.assessments.index') }}" class="btn btn-light px-3 py-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -54,11 +73,10 @@
 
     @php
         use Illuminate\Support\Str;
-        $userIds = collect();
-        for($n=1; $n<=10; $n++){
-            $userIds = $userIds->merge($assessment->{'df'.$n}()->pluck('id'));
+        // `userIds` is prepared in the controller (sanitized & admin-excluded). Ensure it's a Collection here.
+        if (!isset($userIds) || !($userIds instanceof \Illuminate\Support\Collection)) {
+            $userIds = collect();
         }
-        $userIds = $userIds->unique()->sort()->values();
     @endphp
 
     {{-- SECTION: Design Factor Inputs --}}
@@ -75,7 +93,7 @@
                         <table class="table table-bordered table-striped table-hover table-sm" data-df="{{ $n }}">
                             <thead>
                                 <tr class="bg-primary text-white">
-                                    <th style="width: 150px;">User</th>
+                                    <th style="width: 150px;">Responden</th>
                                     @foreach($userIds as $uid)
                                     <th class="user-col col-u-{{ $uid }} text-center" style="width: 120px;">
                                         <div class="fw-bold">{{ $uid }}</div>
@@ -84,7 +102,7 @@
                                         </small>
                                     </th>
                                     @endforeach
-                                    <th class="text-center bg-warning text-dark" style="width: 140px;">Suggestion</th>
+                                    <th class="text-center bg-warning text-dark" style="width: 140px;">Statistik</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -100,15 +118,40 @@
                                     }
                                 @endphp
 
-                                @foreach($inputCols as $col)
+                                @php
+                                    // custom labels untuk DF1 (index dimulai 0). Ubah teks sesuai kebutuhan.
+                                    $customDfLabels = [
+                                        1 => [
+                                            'Growth/Acquisition',
+                                            'Innovation/Differentiation',
+                                            'Cost Leadership',
+                                            'Client Service/Stability',
+                                            'Lainnya' // ubah atau hapus jika tidak diperlukan
+                                        ]
+                                    ];
+                                @endphp
+
+                                @foreach($inputCols as $i => $col)
                                 <tr>
-                                    <td class="fw-bold">{{ str_replace("df{$n}", '', $col) }}</td>
+                                    @php
+                                        // jika DF1 dan ada custom label untuk index ini, pakai itu.
+                                        if ($n === 1 && isset($customDfLabels[1][$i])) {
+                                            $label = $customDfLabels[1][$i];
+                                        } else {
+                                            // fallback ke label lama (menghapus 'df{n}' dari nama kolom)
+                                            $label = str_replace("df{$n}", '', $col);
+                                        }
+                                    @endphp
+
+                                    <td class="fw-bold">{{ $label }}</td>
                                     @foreach($userIds as $uid)
                                         @php $rec = $dfRecords->firstWhere('id', $uid); @endphp
                                         <td class="user-col col-u-{{ $uid }} text-center">{{ $rec->{$col} ?? '-' }}</td>
                                     @endforeach
-                                    {{-- placeholder for JS --}}
-                                    <td class="suggestion text-center fw-bold">–</td>
+                                    {{-- statistik grafis (chart) --}}
+                                    <td class="suggestion text-center">
+                                        <canvas id="chart-df{{ $n }}-col{{ $i }}" style="width:160px;height:80px;"></canvas>
+                                    </td>
                                 </tr>
                                 @endforeach
 
@@ -288,5 +331,105 @@
       });
     });
   });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Render distribution charts (values 1..5) for each DF input row
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('#section-df table[data-df]').forEach(tbl => {
+            tbl.querySelectorAll('tbody tr').forEach((row, rowIndex) => {
+                try {
+                    // collect user columns text (skip first label cell, last statistik cell)
+                    const userCells = Array.from(row.querySelectorAll('td.user-col')).map(td => td.textContent.trim());
+                    // prepare counts for values 1..5
+                    const labels = ['1','2','3','4','5'];
+                    const counts = labels.map(() => 0);
+                    userCells.forEach(v => {
+                        if (!v || v === '-') return;
+                        const num = parseInt(v);
+                        if (!isNaN(num) && num >= 1 && num <= 5) {
+                            counts[num - 1] += 1;
+                        }
+                    });
+
+                    // find canvas inside this row
+                    const canvas = row.querySelector('canvas');
+                    if (!canvas) return;
+
+                    // ensure canvas has explicit pixel size so Chart can render reliably
+                    canvas.width = 160;
+                    canvas.height = 80;
+                    canvas.style.width = '160px';
+                    canvas.style.height = '80px';
+
+                    const ctx = canvas.getContext('2d');
+                    // clear any previous drawing
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+                    const total = counts.reduce((a,b)=>a+b,0);
+                    if (total === 0) {
+                        // draw a subtle placeholder text when no responses
+                        ctx.fillStyle = '#6c757d';
+                        ctx.font = '12px system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('No responses', canvas.width/2, canvas.height/2);
+                        return;
+                    }
+
+                    // create small bar chart
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: counts,
+                                backgroundColor: labels.map((_,i) => `rgba(54,162,235,${0.75 - i*0.08})`),
+                                borderColor: 'rgba(54,162,235,1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => `${ctx.label}: ${ctx.parsed.y} responden`
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    display: true,
+                                    grid: { display: false },
+                                    ticks: { font: { size: 11 } }
+                                },
+                                y: {
+                                    display: true,
+                                    beginAtZero: true,
+                                    ticks: { precision: 0, stepSize: 1 }
+                                }
+                            }
+                        }
+                    });
+                } catch (err) {
+                    // debug output in console if chart fails
+                    console.error('Chart render error for row', rowIndex, err);
+                    const canvas = row.querySelector('canvas');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0,0,canvas.width,canvas.height);
+                        ctx.fillStyle = '#dc3545';
+                        ctx.font = '12px system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Chart error', canvas.width/2, canvas.height/2);
+                    }
+                }
+            });
+        });
+    });
 </script>
 @endsection

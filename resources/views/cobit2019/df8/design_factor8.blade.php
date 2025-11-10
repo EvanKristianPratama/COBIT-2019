@@ -2,6 +2,9 @@
 @section('cobit-tools-content')
 @include('cobit2019.cobitPagination')
 <div class="container">
+
+  {{-- Admin raw submissions (generic) --}}
+  {{-- Admin raw submissions removed per request --}}
   <div class="row justify-content-center">
     <div class="col-md-10">
       <div class="card shadow border-0 rounded">
@@ -60,6 +63,12 @@
                   </tr>
                 </tbody>
               </table>
+                    <!-- Submit Button -->
+                            <div class="text-end mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    Save
+                                </button>
+                            </div>
             </div>
 
             <!-- Error Message -->
@@ -127,10 +136,7 @@
               </div>
             </div>
 
-            <!-- Submit Button -->
-            <div class="text-center mt-4">
-              <button type="submit" class="btn btn-primary btn-lg px-5">Submit Assessment</button>
-            </div>
+          
           </form>
         </div>
       </div>
@@ -532,6 +538,17 @@
   document.querySelectorAll('.input-percentage').forEach(input => {
     input.addEventListener('change', updateChartsAndTable);
   });
+
+  // --- Restore server-provided latest inputs (if any) ---
+  const serverHistoryInputs = @json($historyInputs ?? null);
+  const serverHistoryScoreArray = @json($historyScoreArray ?? null);
+  const serverHistoryRIArray = @json($historyRIArray ?? null);
+  if (serverHistoryInputs) {
+    document.getElementById('input1df8').value = serverHistoryInputs[0] ?? '';
+    document.getElementById('input2df8').value = serverHistoryInputs[1] ?? '';
+    document.getElementById('input3df8').value = serverHistoryInputs[2] ?? '';
+    updateChartsAndTable();
+  }
 </script>
 
 @endsection

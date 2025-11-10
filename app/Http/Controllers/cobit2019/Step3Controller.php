@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\DfStep3;
 use Illuminate\View\View;
 
 class Step3Controller extends Controller
@@ -19,6 +20,17 @@ class Step3Controller extends Controller
             return $this->handleAssessmentNotFound();
         }
 
+        // Ambil saved weights Step3 dari DB (df_step3) untuk current user
+        $assessmentId = session('assessment_id');
+        $dfStep3 = DfStep3::where('assessment_id', $assessmentId)
+                    ->where('user_id', auth()->id())
+                    ->orderBy('created_at', 'desc')
+                    ->orderBy('id','desc')
+                    ->first();
+
+        $defaultWeights3 = [1,1,1,1,1,1];
+        $savedWeights3 = is_array($dfStep3->weights ?? null) ? $dfStep3->weights : $defaultWeights3;
+
         // Ambil data Step 2 dari session
         $step2Weights = session('step2.weights', [0, 0, 0, 0]);
         $step2RelImps = session('step2.relative_importances', []);
@@ -28,7 +40,8 @@ class Step3Controller extends Controller
             $assessment,
             $step2Weights,
             $step2RelImps,
-            $step2Totals
+            $step2Totals,
+            $savedWeights3
         );
     }
 
@@ -69,24 +82,24 @@ class Step3Controller extends Controller
      */
   public function store(Request $request)
 {
-    // 1) Validasi JSON payload
     $request->validate([
         'weights3'      => 'required|json',
         'refinedScopes' => 'required|json',
     ]);
 
-    // 2) Decode JSON
-    $weights3      = json_decode($request->input('weights3'), true);
-    $refinedScopes = json_decode($request->input('refinedScopes'), true);
+    $assessmentId = session('assessment_id') ?? $request->input('assessment_id');
+    $userId = Auth::id();
 
-    // 3) Simpan ke session, mirip Step 2
-    session()->put('step3.weights',         $weights3);
-    session()->put('step3.refined_scopes',  $refinedScopes);
+    $weights3 = json_decode($request->input('weights3'), true);
 
-    // 4) Redirect kembali dengan flash message
-    return redirect()
-        ->route('step3.index')
-        ->with('success', 'Data Step 3 berhasil disimpan di session.');
+    DfStep3::updateOrCreate(
+        ['assessment_id' => $assessmentId, 'user_id' => $userId],
+        [
+            'weights' => $weights3,
+        ]
+    );
+
+    return redirect()->route('step3.index')->with('success', 'Data Step 3 berhasil disimpan.');
 }
 
 
@@ -97,7 +110,8 @@ class Step3Controller extends Controller
         Assessment $assessment,
         array $step2Weights,
         array $step2RelImps,
-        array $step2Totals
+        array $step2Totals,
+        array $savedWeights3
     ): View {
         $userIds = collect([Auth::id()]);
 
@@ -107,6 +121,7 @@ class Step3Controller extends Controller
             'step2Weights' => $step2Weights,
             'step2RelativeImportances' => $step2RelImps,
             'step2Totals' => $step2Totals,
+            'savedWeights3' => $savedWeights3,
         ]);
     }
 }

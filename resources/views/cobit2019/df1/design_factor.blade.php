@@ -13,7 +13,191 @@
 
                     <!-- Card Body -->
                     <div class="card-body p-4">
-                        <form action="{{ route('df1.store') }}" method="POST" id="df1Form">
+                        @php
+                            $historyValues = [];
+                            if (!empty($historyInputs) && is_array($historyInputs)) {
+                                $historyValues = [
+                                    'strategy_archetype' => $historyInputs[0] ?? null,
+                                    'current_performance' => $historyInputs[1] ?? null,
+                                    'future_goals' => $historyInputs[2] ?? null,
+                                    'alignment_with_it' => $historyInputs[3] ?? null,
+                                ];
+                            }
+                        @endphp
+
+
+                            {{-- Panel Admin: Distribusi Jawaban (Chart) --}}
+                            @php
+                                $isAdmin = in_array(strtolower(trim(Auth::user()->role ?? '')), ['admin','administrator','pic'], true);
+                                $df1Fields = [
+                                    'input1df1' => 'Growth/Acquisition',
+                                    'input2df1' => 'Innovation/Differentiation',
+                                    'input3df1' => 'Cost Leadership',
+                                    'input4df1' => 'Client Service/Stability',
+                                ];
+                                $df1Freqs = [];
+                                $df1Totals = [];
+                                foreach ($df1Fields as $f => $label) {
+                                    $df1Freqs[$f] = [1=>0,2=>0,3=>0,4=>0,5=>0];
+                                    $df1Totals[$f] = 0;
+                                }
+                                if (!empty($allSubmissions) && $allSubmissions->isNotEmpty()) {
+                                    foreach ($allSubmissions as $r) {
+                                        foreach ($df1Fields as $f => $label) {
+                                            $val = (int)($r->{$f} ?? 0);
+                                            if ($val >= 1 && $val <= 5) {
+                                                $df1Freqs[$f][$val]++;
+                                                $df1Totals[$f]++;
+                                            }
+                                        }
+                                    }
+                                }
+                            @endphp
+                            @if($isAdmin)
+                                <div class="mb-3">
+                                    <div class="card shadow-sm border-0">
+                                        <div class="card-header bg-primary text-white fw-bold text-center">
+                                            Panel - Distribusi Jawaban Responden
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="accordion" id="adminStatsAccordion">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="adminStatsHeading">
+                                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#adminStatsCollapse" aria-expanded="true" aria-controls="adminStatsCollapse">
+                                                            Statistik Distribusi
+                                                        </button>
+                                                    </h2>
+                                                    <div id="adminStatsCollapse" class="accordion-collapse collapse show" aria-labelledby="adminStatsHeading" data-bs-parent="#adminStatsAccordion">
+                                                        <div class="accordion-body p-2">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-bordered table-striped table-sm align-middle mb-0">
+                                                                    <thead class="table-light align-middle small">
+                                                                        <tr>
+                                                                            <th class="text-center align-middle" style="width:220px;">Value</th>
+                                                                            <th class="text-center align-middle" style="width:80px;">Total Responden</th>
+                                                                            <th class="text-center align-middle">Distribusi </th>
+                                                                            <th class="text-center align-middle" style="width:160px;">Modus (Mayoritas)</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach($df1Fields as $f => $label)
+                                                                            @php
+                                                                                $freqs = $df1Freqs[$f] ?? [1=>0,2=>0,3=>0,4=>0,5=>0];
+                                                                                $maxVal = max($freqs);
+                                                                                $suggestions = collect($freqs)->filter(fn($v) => $v === $maxVal && $v > 0)->keys()->all();
+                                                                            @endphp
+                                                                            <tr class="small">
+                                                                                <td class="fw-semibold align-middle text-center">{{ $label }}</td>
+                                                                                <td class="text-center align-middle">{{ $df1Totals[$f] }}</td>
+                                                                                <td class="align-middle">
+                                                                                    <div style="height:90px;max-width:320px;">
+                                                                                        <canvas id="df1_admin_{{ $f }}_chart" height="90" style="height:90px;"></canvas>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td class="text-center align-middle">
+                                                                                    @if(count($suggestions) > 0)
+                                                                                        @foreach($suggestions as $s)
+                                                                                            <span class="badge bg-primary me-1">{{ $s }}</span>
+                                                                                        @endforeach
+                                                                                    @else
+                                                                                        <span class="text-muted">-</span>
+                                                                                    @endif
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                    <!-- Accordion Detil Jawaban Per User -->
+                                <div class="mb-3">
+                                    <div class="accordion" id="df1UserAccordion">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="df1UserAccordionHeading">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#df1UserAccordionCollapse" aria-expanded="false" aria-controls="df1UserAccordionCollapse">
+                                                    Lihat Detil Jawaban Per User
+                                                </button>
+                                            </h2>
+                                            <div id="df1UserAccordionCollapse" class="accordion-collapse collapse" aria-labelledby="df1UserAccordionHeading" data-bs-parent="#df1UserAccordion">
+                                                <div class="accordion-body p-2">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-bordered table-sm align-middle mb-0">
+                                                            <thead class="table bg-black small">
+                                                                <tr>
+                                                                    <th class="text-center align-middle ">No</th>
+                                                                    <th class="align-middle">Nama</th>
+                                                                    <th class="align-middle">Email</th>
+                                                                    <th class="align-middle">Grup Fungsi</th>
+                                                                    @foreach($df1Fields as $f => $label)
+                                                                        <th class="text-center align-middle">{{ $label }}</th>
+                                                                    @endforeach
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @forelse($allSubmissions ?? [] as $i => $row)
+                                                                    <tr class="small">
+                                                                        <td class="text-center align-middle">{{ $i+1 }}</td>
+                                                                        <td class="align-middle">{{ $users[$row->id] ?? '-' }}</td>
+                                                                        <td class="align-middle">{{ $email[$row->id] ?? '-' }}</td>
+                                                                        <td class="align-middle">{{ $jabatan[$row->id] ?? '-' }}</td>
+                                                                        @foreach($df1Fields as $f => $label)
+                                                                            <td class="text-center align-middle">{{ $row->{$f} ?? '-' }}</td>
+                                                                        @endforeach
+                                                                    </tr>
+                                                                @empty
+                                                                    <tr><td colspan="{{ 3+count($df1Fields) }}" class="text-center text-muted">Belum ada data</td></tr>
+                                                                @endforelse
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                                <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const freqs = @json($df1Freqs);
+                                    Object.keys(freqs).forEach(function(f) {
+                                        const ctx = document.getElementById('df1_admin_' + f + '_chart');
+                                        if (!ctx) return;
+                                        const data = [freqs[f][1], freqs[f][2], freqs[f][3], freqs[f][4], freqs[f][5]];
+                                        new Chart(ctx, {
+                                            type: 'bar',
+                                            data: {
+                                                labels: ['1','2','3','4','5'],
+                                                datasets: [{
+                                                    label: 'Jumlah',
+                                                    data: data,
+                                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                                    borderWidth: 1
+                                                }]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                maintainAspectRatio: false,
+                                                plugins: { legend: { display: false } },
+                                                scales: {
+                                                    x: { grid: { display: false } },
+                                                    y: { beginAtZero: true, precision: 0, stepSize: 1, max: 10 }
+                                                }
+                                            }
+                                        });
+                                    });
+                                });
+                                </script>
+                            @endif
+
+                            <form action="{{ route('df1.store') }}" method="POST" id="df1Form">
                             @csrf
                             <input type="hidden" name="df_id" value="{{ $id }}">
 
@@ -65,9 +249,12 @@
                                                 <td>
                                                     <div class="d-flex justify-content-between">
                                                         @for ($i = 1; $i <= 5; $i++)
+                                                            @php
+                                                                $checkedVal = old($name, $historyValues[$name] ?? null);
+                                                            @endphp
                                                             <div class="form-check form-check-inline">
                                                                 <input class="form-check-input" type="radio" name="{{ $name }}"
-                                                                    id="{{ $name }}_{{ $i }}" value="{{ $i }}" required>
+                                                                    id="{{ $name }}_{{ $i }}" value="{{ $i }}" required {{ ($checkedVal == $i) ? 'checked' : '' }}>
                                                                 <label class="form-check-label small" for="{{ $name }}_{{ $i }}">
                                                                     {{ $i }}
                                                                 </label>
@@ -83,8 +270,16 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+
+                                <!-- Submit Button -->
+                            <div class="text-end mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    Save
+                                </button>
                             </div>
 
+                            </div>
+                             
                             <!-- Grafik Input Score -->
                             <div class="row mt-4">
                                 <!-- Bar Chart Input Score -->
@@ -166,12 +361,7 @@
                                 </div>
                             </div>
 
-                            <!-- Submit Button -->
-                            <div class="text-center mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg px-5">
-                                    Submit Assessment
-                                </button>
-                            </div>
+                           
                         </form>
                     </div>
                 </div>
@@ -182,6 +372,61 @@
     <!-- Chart.js Script -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Render small distribution charts for each input's suggestion column
+        // Chart shows counts for values 1..5 (even if some values = 0)
+        document.addEventListener('DOMContentLoaded', function () {
+            const frequencies = @json($aggregatedData['frequencies'] ?? []);
+            const VALUE_LABELS = ['1','2','3','4','5'];
+            Object.keys(frequencies).forEach(col => {
+                const canvas = document.getElementById(`suggestion_${col}`);
+                if (!canvas) return;
+                const freqMap = frequencies[col] || {};
+                // ensure labels 1..5 always present and ordered
+                const labels = VALUE_LABELS.slice();
+                const data = labels.map(l => parseInt(freqMap[l] ?? 0, 10));
+
+                // choose color ramp
+                const bg = labels.map((_, i) => `rgba(54, 162, 235, ${0.7 - i*0.06})`);
+                const border = labels.map(_ => 'rgba(54, 162, 235, 1)');
+
+                new Chart(canvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: bg,
+                            borderColor: border,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: true, callbacks: {
+                                label: ctx => `${ctx.label}: ${ctx.parsed.y} responden`
+                            }}
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                grid: { display: false },
+                                ticks: { font: { size: 11 } }
+                            },
+                            y: {
+                                display: true,
+                                beginAtZero: true,
+                                ticks: { precision: 0, stepSize: 1 }
+                            }
+                        }
+                    }
+                });
+            });
+        });
+        // end small suggestion charts (1..5)
+
         document.addEventListener('DOMContentLoaded', function () {
             // Inisialisasi Chart untuk Input Score
             const inputLabels = [
@@ -190,7 +435,21 @@
                 'Cost Leadership',
                 'Client Service/Stability'
             ];
-            const initialInputData = [0, 0, 0, 0];
+            // server-provided history inputs (may be null)
+            const historyInputs = @json($historyInputs ?? null);
+            // identifiers for local draft storage
+            const ASSESSMENT_ID = @json(session('assessment_id') ?? null);
+            const DF_ID = @json($id);
+
+            // try to restore from local draft if no server history
+            const draftKey = `df1:${ASSESSMENT_ID}:${DF_ID}`;
+            let draftInputs = null;
+            try {
+                const raw = localStorage.getItem(draftKey);
+                if (raw) draftInputs = JSON.parse(raw);
+            } catch (e) { /* ignore parse errors */ }
+
+            const initialInputData = Array.isArray(historyInputs) ? historyInputs : (Array.isArray(draftInputs) ? draftInputs : [0, 0, 0, 0]);
 
             // Bar Chart Input Score
             const barChart = new Chart(document.getElementById('barChart').getContext('2d'), {
@@ -264,6 +523,14 @@
                 }
             });
 
+            // jika ada history inputs, set data awal pada chart input
+            if (Array.isArray(initialInputData)) {
+                barChart.data.datasets[0].data = initialInputData.slice();
+                barChart.update();
+                radarChartMain.data.datasets[0].data = initialInputData.slice();
+                radarChartMain.update();
+            }
+
             // Inisialisasi Chart untuk Relative Importance
             const relativeImportanceLabels = [
                 'EDM01', 'EDM02', 'EDM03', 'EDM04', 'EDM05',
@@ -275,7 +542,9 @@
                 'DSS01', 'DSS02', 'DSS03', 'DSS04', 'DSS05',
                 'DSS06', 'MEA01', 'MEA02', 'MEA03', 'MEA04'
             ];
-            const initialRelativeData = new Array(40).fill(0);
+            const initialRelativeData = @json($historyRIArray ?? null) || new Array(40).fill(0);
+            const historyScoreData = @json($historyScoreArray ?? null);
+            const historyRIData = @json($historyRIArray ?? null);
 
             // Radar Chart Relative Importance
             const relativeImportanceRadarChart = new Chart(
@@ -552,8 +821,26 @@
                     radarChartMain.data.datasets[0].data = newData;
                     radarChartMain.update();
                     calculateAndUpdate();
+
+                    // save current inputs to local draft so navigating away keeps values
+                    try {
+                        const current = [
+                            parseFloat(document.querySelector('input[name="strategy_archetype"]:checked')?.value || 0),
+                            parseFloat(document.querySelector('input[name="current_performance"]:checked')?.value || 0),
+                            parseFloat(document.querySelector('input[name="future_goals"]:checked')?.value || 0),
+                            parseFloat(document.querySelector('input[name="alignment_with_it"]:checked')?.value || 0)
+                        ];
+                        localStorage.setItem(draftKey, JSON.stringify(current));
+                    } catch (e) { /* ignore storage errors */ }
                 });
             });
+
+            // If server provided history, prefer it and clear any local draft so saved values take precedence
+            try {
+                if (Array.isArray(historyInputs) && historyInputs.length) {
+                    try { localStorage.removeItem(draftKey); } catch (e) { /* ignore */ }
+                }
+            } catch (e) { /* ignore */ }
 
             // ==================== DF1 SUGGESTION SWITCH (UPDATE OPSI RADIO) ====================
             const radios = document.querySelectorAll('input[type="radio"]');
@@ -600,6 +887,27 @@
 
             // Panggil calculateAndUpdate() saat halaman selesai dimuat agar tabel dan grafik muncul dengan data default
             calculateAndUpdate();
+
+            // Jika server menyediakan historyInputs, pastikan radios dan chart di-sync ke nilai terbaru
+            try {
+                if (Array.isArray(historyInputs) && historyInputs.length) {
+                    const names = ['strategy_archetype','current_performance','future_goals','alignment_with_it'];
+                    names.forEach((n, idx) => {
+                        const val = historyInputs[idx];
+                        const el = document.querySelector(`input[name="${n}"][value="${val}"]`);
+                        if (el) el.checked = true;
+                    });
+                    // sync charts
+                    if (barChart && radarChartMain) {
+                        barChart.data.datasets[0].data = historyInputs.slice();
+                        barChart.update();
+                        radarChartMain.data.datasets[0].data = historyInputs.slice();
+                        radarChartMain.update();
+                    }
+                    // recompute derived tables/relative importance
+                    calculateAndUpdate();
+                }
+            } catch (e) { console.error(e); }
         });
     </script>
 @endsection

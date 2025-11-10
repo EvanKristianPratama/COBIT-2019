@@ -13,10 +13,11 @@ class JabatanDFMiddleware
         'Executive Management' => [1,2,3,4,5,6],
         'Business Managers' => [1,2,3,4,5,6],
         'IT Managers' => [1,2,3,4,5,6,7,8,9,10],
-        'Guest' => [1,2,3,4,5,6,7,8,9,10],
         'Assurance Providers' => [1,2,3,4,5,6],
         'Risk Management' => [1,2,3,4,5,6],
         'Staff' => [4],
+        'Guest' => [1,2,3,4,5,6,7,8,9,10],
+        'Administrator' => [1,2,3,4,5,6,7,8,9,10]
     ];
 
     public function handle(Request $request, Closure $next, $df = null): Response

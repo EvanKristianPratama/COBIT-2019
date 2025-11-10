@@ -5,8 +5,10 @@ namespace App\Http\Controllers\cobit2019;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\DesignFactor7;
+use App\Models\User;
 use App\Models\DesignFactor7Score;
 use App\Models\DesignFactor7RelativeImportance;
 
@@ -18,7 +20,100 @@ class Df7Controller extends Controller
      * ===================================================================*/
     public function showDesignFactor7Form($id)
     {
-        return view('cobit2019.df7.design_factor7', compact('id'));
+        $assessment_id = session('assessment_id');
+        $historyInputs = null;
+        $historyScoreArray = null;
+        $historyRIArray = null;
+
+        if ($assessment_id) {
+            $history = DesignFactor7::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($history) {
+                $historyInputs = [
+                    $history->input1df7 ?? null,
+                    $history->input2df7 ?? null,
+                    $history->input3df7 ?? null,
+                    $history->input4df7 ?? null,
+                ];
+            }
+
+            $historyScore = DesignFactor7Score::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($historyScore) {
+                $arr = [];
+                foreach ($historyScore->getAttributes() as $k => $v) {
+                    if (strpos($k, 's_df7_') === 0) {
+                        $idx = (int) str_replace('s_df7_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyScoreArray = array_values($arr);
+                }
+            }
+
+            $historyRI = DesignFactor7RelativeImportance::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($historyRI) {
+                $arr = [];
+                foreach ($historyRI->getAttributes() as $k => $v) {
+                    if (strpos($k, 'r_df7_') === 0) {
+                        $idx = (int) str_replace('r_df7_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyRIArray = array_values($arr);
+                }
+            }
+        }
+
+        // expose respondent ids/users (exclude admin via session respondent_ids)
+        $userIds = session('respondent_ids', []);
+        $users = [];
+        $aggregatedData = [];
+        $suggestedValues = [];
+        $allSubmissions = collect();
+        try {
+            if (!empty($userIds)) {
+                $users = User::whereIn('id', $userIds)->pluck('name', 'id')->toArray();
+            }
+        } catch (\Throwable $e) {
+            // ignore lookup failures
+        }
+
+        // prepare aggregated data and exclude admin roles from aggregates
+        try {
+            $excludeAdminIds = [];
+            if (!empty($userIds)) {
+                $excludeAdminIds = User::whereIn('id', $userIds)
+                    ->where(function($q){ $q->where('role', 'admin')->orWhere('role', 'Administrator'); })
+                    ->pluck('id')->map(fn($v)=>(int)$v)->toArray();
+            }
+            // Aggregator removed — keep defaults for backwards compatibility
+            $aggregatedData = [];
+            $suggestedValues = [];
+            $allSubmissions = collect();
+        } catch (\Throwable $e) {
+            // keep defaults
+            $aggregatedData = [];
+            $suggestedValues = [];
+            $allSubmissions = collect();
+        }
+
+    return view('cobit2019.df7.design_factor7', compact('id', 'historyInputs', 'historyScoreArray', 'historyRIArray', 'userIds', 'users', 'aggregatedData', 'suggestedValues', 'allSubmissions'));
     }
 
     public function store(Request $request)
@@ -41,6 +136,8 @@ class Df7Controller extends Controller
         // ===================================================================
         // Simpan data ke tabel design_factor_7
         // ===================================================================
+        DB::beginTransaction();
+        try {
         $designFactor7 = DesignFactor7::create([
             'id' => Auth::id(), // ID user yang sedang login
             'df_id' => $validated['df_id'], // ID terkait Design Factor
@@ -244,11 +341,33 @@ class Df7Controller extends Controller
             $dataForRelativeImportance['r_df7_' . ($index + 1)] = $value;
         }
         DesignFactor7RelativeImportance::create($dataForRelativeImportance);
-        // ===================================================================
-        // Redirect atau respon setelah penyimpanan data berhasil
-        // ===================================================================
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $historyInputs = [
+                $validated['input1df7'],
+                $validated['input2df7'],
+                $validated['input3df7'],
+                $validated['input4df7'],
+            ];
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'historyInputs' => $historyInputs,
+                'historyScoreArray' => $DF7_SCORE ?? null,
+                'historyRIArray' => $DF7_RELATIVE_IMP ?? null,
+            ], 200);
+        }
+
+        DB::commit();
         return redirect()->route('df7.output', ['id' => $validated['df_id']])
             ->with('success', 'Data berhasil disimpan!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan: ' . $e->getMessage());
+        }
     }
     public function showOutput($id)
     {

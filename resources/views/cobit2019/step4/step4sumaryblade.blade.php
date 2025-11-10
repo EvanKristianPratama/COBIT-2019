@@ -47,8 +47,9 @@
     //
     // 4) Ambil bobot dari session
     //
-    $weights2 = session('step2.weights', [0, 0, 0, 0]);
-    $weights3 = session('step3.weights', [0, 0, 0, 0, 0, 0]);
+    // controller mengirim: $step2['weights'] dan $step3['weights']
+    $weights2 = $step2['weights'] ?? session('step2.weights', [0,0,0,0]);
+    $weights3 = $step3['weights'] ?? session('step3.weights', [0,0,0,0,0,0]);
 
     //
     // 5) Siapkan array “Refined Scope” dari Step 3 untuk Step 4 nanti
@@ -111,7 +112,6 @@
                                class="form-control form-control-sm text-center weight2-input"
                                style="width: 60px;"
                                data-index="{{ $i }}"
-                               readonly
                         >
                       </th>
                     @endfor
@@ -196,7 +196,6 @@
                                class="form-control form-control-sm text-center weight3-input"
                                style="width: 60px;"
                                data-index="{{ $i }}"
-                               readonly
                         >
                       </th>
                     @endfor
@@ -463,131 +462,306 @@
           });
         }
 
+        // expose to global so other blocks can call when weights change
+        window.renderAllInitialScopes = function() {
+          const allTotals = Array.from(rows2).map(r => updateInitialScopeForRow(r));
+          const maxT = Math.max(...allTotals.map(v => Math.abs(v)), 1);
+
+          rows2.forEach((row, i) => {
+            const tot = allTotals[i];
+            let pct = 0;
+            if (maxT !== 0) {
+              pct = Math.trunc((tot / maxT) * 100);
+              pct = tot >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
+            }
+            const cell = row.querySelector('.initial-scope-cell2');
+            cell.innerHTML = '';
+
+            const container = document.createElement('div');
+            container.style.cssText = `
+              position: relative;
+              height: 20px;
+              width: 180px;
+              background: #f8f9fa;
+              border: 1px solid #ddd;
+              margin: 0 auto;
+              overflow: hidden;
+            `;
+            const centerLine = document.createElement('div');
+            centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
+            container.appendChild(centerLine);
+
+            const barWidth = Math.min(Math.abs(pct) / 2, 50);
+            const bar = document.createElement('div');
+            if (pct >= 0) {
+              bar.style.cssText = `
+                position: absolute;
+                left: 50%;
+                top: 0;
+                height: 100%;
+                width: ${barWidth}%;
+                background-color: rgba(40, 167, 69, 0.8);
+                transition: all 0.5s ease;
+              `;
+            } else {
+              bar.style.cssText = `
+                position: absolute;
+                right: 50%;
+                top: 0;
+                height: 100%;
+                width: ${barWidth}%;
+                background-color: rgba(220, 53, 69, 0.8);
+                transition: all 0.5s ease;
+              `;
+            }
+            container.appendChild(bar);
+
+            const label = document.createElement('div');
+            label.style.cssText = `
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.8rem;
+              font-weight: 500;
+              color: #343a40;
+              z-index: 1;
+            `;
+            label.textContent = formatInteger(pct);
+            container.appendChild(label);
+
+            cell.appendChild(container);
+            cell.setAttribute('data-scope', pct);
+          });
+        }
+
+        // initial render and bind listeners to weight inputs so editing updates charts
         renderAllInitialScopes();
+        weightInputs2.forEach(i => i.addEventListener('input', () => {
+          // ensure numeric value
+          if (i.value === '') i.value = 0;
+          window.renderAllInitialScopes();
+          if (typeof window.renderAllRefinedScopes === 'function') window.renderAllRefinedScopes();
+          if (typeof window.updateStep4All === 'function') window.updateStep4All();
+        }));
       })();
 
 
       /// STEP 3: Hitung “Refined Scope” v‑bar untuk setiap baris di #step3Table
-(function() {
-  const weightInputs3 = document.querySelectorAll('.weight3-input');
-  const rows2         = document.querySelectorAll('#step2Table tbody tr');
-  const rows3         = document.querySelectorAll('#step3Table tbody tr');
+ (function() {
+   const weightInputs3 = document.querySelectorAll('.weight3-input');
+   const rows2         = document.querySelectorAll('#step2Table tbody tr');
+   const rows3         = document.querySelectorAll('#step3Table tbody tr');
 
-  function roundToNearest5(x) {
-    return Math.round(x / 5) * 5;
-  }
-  function formatInteger(x) {
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(x);
-  }
+   function roundToNearest5(x) {
+     return Math.round(x / 5) * 5;
+   }
+   function formatInteger(x) {
+     return new Intl.NumberFormat('en-US', {
+       minimumFractionDigits: 0,
+       maximumFractionDigits: 0
+     }).format(x);
+   }
 
-  // 1) Hitung raw combined = (DF5..DF10 total) + (Initial Scope dari Step 2)
-  function updateRawCombined(row, idx) {
-    // a) tot3 = sum DF5..DF10 * bobot
-    const cells = row.querySelectorAll('.value3-cell');
-    const w     = Array.from(weightInputs3).map(i => parseFloat(i.value) || 0);
-    let tot3 = 0;
-    cells.forEach((cell, i) => {
-      tot3 += (parseFloat(cell.dataset.value) || 0) * (w[i] || 0);
-    });
+   // 1) Hitung raw combined = (DF5..DF10 total) + (Initial Scope dari Step 2)
+   function updateRawCombined(row, idx) {
+     // a) tot3 = sum DF5..DF10 * bobot
+     const cells = row.querySelectorAll('.value3-cell');
+     const w     = Array.from(weightInputs3).map(i => parseFloat(i.value) || 0);
+     let tot3 = 0;
+     cells.forEach((cell, i) => {
+       tot3 += (parseFloat(cell.dataset.value) || 0) * (w[i] || 0);
+     });
 
-    // b) initPct = data-scope dari Step 2 baris sama idx
-    const initCell = rows2[idx].querySelector('.initial-scope-cell2');
-    const initPct  = parseFloat(initCell.getAttribute('data-scope')) || 0;
+     // b) initPct = data-scope dari Step 2 baris sama idx
+     const initCell = rows2[idx].querySelector('.initial-scope-cell2');
+     const initPct  = parseFloat(initCell.getAttribute('data-scope')) || 0;
 
-    return tot3 + initPct;
-  }
+     return tot3 + initPct;
+   }
 
-  // 2) Render semua refined scopes
-  function renderAllRefinedScopes() {
-    // a) kumpulkan semua rawCombined untuk normalisasi
-    const rawCombined = Array.from(rows3).map((row, i) => updateRawCombined(row, i));
-    const maxAbs = Math.max(...rawCombined.map(v => Math.abs(v)), 1);
+   // 2) Render semua refined scopes
+   function renderAllRefinedScopes() {
+     // a) kumpulkan semua rawCombined untuk normalisasi
+     const rawCombined = Array.from(rows3).map((row, i) => updateRawCombined(row, i));
+     const maxAbs = Math.max(...rawCombined.map(v => Math.abs(v)), 1);
 
-    // b) per baris, hitung pct, tulis Total & gambar bar
-    rows3.forEach((row, i) => {
-      const combined = rawCombined[i];
-      // tulis nilai total (combined) di kolom Total3
-      row.querySelector('.total3-cell').textContent = formatInteger(combined);
+     // b) per baris, hitung pct, tulis Total & gambar bar
+     rows3.forEach((row, i) => {
+       const combined = rawCombined[i];
+       // tulis nilai total (combined) di kolom Total3
+       row.querySelector('.total3-cell').textContent = formatInteger(combined);
 
-      // hitung persen relatif
-      let pct = 0;
-      if (maxAbs !== 0) {
-        pct = Math.trunc((combined / maxAbs) * 100);
-        pct = combined >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
-      }
+       // hitung persen relatif
+       let pct = 0;
+       if (maxAbs !== 0) {
+         pct = Math.trunc((combined / maxAbs) * 100);
+         pct = combined >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
+       }
 
-      // gambar v‑bar di kolom refined-scope
-      const cell = row.querySelector('.refined-scope-cell3');
-      cell.innerHTML = '';
+       // gambar v‑bar di kolom refined-scope
+       const cell = row.querySelector('.refined-scope-cell3');
+       cell.innerHTML = '';
 
-      const container = document.createElement('div');
-      container.style.cssText = `
-        position: relative;
-        height: 20px;
-        width: 180px;
-        background: #f8f9fa;
-        border: 1px solid #ddd;
-        margin: 0 auto;
-        overflow: hidden;
-      `;
-      const centerLine = document.createElement('div');
-      centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
-      container.appendChild(centerLine);
+       const container = document.createElement('div');
+       container.style.cssText = `
+         position: relative;
+         height: 20px;
+         width: 180px;
+         background: #f8f9fa;
+         border: 1px solid #ddd;
+         margin: 0 auto;
+         overflow: hidden;
+       `;
+       const centerLine = document.createElement('div');
+       centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
+       container.appendChild(centerLine);
 
-      const barWidth = Math.min(Math.abs(pct) / 2, 50);
-      const bar = document.createElement('div');
-      if (pct >= 0) {
-        bar.style.cssText = `
-          position: absolute;
-          left: 50%;
-          top: 0;
-          height: 100%;
-          width: ${barWidth}%;
-          background-color: rgba(40, 167, 69, 0.8);
-          transition: all 0.5s ease;
-        `;
-      } else {
-        bar.style.cssText = `
-          position: absolute;
-          right: 50%;
-          top: 0;
-          height: 100%;
-          width: ${barWidth}%;
-          background-color: rgba(220, 53, 69, 0.8);
-          transition: all 0.5s ease;
-        `;
-      }
-      container.appendChild(bar);
+       const barWidth = Math.min(Math.abs(pct) / 2, 50);
+       const bar = document.createElement('div');
+       if (pct >= 0) {
+         bar.style.cssText = `
+           position: absolute;
+           left: 50%;
+           top: 0;
+           height: 100%;
+           width: ${barWidth}%;
+           background-color: rgba(40, 167, 69, 0.8);
+           transition: all 0.5s ease;
+         `;
+       } else {
+         bar.style.cssText = `
+           position: absolute;
+           right: 50%;
+           top: 0;
+           height: 100%;
+           width: ${barWidth}%;
+           background-color: rgba(220, 53, 69, 0.8);
+           transition: all 0.5s ease;
+         `;
+       }
+       container.appendChild(bar);
 
-      const label = document.createElement('div');
-      label.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: #343a40;
-        z-index: 1;
-      `;
-      label.textContent = formatInteger(pct);
-      container.appendChild(label);
+       const label = document.createElement('div');
+       label.style.cssText = `
+         position: absolute;
+         top: 0;
+         left: 0;
+         right: 0;
+         bottom: 0;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         font-size: 0.8rem;
+         font-weight: 500;
+         color: #343a40;
+         z-index: 1;
+       `;
+       label.textContent = formatInteger(pct);
+       container.appendChild(label);
 
-      cell.appendChild(container);
-      cell.setAttribute('data-scope', pct);
-    });
-  }
+       cell.appendChild(container);
+       cell.setAttribute('data-scope', pct);
+     });
+   }
 
-  // jalankan sekali saat load
-  renderAllRefinedScopes();
-})();
+   // expose to global so other blocks can call when weights change
+   window.renderAllRefinedScopes = function() {
+     // a) kumpulkan semua rawCombined untuk normalisasi
+     const rawCombined = Array.from(rows3).map((row, i) => updateRawCombined(row, i));
+     const maxAbs = Math.max(...rawCombined.map(v => Math.abs(v)), 1);
+
+     // b) per baris, hitung pct, tulis Total & gambar bar
+     rows3.forEach((row, i) => {
+       const combined = rawCombined[i];
+       // tulis nilai total (combined) di kolom Total3
+       row.querySelector('.total3-cell').textContent = formatInteger(combined);
+
+       // hitung persen relatif
+       let pct = 0;
+       if (maxAbs !== 0) {
+         pct = Math.trunc((combined / maxAbs) * 100);
+         pct = combined >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
+       }
+
+       // gambar v‑bar di kolom refined-scope
+       const cell = row.querySelector('.refined-scope-cell3');
+       cell.innerHTML = '';
+
+       const container = document.createElement('div');
+       container.style.cssText = `
+         position: relative;
+         height: 20px;
+         width: 180px;
+         background: #f8f9fa;
+         border: 1px solid #ddd;
+         margin: 0 auto;
+         overflow: hidden;
+       `;
+       const centerLine = document.createElement('div');
+       centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
+       container.appendChild(centerLine);
+
+       const barWidth = Math.min(Math.abs(pct) / 2, 50);
+       const bar = document.createElement('div');
+       if (pct >= 0) {
+         bar.style.cssText = `
+           position: absolute;
+           left: 50%;
+           top: 0;
+           height: 100%;
+           width: ${barWidth}%;
+           background-color: rgba(40, 167, 69, 0.8);
+           transition: all 0.5s ease;
+         `;
+       } else {
+         bar.style.cssText = `
+           position: absolute;
+           right: 50%;
+           top: 0;
+           height: 100%;
+           width: ${barWidth}%;
+           background-color: rgba(220, 53, 69, 0.8);
+           transition: all 0.5s ease;
+         `;
+       }
+       container.appendChild(bar);
+
+       const label = document.createElement('div');
+       label.style.cssText = `
+         position: absolute;
+         top: 0;
+         left: 0;
+         right: 0;
+         bottom: 0;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         font-size: 0.8rem;
+         font-weight: 500;
+         color: #343a40;
+         z-index: 1;
+       `;
+       label.textContent = formatInteger(pct);
+       container.appendChild(label);
+
+       cell.appendChild(container);
+       cell.setAttribute('data-scope', pct);
+     });
+   }
+
+   // initial render and bind weight change listeners
+   renderAllRefinedScopes();
+   weightInputs3.forEach(i => i.addEventListener('input', () => {
+     if (i.value === '') i.value = 0;
+     window.renderAllRefinedScopes();
+     if (typeof window.updateStep4All === 'function') window.updateStep4All();
+   }));
+ })();
 
 
      //
@@ -769,6 +943,8 @@ function renderConcludedBars() {
     renderConcludedBars();
     renderSuggestedAgreed();
   }
+  // expose updateStep4All so other blocks can call
+  window.updateStep4All = updateStep4All;
 
   // Pas halaman siap, panggil sekali
   updateStep4All();

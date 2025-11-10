@@ -3,6 +3,8 @@
     @include('cobit2019.cobitPagination')
 
     <div class="container">
+         {{-- Admin raw submissions (generic) --}}
+    {{-- Admin raw submissions removed per request --}}
         <!-- Card Utama -->
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -16,6 +18,13 @@
                         <form id="df4Form" action="{{ route('df4.store') }}" method="POST">
                             @csrf
                             <input type="hidden" name="df_id" value="{{ $id }}">
+
+                            @php
+                                $historyValues = [];
+                                if (!empty($historyInputs) && is_array($historyInputs)) {
+                                    $historyValues = $historyInputs;
+                                }
+                            @endphp
 
                             @php
                                 $labels = [
@@ -89,12 +98,13 @@
                                             <tr>
                                                 <td>{{ $label }}</td>
                                                 <td>
-                                                    <select class="form-select input-score" name="input{{ $index + 1 }}df4"
+                                                    @php $inputName = 'input' . ($index + 1) . 'df4'; @endphp
+                                                    <select class="form-select input-score" name="{{ $inputName }}" id="{{ $inputName }}"
                                                         required>
                                                         <option value="" selected disabled>Pilih</option>
-                                                        <option value="1">1</option>
-                                                        <option value="2">2</option>
-                                                        <option value="3">3</option>
+                                                        <option value="1" {{ (old($inputName, $historyValues[$inputName] ?? null) == 1) ? 'selected' : '' }}>1</option>
+                                                        <option value="2" {{ (old($inputName, $historyValues[$inputName] ?? null) == 2) ? 'selected' : '' }}>2</option>
+                                                        <option value="3" {{ (old($inputName, $historyValues[$inputName] ?? null) == 3) ? 'selected' : '' }}>3</option>
                                                     </select>
                                                 </td>
                                                 <td class="text-center fw-bold text-success fs-5">
@@ -106,6 +116,10 @@
                                     </tbody>
 
                                 </table>
+                                <!-- Submit Button -->
+                                <div class="text-end mt-4">
+                                    <button type="submit" class="btn btn-primary btn-lg px-5">Save</button>
+                                </div>
                             </div>
 
 
@@ -179,10 +193,7 @@
                                 </div>
                             </div>
 
-                            <!-- Submit Button -->
-                            <div class="text-center mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg px-5">Submit Assessment</button>
-                            </div>
+
                         </form>
                     </div>
                     <!-- end card-body -->
@@ -219,6 +230,29 @@
                 "Ignorance of and/or noncompliance with privacy regulations",
                 "Inability to exploit new technologies or innovate using I&T"
             ];
+
+            // history / draft support
+            const historyInputs = @json($historyInputs ?? null);
+            const historyScoreData = @json($historyScoreArray ?? null);
+            const historyRIData = @json($historyRIArray ?? null);
+            const ASSESSMENT_ID = @json(session('assessment_id') ?? null);
+            const DF_ID = @json($id);
+            const draftKey = `df4:${ASSESSMENT_ID}:${DF_ID}`;
+            // Note: history/draft will be applied after charts are initialized
+
+            // save draft on change
+            document.querySelectorAll('select.input-score').forEach(sel => {
+                sel.addEventListener('change', () => {
+                    const state = {};
+                    for (let i = 1; i <= df4Labels.length; i++) {
+                        const key = 'input' + i + 'df4';
+                        const el = document.getElementById(key);
+                        if (el) state[key] = el.value || '';
+                    }
+                    try { localStorage.setItem(draftKey, JSON.stringify(state)); } catch (e) {}
+                });
+            });
+
 
             // --- Konstanta Perhitungan ---
             const DF4_MAP = [
@@ -360,10 +394,10 @@
                             ? 'bg-danger-subtle text-dark'
                             : '';
                     return `<tr>
-                                  <td class="text-center">${i + 1}</td>
-                                  <td class="text-center">${score.toFixed(2)}</td>
-                                  <td class="text-center ${scoreClass}">${relative}</td>
-                                </tr>`;
+                                      <td class="text-center">${i + 1}</td>
+                                      <td class="text-center">${score.toFixed(2)}</td>
+                                      <td class="text-center ${scoreClass}">${relative}</td>
+                                    </tr>`;
                 }).join('');
             }
 
@@ -530,6 +564,79 @@
                 }
             });
 
+            // Apply server history or local draft now that charts and helper functions are ready
+            (function applyHistoryAndCompute() {
+                try {
+                    // helper to set color class on a select input according to its value
+                    function applyColorClassToSelect(el) {
+                        if (!el) return;
+                        el.classList.remove('bg-success-subtle', 'bg-warning-subtle', 'bg-danger-subtle');
+                        const v = String(el.value);
+                        if (v === '1') el.classList.add('bg-success-subtle');
+                        else if (v === '2') el.classList.add('bg-warning-subtle');
+                        else if (v === '3') el.classList.add('bg-danger-subtle');
+                    }
+                    const raw = localStorage.getItem(draftKey);
+                    if (!historyInputs && raw) {
+                        const draft = JSON.parse(raw);
+                        if (draft && typeof draft === 'object') {
+                            for (let i = 1; i <= df4Labels.length; i++) {
+                                const key = 'input' + i + 'df4';
+                                const el = document.getElementById(key);
+                                if (el && draft[key] !== undefined) el.value = draft[key];
+                                // ensure color class matches restored value
+                                applyColorClassToSelect(el);
+                            }
+                        }
+                    } else if (historyInputs && typeof historyInputs === 'object') {
+                        for (let i = 1; i <= df4Labels.length; i++) {
+                            const key = 'input' + i + 'df4';
+                            const el = document.getElementById(key);
+                            if (el && historyInputs[key] !== undefined) el.value = historyInputs[key];
+                            // ensure color class matches restored value
+                            applyColorClassToSelect(el);
+                        }
+                    }
+
+                    // Update scores array and input bar chart
+                    for (let i = 0; i < df4Labels.length; i++) {
+                        const key = 'input' + (i + 1) + 'df4';
+                        const el = document.getElementById(key);
+                        scores[i] = el && el.value ? parseInt(el.value) : 0;
+                        // ensure color class matches restored value
+                        applyColorClassToSelect(el);
+                    }
+                    df4ScoreChart.data.datasets[0].data = scores;
+                    df4ScoreChart.update();
+
+                    // Recompute relative importance and update all visuals
+                    const newResult = updateRelativeImportance();
+                    const newRelImp = newResult.relative;
+                    updateRelativeTable(newResult.score, newRelImp);
+
+                    // update bar chart
+                    relativeBarChart.data.datasets[0].data = newRelImp;
+                    relativeBarChart.data.datasets[0].backgroundColor = newRelImp.map(value =>
+                        value > 0 ? 'rgba(54, 162, 235, 0.6)' : value < 0 ? 'rgba(255, 99, 132, 0.6)' : 'rgba(201, 201, 201, 0.6)'
+                    );
+                    relativeBarChart.data.datasets[0].borderColor = newRelImp.map(value =>
+                        value > 0 ? 'rgba(54, 162, 235, 1)' : value < 0 ? 'rgba(255, 99, 132, 1)' : 'rgba(201, 201, 201, 1)'
+                    );
+                    relativeBarChart.update();
+
+                    // update radar
+                    const rev = [...newRelImp].reverse();
+                    relativeRadarChart.data.datasets[0].data = rev;
+                    relativeRadarChart.data.datasets[0].borderColor = rev.map(value =>
+                        value < 0 ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)'
+                    );
+                    relativeRadarChart.data.datasets[0].pointBackgroundColor = rev.map(value =>
+                        value < 0 ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)'
+                    );
+                    relativeRadarChart.update();
+                } catch (e) { console.error(e); }
+            })();
+
             // -------------------- Event Listener: Update Semua Chart & Tabel Saat Input Berubah --------------------
             document.querySelectorAll('.input-score').forEach(input => {
                 input.addEventListener('change', function () {
@@ -578,13 +685,20 @@
             });
         });
 
+        // If server provided history, prefer it and clear any local draft so saved values take precedence
+        try {
+            if (historyInputs && typeof historyInputs === 'object') {
+                try { localStorage.removeItem(draftKey); } catch (e) { /* ignore */ }
+            }
+        } catch (e) { /* ignore */ }
+
         // -------------------- Fungsi untuk update warna --------------------
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.input-score').forEach(input => {
                 input.addEventListener('change', function () {
                     // Hapus kelas warna yang sudah ada
                     this.classList.remove('bg-success-subtle', 'bg-warning-subtle', 'bg-danger-subtle');
-                    
+
                     // Tambahkan kelas sesuai nilai input
                     if (this.value === "1") {
                         this.classList.add('bg-success-subtle');

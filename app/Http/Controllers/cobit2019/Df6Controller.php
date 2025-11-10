@@ -5,8 +5,10 @@ namespace App\Http\Controllers\cobit2019;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\DesignFactor6;
+use App\Models\User;
 use App\Models\DesignFactor6Score;
 use App\Models\DesignFactor6RelativeImportance;
 
@@ -18,7 +20,85 @@ class Df6Controller extends Controller
      * ===================================================================*/
     public function showDesignFactor6Form($id)
     {
-        return view('cobit2019.df6.design_factor6', compact('id'));
+        $assessment_id = session('assessment_id');
+        $historyInputs = null;
+        $historyScoreArray = null;
+        $historyRIArray = null;
+
+        if ($assessment_id) {
+            $history = DesignFactor6::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($history) {
+                $historyInputs = [
+                    $history->input1df6 ?? null,
+                    $history->input2df6 ?? null,
+                    $history->input3df6 ?? null,
+                ];
+            }
+
+            $historyScore = DesignFactor6Score::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($historyScore) {
+                $arr = [];
+                foreach ($historyScore->getAttributes() as $k => $v) {
+                    if (strpos($k, 's_df6_') === 0) {
+                        $idx = (int) str_replace('s_df6_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyScoreArray = array_values($arr);
+                }
+            }
+
+            $historyRI = DesignFactor6RelativeImportance::where('assessment_id', $assessment_id)
+                ->where('id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($historyRI) {
+                $arr = [];
+                foreach ($historyRI->getAttributes() as $k => $v) {
+                    if (strpos($k, 'r_df6_') === 0) {
+                        $idx = (int) str_replace('r_df6_', '', $k);
+                        $arr[$idx] = $v;
+                    }
+                }
+                if ($arr) {
+                    ksort($arr);
+                    $historyRIArray = array_values($arr);
+                }
+            }
+        }
+
+        // expose respondent ids/users (exclude admin via session respondent_ids)
+        $userIds = session('respondent_ids', []);
+        $users = [];
+        $aggregatedData = [];
+        $suggestedValues = [];
+        $allSubmissions = collect();
+        try {
+            if (!empty($userIds)) {
+                $users = User::whereIn('id', $userIds)->pluck('name', 'id')->toArray();
+            }
+        } catch (\Throwable $e) {
+            // ignore lookup failures
+        }
+
+        // Aggregator removed — keep defaults for backwards compatibility
+        $aggregatedData = [];
+        $suggestedValues = [];
+        $allSubmissions = collect();
+
+    return view('cobit2019.df6.design_factor6', compact('id', 'historyInputs', 'historyScoreArray', 'historyRIArray', 'userIds', 'users', 'aggregatedData', 'suggestedValues', 'allSubmissions'));
     }
 
     public function store(Request $request)
@@ -42,6 +122,8 @@ class Df6Controller extends Controller
         // ===================================================================
         // Simpan data ke tabel design_factor_6 menggunakan assessment_id dari session
         // ===================================================================
+        DB::beginTransaction();
+        try {
         $designFactor6 = DesignFactor6::create([
             'id' => Auth::id(),
             'assessment_id' => $assessment_id,  // Menggunakan assessment_id dari session
@@ -233,11 +315,32 @@ class Df6Controller extends Controller
         }
         DesignFactor6RelativeImportance::create($dataForRelativeImportance);
 
-        // ===================================================================
-        // Redirect atau respon setelah penyimpanan data berhasil
-        // ===================================================================
+        if ($request->ajax() || $request->wantsJson()) {
+            $historyInputs = [
+                $validated['input1df6'],
+                $validated['input2df6'],
+                $validated['input3df6'],
+            ];
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'historyInputs' => $historyInputs,
+                'historyScoreArray' => $DF6_SCORE ?? null,
+                'historyRIArray' => $DF6_RELATIVE_IMP ?? null,
+            ], 200);
+        }
+
+        DB::commit();
+        // Redirect or response for non-AJAX
         return redirect()->route('df6.output', ['id' => $validated['df_id']])
             ->with('success', 'Data berhasil disimpan!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan: ' . $e->getMessage());
+        }
     }
 
     public function showOutput($id)

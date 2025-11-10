@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\DesignFactor4;
+use App\Models\User;
 use App\Models\DesignFactor4Score;
 use App\Models\DesignFactor4RelativeImportance;
 
@@ -17,10 +18,138 @@ class Df4Controller extends Controller
      * Menampilkan halaman form input untuk Design Factor 4 berdasarkan ID.
      * ===================================================================*/
     public function showDesignFactor4Form($id)
-    {
-        // Menampilkan form input untuk Design Factor 4 dengan ID yang diberikan
-        return view('cobit2019.df4.design_factor4', compact('id'));
+{
+    $assessment_id = session('assessment_id');
+
+    $historyInputs = null;
+    $historyScoreArray = null;
+    $historyRIArray = null;
+
+    // admin view data
+    $allSubmissions = collect();
+    $users = [];
+    $userIds = session('respondent_ids', []);
+
+    if ($assessment_id) {
+        // current user's latest submission (to prefill the form)
+        $history = \App\Models\DesignFactor4::where('assessment_id', $assessment_id)
+            ->where('df_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        if ($history) {
+            $historyInputs = [];
+            for ($i = 1; $i <= 20; $i++) {
+                $historyInputs['input' . $i . 'df4'] = (int) ($history->{'input' . $i . 'df4'} ?? 0);
+            }
+        }
+
+        // last score & relative importance for current user (if any)
+        $historyScore = \App\Models\DesignFactor4Score::where('assessment_id', $assessment_id)
+            ->where('df4_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        if ($historyScore) {
+            $historyScoreArray = [];
+            for ($i = 1; $i <= 40; $i++) {
+                $col = 's_df4_' . $i;
+                $historyScoreArray[] = (float) ($historyScore->{$col} ?? 0);
+            }
+        }
+
+        $historyRI = \App\Models\DesignFactor4RelativeImportance::where('assessment_id', $assessment_id)
+            ->where('df4_id', $id)
+            ->where('id', Auth::id())
+            ->latest()
+            ->first();
+
+        if ($historyRI) {
+            $historyRIArray = [];
+            for ($i = 1; $i <= 40; $i++) {
+                $col = 'r_df4_' . $i;
+                $historyRIArray[] = (float) ($historyRI->{$col} ?? 0);
+            }
+        }
+
+        // If current user is admin/pic collect per-user latest submissions so admin can inspect raw inputs
+        $currentRole = strtolower(trim((string) (Auth::user()->role ?? '')));
+        if (in_array($currentRole, ['admin', 'administrator', 'pic'], true)) {
+            // fetch submissions newest-first, then unique by submitter id (schema uses `id` column for user reference)
+            $subs = \App\Models\DesignFactor4::where('assessment_id', $assessment_id)
+                ->where('df_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // detect which column stores submitter id; fallback to 'id'
+            $userKey = 'id';
+            if ($subs->isNotEmpty()) {
+                $firstAttrs = $subs->first()->getAttributes();
+                if (array_key_exists('user_id', $firstAttrs)) $userKey = 'user_id';
+                elseif (array_key_exists('id_user', $firstAttrs)) $userKey = 'id_user';
+                elseif (array_key_exists('respondent_id', $firstAttrs)) $userKey = 'respondent_id';
+                else $userKey = 'id';
+            }
+
+            // get unique submitter ids (latest first)
+            $submitterIds = $subs->pluck($userKey)->filter()->map(fn($v) => (int) $v)->unique()->values()->toArray();
+
+            // prefer respondent_ids from session but intersect with actual submitters
+            $uids = $userIds ?: $submitterIds;
+            if (!empty($userIds)) {
+                $uids = array_values(array_intersect($submitterIds, $userIds));
+            }
+
+            // exclude admin accounts from the respondent list (optional & defensive)
+            try {
+                if (!empty($uids)) {
+                    $adminIds = \App\Models\User::whereIn('id', $uids)
+                        ->where(function ($q) {
+                            $q->where('role', 'admin')->orWhere('role', 'Administrator');
+                        })->pluck('id')->map(fn($v) => (int)$v)->toArray();
+
+                    if (!empty($adminIds)) {
+                        $uids = array_values(array_filter($uids, fn($id) => !in_array($id, $adminIds, true)));
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore role lookup failures
+            }
+
+            // build users map
+            if (!empty($uids)) {
+                try {
+                    $users = \App\Models\User::whereIn('id', $uids)->pluck('name', 'id')->toArray();
+                } catch (\Throwable $e) {
+                    $users = [];
+                }
+            }
+
+            // keep only submissions from $uids and ensure latest-per-user
+            if (!empty($uids)) {
+                $subs = $subs->filter(fn($r) => in_array((int) ($r->{$userKey} ?? 0), $uids, true))->values();
+            }
+            $subs = $subs->unique($userKey)->values();
+
+            $allSubmissions = $subs;
+            // expose resolved userIds (filtered & admin-excluded) for view
+            $userIds = $uids;
+        }
     }
+
+    return view('cobit2019.df4.design_factor4', compact(
+        'id',
+        'historyInputs',
+        'historyScoreArray',
+        'historyRIArray',
+        'userIds',
+        'users',
+        'allSubmissions'
+    ));
+}
+
 
     /** ===================================================================
      * Method untuk menyimpan data dari form.
@@ -312,8 +441,18 @@ class Df4Controller extends Controller
         DesignFactor4RelativeImportance::create($dataForRelativeImportance);
 
         // ===================================================================
-        // Redirect ke halaman output setelah data berhasil disimpan
-        // ===================================================================
+        // If AJAX request, return computed arrays so frontend can update in-place
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil disimpan!',
+                'historyInputs' => $DF4_INPUT ? array_map('floatval', array_column($DF4_INPUT, 0)) : [],
+                'historyScoreArray' => $DF4_SCORE,
+                'historyRIArray' => $DF4_RELATIVE_IMP,
+            ]);
+        }
+
+        // Redirect ke halaman output setelah data berhasil disimpan for non-AJAX
         return redirect()->route('df4.output', ['id' => $designFactor4->df_id])
             ->with('success', 'Data berhasil disimpan!');
     }
