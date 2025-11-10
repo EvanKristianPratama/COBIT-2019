@@ -1,0 +1,22 @@
+name: 🚀 Publish Website to Dev Server
+
+on:
+  push:
+    branches:
+      - dev  
+
+jobs:
+  ftp-deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Dev via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_DEV_SERVER }}
+          username: ${{ secrets.FTP_DEV_USERNAME }}
+          password: ${{ secrets.FTP_DEV_PASSWORD }}
+          local-dir: ./           # folder project yang mau dideploy
+          remote-dir: /dev/       # folder tujuan di server dev
