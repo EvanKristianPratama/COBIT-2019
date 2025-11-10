@@ -22,11 +22,12 @@
   <body class="{{ Route::is('login', 'register') ? 'login' : '' }}">
     <div id="app">
       <!-- Navbar Utama -->
-      <nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top">
+      <nav class="navbar navbar-expand-md navbar-dark bg-warning fixed-top">
         <div class="container">
           <!-- Logo dan Teks PORTAL -->
           <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
             <img src="{{ asset('images/logo.png') }}" alt="COBIT Logo" style="height: 40px;">
+            <h3>DEV VERSION</h3>
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                   data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
