@@ -721,13 +721,13 @@ const STATE = {
       <!-- body -->
       <div style="padding:14px;color:#222;font-size:13px;">
         <div style="background:#f6f7f9;border:1px solid #d7dbe0;padding:10px 12px;margin-bottom:10px;border-radius:2px;">
-          <div class="fs-4" style="font-weight:700;margin-bottom:6px;">Description</div>
-          <div class="fs-5">${Utils.formatText(obj.objective_description || '')}</div>
+          <div class="fs-5" style="font-weight:700;margin-bottom:6px;">Description</div>
+          <div class="medium">${Utils.formatText(obj.objective_description || '')}</div>
         </div>
 
         <div style="background:#f6f7f9;border:1px solid #d7dbe0;padding:10px 12px;margin-bottom:10px;border-radius:2px;">
-          <div class="fs-4" style="font-weight:700;margin-bottom:6px;">Purpose</div>
-          <div class="fs-5">${Utils.formatText(obj.objective_purpose || '')}</div>
+          <div class="fs-5" style="font-weight:700;margin-bottom:6px;">Purpose</div>
+          <div class="medium">${Utils.formatText(obj.objective_purpose || '')}</div>
         </div>
 
         <!-- goals row -->
@@ -751,7 +751,7 @@ const STATE = {
         <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
           <div style="flex:1;min-width:260px;border:1px solid #dcdcdc;padding:10px;background:#fff;">
             <div style="font-weight:700;background:#eef2f6;padding:6px 8px;border:1px solid #d6dbe0;margin:-10px -10px 10px -10px;font-size:13px;">Example Metrics for Enterprise Goals</div>
-            <div style="margin-top:6px;font-size:13px;color:#333;">${egMetricsHtml}</div>
+            <div class= " medium " style="margin-top:6px;font-size:13px;color:#333;">${egMetricsHtml}</div>
           </div>
 
           <div style="width:56px;display:flex;align-items:flex-start;justify-content:center;margin-top:6px;">
@@ -760,7 +760,7 @@ const STATE = {
 
           <div style="flex:1;min-width:260px;border:1px solid #dcdcdc;padding:10px;background:#fff;">
             <div style="font-weight:700;background:#eef2f6;padding:6px 8px;border:1px solid #d6dbe0;margin:-10px -10px 10px -10px;font-size:13px;">Example Metrics for Alignment Goals</div>
-            <div style="margin-top:6px;font-size:13px;color:#333;">${agMetricsHtml}</div>
+            <div class= " medium "  style="margin-top:6px;font-size:13px;color:#333;">${agMetricsHtml}</div>
           </div>
         </div>
       </div>
