@@ -721,13 +721,13 @@ const STATE = {
       <!-- body -->
       <div style="padding:14px;color:#222;font-size:13px;">
         <div style="background:#f6f7f9;border:1px solid #d7dbe0;padding:10px 12px;margin-bottom:10px;border-radius:2px;">
-          <div style="font-weight:700;margin-bottom:6px;font-size:13px;">Description</div>
-          <div class="small">${Utils.formatText(obj.objective_description || '')}</div>
+          <div class="fs-4" style="font-weight:700;margin-bottom:6px;">Description</div>
+          <div class="fs-5">${Utils.formatText(obj.objective_description || '')}</div>
         </div>
 
         <div style="background:#f6f7f9;border:1px solid #d7dbe0;padding:10px 12px;margin-bottom:10px;border-radius:2px;">
-          <div style="font-weight:700;margin-bottom:6px;font-size:13px;">Purpose</div>
-          <div class="small">${Utils.formatText(obj.objective_purpose || '')}</div>
+          <div class="fs-4" style="font-weight:700;margin-bottom:6px;">Purpose</div>
+          <div class="fs-5">${Utils.formatText(obj.objective_purpose || '')}</div>
         </div>
 
         <!-- goals row -->
@@ -928,16 +928,12 @@ renderSinglePractice(practice) {
     .map((m, i) => `<li class="mb-1">${String.fromCharCode(97 + i)}. ${Utils.formatText(m.description || '')}</li>`)
     .join('');
 
-  // Keep each activity as its own row (numbered). Merge only the capability
-  // level cells for consecutive activities that share the same level using
-  // rowspan on the first row of the run.
   const _acts = (practice.activities || []).map((ac, i) => ({
     idx: i + 1,
     desc: ac.description || ac.activity || '',
     level: (ac.capability_lvl ?? ac.capability_level ?? ac.level ?? '') || '-'
   }));
 
-  // Compute runs of identical level values and record rowspan for the run start
   const rowspanMap = {}; // map 0-based index -> rowspan
   for (let i = 0; i < _acts.length; ) {
     const lvl = _acts[i].level;
@@ -949,14 +945,12 @@ renderSinglePractice(practice) {
   }
 
   const activitiesHtml = _acts.map((a, i) => {
-  // Make NO cell width fit content (number) with small horizontal padding
   const noCell = `<td class="text-center" style="width:auto; white-space:nowrap;">${a.idx}</td>`;
     const activityCell = `<td style="width:95%;">${Utils.formatText(a.desc || '')}</td>`;
     let levelCell = '';
     if (rowspanMap[i]) {
       levelCell = `<td class="text-center fw-semibold" style="width:5%;" rowspan="${rowspanMap[i]}">${Utils.formatText(String(a.level || '-'))}</td>`;
     } else {
-      // Check if this index is covered by a previous rowspan; if so, omit level cell
       let covered = false;
       for (const startStr of Object.keys(rowspanMap)) {
         const start = parseInt(startStr, 10);
@@ -1441,7 +1435,6 @@ renderSinglePractice(practice) {
         const cardHtml = Renderers.renderCardWrapper({
           title: `Menampilkan ${Utils.escapeHtml(componentType)} dari semua objective`,
           subtitle: '',
-          smallNote: 'Data diambil client-side dari /objectives',
           tabsHtml,
           bodyHtml: `
             <div id="componentFilterTabs" class="mb-3"></div>
@@ -1558,16 +1551,12 @@ renderSinglePractice(practice) {
   const inner = document.getElementById('componentInnerContent');
   if (!inner) return;
 
-  // quick debug
-  console.log('[handleFilterClick] clicked data-filter:', rawFilter);
-
   if (rawFilter === 'ALL' || rawFilter === '') {
     inner.innerHTML = this.renderComponentContent(componentType, objectives);
     inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
 
-  // try mapping first (most reliable)
   const mappedObjectiveId = STATE.objectiveMap.get(rawFilter);
   if (mappedObjectiveId) {
     const obj = objectives.find(x => String(x.objective_id) === String(mappedObjectiveId));
@@ -1578,7 +1567,6 @@ renderSinglePractice(practice) {
     }
   }
 
-  // fallback: tolerant normalize and try exact / prefix match
   const decodeHtmlEntity = (s) => {
     if (!s) return '';
     const txt = document.createElement('textarea');
@@ -1609,8 +1597,6 @@ renderSinglePractice(practice) {
   inner.innerHTML = `<div class="text-muted small">Objective ${Utils.escapeHtml(rawFilter)} not found.</div>`;
   inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
 },
-
-
 
     renderSingleObjectiveComponent(componentType, obj) {
       const rendererMap = {

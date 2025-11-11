@@ -47,8 +47,6 @@ Route::get('/objectives/component/{component}', [MstObjectiveController::class, 
     ->name('cobit2019.objectives.bycomponent');
 
 
-
-
 // Admin routes (auth + role check di controller)
 Route::prefix('admin')
      ->middleware('auth')
@@ -109,8 +107,6 @@ Route::get('login/google/callback', [LoginController::class, 'handleGoogleCallba
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 
-// Jika login dengan Google untuk pertama kali, redirect ke register-google
-
 
 // Home route
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
@@ -146,9 +142,6 @@ Route::get('/step4', [Step4Controller::class, 'index'])
 Route::post('/step4/store', [Step4Controller::class, 'store'])
      ->name('step4.store')
      ->middleware('auth');
-
-
-// Routes untuk Design Factors
 
 // DF1
 Route::get('/df1/form/{id}', [DfController::class, 'showDesignFactorForm'])
