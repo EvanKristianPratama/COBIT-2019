@@ -97,7 +97,7 @@
                     <th class="text-center bg-primary text-white">Enterprise Goals</th>
                     <th class="text-center bg-primary text-white">Risk Profile</th>
                     <th class="text-center bg-primary text-white">IT-Related Issues</th>
-                    <th class="text-center bg-info text-white">Total</th>
+                    <th class="text-center bg-info text-info">Total</th>
                     <th class="text-center bg-secondary text-white" style="width: 200px;">
                       Initial Scope:<br>Governance/Management Objectives Score
                     </th>

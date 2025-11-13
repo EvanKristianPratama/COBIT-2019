@@ -751,7 +751,7 @@ const STATE = {
         <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
           <div style="flex:1;min-width:260px;border:1px solid #dcdcdc;padding:10px;background:#fff;">
             <div style="font-weight:700;background:#eef2f6;padding:6px 8px;border:1px solid #d6dbe0;margin:-10px -10px 10px -10px;font-size:13px;">Example Metrics for Enterprise Goals</div>
-            <div class= " medium " style="margin-top:6px;font-size:13px;color:#333;">${egMetricsHtml}</div>
+            <div class= " medium " style="margin-top:6px;font-size:15px;color:#333;">${egMetricsHtml}</div>
           </div>
 
           <div style="width:56px;display:flex;align-items:flex-start;justify-content:center;margin-top:6px;">
@@ -760,7 +760,7 @@ const STATE = {
 
           <div style="flex:1;min-width:260px;border:1px solid #dcdcdc;padding:10px;background:#fff;">
             <div style="font-weight:700;background:#eef2f6;padding:6px 8px;border:1px solid #d6dbe0;margin:-10px -10px 10px -10px;font-size:13px;">Example Metrics for Alignment Goals</div>
-            <div class= " medium "  style="margin-top:6px;font-size:13px;color:#333;">${agMetricsHtml}</div>
+            <div style="margin-top:6px;font-size:19;color:#333;">${agMetricsHtml}</div>
           </div>
         </div>
       </div>

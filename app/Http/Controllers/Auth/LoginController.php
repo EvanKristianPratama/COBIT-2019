@@ -33,7 +33,7 @@ class LoginController extends Controller
         }
 
         if ($user->role === 'admin' || $user->role === 'pic') {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('home');
         }
 
         return redirect()->route('home');

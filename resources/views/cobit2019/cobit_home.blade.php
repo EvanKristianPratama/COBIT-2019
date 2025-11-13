@@ -13,41 +13,80 @@
         ? collect(json_decode(Storage::get('requests.json'), true))
         : collect();
 
-    // Default: empty collection
+    // Default: empty collection(s)
     $assessments = collect();
+    $assessments_same = collect();
+    $assessments_other = collect();
 
     // Jika authenticated dan bukan guest => tampilkan assessment yang relevan
     if (Auth::check() && ! $isGuest) {
-        $query = Assessment::query();
-        // Admin/PIC lihat semua assessment
-        if (! empty($user->role) && in_array(strtolower($user->role), ['admin','pic'])) {
-            // no extra where — admin/pic see all
-        } elseif (! empty($user->organisasi)) {
-            // Tampilkan semua assessment yg instansi/organisasi nya sesuai user
-            $query->where('instansi', 'like', '%' . $user->organisasi . '%');
-        } else {
-            // fallback: hanya milik user
-            $query->where('user_id', $user->id);
-        }
-
-        // optional filter by kode/instansi from query string
-        if (! empty(request('kode'))) {
-            $query->where('kode_assessment', 'like', '%' . request('kode') . '%');
-        }
-        if (! empty(request('instansi'))) {
-            $query->where('instansi', 'like', '%' . request('instansi') . '%');
-        }
-
         $sort = request('sort', 'terbaru');
-        $query->orderBy('created_at', $sort === 'terlama' ? 'asc' : 'desc');
+        $orderDir = $sort === 'terlama' ? 'asc' : 'desc';
 
-        $assessments = $query->get();
+        // Khusus admin: dua box — sama organisasi (atas) dan lainnya/semua (bawah)
+        if (! empty($user->role) && strtolower($user->role) === 'admin') {
+            if (! empty($user->organisasi)) {
+                $querySame = Assessment::query()
+                    ->where('instansi', 'like', '%' . $user->organisasi . '%');
+
+                $queryOther = Assessment::query()
+                    ->where(function ($q) use ($user) {
+                        $q->where('instansi', 'not like', '%' . $user->organisasi . '%')
+                          ->orWhereNull('instansi')
+                          ->orWhere('instansi', '');
+                    });
+
+                if (! empty(request('kode'))) {
+                    $querySame->where('kode_assessment', 'like', '%' . request('kode') . '%');
+                    $queryOther->where('kode_assessment', 'like', '%' . request('kode') . '%');
+                }
+                if (! empty(request('instansi'))) {
+                    $querySame->where('instansi', 'like', '%' . request('instansi') . '%');
+                    $queryOther->where('instansi', 'like', '%' . request('instansi') . '%');
+                }
+
+                $assessments_same = $querySame->orderBy('created_at', $orderDir)->get();
+                $assessments_other = $queryOther->orderBy('created_at', $orderDir)->get();
+            } else {
+                $assessments_same = collect();
+                $queryAll = Assessment::query();
+
+                if (! empty(request('kode'))) {
+                    $queryAll->where('kode_assessment', 'like', '%' . request('kode') . '%');
+                }
+                if (! empty(request('instansi'))) {
+                    $queryAll->where('instansi', 'like', '%' . request('instansi') . '%');
+                }
+
+                $assessments_other = $queryAll->orderBy('created_at', $orderDir)->get();
+            }
+        } else {
+            // Bukan admin: perilaku lama (PIC lihat semua; organisasi filter; fallback user_id)
+            $query = Assessment::query();
+
+            if (! empty($user->role) && in_array(strtolower($user->role), ['pic'])) {
+                // PIC lihat semua
+            } elseif (! empty($user->organisasi)) {
+                $query->where('instansi', 'like', '%' . $user->organisasi . '%');
+            } else {
+                $query->where('user_id', $user->id);
+            }
+
+            if (! empty(request('kode'))) {
+                $query->where('kode_assessment', 'like', '%' . request('kode') . '%');
+            }
+            if (! empty(request('instansi'))) {
+                $query->where('instansi', 'like', '%' . request('instansi') . '%');
+            }
+
+            $assessments = $query->orderBy('created_at', $orderDir)->get();
+        }
     }
 @endphp
 
 <div class="container">
   <div class="row g-4 justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-9">
       <div class="card shadow-sm rounded-3 overflow-hidden">
         <div class="card-header bg-primary text-white py-3">
           <div class="d-flex align-items-center">
@@ -81,12 +120,12 @@
                 @csrf
                 <input type="hidden" name="kode_assessment" value="new">
                 <button type="submit" class="btn btn-primary btn-sm">
-                  <i class="fas fa-plus me-1"></i> Buat Assessment Baru
+                  <i class="fas fa-plus me-1"></i> Buat Design Factor
                 </button>
               </form>
 
               <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#quickJoinBox" aria-expanded="false">
-                <i class="fas fa-sign-in-alt me-1"></i> Quick Join
+                <i class="fas fa-sign-in-alt me-1"></i> Join Design Factor
               </button>
 
             </div>
@@ -106,36 +145,110 @@
             </div>
           </div>
 
-          <!-- Daftar assessment: hanya untuk user biasa (bukan guest) -->
+          <!-- Daftar assessment -->
           @if(! Auth::check())
             <div class="alert alert-warning">Silakan login untuk melihat daftar assessment Anda.</div>
           @else
             @if($isGuest)
               <div class="alert alert-info">Guest tidak menampilkan daftar assessment. Silakan register untuk melihat daftar assessment Anda.</div>
             @else
-              <h6 class="mb-2">Daftar Assessment yang Anda buat</h6>
-              @if($assessments->isEmpty())
-                <p class="text-muted">Belum ada assessment yang Anda buat.</p>
-              @else
-                <div class="list-group mb-3">
-                  @foreach($assessments as $assessment)
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                      <div>
-                        <strong>{{ $assessment->kode_assessment }}</strong><br>
-                        <small class="text-secondary">{{ $assessment->instansi }}</small><br>
-                        <small class="text-muted">{{ $assessment->created_at->translatedFormat('d M Y, H:i') }}</small>
-                      </div>
-                      <div class="text-end">
-                        <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
-                          @csrf
-                          <input type="hidden" name="kode_assessment" value="{{ $assessment->kode_assessment }}">
-                          <button class="btn btn-sm btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
-                        </form>
-                        {{-- Detail dihapus --}}
-                      </div>
+              {{-- Jika admin: tampilkan dua box terpisah --}}
+              @if(! empty($user->role) && strtolower($user->role) === 'admin')
+                <div class="mb-4">
+                  <h6 class="mb-2">Assessment — Organisasi Anda ({{ $user->organisasi ?? 'tidak tersedia' }})</h6>
+                  <div class="card border-0 mb-3">
+                    <div class="card-body p-2">
+                      @if($assessments_same->isEmpty())
+                        <p class="text-muted mb-0">Tidak ada assessment yang instansinya sesuai organisasi Anda.</p>
+                      @else
+                        <div class="list-group">
+                          @foreach($assessments_same as $assessment)
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                              <div>
+                                <strong>{{ $assessment->kode_assessment }}</strong><br>
+                                <small class="text-secondary">{{ $assessment->instansi }}</small><br>
+                                <small class="text-muted">{{ $assessment->created_at->translatedFormat('d M Y, H:i') }}</small>
+                              </div>
+                              <div class="text-end">
+                                <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
+                                  @csrf
+                                  <input type="hidden" name="kode_assessment" value="{{ $assessment->kode_assessment }}">
+                                  <button class="btn btn-sm btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
+                                </form>
+                              </div>
+                            </div>
+                          @endforeach
+                        </div>
+                      @endif
                     </div>
-                  @endforeach
+                  </div>
                 </div>
+
+                {{-- Accordion untuk "Lainnya / Semua" --}}
+                <div class="mb-2">
+                  <div class="accordion" id="accordionAssessmentsOther">
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingAssessmentsOther">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAssessmentsOther" aria-expanded="false" aria-controls="collapseAssessmentsOther">
+                          Assessment — Lainnya / Semua
+                          <span class="ms-2 text-muted small">({{ $assessments_other->count() }} item)</span>
+                        </button>
+                      </h2>
+                      <div id="collapseAssessmentsOther" class="accordion-collapse collapse" aria-labelledby="headingAssessmentsOther" data-bs-parent="#accordionAssessmentsOther">
+                        <div class="accordion-body p-2">
+                          @if($assessments_other->isEmpty())
+                            <p class="text-muted mb-0">Tidak ada assessment lain.</p>
+                          @else
+                            <div class="list-group">
+                              @foreach($assessments_other as $assessment)
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                  <div>
+                                    <strong>{{ $assessment->kode_assessment }}</strong><br>
+                                    <small class="text-secondary">{{ $assessment->instansi }}</small><br>
+                                    <small class="text-muted">{{ $assessment->created_at->translatedFormat('d M Y, H:i') }}</small>
+                                  </div>
+                                  <div class="text-end">
+                                    <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
+                                      @csrf
+                                      <input type="hidden" name="kode_assessment" value="{{ $assessment->kode_assessment }}">
+                                      <button class="btn btn-sm btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
+                                    </form>
+                                  </div>
+                                </div>
+                              @endforeach
+                            </div>
+                          @endif
+                        </div>
+                      </div>
+                    </div> <!-- /.accordion-item -->
+                  </div> <!-- /.accordion -->
+                </div>
+
+              @else
+                {{-- Non-admin: tampilkan daftar seperti sebelumnya (satu list) --}}
+                <h6 class="mb-2">Daftar Assessment yang Anda buat</h6>
+                @if($assessments->isEmpty())
+                  <p class="text-muted">Belum ada assessment yang Anda buat.</p>
+                @else
+                  <div class="list-group mb-3">
+                    @foreach($assessments as $assessment)
+                      <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>{{ $assessment->kode_assessment }}</strong><br>
+                          <small class="text-secondary">{{ $assessment->instansi }}</small><br>
+                          <small class="text-muted">{{ $assessment->created_at->translatedFormat('d M Y, H:i') }}</small>
+                        </div>
+                        <div class="text-end">
+                          <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
+                            @csrf
+                            <input type="hidden" name="kode_assessment" value="{{ $assessment->kode_assessment }}">
+                            <button class="btn btn-sm btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
+                          </form>
+                        </div>
+                      </div>
+                    @endforeach
+                  </div>
+                @endif
               @endif
             @endif
           @endif
