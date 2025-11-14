@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TrsActivityeval extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'trs_activityeval';
     
@@ -15,6 +16,7 @@ class TrsActivityeval extends Model
         'eval_id',
         'activity_id',
         'level_achieved',
+        'evidence',
         'notes'
     ];
 

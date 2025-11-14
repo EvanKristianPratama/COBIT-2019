@@ -29,7 +29,9 @@ class EvaluationService
 
             if (isset($data['activity_evaluations'])) {
                 // First, remove all existing activity evaluations for this assessment
-                TrsActivityeval::where('eval_id', $evaluation->eval_id)->delete();
+                TrsActivityeval::withTrashed()
+                    ->where('eval_id', $evaluation->eval_id)
+                    ->forceDelete();
                 
                 foreach ($data['activity_evaluations'] as $activityData) {
                     // Only save activities that are not rated as 'N' (None)
@@ -38,6 +40,7 @@ class EvaluationService
                             'eval_id' => $evaluation->eval_id,
                             'activity_id' => $activityData['activity_id'],
                             'level_achieved' => $activityData['level_achieved'],
+                            'evidence' => $activityData['evidence'] ?? null,
                             'notes' => $activityData['notes'] ?? null
                         ]);
                     }
@@ -78,6 +81,7 @@ class EvaluationService
             $formattedData['activity_evaluations'][$activityEval->activity_id] = [
                 'activity_id' => $activityEval->activity_id,
                 'level_achieved' => $activityEval->level_achieved,
+                'evidence' => $activityEval->evidence,
                 'notes' => $activityEval->notes,
                 'capability_lvl' => $activity->capability_lvl ?? null,
                 'objective_id' => $objective ? $objective->objective_id : null
@@ -97,6 +101,7 @@ class EvaluationService
         if (isset($assessmentData['assessmentData'])) {
             $levelScores = $assessmentData['assessmentData'];
             $notes = $assessmentData['notes'] ?? [];
+            $evidence = $assessmentData['evidence'] ?? [];
             
             foreach ($levelScores as $objectiveId => $levels) {
                 foreach ($levels as $level => $levelData) {
@@ -109,6 +114,7 @@ class EvaluationService
                                 $activityEvaluations[] = [
                                     'activity_id' => $activityId,
                                     'level_achieved' => $levelAchieved,
+                                    'evidence' => $evidence[$activityId] ?? null,
                                     'notes' => $notes[$activityId] ?? null
                                 ];
                             }
@@ -127,7 +133,8 @@ class EvaluationService
                             $activityEvaluations[] = [
                                 'activity_id' => $activityId,
                                 'level_achieved' => $levelAchieved,
-                                'notes' => $levelData['evidence'][$activityId] ?? null
+                                'evidence' => $levelData['evidence'][$activityId] ?? null,
+                                'notes' => $levelData['notes'][$activityId] ?? null
                             ];
                         }
                     }

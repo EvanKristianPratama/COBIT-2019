@@ -198,9 +198,11 @@ class AssessmentEvalController extends Controller
             
             $assessmentData = [];
             $notes = [];
+            $evidence = [];
             
             foreach ($data['activity_evaluations'] as $activityId => $activityData) {
                 $notes[$activityId] = $activityData['notes'];
+                $evidence[$activityId] = $activityData['evidence'];
             }
 
             return response()->json([
@@ -209,6 +211,7 @@ class AssessmentEvalController extends Controller
                     'eval_id' => $data['eval_id'],
                     'assessmentData' => $assessmentData,
                     'notes' => $notes,
+                    'evidence' => $evidence,
                     'activityData' => $data['activity_evaluations']
                 ]
             ]);
