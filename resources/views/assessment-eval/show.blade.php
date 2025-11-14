@@ -27,23 +27,7 @@
             </div>
         </div>
         <div class="card-body">
-            <p class="mb-3">Evaluate the capability level of each COBIT 2019 governance and management objective</p>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="rating-scale-info">
-                        <strong class="text-muted d-block mb-2">Rating Scale:</strong>
-                        <small class="text-muted d-block">N (None) = 0</small>
-                        <small class="text-muted d-block">P (Partial) = 1/3</small>
-                        <small class="text-muted d-block">L (Largely) = 2/3</small>
-                        <small class="text-muted d-block">F (Fully) = 1</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <small class="text-muted d-block">
-                        <strong>Capability Levels:</strong> Start with the lowest available level and progress based on scores
-                    </small>
-                </div>
-            </div>
+            <p class="mb-0">Evaluate the capability level of each COBIT 2019 governance and management objective</p>
         </div>
     </div>
 
@@ -78,57 +62,52 @@
             <div class="col-12 mb-4 objective-card" data-domain="{{ $domain }}" data-objective-id="{{ $objective->objective_id }}">
                 <div class="card shadow-sm h-100">
                     {{-- Card Header --}}
-                    <div class="card-header d-flex justify-content-between align-items-center py-3
-                        @if($domain == 'EDM') bg-success text-white
-                        @elseif($domain == 'APO') bg-info text-white  
-                        @elseif($domain == 'BAI') bg-warning text-dark
-                        @elseif($domain == 'DSS') bg-danger text-white
-                        @elseif($domain == 'MEA') bg-dark text-white
-                        @else bg-secondary text-white @endif">
-                        <div>
-                            <h5 class="mb-1 fw-bold">{{ $objective->objective_id }} - {{ $objective->objective }}</h5>
-                            @php
-                                $domainFullNames = [
-                                    'EDM' => 'Evaluate, Direct, and Monitor',
-                                    'APO' => 'Align, Plan, and Organize',
-                                    'BAI' => 'Build, Acquire, and Implement',
-                                    'DSS' => 'Deliver, Service, and Support',
-                                    'MEA' => 'Monitor, Evaluate, and Assess'
-                                ];
-                                $fullDomainName = $domainFullNames[$domain] ?? $domain;
-                            @endphp
-                            <small class="opacity-75">{{ $fullDomainName }}</small>
-                        </div>
-                        <div class="d-flex align-items-center gap-3">
-                            @php
-                                $totalLevel2Activities = $objective->practices->sum(function($practice) {
-                                    return $practice->activities ? $practice->activities->where('capability_lvl', 2)->count() : 0;
-                                });
-                            @endphp
-                            <span class="badge bg-light text-dark px-2 py-1">
-                                {{ $totalLevel2Activities }} activities
-                            </span>
-                            <div class="capability-level-display">
-                                <span class="badge fs-6 px-3 py-2 bg-danger" id="capability-level-{{ $objective->objective_id }}">
-                                    Level <span class="level-number">1</span>
-                                </span>
+                    <div class="card-header objective-header py-3">
+                        @php
+                            $domainFullNames = [
+                                'EDM' => 'Evaluate, Direct, and Monitor',
+                                'APO' => 'Align, Plan, and Organize',
+                                'BAI' => 'Build, Acquire, and Implement',
+                                'DSS' => 'Deliver, Service, and Support',
+                                'MEA' => 'Monitor, Evaluate, and Assess'
+                            ];
+                            $fullDomainName = $domainFullNames[$domain] ?? $domain;
+                            $totalLevel2Activities = $objective->practices->sum(function($practice) {
+                                return $practice->activities ? $practice->activities->where('capability_lvl', 2)->count() : 0;
+                            });
+                        @endphp
+                        <div class="objective-hero d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="objective-title mb-1">{{ $objective->objective_id }} - {{ $objective->objective }}</h5>
+                                <div class="objective-domain">{{ $fullDomainName }}</div>
+                            </div>
+                            <div class="objective-stats text-end">
+                                <div class="objective-stat">{{ $totalLevel2Activities }} activities</div>
+                                <div class="capability-level-display mt-2">
+                                    <span class="capability-badge badge-level-1" id="capability-level-{{ $objective->objective_id }}">
+                                        Level <span class="level-number">1</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    {{-- Card Body --}}
-                    <div class="card-body">
-                        @if($objective->objective_description)
-                            <p class="card-text text-muted mb-3">
-                                {{ $objective->objective_description }}
-                            </p>
-                        @endif
-
-                        @if($objective->objective_purpose)
-                            <div class="mb-3">
-                                <small class="text-muted">
-                                    <strong>Purpose:</strong> {{ $objective->objective_purpose }}
-                                </small>
+                        @if($objective->objective_description || $objective->objective_purpose)
+                            <div class="objective-summary mt-3">
+                                @if($objective->objective_description)
+                                    <div class="summary-column">
+                                        <div class="summary-label">Description</div>
+                                        <p class="objective-description-text mb-0">
+                                            {{ $objective->objective_description }}
+                                        </p>
+                                    </div>
+                                @endif
+                                @if($objective->objective_purpose)
+                                    <div class="summary-column">
+                                        <div class="summary-label">Purpose</div>
+                                        <p class="objective-purpose-text mb-0">
+                                            {{ $objective->objective_purpose }}
+                                        </p>
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -162,155 +141,112 @@
                             @endphp
                             @if($levelActivities > 0)
                                 <div class="capability-level-section mb-3" data-level="{{ $level }}">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <small class="text-muted fw-bold">
-                                                <i class="fas fa-clipboard-check me-1"></i>
-                                                Capability Level {{ $level }} - Evaluate {{ $levelActivities }} Activities
-                                            </small>
-                                            <span class="badge bg-secondary capability-score" id="level-score-{{ $objective->objective_id }}-{{ $level }}">
+                                    <div class="level-section-header">
+                                        <div class="level-section-info">
+                                            <span class="level-pill">Level {{ $level }}</span>
+                                            <span class="level-section-subtext">{{ $levelActivities }} activities to assess</span>
+                                        </div>
+                                        <div class="level-section-actions">
+                                            <span class="capability-score level-score-chip" id="level-score-{{ $objective->objective_id }}-{{ $level }}">
                                                 N (0.00)
                                             </span>
+                                            <button class="btn btn-sm level-toggle-btn toggle-level-details" type="button" 
+                                                    data-objective-id="{{ $objective->objective_id }}"
+                                                    data-level="{{ $level }}"
+                                                    data-min-level="{{ $minLevel }}"
+                                                    data-required-previous="{{ $level > $minLevel ? 'true' : 'false' }}">
+                                                <i class="fas me-1 fa-chevron-down toggle-icon"></i>
+                                                <span class="toggle-text">Start Assessment</span>
+                                            </button>
                                         </div>
-                                        <button class="btn btn-sm btn-outline-primary toggle-level-details" type="button" 
-                                                data-objective-id="{{ $objective->objective_id }}"
-                                                data-level="{{ $level }}"
-                                                data-min-level="{{ $minLevel }}"
-                                                data-required-previous="{{ $level > $minLevel ? 'true' : 'false' }}">
-                                            <i class="fas me-1 fa-chevron-down toggle-icon"></i>
-                                            <span class="toggle-text">Start Assessment</span>
-                                        </button>
                                     </div>
                                     
                                     {{-- Assessment Section for this level --}}
                                     <div class="assessment-section mt-3" id="assessment-{{ $objective->objective_id }}-{{ $level }}" style="display: none;">
-                                        <div class="border-top pt-3">
-                                            <div class="row mb-3">
-                                                <div class="col-md-8">
-                                                    <h6 class="fw-bold text-primary">
-                                                        <i class="fas fa-clipboard-check me-2"></i>Level {{ $level }} Capability Assessment
-                                                    </h6>
-                                                    <div class="rating-info">
-                                                        <small class="text-muted d-block">N (None) = 0</small>
-                                                        <small class="text-muted d-block">P (Partial) = 1/3</small>
-                                                        <small class="text-muted d-block">L (Largely) = 2/3</small>
-                                                        <small class="text-muted d-block">F (Fully) = 1</small>
-                                                        <small class="text-muted d-block mt-2">
-                                                            <strong>Capability Levels:</strong> Start with the lowest available level and progress based on scores
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4 text-end">
-                                                    <div class="capability-score-display">
-                                                        <div class="mt-2">
-                                                            <small class="text-muted d-block">Average Score</small>
-                                                            <span class="badge bg-secondary" id="average-score-{{ $objective->objective_id }}-{{ $level }}">
-                                                                0.00
-                                                            </span>
-                                                        </div>
-                                                        <div class="mt-1">
-                                                            <small class="text-muted d-block">Activities Rated</small>
-                                                            <span class="badge bg-info" id="activities-count-{{ $objective->objective_id }}-{{ $level }}">
-                                                                0/{{ $levelActivities }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            {{-- Activities Assessment for this level --}}
-                                            @php $activityCounter = 1; @endphp
-                                            @forelse($objective->practices as $practice)
-                                                @php
-                                                    $levelSpecificActivities = $practice->activities ? $practice->activities->where('capability_lvl', $level) : collect();
-                                                @endphp
-                                                @if($levelSpecificActivities->count() > 0)
-                                                    <div class="practice-section mb-4">
-                                                        <h6 class="fw-semibold text-dark mb-3">
-                                                            <span class="badge bg-primary me-2">{{ $practice->practice_id }}</span>
-                                                            {{ $practice->practice_name }}
-                                                            <span class="badge bg-info ms-2">{{ $levelSpecificActivities->count() }} Activities</span>
-                                                        </h6>
-                                                        
-                                                        @foreach($levelSpecificActivities as $activity)
-                                                            <div class="activity-assessment mb-3 p-3 border rounded bg-light">
-                                                                <div class="row align-items-center">
-                                                                    <div class="col-md-1 text-center">
-                                                                        <span class="badge bg-secondary fs-6">{{ $activityCounter }}</span>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <p class="mb-2 fw-medium">{{ $activity->description }}</p>
-                                                                    </div>
-                                                                    <div class="col-md-5">
-                                                                        <div class="rating-slider">
-                                                                            <div class="btn-group w-100" role="group">
-                                                                                @foreach(['N' => 'None', 'P' => 'Partial', 'L' => 'Largely', 'F' => 'Fully'] as $rating => $label)
-                                                                                    <input type="radio" 
-                                                                                           class="btn-check activity-rating" 
-                                                                                           name="activity_{{ $activity->activity_id }}" 
-                                                                                           id="activity_{{ $activity->activity_id }}_{{ $rating }}" 
-                                                                                           value="{{ $rating }}"
-                                                                                           data-activity-id="{{ $activity->activity_id }}"
-                                                                                           data-objective-id="{{ $objective->objective_id }}"
-                                                                                           data-level="{{ $level }}">
-                                                                                    <label class="btn btn-outline-secondary btn-sm" 
-                                                                                           for="activity_{{ $activity->activity_id }}_{{ $rating }}">
-                                                                                        {{ $rating }}
-                                                                                    </label>
-                                                                                @endforeach
-                                                                                {{-- Clear button --}}
-                                                                                <button type="button" 
-                                                                                        class="btn btn-outline-danger btn-sm clear-rating" 
-                                                                                        data-activity-id="{{ $activity->activity_id }}"
-                                                                                        data-objective-id="{{ $objective->objective_id }}"
-                                                                                        data-level="{{ $level }}"
-                                                                                        title="Clear rating">
-                                                                                    <i class="fas fa-times"></i>
-                                                                                </button>
-                                                                            </div>
-                                                                            <div class="mt-2 d-flex justify-content-between align-items-center">
-                                                                                <small class="text-muted">
-                                                                                    N=0, P=0.33, L=0.67, F=1
-                                                                                </small>
-                                                                                <span class="badge bg-light text-dark activity-score" id="score-{{ $activity->activity_id }}">
-                                                                                    Score: 0
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                {{-- Evidence / Notes section --}}
-                                                                <div class="row mt-3">
-                                                                    <div class="col-md-1"></div>
-                                                                    <div class="col-md-11">
-                                                                        <div class="evidence-notes-section">
-                                                                            <label for="evidence_{{ $activity->activity_id }}" class="form-label text-muted">
-                                                                                <i class="fas fa-clipboard-list me-1"></i>
-                                                                                <small><strong>Evidence / Notes:</strong></small>
-                                                                            </label>
-                                                                            <textarea 
-                                                                                class="form-control form-control-sm evidence-notes" 
-                                                                                id="evidence_{{ $activity->activity_id }}" 
-                                                                                name="evidence_{{ $activity->activity_id }}"
-                                                                                data-activity-id="{{ $activity->activity_id }}"
-                                                                                data-objective-id="{{ $objective->objective_id }}"
-                                                                                data-level="{{ $level }}"
-                                                                                rows="2" 
-                                                                                placeholder="Enter evidence, documentation references, or notes to support your rating..."></textarea>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            @php $activityCounter++; @endphp
+                                        <p class="assessment-level-intro">
+                                            Review each practice at Level {{ $level }} below and choose the most accurate rating.
+                                        </p>
+
+                                        {{-- Activities Assessment for this level --}}
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered align-middle assessment-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-center" style="width: 55px;">No</th>
+                                                            <th style="width: 120px;">Practice</th>
+                                                            <th style="width: 220px;">Practice Name</th>
+                                                            <th>Description</th>
+                                                            <th style="width: 160px;">Answer</th>
+                                                            <th style="width: 240px;">Evidence / Comment</th>
+                                                            <th class="text-center" style="width: 70px;">Level</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @php 
+                                                            $activityCounter = 1;
+                                                            $levelCellRendered = false;
+                                                        @endphp
+                                                        @foreach($objective->practices as $practice)
+                                                            @php
+                                                                $levelSpecificActivities = $practice->activities ? $practice->activities->where('capability_lvl', $level) : collect();
+                                                            @endphp
+                                                            @foreach($levelSpecificActivities as $activity)
+                                                                <tr class="activity-row">
+                                                                    <td class="text-center fw-semibold">{{ $activityCounter }}</td>
+                                                                    <td class="practice-code-cell text-center">
+                                                                        <span class="practice-code-text">{{ trim($practice->practice_id, '"') }}</span>
+                                                                    </td>
+                                                                    <td class="practice-name-cell">
+                                                                        <div class="fw-semibold">{{ trim($practice->practice_name, '"') }}</div>
+                                                                    </td>
+                                                                    <td class="description-cell">
+                                                                        <p class="mb-1 fw-medium">{{ $activity->description }}</p>
+                                                                    </td>
+                                                                    <td class="rating-cell">
+                                                                        <select 
+                                                                            class="form-select form-select-sm activity-rating-select" 
+                                                                            data-activity-id="{{ $activity->activity_id }}"
+                                                                            data-objective-id="{{ $objective->objective_id }}"
+                                                                            data-level="{{ $level }}">
+                                                                            <option value="">Select Rating</option>
+                                                                            <option value="N">N</option>
+                                                                            <option value="P">P</option>
+                                                                            <option value="L">L</option>
+                                                                            <option value="F">F</option>
+                                                                        </select>
+                                                                    </td>
+                                                                    <td class="evidence-cell">
+                                                                        <textarea 
+                                                                            class="form-control form-control-sm evidence-notes" 
+                                                                            id="evidence_{{ $activity->activity_id }}" 
+                                                                            name="evidence_{{ $activity->activity_id }}"
+                                                                            data-activity-id="{{ $activity->activity_id }}"
+                                                                            data-objective-id="{{ $objective->objective_id }}"
+                                                                            data-level="{{ $level }}"
+                                                                            rows="2" 
+                                                                            placeholder="Enter evidence, documentation references, or notes..."></textarea>
+                                                                    </td>
+                                                                    @if(!$levelCellRendered)
+                                                                        <td class="level-cell text-center" rowspan="{{ $levelActivities }}">
+                                                                            Level {{ $level }}
+                                                                        </td>
+                                                                        @php $levelCellRendered = true; @endphp
+                                                                    @endif
+                                                                </tr>
+                                                                @php $activityCounter++; @endphp
+                                                            @endforeach
                                                         @endforeach
-                                                    </div>
-                                                @endif
-                                            @empty
-                                                <div class="text-center py-4">
-                                                    <i class="fas fa-info-circle text-muted me-2"></i>
-                                                    <span class="text-muted">No practices with Level {{ $level }} activities found for assessment.</span>
-                                                </div>
-                                            @endforelse
+                                                        @if($activityCounter === 1)
+                                                            <tr>
+                                                                <td colspan="7" class="text-center text-muted py-4">
+                                                                    <i class="fas fa-info-circle me-2"></i>
+                                                                    No practices with Level {{ $level }} activities found for assessment.
+                                                                </td>
+                                                            </tr>
+                                                        @endif
+                                                    </tbody>
+                                                </table>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
@@ -456,7 +392,7 @@ class COBITAssessmentManager {
     populateAssessmentData(data) {
         this.levelScores = {};
         
-        document.querySelectorAll('.activity-rating').forEach(input => input.checked = false);
+        document.querySelectorAll('.activity-rating-select').forEach(select => select.value = '');
         document.querySelectorAll('.evidence-notes').forEach(textarea => textarea.value = '');
 
         const objectiveCards = document.querySelectorAll('.objective-card');
@@ -468,7 +404,7 @@ class COBITAssessmentManager {
                 const level = parseInt(section.getAttribute('data-level'));
                 this.initializeLevelScore(objectiveId, level);
                 
-                const activityInputs = section.querySelectorAll('.activity-rating');
+                const activityInputs = section.querySelectorAll('.activity-rating-select');
                 const activityIds = new Set();
                 activityInputs.forEach(input => {
                     const activityId = input.getAttribute('data-activity-id');
@@ -497,9 +433,9 @@ class COBITAssessmentManager {
                 const capabilityLevel = activityData.capability_lvl;
                 const objectiveId = activityData.objective_id;
                 
-                const radioInput = document.querySelector(`input[name="activity_${activityId}"][value="${levelAchieved}"]`);
-                if (radioInput && objectiveId && capabilityLevel) {
-                    radioInput.checked = true;
+                const ratingSelect = document.querySelector(`select.activity-rating-select[data-activity-id="${activityId}"]`);
+                if (ratingSelect && objectiveId && capabilityLevel) {
+                    ratingSelect.value = levelAchieved;
                     
                     if (this.levelScores[objectiveId] && this.levelScores[objectiveId][capabilityLevel]) {
                         this.levelScores[objectiveId][capabilityLevel].activities[activityId] = this.getRatingValue(levelAchieved);
@@ -629,35 +565,23 @@ class COBITAssessmentManager {
     }
 
     setupActivityRating() {
-        const ratingInputs = document.querySelectorAll('.activity-rating');
-        const clearButtons = document.querySelectorAll('.clear-rating');
+        const ratingInputs = document.querySelectorAll('.activity-rating-select');
         const evidenceTextareas = document.querySelectorAll('.evidence-notes');
         
-        ratingInputs.forEach(input => {
-            input.addEventListener('change', () => {
-                const activityId = input.getAttribute('data-activity-id');
-                const objectiveId = input.getAttribute('data-objective-id');
-                const level = parseInt(input.getAttribute('data-level'));
-                const rating = input.value;
+        ratingInputs.forEach(select => {
+            select.addEventListener('change', () => {
+                const activityId = select.getAttribute('data-activity-id');
+                const objectiveId = select.getAttribute('data-objective-id');
+                const level = parseInt(select.getAttribute('data-level'));
+                const rating = select.value;
                 
-                this.setActivityRating(objectiveId, level, activityId, rating);
-                this.updateActivityScore(activityId, rating);
-                this.updateLevelCapability(objectiveId, level);
-                this.checkAllLevelLocks(objectiveId);
-            });
-        });
-
-        clearButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const activityId = button.getAttribute('data-activity-id');
-                const objectiveId = button.getAttribute('data-objective-id');
-                const level = parseInt(button.getAttribute('data-level'));
-                
-                const radioButtons = document.querySelectorAll(`input[name="activity_${activityId}"]`);
-                radioButtons.forEach(radio => radio.checked = false);
-                
-                this.clearActivityRating(objectiveId, level, activityId);
-                this.updateActivityScore(activityId, null);
+                if (rating) {
+                    this.setActivityRating(objectiveId, level, activityId, rating);
+                    this.updateActivityScore(activityId, rating);
+                } else {
+                    this.clearActivityRating(objectiveId, level, activityId);
+                    this.updateActivityScore(activityId, null);
+                }
                 this.updateLevelCapability(objectiveId, level);
                 this.checkAllLevelLocks(objectiveId);
             });
@@ -677,6 +601,10 @@ class COBITAssessmentManager {
 
     setActivityRating(objectiveId, level, activityId, rating) {
         this.initializeLevelScore(objectiveId, level);
+        if (!rating) {
+            delete this.levelScores[objectiveId][level].activities[activityId];
+            return;
+        }
         this.levelScores[objectiveId][level].activities[activityId] = this.getRatingValue(rating);
     }
 
@@ -698,15 +626,17 @@ class COBITAssessmentManager {
     }
 
     updateActivityScore(activityId, rating) {
-        const scoreElement = document.getElementById(`score-${activityId}`);
-        if (scoreElement) {
-            if (rating === null) {
-                scoreElement.textContent = 'Score: 0';
-                scoreElement.className = 'badge bg-light text-dark activity-score';
-            } else {
-                const score = this.getRatingValue(rating);
-                scoreElement.textContent = `Score: ${score.toFixed(2)}`;
-                scoreElement.className = `badge activity-score ${this.getScoreColorClass(score)}`;
+        const ratingSelect = document.querySelector(`select.activity-rating-select[data-activity-id="${activityId}"]`);
+        if (ratingSelect) {
+            ratingSelect.classList.remove('rating-full', 'rating-high', 'rating-medium', 'rating-low');
+            if (rating === 'F') {
+                ratingSelect.classList.add('rating-full');
+            } else if (rating === 'L') {
+                ratingSelect.classList.add('rating-high');
+            } else if (rating === 'P') {
+                ratingSelect.classList.add('rating-medium');
+            } else if (rating === 'N') {
+                ratingSelect.classList.add('rating-low');
             }
         }
     }
@@ -735,7 +665,7 @@ class COBITAssessmentManager {
         
         if (scoreElement) {
             scoreElement.textContent = `${levelData.letter} (${levelData.score.toFixed(2)})`;
-            scoreElement.className = `badge capability-score ${this.getScoreColorClass(levelData.score)}`;
+            scoreElement.className = `capability-score level-score-chip ${this.getScoreColorClass(levelData.score)}`;
         }
     }
 
@@ -811,10 +741,9 @@ class COBITAssessmentManager {
             if (isLocked) {
                 button.querySelector('.toggle-text').textContent = 'Locked';
                 button.disabled = true;
-                button.classList.add('btn-secondary');
-                button.classList.remove('btn-outline-primary');
+                button.classList.add('level-toggle-btn-disabled');
                 scoreElement.textContent = 'N (0.00)';
-                scoreElement.className = 'badge capability-score bg-secondary text-white';
+                scoreElement.className = 'capability-score level-score-chip score-chip-muted';
                 
                 // Also lock the level data
                 this.levelScores[objectiveId][level] = {
@@ -826,8 +755,7 @@ class COBITAssessmentManager {
             } else {
                 button.querySelector('.toggle-text').textContent = 'Start Assessment';
                 button.disabled = false;
-                button.classList.remove('btn-secondary');
-                button.classList.add('btn-outline-primary');
+                button.classList.remove('level-toggle-btn-disabled');
             }
         }
     }
@@ -858,18 +786,10 @@ class COBITAssessmentManager {
     }
 
     updateCapabilityBadge(badge, level) {
-        badge.className = badge.className.replace(/bg-(danger|warning|info|primary|success)/g, '');
-        
-        const levelConfig = {
-            1: { class: 'bg-danger', textClass: 'text-white' },
-            2: { class: 'bg-warning', textClass: 'text-dark' },
-            3: { class: 'bg-info', textClass: 'text-white' },
-            4: { class: 'bg-primary', textClass: 'text-white' },
-            5: { class: 'bg-success', textClass: 'text-white' }
-        };
-        
-        const config = levelConfig[level];
-        badge.classList.add(config.class, config.textClass);
+        const badgeClasses = ['badge-level-1','badge-level-2','badge-level-3','badge-level-4','badge-level-5'];
+        badgeClasses.forEach(c => badge.classList.remove(c));
+        const levelKey = Math.min(Math.max(level, 1), 5);
+        badge.classList.add(`badge-level-${levelKey}`);
         
         const levelNumber = badge.querySelector('.level-number');
         if (levelNumber) {
@@ -880,16 +800,16 @@ class COBITAssessmentManager {
     getTotalActivitiesForLevel(objectiveId, level) {
         const assessmentSection = document.getElementById(`assessment-${objectiveId}-${level}`);
         if (assessmentSection) {
-            return assessmentSection.querySelectorAll('.activity-rating').length / 4;
+            return assessmentSection.querySelectorAll('.activity-rating-select').length;
         }
         return 0;
     }
 
     getScoreColorClass(score) {
-        if (score === 0) return 'bg-danger text-white';
-        if (score < 0.5) return 'bg-warning text-dark';
-        if (score < 0.8) return 'bg-info text-white';
-        return 'bg-success text-white';
+        if (score === 0) return 'score-chip-danger';
+        if (score < 0.5) return 'score-chip-warning';
+        if (score < 0.8) return 'score-chip-info';
+        return 'score-chip-success';
     }
 
     getCompletionColorClass(ratio) {
@@ -935,6 +855,67 @@ document.addEventListener('DOMContentLoaded', () => {
     border-bottom: none;
 }
 
+.objective-header {
+    background-color: #0f2b5c;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.objective-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.objective-domain {
+    font-size: 0.95rem;
+    opacity: 0.85;
+}
+
+.objective-stat {
+    font-size: 0.9rem;
+}
+
+.capability-badge {
+    display: inline-block;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.capability-badge.badge-level-1 { background-color: #f8d7da; color: #58151c; }
+.capability-badge.badge-level-2 { background-color: #fff3cd; color: #664d03; }
+.capability-badge.badge-level-3 { background-color: #cff4fc; color: #055160; }
+.capability-badge.badge-level-4 { background-color: #dbe4ff; color: #102a5b; }
+.capability-badge.badge-level-5 { background-color: #d1e7dd; color: #0f5132; }
+
+.objective-description-text,
+.objective-purpose-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.9);
+}
+
+.objective-summary {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.summary-column {
+    flex: 1 1 260px;
+    background-color: rgba(255,255,255,0.08);
+    border-radius: 0.5rem;
+    padding: 0.85rem 1rem;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+    opacity: 0.75;
+}
+
 .btn-group .btn {
     border-radius: 0;
 }
@@ -967,103 +948,218 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* Assessment Interface Styling */
 .capability-level-section {
-    border-left: 3px solid #007bff;
-    padding-left: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 0.375rem;
+    border: 1px solid #e2e8fb;
+    border-radius: 0.85rem;
+    padding: 1rem 1.25rem;
+    background-color: #fff;
+    box-shadow: 0 10px 25px rgba(15,43,92,0.04);
 }
 
 .capability-level-section:not(:last-child) {
     margin-bottom: 1rem;
 }
 
-.rating-scale-info {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0.375rem;
-    border-left: 3px solid #007bff;
+.level-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
-.rating-info {
-    background-color: #f8f9fa;
-    padding: 0.75rem;
-    border-radius: 0.375rem;
-    border-left: 2px solid #007bff;
+.level-section-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.level-pill {
+    background-color: #0f2b5c;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.35rem 1.2rem;
+    font-weight: 600;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.12);
+}
+
+.level-section-subtext {
+    font-size: 0.9rem;
+    color: #5e6681;
+    font-weight: 500;
+}
+
+.level-section-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
 }
 
 .capability-score {
-    font-weight: bold;
+    font-weight: 600;
     transition: all 0.3s ease;
 }
 
-.activity-assessment {
-    transition: all 0.2s ease;
+.level-score-chip {
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
 }
 
-.activity-assessment:hover {
-    background-color: #e9ecef !important;
-    border-color: #007bff !important;
+.score-chip-muted {
+    background: #eef1f8;
+    color: #5b6279;
 }
 
-.activity-score {
-    font-size: 0.7rem;
-    transition: all 0.3s ease;
+.score-chip-danger {
+    background: #fee4e2;
+    color: #a01d17;
+    border-color: #f8b4a9;
 }
 
-.rating-slider .btn-group {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.score-chip-warning {
+    background: #fff3cd;
+    color: #7a5d07;
+    border-color: #ffe69c;
 }
 
-.rating-slider .btn-check:checked + .btn {
-    background-color: #007bff;
-    border-color: #007bff;
-    color: white;
+.score-chip-info {
+    background: #e0f2ff;
+    color: #0b4c73;
+    border-color: #b6e0fe;
 }
 
-.clear-rating {
-    border-radius: 0;
-    margin-left: 5px;
+.score-chip-success {
+    background: #d1f2e2;
+    color: #0f5132;
+    border-color: #a5e3c6;
 }
 
-.clear-rating:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
+.level-toggle-btn {
+    border-radius: 999px;
+    padding: 0.45rem 1.35rem;
+    font-weight: 600;
+    background: linear-gradient(120deg, #0f6ad9, #0c4fb5);
+    color: #fff;
+    border: none;
+    box-shadow: 0 6px 15px rgba(15,106,217,0.25);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
-.activity-assessment .col-md-1 .badge {
-    font-size: 1rem;
-    padding: 0.5rem;
+.level-toggle-btn:hover {
+    color: #fff;
+    transform: translateY(-1px);
 }
 
-.capability-level-display .badge,
-.capability-score-display .badge {
-    transition: all 0.3s ease;
-    font-weight: bold;
+.level-toggle-btn:disabled,
+.level-toggle-btn-disabled {
+    background: #c6cdde;
+    color: #6b738a;
+    box-shadow: none;
 }
 
-.practice-section {
-    border-left: 3px solid #007bff;
-    padding-left: 1rem;
-    margin-left: 0.5rem;
+.assessment-section {
+    margin-top: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e5e8f4;
 }
 
-.btn-group .btn-sm {
-    font-size: 0.8rem;
-    padding: 0.25rem 0.5rem;
+.assessment-level-intro {
+    font-size: 0.9rem;
+    color: #4b5168;
+    margin-bottom: 1rem;
 }
 
-/* Evidence/Notes section styling */
-.evidence-notes-section {
-    background-color: #f8f9fa;
-    padding: 0.75rem;
-    border-radius: 0.375rem;
-    border-left: 2px solid #6c757d;
+.assessment-table th {
+    background-color: #eef2ff;
+    border-bottom: 2px solid #d5dcf3;
+    color: #0f2b5c;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
 }
 
-.evidence-notes-section .form-label {
-    margin-bottom: 0.5rem;
-    font-weight: 500;
+.assessment-table th,
+.assessment-table td {
+    padding: 0.65rem;
+    border-color: #d9d9d9;
+}
+
+.assessment-table td {
+    vertical-align: top;
+}
+
+.assessment-table tbody tr:nth-child(even) {
+    background-color: #fbfcff;
+}
+
+.level-cell {
+    background-color: #eef2ff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    padding: 0.35rem;
+}
+
+.practice-code-cell {
+    background-color: #fff;
+}
+
+.practice-code-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.practice-name-cell {
+    font-size: 0.9rem;
+}
+
+.practice-name-cell small {
+    font-size: 0.75rem;
+}
+
+.description-cell p {
+    margin-bottom: 0;
+}
+
+.rating-cell select {
+    width: 100%;
+    margin-bottom: 0.35rem;
+}
+
+
+.activity-rating-select.rating-full {
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+.activity-rating-select.rating-high {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+    color: #042c55;
+}
+
+.activity-rating-select.rating-medium {
+    background-color: #ffe69c;
+    border-color: #ffe69c;
+    color: #5c4705;
+}
+
+.activity-rating-select.rating-low {
+    background-color: #f8d7da;
+    border-color: #f8d7da;
+    color: #842029;
+}
+
+.evidence-cell textarea {
+    width: 100%;
 }
 
 .evidence-notes {
@@ -1101,16 +1197,6 @@ document.addEventListener('DOMContentLoaded', () => {
 .assessment-section {
     overflow: hidden;
     transition: all 0.3s ease;
-}
-
-@media (max-width: 768px) {
-    .activity-assessment .row {
-        flex-direction: column;
-    }
-    
-    .rating-slider {
-        margin-top: 1rem;
-    }
 }
 </style>
 @endsection
