@@ -2,7 +2,7 @@
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<div class="container mx-auto p-6">
+<div class="container mx-auto p-6" id="page-top">
     {{-- Main Card --}}
     <div class="card shadow-sm mb-4 hero-card" style="border:none;box-shadow:0 22px 45px rgba(14,33,70,0.15);">
         <div class="card-header hero-header py-4" style="background:linear-gradient(135deg,#081a3d,#0f2b5c);color:#fff;border:none;">
@@ -18,25 +18,132 @@
         <div class="card-body">
 
             <div class="domain-tabs-wrapper">
-                <div class="domain-tabs" role="tablist">
+                <div class="domain-tabs-scroll" role="tablist" aria-label="Workflow and GAMO tabs">
+                    <button type="button" class="workflow-tab" data-workflow="scoping">Scoping</button>
+                    <button type="button" class="workflow-tab" data-workflow="evidence">ADD EVIDENCE</button>
                     <button type="button" class="domain-tab active" data-domain="all">All Domains</button>
                     <button type="button" class="domain-tab" data-domain="EDM">EDM</button>
                     <button type="button" class="domain-tab" data-domain="APO">APO</button>
                     <button type="button" class="domain-tab" data-domain="BAI">BAI</button>
                     <button type="button" class="domain-tab" data-domain="DSS">DSS</button>
                     <button type="button" class="domain-tab" data-domain="MEA">MEA</button>
+                    <button type="button" class="domain-tab" data-domain="recap">Rekap Domain</button>
                 </div>
+                <div id="objective-filter-wrapper" class="objective-filter-wrapper" style="display: none;">
+                    <div class="objective-filter-tabs" id="objective-filter-tabs" role="tablist"></div>
+                </div>
+            </div>
+
+            <div id="domain-overview-wrapper" class="domain-overview-wrapper mt-3" style="display: none;">
+                <button class="domain-overview-toggle" type="button" id="domain-overview-toggle" aria-expanded="true">
+                    <span><i class="fas fa-chart-line me-2"></i>Ringkasan Level Domain</span>
+                    <i class="fas fa-chevron-up toggle-indicator"></i>
+                </button>
+                <div class="domain-level-card" id="domain-level-overview">
+                    <div class="domain-level-header">
+                        <div>
+                            <h5 class="domain-level-title" id="domain-level-title"></h5>
+                        </div>
+                        <span class="domain-level-pill" id="domain-level-pill">EDM</span>
+                    </div>
+                    <div class="domain-level-table">
+                        <div class="domain-level-table-head">
+                            <span>Objective</span>
+                            <span>Capability Progress</span>
+                            <span class="text-end">Level Saat Ini</span>
+                        </div>
+                        <div id="domain-level-rows"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @php
+        $domainOrderMap = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+        $sortedObjectives = collect($objectives)->sortBy(function($objective) use ($domainOrderMap) {
+            $domain = preg_replace('/\d+/', '', $objective->objective_id);
+            $domainRank = $domainOrderMap[$domain] ?? 99;
+            return sprintf('%02d_%s', $domainRank, $objective->objective_id);
+        });
+    @endphp
+
+    <div class="card shadow-sm mb-4 scoping-panel" id="scoping-panel" style="display: none;">
+        <div class="card-header scoping-panel-header">
+            <div>
+                <div class="scoping-title">Scoping Assessment</div>
+                <p class="mb-0 text-muted scoping-subtitle">Pilih objective GAMO yang ingin dinilai terlebih dahulu.</p>
+            </div>
+            <span class="scoping-pill"><i class="fas fa-flag-checkered me-2"></i>Scoping</span>
+        </div>
+        <div class="card-body scoping-panel-body">
+            <div class="scoping-table-wrapper">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle scoping-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;" class="text-center">No</th>
+                                <th style="width: 140px;">GAMO</th>
+                                <th>Nama GAMO</th>
+                                <th style="width: 140px;" class="text-end">Pilih</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scoping-table-body">
+                            @foreach($sortedObjectives as $objective)
+                                @php
+                                    $objectiveDomain = preg_replace('/\d+/', '', $objective->objective_id);
+                                @endphp
+                                <tr class="scoping-row" data-objective-id="{{ $objective->objective_id }}" data-domain="{{ $objectiveDomain }}">
+                                    <td class="text-center fw-semibold">{{ $loop->iteration }}</td>
+                                    <td class="scoping-gamo-code">{{ $objective->objective_id }}</td>
+                                    <td class="scoping-gamo-name">{{ $objective->objective }}</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary scoping-select-btn">
+                                            <i class="fas fa-plus me-1"></i>Pilih
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="scoping-selection-footer">
+                <div class="scoping-selection-summary" id="scoping-selection-summary">
+                    Belum ada GAMO yang dipilih.
+                </div>
+                <div class="scoping-selection-actions">
+                    <button type="button" class="btn btn-outline-secondary" id="scoping-clear-btn" disabled>
+                        Reset Pilihan
+                    </button>
+                    <button type="button" class="btn btn-primary" id="scoping-apply-btn" disabled>
+                        Mulai Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" id="recap-standalone-row" style="display: none;">
+        <div class="col-12">
+            <div class="recap-standalone-wrapper" id="recap-standalone-wrapper">
+                <div class="recap-standalone-header">
+                    <div>
+                        <h5 class="recap-title">Rekap Level Seluruh Gamo</h5>
+                    </div>
+                </div>
+                <div id="recap-standalone-body"></div>
             </div>
         </div>
     </div>
 
     {{-- Objectives Cards --}}
     <div class="row" id="objectives-container">
-        @foreach($objectives as $objective)
+        @foreach($sortedObjectives as $objective)
             @php
                 $domain = preg_replace('/\d+/', '', $objective->objective_id);
             @endphp
-            <div class="col-12 mb-4 objective-card" data-domain="{{ $domain }}" data-objective-id="{{ $objective->objective_id }}">
+            <div class="col-12 mb-4 objective-card" data-domain="{{ $domain }}" data-objective-id="{{ $objective->objective_id }}" data-objective-name="{{ $objective->objective }}">
                 <div class="card shadow-sm h-100">
                     {{-- Card Header --}}
                     <div class="card-header objective-header py-3">
@@ -71,7 +178,7 @@
                             <div class="objective-summary mt-3">
                                 @if($objective->objective_description)
                                     <div class="summary-column">
-                                        <div class="summary-label">Description</div>
+                                        <div class="summary-label">Activity</div>
                                         <p class="objective-description-text mb-0">
                                             {{ $objective->objective_description }}
                                         </p>
@@ -149,7 +256,7 @@
                                                             <th class="text-center" style="width: 55px;">No</th>
                                                             <th style="width: 120px;">Practice</th>
                                                             <th style="width: 220px;">Practice Name</th>
-                                                            <th>Description</th>
+                                                            <th>Activity</th>
                                                             <th style="width: 160px;">Answer</th>
                                                             <th style="width: 220px;">Evidence</th>
                                                             <th style="width: 220px;">Notes</th>
@@ -184,10 +291,10 @@
                                                                             data-objective-id="{{ $objective->objective_id }}"
                                                                             data-level="{{ $level }}">
                                                                             <option value="">Select Rating</option>
-                                                                            <option value="N">N</option>
-                                                                            <option value="P">P</option>
-                                                                            <option value="L">L</option>
-                                                                            <option value="F">F</option>
+                                                                            <option value="N">None</option>
+                                                                            <option value="P">Partial</option>
+                                                                            <option value="L">Largely</option>
+                                                                            <option value="F">Full</option>
                                                                         </select>
                                                                     </td>
                                                                     <td class="evidence-cell">
@@ -275,6 +382,9 @@
     <button type="button" class="sticky-action-btn btn btn-primary" id="save-assessment" title="Save Assessment">
         <i class="fas fa-save me-2"></i>Save
     </button>
+    <button type="button" class="sticky-action-btn btn btn-light" id="back-to-top-btn" title="Back to Top">
+        <i class="fas fa-arrow-up me-2"></i>Top
+    </button>
     <a href="{{ url('/') }}" class="sticky-action-btn btn btn-light" title="Go to Home">
         <i class="fas fa-home me-2"></i>Home
     </a>
@@ -287,15 +397,47 @@ class COBITAssessmentManager {
         this.levelScores = {};
         this.currentEvalId = evalId;
         this.evidenceLibrary = new Set();
+        this.objectiveCapabilityLevels = {};
+        this.activeDomainFilter = 'all';
+        this.activeObjectiveFilter = 'all';
+        this.domainChartContainer = null;
+        this.domainChartWrapper = null;
+        this.domainOverviewToggle = null;
+        this.domainChartCollapsed = true;
+        this.domainChartHasData = false;
+        this.domainChartRows = null;
+        this.domainChartTitle = null;
+        this.domainChartPill = null;
+        this.objectiveFilterWrapper = null;
+        this.objectiveFilterTabs = null;
+        this.domainObjectiveMap = {};
+        this.objectiveCards = [];
+        this.workflowTabs = null;
+        this.activeWorkflow = 'domains';
+        this.scopingPanel = null;
+        this.scopingRows = [];
+        this.selectedObjectiveIds = new Set();
+        this.appliedScopingObjectives = new Set();
+        this.scopingSelectionSummary = null;
+        this.scopingApplyBtn = null;
+        this.scopingClearBtn = null;
         this.init();
     }
 
     init() {
+        this.cacheDomainChartElements();
+        this.cacheObjectiveFilterElements();
+        this.cacheScopingElements();
+        this.buildDomainObjectiveMap();
         this.setupDomainFiltering();
+        this.setupWorkflowTabs();
+        this.setupScopingCards();
         this.setupAssessmentToggles();
         this.setupActivityRating();
         this.initializeDefaultStates();
         this.setupSaveLoadButtons();
+        this.setupDomainOverviewAccordion();
+        this.setupBackToTopButton();
         this.loadAssessment();
         this.refreshEvidenceDropdowns();
     }
@@ -304,6 +446,9 @@ class COBITAssessmentManager {
         const objectiveCards = document.querySelectorAll('.objective-card');
         objectiveCards.forEach(card => {
             const objectiveId = card.getAttribute('data-objective-id');
+            if (!this.objectiveCapabilityLevels[objectiveId]) {
+                this.objectiveCapabilityLevels[objectiveId] = 1;
+            }
             const levelSections = card.querySelectorAll('.capability-level-section');
             
             levelSections.forEach(section => {
@@ -344,6 +489,423 @@ class COBITAssessmentManager {
         if (loadBtn) {
             loadBtn.addEventListener('click', () => this.loadAssessment(true));
         }
+    }
+
+    cacheDomainChartElements() {
+        this.domainChartWrapper = document.getElementById('domain-overview-wrapper');
+        this.domainChartContainer = document.getElementById('domain-level-overview');
+        this.domainChartRows = document.getElementById('domain-level-rows');
+        this.domainChartTitle = document.getElementById('domain-level-title');
+        this.domainChartPill = document.getElementById('domain-level-pill');
+        this.domainOverviewToggle = document.getElementById('domain-overview-toggle');
+        this.domainChartTable = document.querySelector('.domain-level-table');
+        this.recapStandaloneRow = document.getElementById('recap-standalone-row');
+        this.recapStandaloneWrapper = document.getElementById('recap-standalone-wrapper');
+        this.recapStandaloneBody = document.getElementById('recap-standalone-body');
+    }
+
+    cacheObjectiveFilterElements() {
+        this.objectiveFilterWrapper = document.getElementById('objective-filter-wrapper');
+        this.objectiveFilterTabs = document.getElementById('objective-filter-tabs');
+    }
+
+    cacheScopingElements() {
+        this.scopingPanel = document.getElementById('scoping-panel');
+        this.scopingRows = Array.from(document.querySelectorAll('.scoping-row'));
+        this.scopingSelectionSummary = document.getElementById('scoping-selection-summary');
+        this.scopingApplyBtn = document.getElementById('scoping-apply-btn');
+        this.scopingClearBtn = document.getElementById('scoping-clear-btn');
+        this.workflowTabs = document.querySelectorAll('.workflow-tab');
+    }
+
+    buildDomainObjectiveMap() {
+        this.objectiveCards = Array.from(document.querySelectorAll('.objective-card'));
+        this.domainObjectiveMap = {};
+
+        this.objectiveCards.forEach(card => {
+            const domain = card.getAttribute('data-domain');
+            const objectiveId = card.getAttribute('data-objective-id');
+            const objectiveName = card.getAttribute('data-objective-name') || objectiveId;
+
+            if (!domain || !objectiveId) {
+                return;
+            }
+
+            if (!this.domainObjectiveMap[domain]) {
+                this.domainObjectiveMap[domain] = [];
+            }
+
+            this.domainObjectiveMap[domain].push({
+                id: objectiveId,
+                name: objectiveName
+            });
+        });
+
+        Object.keys(this.domainObjectiveMap).forEach(domainKey => {
+            this.domainObjectiveMap[domainKey].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+        });
+    }
+
+    renderObjectiveFilterTabs(domain) {
+        if (!this.objectiveFilterWrapper || !this.objectiveFilterTabs) {
+            return;
+        }
+
+        if (domain === 'all' || domain === 'recap' || domain === 'multi' || !this.domainObjectiveMap[domain] || this.domainObjectiveMap[domain].length === 0) {
+            this.objectiveFilterWrapper.style.display = 'none';
+            this.objectiveFilterTabs.innerHTML = '';
+            this.activeObjectiveFilter = 'all';
+            return;
+        }
+
+        this.objectiveFilterWrapper.style.display = 'block';
+        this.activeObjectiveFilter = 'all';
+
+        const objectives = this.domainObjectiveMap[domain];
+        const tabsHtml = [
+            `<button type="button" class="objective-filter-tab active" data-objective="all">
+                All
+            </button>`
+        ];
+
+        objectives.forEach(obj => {
+            const safeCode = this.escapeHtml(obj.id);
+            tabsHtml.push(`
+                <button type="button" class="objective-filter-tab" data-objective="${safeCode}">
+                    ${safeCode}
+                </button>
+            `);
+        });
+
+        this.objectiveFilterTabs.innerHTML = tabsHtml.join('');
+        const buttons = this.objectiveFilterTabs.querySelectorAll('.objective-filter-tab');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                buttons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const objectiveId = button.getAttribute('data-objective');
+                this.applyObjectiveFilter(objectiveId);
+            });
+        });
+    }
+
+    setupWorkflowTabs() {
+        if (!this.workflowTabs || !this.workflowTabs.length) {
+            return;
+        }
+
+        this.workflowTabs.forEach(tab => {
+            const workflow = tab.getAttribute('data-workflow');
+            tab.addEventListener('click', () => {
+                if (workflow === 'scoping') {
+                    this.activateWorkflow('scoping');
+                    return;
+                }
+                this.showNotification('Workflow ini masih tahap POC.', 'info');
+            });
+        });
+
+        this.refreshWorkflowTabState();
+    }
+
+    activateWorkflow(workflow) {
+        if (!workflow) {
+            return;
+        }
+
+        this.activeWorkflow = workflow;
+        this.refreshWorkflowTabState();
+
+        if (workflow === 'scoping') {
+            this.toggleScopingView(true);
+            this.activeDomainFilter = 'scoping';
+            this.activeObjectiveFilter = 'all';
+            this.renderObjectiveFilterTabs('all');
+            this.toggleRecapStandalone(false);
+            this.updateObjectiveVisibility();
+            this.updateDomainChart('all');
+            return;
+        }
+
+        this.toggleScopingView(false);
+        if (this.activeDomainFilter === 'scoping') {
+            this.activeDomainFilter = 'all';
+        }
+        this.renderObjectiveFilterTabs(this.activeDomainFilter);
+        this.updateObjectiveVisibility();
+        this.updateDomainChart(this.activeDomainFilter);
+    }
+
+    refreshWorkflowTabState() {
+        if (!this.workflowTabs) {
+            return;
+        }
+        this.workflowTabs.forEach(tab => {
+            tab.classList.remove('active');
+            const wf = tab.getAttribute('data-workflow');
+            if (wf === this.activeWorkflow) {
+                tab.classList.add('active');
+            }
+        });
+    }
+
+    toggleScopingView(show) {
+        if (!this.scopingPanel) {
+            return;
+        }
+        this.scopingPanel.style.display = show ? 'block' : 'none';
+        const objectivesContainer = document.getElementById('objectives-container');
+        const overviewWrapper = document.getElementById('domain-overview-wrapper');
+        if (objectivesContainer) {
+            objectivesContainer.style.display = show ? 'none' : '';
+        }
+        if (overviewWrapper) {
+            if (show) {
+                overviewWrapper.style.display = 'none';
+            } else {
+                overviewWrapper.style.display = this.domainChartHasData ? '' : 'none';
+            }
+        }
+        const recapRow = document.getElementById('recap-standalone-row');
+        if (recapRow) {
+            if (show) {
+                recapRow.style.display = 'none';
+            } else {
+                recapRow.style.display = this.activeDomainFilter === 'recap' && this.recapStandaloneBody && this.recapStandaloneBody.children.length
+                    ? ''
+                    : 'none';
+            }
+        }
+    }
+
+    setupScopingCards() {
+        if (!this.scopingRows || !this.scopingRows.length) {
+            return;
+        }
+
+        this.scopingRows.forEach(row => {
+            const toggleBtn = row.querySelector('.scoping-select-btn');
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.toggleScopingRowSelection(row);
+                });
+            }
+
+            row.addEventListener('click', (event) => {
+                if (event.target && event.target.closest('.scoping-select-btn')) {
+                    return;
+                }
+                this.toggleScopingRowSelection(row);
+            });
+        });
+
+        if (this.scopingApplyBtn) {
+            this.scopingApplyBtn.addEventListener('click', () => this.applyScopingSelections());
+        }
+
+        if (this.scopingClearBtn) {
+            this.scopingClearBtn.addEventListener('click', () => this.clearScopingSelections(true));
+        }
+
+        this.updateScopingSummary();
+    }
+
+    toggleScopingRowSelection(row) {
+        if (!row) {
+            return;
+        }
+
+        const objectiveId = row.getAttribute('data-objective-id');
+        if (!objectiveId) {
+            return;
+        }
+
+        let isSelected;
+        if (this.selectedObjectiveIds.has(objectiveId)) {
+            this.selectedObjectiveIds.delete(objectiveId);
+            row.classList.remove('selected');
+            isSelected = false;
+        } else {
+            this.selectedObjectiveIds.add(objectiveId);
+            row.classList.add('selected');
+            isSelected = true;
+        }
+
+        const toggleBtn = row.querySelector('.scoping-select-btn');
+        if (toggleBtn) {
+            toggleBtn.innerHTML = isSelected
+                ? '<i class="fas fa-check me-1"></i>Dipilih'
+                : '<i class="fas fa-plus me-1"></i>Pilih';
+            toggleBtn.classList.toggle('btn-primary', isSelected);
+            toggleBtn.classList.toggle('btn-outline-primary', !isSelected);
+        }
+
+        this.updateScopingSummary();
+    }
+
+    updateScopingSummary() {
+        if (!this.scopingSelectionSummary) {
+            return;
+        }
+
+        const count = this.selectedObjectiveIds.size;
+        if (!count) {
+            this.scopingSelectionSummary.textContent = 'Belum ada GAMO yang dipilih.';
+            if (this.scopingApplyBtn) {
+                this.scopingApplyBtn.disabled = true;
+            }
+            if (this.scopingClearBtn) {
+                this.scopingClearBtn.disabled = true;
+            }
+            return;
+        }
+
+        const selectedList = Array.from(this.selectedObjectiveIds).sort();
+        this.scopingSelectionSummary.textContent = `Terpilih (${count}): ${selectedList.join(', ')}`;
+        if (this.scopingApplyBtn) {
+            this.scopingApplyBtn.disabled = false;
+        }
+        if (this.scopingClearBtn) {
+            this.scopingClearBtn.disabled = false;
+        }
+    }
+
+    applyScopingSelections() {
+        if (!this.selectedObjectiveIds.size) {
+            this.showNotification('Pilih minimal satu GAMO.', 'info');
+            return;
+        }
+
+        this.appliedScopingObjectives = new Set(this.selectedObjectiveIds);
+        this.toggleScopingView(false);
+        this.activeWorkflow = 'domains';
+        this.refreshWorkflowTabState();
+        this.activeDomainFilter = 'all';
+        this.activeObjectiveFilter = 'all';
+        this.renderObjectiveFilterTabs('all');
+        this.toggleRecapStandalone(false);
+        this.updateObjectiveVisibility();
+        this.updateDomainChart('all');
+        this.showNotification('Pilihan GAMO diterapkan.', 'success');
+    }
+
+    clearScopingSelections(clearApplied = false) {
+        this.selectedObjectiveIds.clear();
+        if (clearApplied) {
+            this.appliedScopingObjectives.clear();
+            this.activeDomainFilter = 'all';
+            this.activeObjectiveFilter = 'all';
+            this.renderObjectiveFilterTabs('all');
+            this.toggleRecapStandalone(false);
+            this.updateObjectiveVisibility();
+            this.updateDomainChart('all');
+        }
+        if (this.scopingRows && this.scopingRows.length) {
+            this.scopingRows.forEach(row => {
+                row.classList.remove('selected');
+                const toggleBtn = row.querySelector('.scoping-select-btn');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fas fa-plus me-1"></i>Pilih';
+                    toggleBtn.classList.add('btn-outline-primary');
+                    toggleBtn.classList.remove('btn-primary');
+                }
+            });
+        }
+        this.updateScopingSummary();
+    }
+
+    applyObjectiveFilter(objectiveId) {
+        this.activeObjectiveFilter = objectiveId || 'all';
+        this.updateObjectiveVisibility();
+    }
+
+    updateObjectiveVisibility() {
+        const cards = this.objectiveCards.length ? this.objectiveCards : Array.from(document.querySelectorAll('.objective-card'));
+        const noResultsDiv = document.getElementById('no-results');
+        let visibleCount = 0;
+
+        if (this.activeWorkflow === 'scoping') {
+            cards.forEach(card => {
+                card.style.display = 'none';
+            });
+            if (noResultsDiv) {
+                noResultsDiv.style.display = 'none';
+            }
+            return;
+        }
+
+        if (this.activeDomainFilter === 'recap') {
+            cards.forEach(card => {
+                card.style.display = 'none';
+            });
+            if (noResultsDiv) {
+                noResultsDiv.style.display = 'none';
+            }
+            return;
+        }
+
+        cards.forEach(card => {
+            const cardDomain = card.getAttribute('data-domain');
+            const cardObjective = card.getAttribute('data-objective-id');
+            const matchesDomain = this.activeDomainFilter === 'all' || cardDomain === this.activeDomainFilter;
+            const matchesObjective = this.activeObjectiveFilter === 'all' || cardObjective === this.activeObjectiveFilter;
+            const matchesScoping = !this.appliedScopingObjectives.size || this.appliedScopingObjectives.has(cardObjective);
+
+            if (matchesDomain && matchesObjective && matchesScoping) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (noResultsDiv) {
+            noResultsDiv.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    }
+
+    setupDomainOverviewAccordion() {
+        if (!this.domainOverviewToggle) {
+            return;
+        }
+        this.domainOverviewToggle.addEventListener('click', () => {
+            this.domainChartCollapsed = !this.domainChartCollapsed;
+            this.updateDomainOverviewVisibility();
+        });
+    }
+
+    updateDomainOverviewVisibility() {
+        if (!this.domainChartWrapper || !this.domainChartContainer || !this.domainOverviewToggle) {
+            return;
+        }
+        if (!this.domainChartHasData) {
+            this.domainChartWrapper.style.display = 'none';
+            return;
+        }
+        this.domainChartWrapper.style.display = 'block';
+        if (this.domainChartCollapsed) {
+            this.domainChartWrapper.classList.add('collapsed');
+            this.domainChartContainer.style.display = 'none';
+            this.domainOverviewToggle.setAttribute('aria-expanded', 'false');
+        } else {
+            this.domainChartWrapper.classList.remove('collapsed');
+            this.domainChartContainer.style.display = 'block';
+            this.domainOverviewToggle.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    setupBackToTopButton() {
+        const backToTopBtn = document.getElementById('back-to-top-btn');
+        if (!backToTopBtn) {
+            return;
+        }
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
     }
 
     async saveAssessment() {
@@ -506,6 +1068,8 @@ class COBITAssessmentManager {
             // Update overall objective capability level
             this.updateObjectiveCapabilityLevel(objectiveId);
         });
+
+        this.updateDomainChart(this.activeDomainFilter);
     }
 
     collectFieldData() {
@@ -531,6 +1095,18 @@ class COBITAssessmentManager {
         return { notes, evidence };
     }
 
+    escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
@@ -550,32 +1126,49 @@ class COBITAssessmentManager {
     }
 
     setupDomainFiltering() {
-        const filterButtons = document.querySelectorAll('.domain-tab');
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        const noResultsDiv = document.getElementById('no-results');
+        const filterButtons = document.querySelectorAll('.domain-tab[data-domain]');
+        this.objectiveCards = this.objectiveCards.length ? this.objectiveCards : Array.from(document.querySelectorAll('.objective-card'));
 
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
+                const selectedDomain = button.getAttribute('data-domain') || 'all';
+
+                if (this.activeWorkflow === 'scoping') {
+                    this.activeWorkflow = 'domains';
+                    this.refreshWorkflowTabState();
+                    this.toggleScopingView(false);
+                }
+
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
 
-                const selectedDomain = button.getAttribute('data-domain');
-                let visibleCount = 0;
+                if (selectedDomain === 'recap') {
+                    this.activeDomainFilter = 'recap';
+                    this.activeObjectiveFilter = 'all';
+                    this.renderObjectiveFilterTabs('recap');
+                    this.updateObjectiveVisibility();
+                    this.updateDomainChart('recap');
+                    return;
+                }
 
-                objectiveCards.forEach(card => {
-                    const cardDomain = card.getAttribute('data-domain');
-                    
-                    if (selectedDomain === 'all' || cardDomain === selectedDomain) {
-                        card.style.display = 'block';
-                        visibleCount++;
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-
-                noResultsDiv.style.display = visibleCount === 0 ? 'block' : 'none';
+                this.activeDomainFilter = selectedDomain;
+                this.activeObjectiveFilter = 'all';
+                if (this.activeDomainFilter !== 'recap') {
+                    this.toggleRecapStandalone(false);
+                }
+                this.renderObjectiveFilterTabs(this.activeDomainFilter);
+                this.updateObjectiveVisibility();
+                this.updateDomainChart(this.activeDomainFilter);
             });
         });
+
+        const initialActive = document.querySelector(`.domain-tab[data-domain="${this.activeDomainFilter}"]`);
+        if (initialActive) {
+            initialActive.classList.add('active');
+        }
+        this.renderObjectiveFilterTabs(this.activeDomainFilter);
+        this.updateObjectiveVisibility();
+        this.updateDomainChart(this.activeDomainFilter);
     }
 
     setupAssessmentToggles() {
@@ -684,7 +1277,6 @@ class COBITAssessmentManager {
     setActivityEvidence(objectiveId, level, activityId, evidence) {
         this.initializeLevelScore(objectiveId, level);
         this.levelScores[objectiveId][level].evidence[activityId] = evidence;
-        this.addEvidenceToLibrary(evidence);
     }
 
     setActivityNote(objectiveId, level, activityId, note) {
@@ -798,6 +1390,8 @@ class COBITAssessmentManager {
         if (capabilityBadge) {
             this.updateCapabilityBadge(capabilityBadge, highestLevel);
         }
+
+        this.objectiveCapabilityLevels[objectiveId] = highestLevel;
     }
 
     getMinLevelForObjective(objectiveId) {
@@ -954,6 +1548,228 @@ class COBITAssessmentManager {
         });
     }
 
+    updateDomainChart(selectedDomain = 'all') {
+        if (!this.domainChartContainer || !this.domainChartRows) {
+            return;
+        }
+
+        if (selectedDomain === 'scoping') {
+            selectedDomain = 'all';
+        }
+
+        if (!selectedDomain || selectedDomain === 'all') {
+            this.toggleRecapStandalone(false);
+            this.domainChartHasData = false;
+            this.updateDomainOverviewVisibility();
+            return;
+        }
+
+        if (selectedDomain === 'recap') {
+            const recapData = this.buildGamoRecapData();
+            if (!recapData.length) {
+                this.toggleRecapStandalone(false);
+                this.domainChartHasData = false;
+                this.updateDomainOverviewVisibility();
+                return;
+            }
+
+            this.toggleRecapStandalone(true, recapData);
+            this.domainChartHasData = false;
+            this.updateDomainOverviewVisibility();
+            return;
+        }
+
+        this.toggleRecapStandalone(false);
+
+        const objectiveCards = document.querySelectorAll(`.objective-card[data-domain="${selectedDomain}"]`);
+        const chartData = Array.from(objectiveCards).map(card => {
+            const objectiveId = card.getAttribute('data-objective-id');
+            const objectiveName = card.getAttribute('data-objective-name') || objectiveId;
+            const currentLevel = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 1, 1), 5);
+            return {
+                objectiveId,
+                objectiveName,
+                level: currentLevel
+            };
+        }).sort((a, b) => a.objectiveId.localeCompare(b.objectiveId, undefined, { numeric: true }));
+
+        if (!chartData.length) {
+            this.domainChartHasData = false;
+            this.updateDomainOverviewVisibility();
+            return;
+        }
+
+        this.domainChartHasData = true;
+
+        if (this.domainChartTitle) {
+            this.domainChartTitle.textContent = `${this.getDomainFullName(selectedDomain)}`;
+        }
+        if (this.domainChartPill) {
+            this.domainChartPill.textContent = selectedDomain;
+        }
+
+        this.domainChartRows.innerHTML = '';
+        chartData.forEach(row => {
+            this.domainChartRows.appendChild(this.createDomainChartRow(row));
+        });
+
+        this.updateDomainOverviewVisibility();
+    }
+
+    buildGamoRecapData() {
+        this.objectiveCards = this.objectiveCards.length ? this.objectiveCards : Array.from(document.querySelectorAll('.objective-card'));
+        if (!this.objectiveCards.length) {
+            return [];
+        }
+
+        const domainOrder = ['EDM', 'APO', 'BAI', 'DSS', 'MEA'];
+        const domainRank = (domain) => {
+            const idx = domainOrder.indexOf(domain);
+            return idx === -1 ? domainOrder.length : idx;
+        };
+
+        const data = this.objectiveCards
+            .map(card => {
+                const domain = card.getAttribute('data-domain');
+                const objectiveId = card.getAttribute('data-objective-id');
+                const objectiveName = card.getAttribute('data-objective-name') || objectiveId;
+                if (!domain || !objectiveId) {
+                    return null;
+                }
+                const level = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 1, 1), 5);
+                return {
+                    domain,
+                    objectiveId,
+                    objectiveName,
+                    level
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => {
+                const domainComparison = domainRank(a.domain) - domainRank(b.domain);
+                if (domainComparison !== 0) {
+                    return domainComparison;
+                }
+                return a.objectiveId.localeCompare(b.objectiveId, undefined, { numeric: true });
+            });
+
+        return data;
+    }
+
+    createRecapTable(data) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'recap-table-wrapper';
+
+        const table = document.createElement('table');
+        table.className = 'table table-sm table-bordered recap-table align-middle mb-0';
+
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th style="width:60px;">No</th>
+                <th style="width:110px;">Domain</th>
+                <th>Gamo / Objective</th>
+                <th style="width:140px;" class="text-center">Level</th>
+            </tr>
+        `;
+
+        const tbody = document.createElement('tbody');
+        data.forEach((row, index) => {
+            const domainCode = (row.domain || '').toLowerCase();
+            const safeDomain = this.escapeHtml(row.domain);
+            const safeObjectiveId = this.escapeHtml(row.objectiveId);
+            const safeObjectiveName = this.escapeHtml(row.objectiveName);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center fw-semibold">${index + 1}</td>
+                <td>
+                    <span class="recap-domain-pill domain-pill-${domainCode}">${safeDomain}</span>
+                </td>
+                <td>
+                    <div class="recap-objective-code">${safeObjectiveId}</div>
+                    <div class="recap-objective-name">${safeObjectiveName}</div>
+                </td>
+                <td class="text-center">
+                    <span class="level-badge level-badge-${row.level}">Level ${row.level}</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        return wrapper;
+    }
+
+    toggleRecapStandalone(show, data = []) {
+        if (!this.recapStandaloneRow || !this.recapStandaloneWrapper || !this.recapStandaloneBody) {
+            return;
+        }
+
+        if (!show || !data.length) {
+            this.recapStandaloneRow.style.display = 'none';
+            this.recapStandaloneWrapper.style.display = 'none';
+            this.recapStandaloneBody.innerHTML = '';
+            return;
+        }
+
+        this.recapStandaloneBody.innerHTML = '';
+        this.recapStandaloneBody.appendChild(this.createRecapTable(data));
+        this.recapStandaloneRow.style.display = 'flex';
+        this.recapStandaloneWrapper.style.display = 'block';
+    }
+
+    createDomainChartRow({ objectiveId, objectiveName, level, meta = {} }) {
+        const row = document.createElement('div');
+        row.className = 'domain-level-row';
+
+        const label = document.createElement('div');
+        label.className = 'domain-level-objective';
+        label.innerHTML = `<strong>${objectiveId}</strong><span>${objectiveName}</span>`;
+
+        const bar = document.createElement('div');
+        bar.className = 'domain-level-bar';
+        for (let i = 1; i <= 5; i++) {
+            const segment = document.createElement('span');
+            segment.className = 'level-segment';
+            segment.classList.add(`level-tier-${i}`);
+            segment.textContent = i;
+            if (i <= level) {
+                segment.classList.add('active');
+            }
+            bar.appendChild(segment);
+        }
+
+        const currentLevel = document.createElement('div');
+        currentLevel.className = 'domain-level-current';
+        const averageNote = meta && typeof meta.average === 'number'
+            ? `<small>Rata-rata ${meta.average.toFixed(2)}</small>`
+            : '';
+        currentLevel.innerHTML = `
+            <span class="level-badge level-badge-${level}" data-level="${level}">
+                <strong>Level ${level}</strong>
+                ${averageNote}
+            </span>
+        `;
+
+        row.appendChild(label);
+        row.appendChild(bar);
+        row.appendChild(currentLevel);
+        return row;
+    }
+
+    getDomainFullName(domainCode) {
+        const names = {
+            'EDM': 'Evaluate, Direct, and Monitor',
+            'APO': 'Align, Plan, and Organize',
+            'BAI': 'Build, Acquire, and Implement',
+            'DSS': 'Deliver, Service, and Support',
+            'MEA': 'Monitor, Evaluate, and Assess'
+        };
+        return names[domainCode] || domainCode;
+    }
+
     parseNotePayload(rawValue, rawEvidence = null) {
         const emptyPayload = { evidence: '', note: '' };
         if (rawEvidence !== null && rawEvidence !== undefined) {
@@ -1097,36 +1913,560 @@ document.addEventListener('DOMContentLoaded', () => {
     font-size: 0.75rem;
 }
 
+
 .domain-tabs-wrapper {
-    background: #0f2b5c;
-    border-radius: 0.65rem;
-    padding: 0.5rem;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    background: #f7f9ff;
+    border-radius: 0.8rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid #e1e6f5;
 }
 
-.domain-tabs {
+.domain-tabs-scroll {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
+    gap: 0.65rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7cee6 transparent;
+}
+
+.domain-tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.domain-tabs-scroll::-webkit-scrollbar-thumb {
+    background: #cbd2eb;
+    border-radius: 999px;
+}
+
+.domain-tabs-scroll::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .domain-tab {
     border: none;
-    background: rgba(255,255,255,0.15);
-    color: #fff;
-    padding: 0.45rem 1.1rem;
-    border-radius: 999px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
+    background: transparent;
+    color: #0f6ad9;
+    padding: 0.4rem 1.4rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     transition: all 0.2s ease;
 }
 
-.domain-tab:hover,
+.domain-tab:hover {
+    color: #0c4fb5;
+}
+
 .domain-tab.active {
-    background: #fff;
+    background: #0f73c9;
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(15,106,217,0.25);
+}
+
+.workflow-tab {
+    border: 1px dashed rgba(15,106,217,0.4);
+    background: rgba(15,106,217,0.06);
     color: #0f2b5c;
-    box-shadow: 0 6px 18px rgba(15,43,92,0.2);
+    padding: 0.4rem 1.4rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.workflow-tab:hover {
+    background: rgba(15,106,217,0.15);
+}
+
+.workflow-tab.active {
+    background: linear-gradient(120deg, #0f6ad9, #0c4fb5);
+    color: #fff;
+    border-style: solid;
+    box-shadow: 0 12px 24px rgba(15,106,217,0.25);
+}
+
+
+.objective-filter-wrapper {
+    margin-top: 0.75rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #dfe4f4;
+}
+
+.objective-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    overflow-x: auto;
+}
+
+.objective-filter-tab {
+    border: none;
+    background: transparent;
+    color: #6a7091;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    padding: 0.35rem 0.65rem;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.objective-filter-tab:hover {
+    color: #0c4fb5;
+}
+
+.objective-filter-tab.active {
+    color: #0f2b5c;
+    border-bottom-color: #0f6ad9;
+}
+
+.domain-overview-wrapper {
+    border: 1px solid #e2e8fb;
+    border-radius: 0.9rem;
+    background: #fdfdff;
+    box-shadow: 0 16px 35px rgba(15,43,92,0.06);
+    padding: 0;
+}
+
+.domain-overview-toggle {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0.95rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #0f2b5c;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+}
+
+.domain-overview-toggle .toggle-indicator {
+    transition: transform 0.25s ease;
+}
+
+.domain-overview-wrapper.collapsed .toggle-indicator {
+    transform: rotate(180deg);
+}
+
+.domain-level-card {
+    background: #fff;
+    border-top: 1px solid #e2e8fb;
+    border-radius: 0 0 0.9rem 0.9rem;
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.domain-level-card {
+    background: #fff;
+    border: 1px solid #e2e8fb;
+    border-radius: 0.85rem;
+    padding: 1.5rem;
+    box-shadow: 0 18px 40px rgba(15,43,92,0.08);
+}
+
+.domain-level-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.domain-level-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6f7a98;
+    margin-bottom: 0.25rem;
+}
+
+.domain-level-title {
+    margin: 0;
+    font-weight: 700;
+    color: #0f2b5c;
+}
+
+.domain-level-pill {
+    background: #0f2b5c;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.4rem 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+.domain-level-table {
+    border: 1px solid #e2e8fb;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.domain-level-table-head,
+.domain-level-row {
+    display: grid;
+    grid-template-columns: minmax(170px, 1.3fr) minmax(250px, 2fr) 150px;
+    gap: 0.85rem;
+    padding: 0.9rem 1.2rem;
+    align-items: center;
+}
+
+.domain-level-table {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.domain-level-table-head {
+    background: #f6f8ff;
+    font-weight: 600;
+    color: #42507a;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.recap-table-wrapper {
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8fb;
+}
+
+.recap-table {
+    margin: 0;
+    background: #fff;
+}
+
+.recap-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f6f8ff;
+    color: #42507a;
+    font-weight: 600;
+    text-transform: uppercase;
+.recap-standalone-wrapper {
+    border: 1px solid #e2e8fb;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 18px 40px rgba(15,43,92,0.08);
+    padding: 1.5rem;
+}
+.recap-standalone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.recap-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6f7a98;
+    margin-bottom: 0.2rem;
+}
+.recap-title {
+    margin: 0;
+    font-weight: 700;
+    color: #0f2b5c;
+}
+.recap-pill {
+    background: #0f2b5c;
+    color: #fff;
+    letter-spacing: 0.08em;
+}
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #e2e8fb;
+}
+
+.recap-table tbody tr:nth-child(odd) {
+    background: #fbfcff;
+}
+
+.recap-table tbody tr:hover {
+    background: #f0f4ff;
+}
+
+.scoping-panel {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 25px 60px rgba(9, 18, 56, 0.12) !important;
+}
+
+.scoping-panel-header {
+    background: #081a3d;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.scoping-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.scoping-pill {
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    background: rgba(255,255,255,0.15);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.scoping-panel-body {
+    background: #fdfdff;
+}
+
+.scoping-table-wrapper {
+    border: 1px solid #e1e6f5;
+    border-radius: 0.9rem;
+    background: #fff;
+    padding: 0.75rem;
+}
+
+.scoping-table thead th {
+    background: #f6f8ff;
+    color: #42507a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.82rem;
+    border-bottom: 1px solid #dbe2fb;
+}
+
+.scoping-table tbody tr {
+    border-color: #eef2ff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.scoping-table tbody tr:hover {
+    background: #f3f7ff;
+}
+
+.scoping-row.selected {
+    background: #e8f1ff;
+    box-shadow: inset 0 0 0 1px rgba(15,106,217,0.25);
+}
+
+.scoping-gamo-code {
+    font-weight: 700;
+    color: #0f2b5c;
+    letter-spacing: 0.05em;
+}
+
+.scoping-gamo-name {
+    font-weight: 600;
+    color: #0f2b5c;
+}
+
+.scoping-select-btn {
+    font-weight: 600;
+    min-width: 110px;
+}
+
+.scoping-selection-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e1e6f5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.scoping-selection-summary {
+    font-weight: 600;
+    color: #0f2b5c;
+}
+
+.scoping-selection-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.recap-domain-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+}
+
+.domain-pill-edm {
+    background: rgba(15, 43, 92, 0.12);
+    color: #081a3d;
+    border-color: rgba(15, 43, 92, 0.3);
+}
+
+.domain-pill-apo {
+    background: rgba(8, 122, 194, 0.12);
+    color: #084c8c;
+    border-color: rgba(8, 122, 194, 0.3);
+}
+
+.domain-pill-bai {
+    background: rgba(19, 110, 82, 0.12);
+    color: #0b5136;
+    border-color: rgba(19, 110, 82, 0.3);
+}
+
+.domain-pill-dss {
+    background: rgba(207, 99, 26, 0.12);
+    color: #81370a;
+    border-color: rgba(207, 99, 26, 0.3);
+}
+
+.domain-pill-mea {
+    background: rgba(103, 35, 156, 0.12);
+    color: #4b0f82;
+    border-color: rgba(103, 35, 156, 0.3);
+}
+
+.recap-objective-code {
+    font-weight: 600;
+    color: #0f2b5c;
+    letter-spacing: 0.03em;
+}
+
+.recap-objective-name {
+    font-size: 0.86rem;
+    color: #5a6482;
+}
+
+.domain-level-row:nth-child(odd) {
+    background: #fbfcff;
+}
+
+.domain-level-row:not(:last-child) {
+    border-bottom: 1px solid #eef2ff;
+}
+
+.domain-level-objective {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.domain-level-objective strong {
+    color: #0f2b5c;
+    font-size: 0.95rem;
+}
+
+.domain-level-objective span {
+    font-size: 0.85rem;
+    color: #66718f;
+}
+
+.domain-level-bar {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.level-segment {
+    flex: 1;
+    border-radius: 0.4rem;
+    border: 1px solid #d7ddf1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.35rem 0;
+    color: #7a85a8;
+}
+
+.level-segment.active {
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 14px rgba(15,106,217,0.18);
+}
+
+.level-segment.level-tier-1.active {
+    background: #f97316;
+}
+
+.level-segment.level-tier-2.active {
+    background: #facc15;
+    color: #7a5d07;
+    box-shadow: none;
+}
+
+.level-segment.level-tier-3.active {
+    background: #86efac;
+    color: #065f46;
+    box-shadow: none;
+}
+
+.level-segment.level-tier-4.active {
+    background: #15803d;
+}
+
+.level-segment.level-tier-5.active {
+    background: linear-gradient(120deg, #0f6ad9, #0c4fb5);
+}
+
+.domain-level-current {
+    text-align: right;
+}
+
+.level-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+    gap: 0.1rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 1.5rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    font-size: 0.85rem;
+}
+
+.level-badge small {
+    font-size: 0.7rem;
+    text-transform: none;
+    letter-spacing: 0.03em;
+    opacity: 0.85;
+}
+
+.level-badge-1 {
+    background: rgba(249, 115, 22, 0.15);
+    color: #9a3412;
+    border-color: rgba(249, 115, 22, 0.4);
+}
+
+.level-badge-2 {
+    background: rgba(250, 204, 21, 0.2);
+    color: #7a5d07;
+    border-color: rgba(250, 204, 21, 0.6);
+}
+
+.level-badge-3 {
+    background: rgba(134, 239, 172, 0.25);
+    color: #065f46;
+    border-color: rgba(16, 185, 129, 0.45);
+}
+
+.level-badge-4 {
+    background: rgba(21, 128, 61, 0.2);
+    color: #064e3b;
+    border-color: rgba(21, 128, 61, 0.5);
+}
+
+.level-badge-5 {
+    background: rgba(15, 74, 129, 0.15);
+    color: #0f2b5c;
+    border-color: rgba(15, 74, 129, 0.45);
 }
 
 .card-footer {
@@ -1430,5 +2770,6 @@ document.addEventListener('DOMContentLoaded', () => {
     overflow: hidden;
     transition: all 0.3s ease;
 }
+
 </style>
 @endsection
