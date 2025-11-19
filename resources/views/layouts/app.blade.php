@@ -18,16 +18,170 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    
+    <style>
+        :root {
+            --cobit-primary: #0f2b5c;
+            --cobit-secondary: #1a3d6b;
+            --cobit-accent: #0f6ad9;
+            --cobit-light: #f7f9ff;
+            --cobit-gradient: linear-gradient(135deg, #081a3d, #0f2b5c, #1a3d6b);
+        }
+        
+        body {
+            background: var(--cobit-light);
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #app {
+            flex: 1;
+        }
+        
+        /* Navbar Styling */
+        .navbar {
+            background: var(--cobit-gradient) !important;
+            box-shadow: 0 4px 20px rgba(15, 43, 92, 0.3);
+            padding: 1rem 0;
+            border-bottom: 3px solid rgba(15, 106, 217, 0.3);
+        }
+        
+        .navbar-brand {
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: translateY(-2px);
+        }
+        
+
+        
+        .navbar-brand img {
+            filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+        
+        .nav-link:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .badge.bg-warning {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: #fff !important;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Offcanvas Sidebar Styling */
+        .offcanvas {
+            background: var(--cobit-gradient);
+            color: #fff;
+        }
+        
+        .offcanvas-header {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 1.5rem;
+        }
+        
+        .offcanvas-title {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.25rem;
+            letter-spacing: 0.03em;
+        }
+        
+        .offcanvas .btn-close {
+            filter: invert(1);
+            opacity: 0.8;
+        }
+        
+        .offcanvas .btn-close:hover {
+            opacity: 1;
+        }
+        
+        .offcanvas-body {
+            padding: 1.5rem;
+        }
+        
+        .offcanvas .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .offcanvas .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff !important;
+            transform: translateX(5px);
+        }
+        
+        .offcanvas .nav-link i {
+            font-size: 1.1rem;
+        }
+        
+        /* Main Content Styling */
+        .container-fluid.mt-5 {
+            padding-top: 5rem;
+            padding-bottom: 2rem;
+            min-height: calc(100vh - 100px);
+        }
+        
+        /* Navbar Toggler */
+        .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.2);
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        
+        /* Login/Register Specific Styling */
+        body.login {
+            background: var(--cobit-gradient);
+        }
+        
+        /* Smooth Animations */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .badge.bg-warning {
+                font-size: 0.75rem !important;
+            }
+        }
+    </style>
   </head>
   <body class="{{ Route::is('login', 'register') ? 'login' : '' }}">
     <div id="app">
       <!-- Navbar Utama -->
-      <nav class="navbar navbar-expand-md navbar-dark bg-warning fixed-top">
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top">
         <div class="container">
-          <!-- Logo dan Teks PORTAL -->
+          <!-- Logo -->
           <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
             <img src="{{ asset('images/logo.png') }}" alt="COBIT Logo" style="height: 40px;">
-            <h3>DEV VERSION</h3>
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                   data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
@@ -75,7 +229,9 @@
         <div class="offcanvas offcanvas-start" data-bs-backdrop="static" tabindex="-1" id="sidebarOffcanvas"
              aria-labelledby="sidebarOffcanvasLabel">
           <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">Sidebar Menu</h5>
+            <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
+              <i class="fas fa-bars me-2"></i>Menu Navigasi
+            </h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div class="offcanvas-body">
@@ -108,14 +264,7 @@
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="container-fluid text-center py-3 mt-4">
-      <p class="mb-1">By: Evan Kristian Pratama</p>
-      <p class="mb-0">
-        <a href="https://www.linkedin.com/in/evan-pratama-196119271/" target="_blank">LinkedIn</a>
-      </p>
-      <p class="mb-0">Version: 0.0.0</p>
-    </footer>
+
   </body>
 </html>
 <!-- SweetAlert dan Script Coming Soon -->

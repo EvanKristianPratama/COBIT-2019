@@ -2,33 +2,6 @@
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-
-{{-- Loading Overlay with Progress --}}
-<div id="loading-overlay" class="loading-overlay">
-    <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <div class="loading-text" id="loading-text">Loading...</div>
-        <div class="loading-progress-container">
-            <div class="loading-progress-bar" id="loading-progress-bar"></div>
-        </div>
-        <div class="loading-percentage" id="loading-percentage">0%</div>
-    </div>
-</div>
-
-{{-- Non-blocking Corner Loading Indicator --}}
-<div id="corner-loading" class="corner-loading" style="display: none;">
-    <div class="corner-loading-content">
-        <div class="corner-spinner"></div>
-        <div class="corner-loading-info">
-            <div class="corner-loading-text" id="corner-loading-text">Loading data...</div>
-            <div class="corner-loading-progress">
-                <div class="corner-progress-bar" id="corner-progress-bar"></div>
-            </div>
-            <div class="corner-loading-percentage" id="corner-loading-percentage">0%</div>
-        </div>
-    </div>
-</div>
-
 <div class="container mx-auto p-6" id="page-top">
     {{-- Main Card --}}
     <div class="card shadow-sm mb-4 hero-card" style="border:none;box-shadow:0 22px 45px rgba(14,33,70,0.15);">
@@ -45,7 +18,9 @@
         <div class="card-body">
 
             <div class="domain-tabs-wrapper">
-                <div class="domain-tabs" role="tablist">
+                <div class="domain-tabs-scroll" role="tablist" aria-label="Workflow and GAMO tabs">
+                    <button type="button" class="workflow-tab" data-workflow="scoping">Scoping</button>
+                    <button type="button" class="workflow-tab" data-workflow="evidence">ADD EVIDENCE</button>
                     <button type="button" class="domain-tab active" data-domain="all">All Domains</button>
                     <button type="button" class="domain-tab" data-domain="EDM">EDM</button>
                     <button type="button" class="domain-tab" data-domain="APO">APO</button>
@@ -84,6 +59,71 @@
         </div>
     </div>
 
+    @php
+        $domainOrderMap = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+        $sortedObjectives = collect($objectives)->sortBy(function($objective) use ($domainOrderMap) {
+            $domain = preg_replace('/\d+/', '', $objective->objective_id);
+            $domainRank = $domainOrderMap[$domain] ?? 99;
+            return sprintf('%02d_%s', $domainRank, $objective->objective_id);
+        });
+    @endphp
+
+    <div class="card shadow-sm mb-4 scoping-panel" id="scoping-panel" style="display: none;">
+        <div class="card-header scoping-panel-header">
+            <div>
+                <div class="scoping-title">Scoping Assessment</div>
+                <p class="mb-0 text-muted scoping-subtitle">Pilih objective GAMO yang ingin dinilai terlebih dahulu.</p>
+            </div>
+            <span class="scoping-pill"><i class="fas fa-flag-checkered me-2"></i>Scoping</span>
+        </div>
+        <div class="card-body scoping-panel-body">
+            <div class="scoping-table-wrapper">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle scoping-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;" class="text-center">No</th>
+                                <th style="width: 140px;">GAMO</th>
+                                <th>Nama GAMO</th>
+                                <th style="width: 140px;" class="text-end">Pilih</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scoping-table-body">
+                            @foreach($sortedObjectives as $objective)
+                                @php
+                                    $objectiveDomain = preg_replace('/\d+/', '', $objective->objective_id);
+                                @endphp
+                                <tr class="scoping-row" data-objective-id="{{ $objective->objective_id }}" data-domain="{{ $objectiveDomain }}">
+                                    <td class="text-center fw-semibold">{{ $loop->iteration }}</td>
+                                    <td class="scoping-gamo-code">{{ $objective->objective_id }}</td>
+                                    <td class="scoping-gamo-name">{{ $objective->objective }}</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary scoping-select-btn">
+                                            <i class="fas fa-plus me-1"></i>Pilih
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="scoping-selection-footer">
+                <div class="scoping-selection-summary" id="scoping-selection-summary">
+                    Belum ada GAMO yang dipilih.
+                </div>
+                <div class="scoping-selection-actions">
+                    <button type="button" class="btn btn-outline-secondary" id="scoping-clear-btn" disabled>
+                        Reset Pilihan
+                    </button>
+                    <button type="button" class="btn btn-primary" id="scoping-apply-btn" disabled>
+                        Mulai Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row" id="recap-standalone-row" style="display: none;">
         <div class="col-12">
             <div class="recap-standalone-wrapper" id="recap-standalone-wrapper">
@@ -98,15 +138,6 @@
     </div>
 
     {{-- Objectives Cards --}}
-    @php
-        $domainOrderMap = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
-        $sortedObjectives = collect($objectives)->sortBy(function($objective) use ($domainOrderMap) {
-            $domain = preg_replace('/\d+/', '', $objective->objective_id);
-            $domainRank = $domainOrderMap[$domain] ?? 99;
-            return sprintf('%02d_%s', $domainRank, $objective->objective_id);
-        });
-    @endphp
-
     <div class="row" id="objectives-container">
         @foreach($sortedObjectives as $objective)
             @php
@@ -381,72 +412,69 @@ class COBITAssessmentManager {
         this.objectiveFilterTabs = null;
         this.domainObjectiveMap = {};
         this.objectiveCards = [];
-        this.cache = {
-            elements: new Map(),
-            data: new Map()
-        };
+        this.workflowTabs = null;
+        this.activeWorkflow = 'domains';
+        this.scopingPanel = null;
+        this.scopingRows = [];
+        this.selectedObjectiveIds = new Set();
+        this.appliedScopingObjectives = new Set();
+        this.scopingSelectionSummary = null;
+        this.scopingApplyBtn = null;
+        this.scopingClearBtn = null;
+        this.objectiveLevelActivityCounts = {};
+        this.pendingObjectiveUpdates = new Map();
+        this.objectiveUpdateScheduled = false;
+        this.domainChartRefreshScheduled = false;
+        this.pendingDomainChartFilter = 'all';
         this.init();
     }
 
     init() {
-        this.cacheLoadingElements();
-        this.buildElementCache();
-        this.showLoading('Initializing assessment...', 0);
-        
-        setTimeout(() => {
-            this.cacheDomainChartElements();
-            this.updateLoadingProgress('Loading components...', 10);
-            
-            this.cacheObjectiveFilterElements();
-            this.updateLoadingProgress('Building domain map...', 20);
-            
-            this.buildDomainObjectiveMap();
-            this.updateLoadingProgress('Setting up filters...', 30);
-            
-            this.setupDomainFiltering();
-            this.updateLoadingProgress('Setting up assessment...', 40);
-            
-            this.setupAssessmentToggles();
-            this.updateLoadingProgress('Setting up activity rating...', 50);
-            
-            this.setupActivityRating();
-            this.updateLoadingProgress('Initializing states...', 60);
-            
-            this.initializeDefaultStates();
-            this.updateLoadingProgress('Setting up buttons...', 70);
-            
-            this.setupSaveLoadButtons();
-            this.setupDomainOverviewAccordion();
-            this.setupBackToTopButton();
-            this.updateLoadingProgress('Loading assessment data...', 80);
-            
-            this.loadAssessment();
-            this.updateLoadingProgress('Finalizing...', 90);
-            
-            this.refreshEvidenceDropdowns();
-            this.updateLoadingProgress('Complete!', 100);
-            
-            setTimeout(() => this.hideLoading(), 500);
-        }, 100);
+        this.cacheDomainChartElements();
+        this.cacheObjectiveFilterElements();
+        this.cacheScopingElements();
+        this.buildDomainObjectiveMap();
+        this.setupDomainFiltering();
+        this.setupWorkflowTabs();
+        this.setupScopingCards();
+        this.setupAssessmentToggles();
+        this.setupActivityRating();
+        this.initializeDefaultStates();
+        this.setupSaveLoadButtons();
+        this.setupDomainOverviewAccordion();
+        this.setupBackToTopButton();
+        this.refreshEvidenceDropdowns();
+        this.scheduleInitialDataLoad();
     }
 
     initializeDefaultStates() {
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        objectiveCards.forEach(card => {
+        const objectiveCards = Array.from(document.querySelectorAll('.objective-card'));
+        if (!objectiveCards.length) {
+            return;
+        }
+
+        this.processInBatches(objectiveCards, 3, (card) => {
             const objectiveId = card.getAttribute('data-objective-id');
+            if (!objectiveId) {
+                return;
+            }
             if (!this.objectiveCapabilityLevels[objectiveId]) {
                 this.objectiveCapabilityLevels[objectiveId] = 1;
             }
+
             const levelSections = card.querySelectorAll('.capability-level-section');
-            
+            if (!this.objectiveLevelActivityCounts[objectiveId]) {
+                this.objectiveLevelActivityCounts[objectiveId] = {};
+            }
             levelSections.forEach(section => {
                 const level = parseInt(section.getAttribute('data-level'));
                 this.initializeLevelScore(objectiveId, level);
+                const activityCount = section.querySelectorAll('.activity-rating-select').length;
+                this.objectiveLevelActivityCounts[objectiveId][level] = activityCount;
                 this.updateLevelDisplay(objectiveId, level);
                 this.checkLevelLock(objectiveId, level);
             });
-            
-            // Update overall objective capability level
+
             this.updateObjectiveCapabilityLevel(objectiveId);
         });
     }
@@ -479,90 +507,6 @@ class COBITAssessmentManager {
         }
     }
 
-    cacheLoadingElements() {
-        this.loadingOverlay = document.getElementById('loading-overlay');
-        this.loadingText = document.getElementById('loading-text');
-        this.loadingProgressBar = document.getElementById('loading-progress-bar');
-        this.loadingPercentage = document.getElementById('loading-percentage');
-        this.cornerLoading = document.getElementById('corner-loading');
-        this.cornerLoadingText = document.getElementById('corner-loading-text');
-        this.cornerProgressBar = document.getElementById('corner-progress-bar');
-        this.cornerLoadingPercentage = document.getElementById('corner-loading-percentage');
-    }
-
-    buildElementCache() {
-        // Cache all rating selects once
-        document.querySelectorAll('.activity-rating-select').forEach(el => {
-            this.elementCache.ratingSelects.set(el.dataset.activityId, el);
-        });
-        
-        // Cache all evidence inputs
-        document.querySelectorAll('.evidence-input').forEach(el => {
-            this.elementCache.evidenceInputs.set(el.dataset.activityId, el);
-        });
-        
-        // Cache all note inputs
-        document.querySelectorAll('.note-input').forEach(el => {
-            this.elementCache.noteInputs.set(el.dataset.activityId, el);
-        });
-        
-        console.log('Element cache built:', {
-            ratings: this.elementCache.ratingSelects.size,
-            evidence: this.elementCache.evidenceInputs.size,
-            notes: this.elementCache.noteInputs.size
-        });
-    }
-
-    showLoading(message = 'Loading...', percentage = 0) {
-        if (this.loadingOverlay) {
-            this.loadingOverlay.style.display = 'flex';
-            if (this.loadingText) this.loadingText.textContent = message;
-            if (this.loadingProgressBar) this.loadingProgressBar.style.width = percentage + '%';
-            if (this.loadingPercentage) this.loadingPercentage.textContent = Math.round(percentage) + '%';
-        }
-    }
-
-    updateLoadingProgress(message, percentage) {
-        if (this.loadingText) this.loadingText.textContent = message;
-        if (this.loadingProgressBar) this.loadingProgressBar.style.width = percentage + '%';
-        if (this.loadingPercentage) this.loadingPercentage.textContent = Math.round(percentage) + '%';
-    }
-
-    hideLoading() {
-        if (this.loadingOverlay) {
-            this.loadingOverlay.style.opacity = '0';
-            setTimeout(() => {
-                this.loadingOverlay.style.display = 'none';
-                this.loadingOverlay.style.opacity = '1';
-            }, 300);
-        }
-    }
-
-    showCornerLoading(message = 'Loading...', percentage = 0) {
-        if (this.cornerLoading) {
-            this.cornerLoading.style.display = 'flex';
-            this.cornerLoading.classList.add('show');
-            if (this.cornerLoadingText) this.cornerLoadingText.textContent = message;
-            if (this.cornerProgressBar) this.cornerProgressBar.style.width = percentage + '%';
-            if (this.cornerLoadingPercentage) this.cornerLoadingPercentage.textContent = Math.round(percentage) + '%';
-        }
-    }
-
-    updateCornerProgress(message, percentage) {
-        if (this.cornerLoadingText) this.cornerLoadingText.textContent = message;
-        if (this.cornerProgressBar) this.cornerProgressBar.style.width = percentage + '%';
-        if (this.cornerLoadingPercentage) this.cornerLoadingPercentage.textContent = Math.round(percentage) + '%';
-    }
-
-    hideCornerLoading() {
-        if (this.cornerLoading) {
-            this.cornerLoading.classList.remove('show');
-            setTimeout(() => {
-                this.cornerLoading.style.display = 'none';
-            }, 400);
-        }
-    }
-
     cacheDomainChartElements() {
         this.domainChartWrapper = document.getElementById('domain-overview-wrapper');
         this.domainChartContainer = document.getElementById('domain-level-overview');
@@ -579,6 +523,15 @@ class COBITAssessmentManager {
     cacheObjectiveFilterElements() {
         this.objectiveFilterWrapper = document.getElementById('objective-filter-wrapper');
         this.objectiveFilterTabs = document.getElementById('objective-filter-tabs');
+    }
+
+    cacheScopingElements() {
+        this.scopingPanel = document.getElementById('scoping-panel');
+        this.scopingRows = Array.from(document.querySelectorAll('.scoping-row'));
+        this.scopingSelectionSummary = document.getElementById('scoping-selection-summary');
+        this.scopingApplyBtn = document.getElementById('scoping-apply-btn');
+        this.scopingClearBtn = document.getElementById('scoping-clear-btn');
+        this.workflowTabs = document.querySelectorAll('.workflow-tab');
     }
 
     buildDomainObjectiveMap() {
@@ -614,7 +567,7 @@ class COBITAssessmentManager {
             return;
         }
 
-        if (domain === 'all' || domain === 'recap' || !this.domainObjectiveMap[domain] || this.domainObjectiveMap[domain].length === 0) {
+        if (domain === 'all' || domain === 'recap' || domain === 'multi' || !this.domainObjectiveMap[domain] || this.domainObjectiveMap[domain].length === 0) {
             this.objectiveFilterWrapper.style.display = 'none';
             this.objectiveFilterTabs.innerHTML = '';
             this.activeObjectiveFilter = 'all';
@@ -653,6 +606,234 @@ class COBITAssessmentManager {
         });
     }
 
+    setupWorkflowTabs() {
+        if (!this.workflowTabs || !this.workflowTabs.length) {
+            return;
+        }
+
+        this.workflowTabs.forEach(tab => {
+            const workflow = tab.getAttribute('data-workflow');
+            tab.addEventListener('click', () => {
+                if (workflow === 'scoping') {
+                    this.activateWorkflow('scoping');
+                    return;
+                }
+                this.showNotification('Workflow ini masih tahap POC.', 'info');
+            });
+        });
+
+        this.refreshWorkflowTabState();
+    }
+
+    activateWorkflow(workflow) {
+        if (!workflow) {
+            return;
+        }
+
+        this.activeWorkflow = workflow;
+        this.refreshWorkflowTabState();
+
+        if (workflow === 'scoping') {
+            this.toggleScopingView(true);
+            this.activeDomainFilter = 'scoping';
+            this.activeObjectiveFilter = 'all';
+            this.renderObjectiveFilterTabs('all');
+            this.toggleRecapStandalone(false);
+            this.updateObjectiveVisibility();
+            this.updateDomainChart('all');
+            return;
+        }
+
+        this.toggleScopingView(false);
+        if (this.activeDomainFilter === 'scoping') {
+            this.activeDomainFilter = 'all';
+        }
+        this.renderObjectiveFilterTabs(this.activeDomainFilter);
+        this.updateObjectiveVisibility();
+        this.updateDomainChart(this.activeDomainFilter);
+    }
+
+    refreshWorkflowTabState() {
+        if (!this.workflowTabs) {
+            return;
+        }
+        this.workflowTabs.forEach(tab => {
+            tab.classList.remove('active');
+            const wf = tab.getAttribute('data-workflow');
+            if (wf === this.activeWorkflow) {
+                tab.classList.add('active');
+            }
+        });
+    }
+
+    toggleScopingView(show) {
+        if (!this.scopingPanel) {
+            return;
+        }
+        this.scopingPanel.style.display = show ? 'block' : 'none';
+        const objectivesContainer = document.getElementById('objectives-container');
+        const overviewWrapper = document.getElementById('domain-overview-wrapper');
+        if (objectivesContainer) {
+            objectivesContainer.style.display = show ? 'none' : '';
+        }
+        if (overviewWrapper) {
+            if (show) {
+                overviewWrapper.style.display = 'none';
+            } else {
+                overviewWrapper.style.display = this.domainChartHasData ? '' : 'none';
+            }
+        }
+        const recapRow = document.getElementById('recap-standalone-row');
+        if (recapRow) {
+            if (show) {
+                recapRow.style.display = 'none';
+            } else {
+                recapRow.style.display = this.activeDomainFilter === 'recap' && this.recapStandaloneBody && this.recapStandaloneBody.children.length
+                    ? ''
+                    : 'none';
+            }
+        }
+    }
+
+    setupScopingCards() {
+        if (!this.scopingRows || !this.scopingRows.length) {
+            return;
+        }
+
+        this.scopingRows.forEach(row => {
+            const toggleBtn = row.querySelector('.scoping-select-btn');
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.toggleScopingRowSelection(row);
+                });
+            }
+
+            row.addEventListener('click', (event) => {
+                if (event.target && event.target.closest('.scoping-select-btn')) {
+                    return;
+                }
+                this.toggleScopingRowSelection(row);
+            });
+        });
+
+        if (this.scopingApplyBtn) {
+            this.scopingApplyBtn.addEventListener('click', () => this.applyScopingSelections());
+        }
+
+        if (this.scopingClearBtn) {
+            this.scopingClearBtn.addEventListener('click', () => this.clearScopingSelections(true));
+        }
+
+        this.updateScopingSummary();
+    }
+
+    toggleScopingRowSelection(row) {
+        if (!row) {
+            return;
+        }
+
+        const objectiveId = row.getAttribute('data-objective-id');
+        if (!objectiveId) {
+            return;
+        }
+
+        let isSelected;
+        if (this.selectedObjectiveIds.has(objectiveId)) {
+            this.selectedObjectiveIds.delete(objectiveId);
+            row.classList.remove('selected');
+            isSelected = false;
+        } else {
+            this.selectedObjectiveIds.add(objectiveId);
+            row.classList.add('selected');
+            isSelected = true;
+        }
+
+        const toggleBtn = row.querySelector('.scoping-select-btn');
+        if (toggleBtn) {
+            toggleBtn.innerHTML = isSelected
+                ? '<i class="fas fa-check me-1"></i>Dipilih'
+                : '<i class="fas fa-plus me-1"></i>Pilih';
+            toggleBtn.classList.toggle('btn-primary', isSelected);
+            toggleBtn.classList.toggle('btn-outline-primary', !isSelected);
+        }
+
+        this.updateScopingSummary();
+    }
+
+    updateScopingSummary() {
+        if (!this.scopingSelectionSummary) {
+            return;
+        }
+
+        const count = this.selectedObjectiveIds.size;
+        if (!count) {
+            this.scopingSelectionSummary.textContent = 'Belum ada GAMO yang dipilih.';
+            if (this.scopingApplyBtn) {
+                this.scopingApplyBtn.disabled = true;
+            }
+            if (this.scopingClearBtn) {
+                this.scopingClearBtn.disabled = true;
+            }
+            return;
+        }
+
+        const selectedList = Array.from(this.selectedObjectiveIds).sort();
+        this.scopingSelectionSummary.textContent = `Terpilih (${count}): ${selectedList.join(', ')}`;
+        if (this.scopingApplyBtn) {
+            this.scopingApplyBtn.disabled = false;
+        }
+        if (this.scopingClearBtn) {
+            this.scopingClearBtn.disabled = false;
+        }
+    }
+
+    applyScopingSelections() {
+        if (!this.selectedObjectiveIds.size) {
+            this.showNotification('Pilih minimal satu GAMO.', 'info');
+            return;
+        }
+
+        this.appliedScopingObjectives = new Set(this.selectedObjectiveIds);
+        this.toggleScopingView(false);
+        this.activeWorkflow = 'domains';
+        this.refreshWorkflowTabState();
+        this.activeDomainFilter = 'all';
+        this.activeObjectiveFilter = 'all';
+        this.renderObjectiveFilterTabs('all');
+        this.toggleRecapStandalone(false);
+        this.updateObjectiveVisibility();
+        this.updateDomainChart('all');
+        this.showNotification('Pilihan GAMO diterapkan.', 'success');
+    }
+
+    clearScopingSelections(clearApplied = false) {
+        this.selectedObjectiveIds.clear();
+        if (clearApplied) {
+            this.appliedScopingObjectives.clear();
+            this.activeDomainFilter = 'all';
+            this.activeObjectiveFilter = 'all';
+            this.renderObjectiveFilterTabs('all');
+            this.toggleRecapStandalone(false);
+            this.updateObjectiveVisibility();
+            this.updateDomainChart('all');
+        }
+        if (this.scopingRows && this.scopingRows.length) {
+            this.scopingRows.forEach(row => {
+                row.classList.remove('selected');
+                const toggleBtn = row.querySelector('.scoping-select-btn');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fas fa-plus me-1"></i>Pilih';
+                    toggleBtn.classList.add('btn-outline-primary');
+                    toggleBtn.classList.remove('btn-primary');
+                }
+            });
+        }
+        this.updateScopingSummary();
+    }
+
     applyObjectiveFilter(objectiveId) {
         this.activeObjectiveFilter = objectiveId || 'all';
         this.updateObjectiveVisibility();
@@ -662,6 +843,16 @@ class COBITAssessmentManager {
         const cards = this.objectiveCards.length ? this.objectiveCards : Array.from(document.querySelectorAll('.objective-card'));
         const noResultsDiv = document.getElementById('no-results');
         let visibleCount = 0;
+
+        if (this.activeWorkflow === 'scoping') {
+            cards.forEach(card => {
+                card.style.display = 'none';
+            });
+            if (noResultsDiv) {
+                noResultsDiv.style.display = 'none';
+            }
+            return;
+        }
 
         if (this.activeDomainFilter === 'recap') {
             cards.forEach(card => {
@@ -676,12 +867,11 @@ class COBITAssessmentManager {
         cards.forEach(card => {
             const cardDomain = card.getAttribute('data-domain');
             const cardObjective = card.getAttribute('data-objective-id');
-            const matchesDomain = this.activeDomainFilter === 'all'
-                || this.activeDomainFilter === 'recap'
-                || cardDomain === this.activeDomainFilter;
+            const matchesDomain = this.activeDomainFilter === 'all' || cardDomain === this.activeDomainFilter;
             const matchesObjective = this.activeObjectiveFilter === 'all' || cardObjective === this.activeObjectiveFilter;
+            const matchesScoping = !this.appliedScopingObjectives.size || this.appliedScopingObjectives.has(cardObjective);
 
-            if (matchesDomain && matchesObjective) {
+            if (matchesDomain && matchesObjective && matchesScoping) {
                 card.style.display = 'block';
                 visibleCount++;
             } else {
@@ -734,24 +924,80 @@ class COBITAssessmentManager {
         });
     }
 
+    scheduleInitialDataLoad() {
+        const loadTask = () => this.loadAssessment();
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            requestIdleCallback(loadTask);
+        } else {
+            setTimeout(loadTask, 0);
+        }
+    }
+
+    queueObjectiveUpdate(objectiveId, level) {
+        if (!objectiveId || level === undefined || level === null) {
+            return;
+        }
+        if (!this.pendingObjectiveUpdates.has(objectiveId)) {
+            this.pendingObjectiveUpdates.set(objectiveId, new Set());
+        }
+        this.pendingObjectiveUpdates.get(objectiveId).add(level);
+
+        if (this.objectiveUpdateScheduled) {
+            return;
+        }
+
+        this.objectiveUpdateScheduled = true;
+        const scheduler = (typeof window !== 'undefined' && (window.requestIdleCallback || window.requestAnimationFrame))
+            ? (window.requestIdleCallback || window.requestAnimationFrame)
+            : (callback) => setTimeout(callback, 16);
+
+        scheduler(() => this.flushObjectiveUpdates());
+    }
+
+    flushObjectiveUpdates() {
+        this.objectiveUpdateScheduled = false;
+        if (!this.pendingObjectiveUpdates.size) {
+            return;
+        }
+
+        this.pendingObjectiveUpdates.forEach((levels, objectiveId) => {
+            levels.forEach(level => {
+                this.updateLevelCapability(objectiveId, level);
+                this.checkLevelLock(objectiveId, level);
+            });
+            this.updateObjectiveCapabilityLevel(objectiveId);
+        });
+
+        this.pendingObjectiveUpdates.clear();
+        this.scheduleDomainChartRefresh(this.activeDomainFilter);
+    }
+
+    scheduleDomainChartRefresh(filter = this.activeDomainFilter) {
+        this.pendingDomainChartFilter = filter || 'all';
+        if (this.domainChartRefreshScheduled) {
+            return;
+        }
+
+        this.domainChartRefreshScheduled = true;
+        const scheduler = (typeof window !== 'undefined' && (window.requestIdleCallback || window.requestAnimationFrame))
+            ? (window.requestIdleCallback || window.requestAnimationFrame)
+            : (callback) => setTimeout(callback, 16);
+
+        scheduler(() => {
+            this.domainChartRefreshScheduled = false;
+            this.updateDomainChart(this.pendingDomainChartFilter);
+        });
+    }
+
     async saveAssessment() {
-        this.showLoading('Collecting assessment data...', 0);
-        
         try {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            this.updateLoadingProgress('Preparing data...', 20);
-            
             const fieldPayload = this.collectFieldData();
-            this.updateLoadingProgress('Building payload...', 40);
-            
             const assessmentData = {
                 assessmentData: this.levelScores,
                 notes: fieldPayload.notes,
                 evidence: fieldPayload.evidence
             };
 
-            this.updateLoadingProgress('Saving to server...', 60);
-            
             const response = await fetch(`/assessment-eval/${this.currentEvalId}/save`, {
                 method: 'POST',
                 headers: {
@@ -761,33 +1007,21 @@ class COBITAssessmentManager {
                 body: JSON.stringify(assessmentData)
             });
 
-            this.updateLoadingProgress('Processing response...', 90);
             const result = await response.json();
 
             if (response.ok) {
-                this.updateLoadingProgress('Saved successfully!', 100);
-                setTimeout(() => {
-                    this.hideLoading();
-                    this.showNotification('Assessment saved successfully!', 'success');
-                }, 500);
+                this.showNotification('Assessment saved successfully!', 'success');
             } else {
-                this.hideLoading();
                 this.showNotification(result.message || 'Failed to save assessment', 'error');
             }
         } catch (error) {
             console.error('Save error:', error);
-            this.hideLoading();
             this.showNotification('Failed to save assessment', 'error');
         }
     }
 
     async loadAssessment(triggeredManually = false) {
-        // Gunakan corner loading untuk non-blocking
-        this.showCornerLoading('Fetching assessment data...', 0);
-        
         try {
-            this.updateCornerProgress('Requesting data from server...', 10);
-            
             const response = await fetch(`/assessment-eval/${this.currentEvalId}/load`, {
                 method: 'GET',
                 headers: {
@@ -795,203 +1029,50 @@ class COBITAssessmentManager {
                 }
             });
 
-            this.updateCornerProgress('Processing response...', 30);
             const result = await response.json();
 
             if (response.ok && result.data) {
-                this.updateCornerProgress('Loading assessment data...', 50);
-                
-                // Populate data secara parallel dengan UI tetap responsive
-                await this.populateAssessmentDataParallel(result.data);
-                
-                this.updateCornerProgress('Complete!', 100);
-                setTimeout(() => {
-                    this.hideCornerLoading();
-                    if (triggeredManually) {
-                        this.showNotification('Assessment loaded successfully!', 'success');
-                    }
-                }, 500);
-            } else {
-                this.hideCornerLoading();
+                await this.populateAssessmentData(result.data);
                 if (triggeredManually) {
-                    this.showNotification(result.message || 'Failed to load assessment', 'error');
+                    this.showNotification('Assessment loaded successfully!', 'success');
                 }
+            } else if (!response.ok && triggeredManually) {
+                this.showNotification(result.message || 'Failed to load assessment', 'error');
             }
         } catch (error) {
             console.error('Load error:', error);
-            this.hideCornerLoading();
             if (triggeredManually) {
                 this.showNotification('Failed to load assessment', 'error');
             }
         }
     }
 
-    async populateAssessmentDataParallel(data) {
-        this.levelScores = {};
-        this.evidenceLibrary = new Set();
-        
-        // Clear fields dengan chunk size lebih kecil untuk smooth interaction
-        const allSelects = document.querySelectorAll('.activity-rating-select');
-        const allTextareas = document.querySelectorAll('.assessment-textarea');
-        const chunkSize = 25; // Smaller chunks = more responsive
-        
-        // Clear selects
-        for (let i = 0; i < allSelects.length; i += chunkSize) {
-            const chunk = Array.from(allSelects).slice(i, i + chunkSize);
-            chunk.forEach(select => select.value = '');
-            await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-        }
-        
-        // Clear textareas
-        for (let i = 0; i < allTextareas.length; i += chunkSize) {
-            const chunk = Array.from(allTextareas).slice(i, i + chunkSize);
-            chunk.forEach(textarea => textarea.value = '');
-            await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-        }
-
-        this.updateCornerProgress('Initializing scores...', 55);
-        
-        // Initialize level scores
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        for (const card of objectiveCards) {
-            const objectiveId = card.getAttribute('data-objective-id');
-            const levelSections = card.querySelectorAll('.capability-level-section');
-            
-            levelSections.forEach(section => {
-                const level = parseInt(section.getAttribute('data-level'));
-                this.initializeLevelScore(objectiveId, level);
-                
-                const activityInputs = section.querySelectorAll('.activity-rating-select');
-                activityInputs.forEach(input => {
-                    const activityId = input.getAttribute('data-activity-id');
-                    this.levelScores[objectiveId][level].activities[activityId] = 0;
-                });
-            });
-            await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-        }
-
-        this.updateCornerProgress('Loading notes and evidence...', 65);
-        
-        // Load notes and evidence
-        if (data.notes || data.evidence) {
-            const activityIds = new Set();
-            if (data.notes) Object.keys(data.notes).forEach(id => activityIds.add(id));
-            if (data.evidence) Object.keys(data.evidence).forEach(id => activityIds.add(id));
-
-            const activityIdsArray = Array.from(activityIds);
-            for (let i = 0; i < activityIdsArray.length; i += chunkSize) {
-                const chunk = activityIdsArray.slice(i, i + chunkSize);
-                
-                chunk.forEach(activityId => {
-                    const parsedNotes = this.parseNotePayload(
-                        data.notes ? data.notes[activityId] : null,
-                        data.evidence ? data.evidence[activityId] : null
-                    );
-
-                    // Use cached elements instead of querySelector
-                    const evidenceField = this.elementCache.evidenceInputs.get(activityId);
-                    const noteField = this.elementCache.noteInputs.get(activityId);
-                    if (evidenceField) evidenceField.value = parsedNotes.evidence || '';
-                    if (noteField) noteField.value = parsedNotes.note || '';
-                    this.addEvidenceToLibrary(parsedNotes.evidence);
-                });
-                
-                await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-            }
-        }
-
-        this.updateCornerProgress('Loading activity ratings...', 75);
-        
-        // Load activity data
-        if (data.activityData) {
-            const activityIds = Object.keys(data.activityData);
-            const totalActivities = activityIds.length;
-            
-            for (let i = 0; i < activityIds.length; i += chunkSize) {
-                const chunk = activityIds.slice(i, i + chunkSize);
-                
-                chunk.forEach(activityId => {
-                    const activityData = data.activityData[activityId];
-                    const levelAchieved = activityData.level_achieved;
-                    const capabilityLevel = activityData.capability_lvl;
-                    const objectiveId = activityData.objective_id;
-                    
-                    const ratingSelect = document.querySelector(`select.activity-rating-select[data-activity-id="${activityId}"]`);
-                    if (ratingSelect && objectiveId && capabilityLevel) {
-                        ratingSelect.value = levelAchieved;
-                        
-                        if (this.levelScores[objectiveId] && this.levelScores[objectiveId][capabilityLevel]) {
-                            this.levelScores[objectiveId][capabilityLevel].activities[activityId] = this.getRatingValue(levelAchieved);
-                            
-                            if (activityData.notes || activityData.evidence) {
-                                const parsedNotes = this.parseNotePayload(activityData.notes, activityData.evidence);
-                                this.levelScores[objectiveId][capabilityLevel].evidence[activityId] = parsedNotes.evidence || '';
-                                this.levelScores[objectiveId][capabilityLevel].notes[activityId] = parsedNotes.note || '';
-                                this.addEvidenceToLibrary(parsedNotes.evidence);
-                            }
-                            
-                            this.updateActivityScore(activityId, levelAchieved);
-                        }
-                    }
-                });
-                
-                // Update progress dynamically
-                const progress = 75 + Math.round((i / totalActivities) * 15);
-                this.updateCornerProgress(`Loading: ${Math.min(i + chunk.length, totalActivities)}/${totalActivities} activities`, progress);
-                
-                // Use requestAnimationFrame for smoother updates
-                await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-            }
-        }
-
-        this.updateCornerProgress('Refreshing dropdowns...', 92);
-        await this.refreshEvidenceDropdownsParallel();
-        
-        this.updateCornerProgress('Calculating scores...', 96);
-        await this.updateAllCalculationsParallel();
-    }
-
     async populateAssessmentData(data) {
         this.levelScores = {};
         this.evidenceLibrary = new Set();
         
-        const allSelects = document.querySelectorAll('.activity-rating-select');
-        const allTextareas = document.querySelectorAll('.assessment-textarea');
-        
-        // Clear in chunks untuk avoid blocking
-        const chunkSize = 100;
-        for (let i = 0; i < allSelects.length; i += chunkSize) {
-            const chunk = Array.from(allSelects).slice(i, i + chunkSize);
-            chunk.forEach(select => select.value = '');
-            if (i % 200 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
-        }
-        
-        for (let i = 0; i < allTextareas.length; i += chunkSize) {
-            const chunk = Array.from(allTextareas).slice(i, i + chunkSize);
-            chunk.forEach(textarea => textarea.value = '');
-            if (i % 200 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
-        }
+        document.querySelectorAll('.activity-rating-select').forEach(select => select.value = '');
+        document.querySelectorAll('.assessment-textarea').forEach(textarea => textarea.value = '');
 
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        objectiveCards.forEach(card => {
+        const objectiveCards = Array.from(document.querySelectorAll('.objective-card'));
+        await this.processInBatches(objectiveCards, 4, (card) => {
             const objectiveId = card.getAttribute('data-objective-id');
+            if (!objectiveId) {
+                return;
+            }
             const levelSections = card.querySelectorAll('.capability-level-section');
-            
+
             levelSections.forEach(section => {
                 const level = parseInt(section.getAttribute('data-level'));
                 this.initializeLevelScore(objectiveId, level);
-                
+
                 const activityInputs = section.querySelectorAll('.activity-rating-select');
                 const activityIds = new Set();
                 activityInputs.forEach(input => {
                     const activityId = input.getAttribute('data-activity-id');
                     activityIds.add(activityId);
                 });
-                
+
                 activityIds.forEach(activityId => {
                     this.levelScores[objectiveId][level].activities[activityId] = 0;
                 });
@@ -1026,131 +1107,58 @@ class COBITAssessmentManager {
         }
 
         if (data.activityData) {
-            const activityIds = Object.keys(data.activityData);
-            const totalActivities = activityIds.length;
-            const chunkSize = 50;
-            
-            for (let i = 0; i < activityIds.length; i += chunkSize) {
-                const chunk = activityIds.slice(i, i + chunkSize);
+            Object.keys(data.activityData).forEach(activityId => {
+                const activityData = data.activityData[activityId];
+                const levelAchieved = activityData.level_achieved;
+                const capabilityLevel = activityData.capability_lvl;
+                const objectiveId = activityData.objective_id;
                 
-                chunk.forEach(activityId => {
-                    const activityData = data.activityData[activityId];
-                    const levelAchieved = activityData.level_achieved;
-                    const capabilityLevel = activityData.capability_lvl;
-                    const objectiveId = activityData.objective_id;
+                const ratingSelect = document.querySelector(`select.activity-rating-select[data-activity-id="${activityId}"]`);
+                if (ratingSelect && objectiveId && capabilityLevel) {
+                    ratingSelect.value = levelAchieved;
                     
-                    const ratingSelect = document.querySelector(`select.activity-rating-select[data-activity-id="${activityId}"]`);
-                    if (ratingSelect && objectiveId && capabilityLevel) {
-                        ratingSelect.value = levelAchieved;
+                    if (this.levelScores[objectiveId] && this.levelScores[objectiveId][capabilityLevel]) {
+                        this.levelScores[objectiveId][capabilityLevel].activities[activityId] = this.getRatingValue(levelAchieved);
                         
-                        if (this.levelScores[objectiveId] && this.levelScores[objectiveId][capabilityLevel]) {
-                            this.levelScores[objectiveId][capabilityLevel].activities[activityId] = this.getRatingValue(levelAchieved);
-                            
-                            if (activityData.notes || activityData.evidence) {
-                                const parsedNotes = this.parseNotePayload(activityData.notes, activityData.evidence);
-                                this.levelScores[objectiveId][capabilityLevel].evidence[activityId] = parsedNotes.evidence || '';
-                                this.levelScores[objectiveId][capabilityLevel].notes[activityId] = parsedNotes.note || '';
-                                this.addEvidenceToLibrary(parsedNotes.evidence);
-                            }
-                            
-                            this.updateActivityScore(activityId, levelAchieved);
+                        if (activityData.notes || activityData.evidence) {
+                            const parsedNotes = this.parseNotePayload(activityData.notes, activityData.evidence);
+                            this.levelScores[objectiveId][capabilityLevel].evidence[activityId] = parsedNotes.evidence || '';
+                            this.levelScores[objectiveId][capabilityLevel].notes[activityId] = parsedNotes.note || '';
+                            this.addEvidenceToLibrary(parsedNotes.evidence);
                         }
+                        
+                        this.updateActivityScore(activityId, levelAchieved);
                     }
-                });
-                
-                // Update progress
-                const progress = 70 + Math.round((i / totalActivities) * 20);
-                this.updateLoadingProgress(`Loading activities: ${i + chunk.length}/${totalActivities}`, progress);
-                
-                // Yield to browser untuk avoid freeze
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
+                }
+            });
         }
 
-        this.updateLoadingProgress('Refreshing dropdowns...', 92);
-        await this.refreshEvidenceDropdowns();
-        
-        this.updateLoadingProgress('Calculating scores...', 96);
-        await this.updateAllCalculations();
+        this.refreshEvidenceDropdowns();
+        this.updateAllCalculations();
     }
 
-    async updateAllCalculationsParallel() {
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        const cardsArray = Array.from(objectiveCards);
-        
-        for (let i = 0; i < cardsArray.length; i++) {
-            const card = cardsArray[i];
+    updateAllCalculations() {
+        const objectiveCards = Array.from(document.querySelectorAll('.objective-card'));
+        if (!objectiveCards.length) {
+            this.updateDomainChart(this.activeDomainFilter);
+            return;
+        }
+
+        this.processInBatches(objectiveCards, 3, (card) => {
             const objectiveId = card.getAttribute('data-objective-id');
+            if (!objectiveId) {
+                return;
+            }
             const levelSections = card.querySelectorAll('.capability-level-section');
-            
             levelSections.forEach(section => {
                 const level = parseInt(section.getAttribute('data-level'));
                 this.updateLevelCapability(objectiveId, level);
                 this.checkLevelLock(objectiveId, level);
             });
-            
             this.updateObjectiveCapabilityLevel(objectiveId);
-            
-            // Yield every 3 objectives for smoother interaction
-            if (i % 3 === 0) {
-                await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-            }
-        }
-
-        this.updateDomainChart(this.activeDomainFilter);
-    }
-
-    async updateAllCalculationsParallel() {
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        const cardsArray = Array.from(objectiveCards);
-        
-        for (let i = 0; i < cardsArray.length; i++) {
-            const card = cardsArray[i];
-            const objectiveId = card.getAttribute('data-objective-id');
-            const levelSections = card.querySelectorAll('.capability-level-section');
-            
-            levelSections.forEach(section => {
-                const level = parseInt(section.getAttribute('data-level'));
-                this.updateLevelCapability(objectiveId, level);
-                this.checkLevelLock(objectiveId, level);
-            });
-            
-            this.updateObjectiveCapabilityLevel(objectiveId);
-            
-            // Yield every 3 objectives for smoother interaction
-            if (i % 3 === 0) {
-                await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-            }
-        }
-
-        this.updateDomainChart(this.activeDomainFilter);
-    }
-
-    async updateAllCalculations() {
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        const cardsArray = Array.from(objectiveCards);
-        
-        for (let i = 0; i < cardsArray.length; i++) {
-            const card = cardsArray[i];
-            const objectiveId = card.getAttribute('data-objective-id');
-            const levelSections = card.querySelectorAll('.capability-level-section');
-            
-            levelSections.forEach(section => {
-                const level = parseInt(section.getAttribute('data-level'));
-                this.updateLevelCapability(objectiveId, level);
-                this.checkLevelLock(objectiveId, level);
-            });
-            
-            // Update overall objective capability level
-            this.updateObjectiveCapabilityLevel(objectiveId);
-            
-            // Yield setiap 5 objectives
-            if (i % 5 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
-        }
-
-        this.updateDomainChart(this.activeDomainFilter);
+        }).then(() => {
+            this.scheduleDomainChartRefresh(this.activeDomainFilter);
+        });
     }
 
     collectFieldData() {
@@ -1207,117 +1215,137 @@ class COBITAssessmentManager {
     }
 
     setupDomainFiltering() {
-        const filterButtons = document.querySelectorAll('.domain-tab');
+        const filterButtons = document.querySelectorAll('.domain-tab[data-domain]');
         this.objectiveCards = this.objectiveCards.length ? this.objectiveCards : Array.from(document.querySelectorAll('.objective-card'));
+
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
+                const selectedDomain = button.getAttribute('data-domain') || 'all';
+
+                if (this.activeWorkflow === 'scoping') {
+                    this.activeWorkflow = 'domains';
+                    this.refreshWorkflowTabState();
+                    this.toggleScopingView(false);
+                }
+
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
 
-                const selectedDomain = button.getAttribute('data-domain');
+                if (selectedDomain === 'recap') {
+                    this.activeDomainFilter = 'recap';
+                    this.activeObjectiveFilter = 'all';
+                    this.renderObjectiveFilterTabs('recap');
+                    this.updateObjectiveVisibility();
+                    this.updateDomainChart('recap');
+                    return;
+                }
+
                 this.activeDomainFilter = selectedDomain;
                 this.activeObjectiveFilter = 'all';
-                this.renderObjectiveFilterTabs(selectedDomain);
+                if (this.activeDomainFilter !== 'recap') {
+                    this.toggleRecapStandalone(false);
+                }
+                this.renderObjectiveFilterTabs(this.activeDomainFilter);
                 this.updateObjectiveVisibility();
-                this.updateDomainChart(selectedDomain);
+                this.updateDomainChart(this.activeDomainFilter);
             });
         });
 
+        const initialActive = document.querySelector(`.domain-tab[data-domain="${this.activeDomainFilter}"]`);
+        if (initialActive) {
+            initialActive.classList.add('active');
+        }
         this.renderObjectiveFilterTabs(this.activeDomainFilter);
         this.updateObjectiveVisibility();
+        this.updateDomainChart(this.activeDomainFilter);
     }
 
     setupAssessmentToggles() {
-        const toggleButtons = document.querySelectorAll('.toggle-level-details');
-        
-        toggleButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const objectiveId = button.getAttribute('data-objective-id');
-                const level = button.getAttribute('data-level');
-                const assessmentSection = document.getElementById(`assessment-${objectiveId}-${level}`);
-                const icon = button.querySelector('.toggle-icon');
-                const text = button.querySelector('.toggle-text');
-                
-                if (text.textContent === 'Locked') {
-                    return;
-                }
-                
-                if (assessmentSection.style.display === 'none' || !assessmentSection.style.display) {
-                    assessmentSection.style.display = 'block';
-                    assessmentSection.style.animation = 'slideDown 0.3s ease-out';
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                    text.textContent = 'Hide Assessment';
-                } else {
-                    assessmentSection.style.display = 'none';
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                    text.textContent = 'Start Assessment';
-                }
-            });
+        const objectivesContainer = document.getElementById('objectives-container');
+        if (!objectivesContainer) {
+            return;
+        }
+
+        objectivesContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('.toggle-level-details');
+            if (!button || !objectivesContainer.contains(button)) {
+                return;
+            }
+
+            const objectiveId = button.getAttribute('data-objective-id');
+            const level = button.getAttribute('data-level');
+            const assessmentSection = document.getElementById(`assessment-${objectiveId}-${level}`);
+            const icon = button.querySelector('.toggle-icon');
+            const text = button.querySelector('.toggle-text');
+
+            if (!assessmentSection || !icon || !text || text.textContent === 'Locked') {
+                return;
+            }
+
+            if (assessmentSection.style.display === 'none' || !assessmentSection.style.display) {
+                assessmentSection.style.display = 'block';
+                assessmentSection.style.animation = 'slideDown 0.3s ease-out';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                text.textContent = 'Hide Assessment';
+            } else {
+                assessmentSection.style.display = 'none';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                text.textContent = 'Start Assessment';
+            }
         });
     }
 
     setupActivityRating() {
-        const ratingInputs = document.querySelectorAll('.activity-rating-select');
-        const evidenceTextareas = document.querySelectorAll('.evidence-input');
-        const noteTextareas = document.querySelectorAll('.note-input');
-        const evidenceSelects = document.querySelectorAll('.evidence-history-select');
-        
-        ratingInputs.forEach(select => {
-            select.addEventListener('change', () => {
-                const activityId = select.getAttribute('data-activity-id');
-                const objectiveId = select.getAttribute('data-objective-id');
-                const level = parseInt(select.getAttribute('data-level'));
-                const rating = select.value;
-                
+        const objectivesContainer = document.getElementById('objectives-container');
+        if (!objectivesContainer) {
+            return;
+        }
+
+        objectivesContainer.addEventListener('change', (event) => {
+            const target = event.target;
+            if (target.classList.contains('activity-rating-select')) {
+                const activityId = target.getAttribute('data-activity-id');
+                const objectiveId = target.getAttribute('data-objective-id');
+                const level = parseInt(target.getAttribute('data-level'));
+                const rating = target.value;
+
                 if (rating) {
                     this.setActivityRating(objectiveId, level, activityId, rating);
-                    this.updateActivityScore(activityId, rating);
+                    this.updateActivityScore(activityId, rating, target);
                 } else {
                     this.clearActivityRating(objectiveId, level, activityId);
-                    this.updateActivityScore(activityId, null);
+                    this.updateActivityScore(activityId, null, target);
                 }
-                this.updateLevelCapability(objectiveId, level);
-                this.checkAllLevelLocks(objectiveId);
-            });
-        });
-
-        evidenceTextareas.forEach(textarea => {
-            textarea.addEventListener('input', () => {
-                const activityId = textarea.getAttribute('data-activity-id');
-                const objectiveId = textarea.getAttribute('data-objective-id');
-                const level = parseInt(textarea.getAttribute('data-level'));
-                const evidence = textarea.value;
-                
-                this.setActivityEvidence(objectiveId, level, activityId, evidence);
-            });
-        });
-
-        noteTextareas.forEach(textarea => {
-            textarea.addEventListener('input', () => {
-                const activityId = textarea.getAttribute('data-activity-id');
-                const objectiveId = textarea.getAttribute('data-objective-id');
-                const level = parseInt(textarea.getAttribute('data-level'));
-                const note = textarea.value;
-
-                this.setActivityNote(objectiveId, level, activityId, note);
-            });
-        });
-
-        evidenceSelects.forEach(select => {
-            select.addEventListener('change', () => {
-                const selectedEvidence = select.value;
+                this.queueObjectiveUpdate(objectiveId, level);
+            } else if (target.classList.contains('evidence-history-select')) {
+                const selectedEvidence = target.value;
                 if (!selectedEvidence) {
                     return;
                 }
-                const wrapper = select.closest('.evidence-input-wrapper');
+                const wrapper = target.closest('.evidence-input-wrapper');
                 const textarea = wrapper ? wrapper.querySelector('.evidence-input') : null;
                 if (textarea) {
                     textarea.value = selectedEvidence;
                     textarea.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-            });
+            }
+        });
+
+        objectivesContainer.addEventListener('input', (event) => {
+            const target = event.target;
+            if (target.classList.contains('evidence-input')) {
+                const activityId = target.getAttribute('data-activity-id');
+                const objectiveId = target.getAttribute('data-objective-id');
+                const level = parseInt(target.getAttribute('data-level'));
+                this.setActivityEvidence(objectiveId, level, activityId, target.value);
+            } else if (target.classList.contains('note-input')) {
+                const activityId = target.getAttribute('data-activity-id');
+                const objectiveId = target.getAttribute('data-objective-id');
+                const level = parseInt(target.getAttribute('data-level'));
+                this.setActivityNote(objectiveId, level, activityId, target.value);
+            }
         });
     }
 
@@ -1358,9 +1386,8 @@ class COBITAssessmentManager {
         }
     }
 
-    updateActivityScore(activityId, rating) {
-        // Use cached element
-        const ratingSelect = this.elementCache.ratingSelects.get(activityId);
+    updateActivityScore(activityId, rating, ratingSelectElement = null) {
+        const ratingSelect = ratingSelectElement || document.querySelector(`select.activity-rating-select[data-activity-id="${activityId}"]`);
         if (ratingSelect) {
             ratingSelect.classList.remove('rating-full', 'rating-high', 'rating-medium', 'rating-low');
             if (rating === 'F') {
@@ -1376,7 +1403,13 @@ class COBITAssessmentManager {
     }
 
     updateLevelCapability(objectiveId, level) {
+        if (!this.levelScores[objectiveId]) {
+            return;
+        }
         const levelData = this.levelScores[objectiveId][level];
+        if (!levelData) {
+            return;
+        }
         const totalActivities = this.getTotalActivitiesForLevel(objectiveId, level);
         const ratedActivities = Object.keys(levelData.activities).length;
         
@@ -1535,9 +1568,18 @@ class COBITAssessmentManager {
     }
 
     getTotalActivitiesForLevel(objectiveId, level) {
+        if (this.objectiveLevelActivityCounts[objectiveId] && typeof this.objectiveLevelActivityCounts[objectiveId][level] === 'number') {
+            return this.objectiveLevelActivityCounts[objectiveId][level];
+        }
+
         const assessmentSection = document.getElementById(`assessment-${objectiveId}-${level}`);
         if (assessmentSection) {
-            return assessmentSection.querySelectorAll('.activity-rating-select').length;
+            const count = assessmentSection.querySelectorAll('.activity-rating-select').length;
+            if (!this.objectiveLevelActivityCounts[objectiveId]) {
+                this.objectiveLevelActivityCounts[objectiveId] = {};
+            }
+            this.objectiveLevelActivityCounts[objectiveId][level] = count;
+            return count;
         }
         return 0;
     }
@@ -1575,44 +1617,7 @@ class COBITAssessmentManager {
         this.refreshEvidenceDropdowns();
     }
 
-    async refreshEvidenceDropdownsParallel() {
-        const selects = document.querySelectorAll('.evidence-history-select');
-        if (!selects.length) return;
-        
-        const evidenceList = Array.from(this.evidenceLibrary)
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
-        
-        const chunkSize = 25; // Smaller for better responsiveness
-        const selectsArray = Array.from(selects);
-        
-        for (let i = 0; i < selectsArray.length; i += chunkSize) {
-            const chunk = selectsArray.slice(i, i + chunkSize);
-            
-            chunk.forEach(select => {
-                const placeholder = select.getAttribute('data-placeholder') || 'Select saved evidence';
-                const currentValue = select.value;
-                select.innerHTML = '';
-
-                const placeholderOption = document.createElement('option');
-                placeholderOption.value = '';
-                placeholderOption.textContent = `${placeholder}...`;
-                select.appendChild(placeholderOption);
-
-                evidenceList.forEach(entry => {
-                    const option = document.createElement('option');
-                    option.value = entry;
-                    option.textContent = entry.length > 90 ? `${entry.slice(0, 87)}...` : entry;
-                    if (entry === currentValue) option.selected = true;
-                    select.appendChild(option);
-                });
-            });
-            
-            await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-        }
-    }
-
-    async refreshEvidenceDropdowns() {
+    refreshEvidenceDropdowns() {
         const selects = document.querySelectorAll('.evidence-history-select');
         if (!selects.length) {
             return;
@@ -1620,44 +1625,35 @@ class COBITAssessmentManager {
         const evidenceList = Array.from(this.evidenceLibrary)
             .filter(Boolean)
             .sort((a, b) => a.localeCompare(b));
-        
-        const chunkSize = 50;
-        const selectsArray = Array.from(selects);
-        
-        for (let i = 0; i < selectsArray.length; i += chunkSize) {
-            const chunk = selectsArray.slice(i, i + chunkSize);
-            
-            chunk.forEach(select => {
-                const placeholder = select.getAttribute('data-placeholder') || 'Select saved evidence';
-                const currentValue = select.value;
-                select.innerHTML = '';
+        selects.forEach(select => {
+            const placeholder = select.getAttribute('data-placeholder') || 'Select saved evidence';
+            const currentValue = select.value;
+            select.innerHTML = '';
 
-                const placeholderOption = document.createElement('option');
-                placeholderOption.value = '';
-                placeholderOption.textContent = `${placeholder}...`;
-                select.appendChild(placeholderOption);
+            const placeholderOption = document.createElement('option');
+            placeholderOption.value = '';
+            placeholderOption.textContent = `${placeholder}...`;
+            select.appendChild(placeholderOption);
 
-                evidenceList.forEach(entry => {
-                    const option = document.createElement('option');
-                    option.value = entry;
-                    option.textContent = entry.length > 90 ? `${entry.slice(0, 87)}...` : entry;
-                    if (entry === currentValue) {
-                        option.selected = true;
-                    }
-                    select.appendChild(option);
-                });
+            evidenceList.forEach(entry => {
+                const option = document.createElement('option');
+                option.value = entry;
+                option.textContent = entry.length > 90 ? `${entry.slice(0, 87)}...` : entry;
+                if (entry === currentValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
             });
-            
-            // Yield to browser
-            if (i % 100 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
-        }
+        });
     }
 
     updateDomainChart(selectedDomain = 'all') {
         if (!this.domainChartContainer || !this.domainChartRows) {
             return;
+        }
+
+        if (selectedDomain === 'scoping') {
+            selectedDomain = 'all';
         }
 
         if (!selectedDomain || selectedDomain === 'all') {
@@ -1873,6 +1869,33 @@ class COBITAssessmentManager {
         return names[domainCode] || domainCode;
     }
 
+    processInBatches(items, batchSize, handler) {
+        return new Promise(resolve => {
+            const list = Array.isArray(items) ? items : Array.from(items || []);
+            if (!list.length || typeof handler !== 'function') {
+                resolve();
+                return;
+            }
+
+            let index = 0;
+            const runner = () => {
+                const end = Math.min(index + batchSize, list.length);
+                for (let i = index; i < end; i++) {
+                    handler(list[i], i);
+                }
+                index = end;
+                if (index < list.length) {
+                    const schedule = window.requestAnimationFrame || function(cb) { return setTimeout(cb, 0); };
+                    schedule(runner);
+                } else {
+                    resolve();
+                }
+            };
+
+            runner();
+        });
+    }
+
     parseNotePayload(rawValue, rawEvidence = null) {
         const emptyPayload = { evidence: '', note: '' };
         if (rawEvidence !== null && rawEvidence !== undefined) {
@@ -2016,18 +2039,34 @@ document.addEventListener('DOMContentLoaded', () => {
     font-size: 0.75rem;
 }
 
+
 .domain-tabs-wrapper {
     background: #f7f9ff;
     border-radius: 0.8rem;
-    padding: 0.75rem 1rem 0.25rem;
+    padding: 0.9rem 1rem;
     border: 1px solid #e1e6f5;
 }
 
-.domain-tabs {
+.domain-tabs-scroll {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    justify-content: space-between;
+    gap: 0.65rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7cee6 transparent;
+}
+
+.domain-tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.domain-tabs-scroll::-webkit-scrollbar-thumb {
+    background: #cbd2eb;
+    border-radius: 999px;
+}
+
+.domain-tabs-scroll::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .domain-tab {
@@ -2051,6 +2090,30 @@ document.addEventListener('DOMContentLoaded', () => {
     color: #fff;
     box-shadow: 0 12px 24px rgba(15,106,217,0.25);
 }
+
+.workflow-tab {
+    border: 1px dashed rgba(15,106,217,0.4);
+    background: rgba(15,106,217,0.06);
+    color: #0f2b5c;
+    padding: 0.4rem 1.4rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.workflow-tab:hover {
+    background: rgba(15,106,217,0.15);
+}
+
+.workflow-tab.active {
+    background: linear-gradient(120deg, #0f6ad9, #0c4fb5);
+    color: #fff;
+    border-style: solid;
+    box-shadow: 0 12px 24px rgba(15,106,217,0.25);
+}
+
 
 .objective-filter-wrapper {
     margin-top: 0.75rem;
@@ -2209,7 +2272,36 @@ document.addEventListener('DOMContentLoaded', () => {
     color: #42507a;
     font-weight: 600;
     text-transform: uppercase;
+.recap-standalone-wrapper {
+    border: 1px solid #e2e8fb;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 18px 40px rgba(15,43,92,0.08);
+    padding: 1.5rem;
+}
+.recap-standalone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.recap-label {
     font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6f7a98;
+    margin-bottom: 0.2rem;
+}
+.recap-title {
+    margin: 0;
+    font-weight: 700;
+    color: #0f2b5c;
+}
+.recap-pill {
+    background: #0f2b5c;
+    color: #fff;
+    letter-spacing: 0.08em;
+}
     letter-spacing: 0.04em;
     border-bottom: 1px solid #e2e8fb;
 }
@@ -2220,6 +2312,109 @@ document.addEventListener('DOMContentLoaded', () => {
 
 .recap-table tbody tr:hover {
     background: #f0f4ff;
+}
+
+.scoping-panel {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 25px 60px rgba(9, 18, 56, 0.12) !important;
+}
+
+.scoping-panel-header {
+    background: #081a3d;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.scoping-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.scoping-pill {
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    background: rgba(255,255,255,0.15);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.scoping-panel-body {
+    background: #fdfdff;
+}
+
+.scoping-table-wrapper {
+    border: 1px solid #e1e6f5;
+    border-radius: 0.9rem;
+    background: #fff;
+    padding: 0.75rem;
+}
+
+.scoping-table thead th {
+    background: #f6f8ff;
+    color: #42507a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.82rem;
+    border-bottom: 1px solid #dbe2fb;
+}
+
+.scoping-table tbody tr {
+    border-color: #eef2ff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.scoping-table tbody tr:hover {
+    background: #f3f7ff;
+}
+
+.scoping-row.selected {
+    background: #e8f1ff;
+    box-shadow: inset 0 0 0 1px rgba(15,106,217,0.25);
+}
+
+.scoping-gamo-code {
+    font-weight: 700;
+    color: #0f2b5c;
+    letter-spacing: 0.05em;
+}
+
+.scoping-gamo-name {
+    font-weight: 600;
+    color: #0f2b5c;
+}
+
+.scoping-select-btn {
+    font-weight: 600;
+    min-width: 110px;
+}
+
+.scoping-selection-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e1e6f5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.scoping-selection-summary {
+    font-weight: 600;
+    color: #0f2b5c;
+}
+
+.scoping-selection-actions {
+    display: flex;
+    gap: 0.75rem;
 }
 
 .recap-domain-pill {
@@ -2702,158 +2897,5 @@ document.addEventListener('DOMContentLoaded', () => {
     transition: all 0.3s ease;
 }
 
-/* Loading Overlay Styles */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 43, 92, 0.95);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.3s ease;
-}
-
-.loading-content {
-    text-align: center;
-    color: #fff;
-    max-width: 400px;
-    padding: 2rem;
-}
-
-.loading-spinner {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    border: 6px solid rgba(255, 255, 255, 0.2);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.loading-text {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    letter-spacing: 0.03em;
-}
-
-.loading-progress-container {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    overflow: hidden;
-    margin-bottom: 1rem;
-}
-
-.loading-progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #0f6ad9, #00d4ff);
-    border-radius: 999px;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-}
-
-.loading-percentage {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #00d4ff;
-    text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-    letter-spacing: 0.05em;
-}
-
-/* Corner Loading Indicator (Non-blocking) */
-.corner-loading {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1040;
-    background: linear-gradient(135deg, #0f2b5c, #1a3d6b);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(15, 43, 92, 0.4);
-    padding: 16px 20px;
-    min-width: 280px;
-    opacity: 0;
-    transform: translateX(350px);
-    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    pointer-events: none;
-}
-
-.corner-loading.show {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.corner-loading-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-}
-
-.corner-spinner {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top-color: #00d4ff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-.corner-loading-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.corner-loading-text {
-    color: #fff;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    line-height: 1.3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.corner-loading-progress {
-    width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 999px;
-    overflow: hidden;
-    margin-bottom: 6px;
-}
-
-.corner-progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #0f6ad9, #00d4ff);
-    border-radius: 999px;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
-}
-
-.corner-loading-percentage {
-    color: #00d4ff;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-align: right;
-}
-
-@media (max-width: 768px) {
-    .corner-loading {
-        right: 10px;
-        top: 10px;
-        min-width: 240px;
-    }
-}
 </style>
 @endsection
