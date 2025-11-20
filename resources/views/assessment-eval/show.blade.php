@@ -71,13 +71,25 @@
                         </div>
                         <span class="domain-level-pill" id="domain-level-pill">EDM</span>
                     </div>
-                    <div class="domain-level-table">
-                        <div class="domain-level-table-head">
-                            <span>Objective</span>
-                            <span>Capability Progress</span>
-                            <span class="text-end">Level Saat Ini</span>
-                        </div>
-                        <div id="domain-level-rows"></div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th rowspan="2" style="width: 10%; vertical-align: middle;">Gamo</th>
+                                    <th rowspan="2" style="width: 25%; vertical-align: middle;">Gamo Name</th>
+                                    <th colspan="5" class="text-center">Level</th>
+                                    <th rowspan="2" class="text-center" style="width: 15%; vertical-align: middle;">Rating</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center" style="width: 10%">1</th>
+                                    <th class="text-center" style="width: 10%">2</th>
+                                    <th class="text-center" style="width: 10%">3</th>
+                                    <th class="text-center" style="width: 10%">4</th>
+                                    <th class="text-center" style="width: 10%">5</th>
+                                </tr>
+                            </thead>
+                            <tbody id="domain-level-rows"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1770,10 +1782,22 @@ class COBITAssessmentManager {
             const objectiveId = card.getAttribute('data-objective-id');
             const objectiveName = card.getAttribute('data-objective-name') || objectiveId;
             const currentLevel = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 1, 1), 5);
+            
+            // Get ratings for each level
+            const ratings = {};
+            for(let i=1; i<=5; i++) {
+                if (this.levelScores[objectiveId] && this.levelScores[objectiveId][i]) {
+                    ratings[i] = this.levelScores[objectiveId][i].letter; // N, P, L, F
+                } else {
+                    ratings[i] = 'N'; // Default if not initialized
+                }
+            }
+
             return {
                 objectiveId,
                 objectiveName,
-                level: currentLevel
+                level: currentLevel,
+                ratings: ratings
             };
         }).sort((a, b) => a.objectiveId.localeCompare(b.objectiveId, undefined, { numeric: true }));
 
@@ -1852,10 +1876,28 @@ class COBITAssessmentManager {
             <tr>
                 <th style="width:60px;">No</th>
                 <th style="width:110px;">Domain</th>
-                <th>Gamo / Objective</th>
-                <th style="width:140px;" class="text-center">Level</th>
+                <th style="width:100px;">Gamo</th>
+                <th>Gamo Name</th>
+                <th style="width:100px;" class="text-center">Level</th>
             </tr>
         `;
+
+        // Level Colors Mapping (Same as Domain Chart)
+        const levelColors = {
+            1: '#f97316', // Orange
+            2: '#facc15', // Yellow
+            3: '#86efac', // Light Green
+            4: '#15803d', // Green
+            5: '#0f6ad9'  // Blue
+        };
+        
+        const levelTextColors = {
+            1: '#fff',
+            2: '#7a5d07',
+            3: '#065f46',
+            4: '#fff',
+            5: '#fff'
+        };
 
         const tbody = document.createElement('tbody');
         data.forEach((row, index) => {
@@ -1863,18 +1905,28 @@ class COBITAssessmentManager {
             const safeDomain = this.escapeHtml(row.domain);
             const safeObjectiveId = this.escapeHtml(row.objectiveId);
             const safeObjectiveName = this.escapeHtml(row.objectiveName);
+            
+            const level = row.level;
+            const bgColor = levelColors[level] || '#f8f9fa';
+            const textColor = levelTextColors[level] || '#6c757d';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="text-center fw-semibold">${index + 1}</td>
-                <td>
-                    <span class="recap-domain-pill domain-pill-${domainCode}">${safeDomain}</span>
+                <td class="fw-bold text-secondary">
+                    ${safeDomain}
                 </td>
                 <td>
-                    <div class="recap-objective-code">${safeObjectiveId}</div>
-                    <div class="recap-objective-name">${safeObjectiveName}</div>
+                    <span class="fw-bold text-primary">${safeObjectiveId}</span>
                 </td>
-                <td class="text-center">
-                    <span class="level-badge level-badge-${row.level}">Level ${row.level}</span>
+                <td>
+                    <span class="small text-muted">${safeObjectiveName}</span>
+                </td>
+                <td class="text-center p-0">
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center fw-bold" 
+                         style="min-height: 40px; background-color: ${bgColor}; color: ${textColor};">
+                        Level ${level}
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1904,43 +1956,70 @@ class COBITAssessmentManager {
         this.recapStandaloneWrapper.style.display = 'block';
     }
 
-    createDomainChartRow({ objectiveId, objectiveName, level, meta = {} }) {
-        const row = document.createElement('div');
-        row.className = 'domain-level-row';
+    createDomainChartRow({ objectiveId, objectiveName, level, ratings = {}, meta = {} }) {
+        const tr = document.createElement('tr');
 
-        const label = document.createElement('div');
-        label.className = 'domain-level-objective';
-        label.innerHTML = `<strong>${objectiveId}</strong><span>${objectiveName}</span>`;
+        // Gamo Column (ID)
+        const tdGamo = document.createElement('td');
+        tdGamo.innerHTML = `<span class="fw-bold text-primary">${objectiveId}</span>`;
+        tr.appendChild(tdGamo);
 
-        const bar = document.createElement('div');
-        bar.className = 'domain-level-bar';
+        // Gamo Name Column
+        const tdGamoName = document.createElement('td');
+        tdGamoName.innerHTML = `<span class="small text-muted text-truncate d-block" style="max-width: 300px;" title="${objectiveName}">${objectiveName}</span>`;
+        tr.appendChild(tdGamoName);
+
+        // Level Colors Mapping
+        const levelColors = {
+            1: '#f97316', // Orange
+            2: '#facc15', // Yellow
+            3: '#86efac', // Light Green
+            4: '#15803d', // Green
+            5: '#0f6ad9'  // Blue
+        };
+        
+        const levelTextColors = {
+            1: '#fff',
+            2: '#7a5d07',
+            3: '#065f46',
+            4: '#fff',
+            5: '#fff'
+        };
+
+        // Level 1-5 Columns
         for (let i = 1; i <= 5; i++) {
-            const segment = document.createElement('span');
-            segment.className = 'level-segment';
-            segment.classList.add(`level-tier-${i}`);
-            segment.textContent = i;
+            const tdLevel = document.createElement('td');
+            tdLevel.className = 'text-center p-0'; // Remove padding to fill the cell
+            
             if (i <= level) {
-                segment.classList.add('active');
+                // Active level - Full Block Color
+                tdLevel.style.backgroundColor = levelColors[i];
+                tdLevel.style.color = levelTextColors[i];
+                tdLevel.innerHTML = `<div class="w-100 h-100 d-flex align-items-center justify-content-center fw-bold" style="min-height: 30px; font-size: 0.9rem;">${i}</div>`;
+            } else {
+                // Inactive
+                tdLevel.style.backgroundColor = '#f8f9fa';
+                tdLevel.innerHTML = `<div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="min-height: 30px; opacity: 0.3; font-size: 0.9rem;">-</div>`;
             }
-            bar.appendChild(segment);
+            tr.appendChild(tdLevel);
         }
 
-        const currentLevel = document.createElement('div');
-        currentLevel.className = 'domain-level-current';
+        // Rating Column (Previously Level Saat Ini)
+        const tdCurrent = document.createElement('td');
+        tdCurrent.className = 'text-center';
+        
+        const currentRatingLetter = ratings[level] || 'N';
         const averageNote = meta && typeof meta.average === 'number'
-            ? `<small>Rata-rata ${meta.average.toFixed(2)}</small>`
+            ? `<div class="mt-1"><small class="text-muted">Avg: ${meta.average.toFixed(2)}</small></div>`
             : '';
-        currentLevel.innerHTML = `
-            <span class="level-badge level-badge-${level}" data-level="${level}">
-                <strong>Level ${level}</strong>
-                ${averageNote}
-            </span>
+        
+        tdCurrent.innerHTML = `
+            <span class="fw-bold" style="font-size: 1rem;">${level} ${currentRatingLetter}</span>
+            ${averageNote}
         `;
+        tr.appendChild(tdCurrent);
 
-        row.appendChild(label);
-        row.appendChild(bar);
-        row.appendChild(currentLevel);
-        return row;
+        return tr;
     }
 
     getDomainFullName(domainCode) {
