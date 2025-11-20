@@ -385,6 +385,12 @@ class COBITAssessmentManager {
             elements: new Map(),
             data: new Map()
         };
+        this.elementCache = {
+            ratingSelects: new Map(),
+            evidenceInputs: new Map(),
+            noteInputs: new Map(),
+            evidenceDropdowns: new Map()
+        };
         this.init();
     }
 
@@ -451,6 +457,33 @@ class COBITAssessmentManager {
         });
     }
 
+    resetAssessmentFields() {
+        this.levelScores = {};
+        this.objectiveCapabilityLevels = {};
+        this.evidenceLibrary = new Set();
+
+        if (this.elementCache.ratingSelects) {
+            this.elementCache.ratingSelects.forEach(select => {
+                select.value = '';
+                select.classList.remove('rating-full', 'rating-high', 'rating-medium', 'rating-low');
+            });
+        }
+
+        if (this.elementCache.evidenceInputs) {
+            this.elementCache.evidenceInputs.forEach(textarea => {
+                textarea.value = '';
+            });
+        }
+
+        if (this.elementCache.noteInputs) {
+            this.elementCache.noteInputs.forEach(textarea => {
+                textarea.value = '';
+            });
+        }
+
+        this.initializeDefaultStates();
+    }
+
     initializeLevelScore(objectiveId, level) {
         if (!this.levelScores[objectiveId]) {
             this.levelScores[objectiveId] = {};
@@ -505,12 +538,24 @@ class COBITAssessmentManager {
         document.querySelectorAll('.note-input').forEach(el => {
             this.elementCache.noteInputs.set(el.dataset.activityId, el);
         });
+
+        document.querySelectorAll('.evidence-history-select').forEach(el => {
+            this.elementCache.evidenceDropdowns.set(el.dataset.activityId, el);
+        });
         
         console.log('Element cache built:', {
             ratings: this.elementCache.ratingSelects.size,
             evidence: this.elementCache.evidenceInputs.size,
-            notes: this.elementCache.noteInputs.size
+            notes: this.elementCache.noteInputs.size,
+            evidenceDropdowns: this.elementCache.evidenceDropdowns.size
         });
+    }
+
+    getEvidenceSelectElements() {
+        if (this.elementCache && this.elementCache.evidenceDropdowns.size) {
+            return Array.from(this.elementCache.evidenceDropdowns.values());
+        }
+        return Array.from(document.querySelectorAll('.evidence-history-select'));
     }
 
     showLoading(message = 'Loading...', percentage = 0) {
@@ -782,12 +827,15 @@ class COBITAssessmentManager {
     }
 
     async loadAssessment(triggeredManually = false) {
-        // Gunakan corner loading untuk non-blocking
-        this.showCornerLoading('Fetching assessment data...', 0);
+        const showLoadingFn = triggeredManually ? this.showLoading.bind(this) : this.showCornerLoading.bind(this);
+        const updateProgressFn = triggeredManually ? this.updateLoadingProgress.bind(this) : this.updateCornerProgress.bind(this);
+        const hideLoadingFn = triggeredManually ? this.hideLoading.bind(this) : this.hideCornerLoading.bind(this);
+
+        showLoadingFn('Fetching assessment data...', 5);
         
         try {
-            this.updateCornerProgress('Requesting data from server...', 10);
-            
+            updateProgressFn('Requesting data from server...', 15);
+
             const response = await fetch(`/assessment-eval/${this.currentEvalId}/load`, {
                 method: 'GET',
                 headers: {
@@ -795,31 +843,116 @@ class COBITAssessmentManager {
                 }
             });
 
-            this.updateCornerProgress('Processing response...', 30);
             const result = await response.json();
 
-            if (response.ok && result.data) {
-                this.updateCornerProgress('Loading assessment data...', 50);
-                
-                // Populate data secara parallel dengan UI tetap responsive
-                await this.populateAssessmentDataParallel(result.data);
-                
-                this.updateCornerProgress('Complete!', 100);
-                setTimeout(() => {
-                    this.hideCornerLoading();
-                    if (triggeredManually) {
-                        this.showNotification('Assessment loaded successfully!', 'success');
-                    }
-                }, 500);
-            } else {
-                this.hideCornerLoading();
+            if (!response.ok || !result.data) {
+                hideLoadingFn();
                 if (triggeredManually) {
                     this.showNotification(result.message || 'Failed to load assessment', 'error');
                 }
+                return;
+            }
+
+            const data = result.data;
+            updateProgressFn('Resetting assessment fields...', 30);
+            this.resetAssessmentFields();
+
+            const aggregatedEvidence = {};
+            const aggregatedNotes = {};
+            const payloadKeys = new Set();
+            if (data.notes) {
+                Object.keys(data.notes).forEach(key => payloadKeys.add(key));
+            }
+            if (data.evidence) {
+                Object.keys(data.evidence).forEach(key => payloadKeys.add(key));
+            }
+
+            payloadKeys.forEach(activityId => {
+                const parsed = this.parseNotePayload(
+                    data.notes ? data.notes[activityId] : null,
+                    data.evidence ? data.evidence[activityId] : null
+                );
+                if (parsed.evidence !== undefined) {
+                    aggregatedEvidence[activityId] = parsed.evidence || '';
+                }
+                if (parsed.note !== undefined) {
+                    aggregatedNotes[activityId] = parsed.note || '';
+                }
+            });
+            const activityEntries = data.activityData ? Object.entries(data.activityData) : [];
+
+            activityEntries.forEach(([activityId, entry]) => {
+                const parsed = this.parseNotePayload(entry.notes, entry.evidence);
+                if (parsed.evidence !== undefined) {
+                    aggregatedEvidence[activityId] = parsed.evidence || '';
+                }
+                if (parsed.note !== undefined) {
+                    aggregatedNotes[activityId] = parsed.note || '';
+                }
+            });
+
+            updateProgressFn('Applying evidence and notes...', 55);
+            Object.entries(aggregatedEvidence).forEach(([activityId, evidenceValue]) => {
+                const textarea = this.elementCache.evidenceInputs.get(activityId);
+                if (textarea) {
+                    textarea.value = evidenceValue || '';
+                }
+                const meta = this.getActivityMeta(activityId);
+                if (meta) {
+                    this.setActivityEvidence(meta.objectiveId, meta.level, activityId, evidenceValue || '');
+                }
+                this.addEvidenceToLibrary(evidenceValue, { refresh: false });
+            });
+
+            Object.entries(aggregatedNotes).forEach(([activityId, noteValue]) => {
+                const textarea = this.elementCache.noteInputs.get(activityId);
+                if (textarea) {
+                    textarea.value = noteValue || '';
+                }
+                const meta = this.getActivityMeta(activityId);
+                if (meta) {
+                    this.setActivityNote(meta.objectiveId, meta.level, activityId, noteValue || '');
+                }
+            });
+
+            updateProgressFn('Building evidence dropdowns...', 70);
+            await this.refreshEvidenceDropdowns();
+
+            updateProgressFn('Applying ratings...', 85);
+            activityEntries.forEach(([activityId, entry]) => {
+                const objectiveId = entry.objective_id;
+                const capabilityLevel = entry.capability_lvl;
+                const levelAchieved = entry.level_achieved;
+                const ratingSelect = this.elementCache.ratingSelects.get(activityId);
+
+                if (ratingSelect) {
+                    ratingSelect.value = levelAchieved || '';
+                }
+
+                if (objectiveId && capabilityLevel) {
+                    this.setActivityRating(objectiveId, capabilityLevel, activityId, levelAchieved);
+                    if (entry.evidence) {
+                        this.setActivityEvidence(objectiveId, capabilityLevel, activityId, entry.evidence);
+                    }
+                    if (entry.notes) {
+                        this.setActivityNote(objectiveId, capabilityLevel, activityId, entry.notes);
+                    }
+                }
+
+                this.updateActivityScore(activityId, levelAchieved);
+            });
+
+            updateProgressFn('Finalizing calculations...', 95);
+            await this.updateAllCalculationsParallel();
+
+            updateProgressFn('Complete!', 100);
+            hideLoadingFn();
+            if (triggeredManually) {
+                this.showNotification('Assessment loaded successfully!', 'success');
             }
         } catch (error) {
             console.error('Load error:', error);
-            this.hideCornerLoading();
+            hideLoadingFn();
             if (triggeredManually) {
                 this.showNotification('Failed to load assessment', 'error');
             }
@@ -893,7 +1026,7 @@ class COBITAssessmentManager {
                     const noteField = this.elementCache.noteInputs.get(activityId);
                     if (evidenceField) evidenceField.value = parsedNotes.evidence || '';
                     if (noteField) noteField.value = parsedNotes.note || '';
-                    this.addEvidenceToLibrary(parsedNotes.evidence);
+                    this.addEvidenceToLibrary(parsedNotes.evidence, { refresh: false });
                 });
                 
                 await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
@@ -927,7 +1060,7 @@ class COBITAssessmentManager {
                                 const parsedNotes = this.parseNotePayload(activityData.notes, activityData.evidence);
                                 this.levelScores[objectiveId][capabilityLevel].evidence[activityId] = parsedNotes.evidence || '';
                                 this.levelScores[objectiveId][capabilityLevel].notes[activityId] = parsedNotes.note || '';
-                                this.addEvidenceToLibrary(parsedNotes.evidence);
+                                this.addEvidenceToLibrary(parsedNotes.evidence, { refresh: false });
                             }
                             
                             this.updateActivityScore(activityId, levelAchieved);
@@ -1021,7 +1154,7 @@ class COBITAssessmentManager {
                 if (noteField) {
                     noteField.value = parsedNotes.note || '';
                 }
-                this.addEvidenceToLibrary(parsedNotes.evidence);
+                this.addEvidenceToLibrary(parsedNotes.evidence, { refresh: false });
             });
         }
 
@@ -1050,7 +1183,7 @@ class COBITAssessmentManager {
                                 const parsedNotes = this.parseNotePayload(activityData.notes, activityData.evidence);
                                 this.levelScores[objectiveId][capabilityLevel].evidence[activityId] = parsedNotes.evidence || '';
                                 this.levelScores[objectiveId][capabilityLevel].notes[activityId] = parsedNotes.note || '';
-                                this.addEvidenceToLibrary(parsedNotes.evidence);
+                                this.addEvidenceToLibrary(parsedNotes.evidence, { refresh: false });
                             }
                             
                             this.updateActivityScore(activityId, levelAchieved);
@@ -1072,32 +1205,6 @@ class COBITAssessmentManager {
         
         this.updateLoadingProgress('Calculating scores...', 96);
         await this.updateAllCalculations();
-    }
-
-    async updateAllCalculationsParallel() {
-        const objectiveCards = document.querySelectorAll('.objective-card');
-        const cardsArray = Array.from(objectiveCards);
-        
-        for (let i = 0; i < cardsArray.length; i++) {
-            const card = cardsArray[i];
-            const objectiveId = card.getAttribute('data-objective-id');
-            const levelSections = card.querySelectorAll('.capability-level-section');
-            
-            levelSections.forEach(section => {
-                const level = parseInt(section.getAttribute('data-level'));
-                this.updateLevelCapability(objectiveId, level);
-                this.checkLevelLock(objectiveId, level);
-            });
-            
-            this.updateObjectiveCapabilityLevel(objectiveId);
-            
-            // Yield every 3 objectives for smoother interaction
-            if (i % 3 === 0) {
-                await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-            }
-        }
-
-        this.updateDomainChart(this.activeDomainFilter);
     }
 
     async updateAllCalculationsParallel() {
@@ -1262,7 +1369,7 @@ class COBITAssessmentManager {
         const ratingInputs = document.querySelectorAll('.activity-rating-select');
         const evidenceTextareas = document.querySelectorAll('.evidence-input');
         const noteTextareas = document.querySelectorAll('.note-input');
-        const evidenceSelects = document.querySelectorAll('.evidence-history-select');
+        const evidenceSelects = this.getEvidenceSelectElements();
         
         ratingInputs.forEach(select => {
             select.addEventListener('change', () => {
@@ -1542,6 +1649,22 @@ class COBITAssessmentManager {
         return 0;
     }
 
+    getActivityMeta(activityId) {
+        const ratingSelect = this.elementCache.ratingSelects.get(activityId);
+        if (!ratingSelect) {
+            return null;
+        }
+        const objectiveId = ratingSelect.getAttribute('data-objective-id');
+        const levelValue = parseInt(ratingSelect.getAttribute('data-level'), 10);
+        if (!objectiveId || Number.isNaN(levelValue)) {
+            return null;
+        }
+        return {
+            objectiveId,
+            level: levelValue
+        };
+    }
+
     getScoreColorClass(score) {
         if (score === 0) return 'score-chip-danger';
         if (score < 0.5) return 'score-chip-warning';
@@ -1566,91 +1689,49 @@ class COBITAssessmentManager {
         return ratingMap[rating] || 0;
     }
 
-    addEvidenceToLibrary(value) {
+    addEvidenceToLibrary(value, { refresh = true } = {}) {
         const trimmed = (value || '').trim();
         if (!trimmed || this.evidenceLibrary.has(trimmed)) {
             return;
         }
         this.evidenceLibrary.add(trimmed);
-        this.refreshEvidenceDropdowns();
+        if (refresh) {
+            this.refreshEvidenceDropdowns();
+        }
     }
 
     async refreshEvidenceDropdownsParallel() {
-        const selects = document.querySelectorAll('.evidence-history-select');
-        if (!selects.length) return;
-        
-        const evidenceList = Array.from(this.evidenceLibrary)
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
-        
-        const chunkSize = 25; // Smaller for better responsiveness
-        const selectsArray = Array.from(selects);
-        
-        for (let i = 0; i < selectsArray.length; i += chunkSize) {
-            const chunk = selectsArray.slice(i, i + chunkSize);
-            
-            chunk.forEach(select => {
-                const placeholder = select.getAttribute('data-placeholder') || 'Select saved evidence';
-                const currentValue = select.value;
-                select.innerHTML = '';
-
-                const placeholderOption = document.createElement('option');
-                placeholderOption.value = '';
-                placeholderOption.textContent = `${placeholder}...`;
-                select.appendChild(placeholderOption);
-
-                evidenceList.forEach(entry => {
-                    const option = document.createElement('option');
-                    option.value = entry;
-                    option.textContent = entry.length > 90 ? `${entry.slice(0, 87)}...` : entry;
-                    if (entry === currentValue) option.selected = true;
-                    select.appendChild(option);
-                });
-            });
-            
-            await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-        }
+        return this.refreshEvidenceDropdowns();
     }
 
     async refreshEvidenceDropdowns() {
-        const selects = document.querySelectorAll('.evidence-history-select');
-        if (!selects.length) {
+        const selectsArray = this.getEvidenceSelectElements();
+        if (!selectsArray.length) {
             return;
         }
+
         const evidenceList = Array.from(this.evidenceLibrary)
             .filter(Boolean)
             .sort((a, b) => a.localeCompare(b));
-        
-        const chunkSize = 50;
-        const selectsArray = Array.from(selects);
-        
-        for (let i = 0; i < selectsArray.length; i += chunkSize) {
-            const chunk = selectsArray.slice(i, i + chunkSize);
-            
-            chunk.forEach(select => {
-                const placeholder = select.getAttribute('data-placeholder') || 'Select saved evidence';
-                const currentValue = select.value;
-                select.innerHTML = '';
 
-                const placeholderOption = document.createElement('option');
-                placeholderOption.value = '';
-                placeholderOption.textContent = `${placeholder}...`;
-                select.appendChild(placeholderOption);
+        const optionsHtml = evidenceList.map(entry => {
+            const safeValue = this.escapeHtml(entry);
+            const truncated = entry.length > 90 ? `${this.escapeHtml(entry.slice(0, 87))}...` : safeValue;
+            return `<option value="${safeValue}">${truncated}</option>`;
+        }).join('');
 
-                evidenceList.forEach(entry => {
-                    const option = document.createElement('option');
-                    option.value = entry;
-                    option.textContent = entry.length > 90 ? `${entry.slice(0, 87)}...` : entry;
-                    if (entry === currentValue) {
-                        option.selected = true;
-                    }
-                    select.appendChild(option);
-                });
-            });
-            
-            // Yield to browser
-            if (i % 100 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 0));
+        for (let i = 0; i < selectsArray.length; i++) {
+            const select = selectsArray[i];
+            const placeholder = select.getAttribute('data-placeholder') || 'Select saved evidence';
+            const previousValue = select.value;
+
+            select.innerHTML = `<option value="">${this.escapeHtml(placeholder)}...</option>${optionsHtml}`;
+            if (previousValue && this.evidenceLibrary.has(previousValue)) {
+                select.value = previousValue;
+            }
+
+            if (i > 0 && i % 120 === 0) {
+                await new Promise(resolve => requestAnimationFrame(resolve));
             }
         }
     }
