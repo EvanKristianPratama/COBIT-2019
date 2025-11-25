@@ -40,6 +40,12 @@
                         Assessment Id: {{ $evalId }}
                     </div>
                 </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                    <span id="status-badge" class="assessment-status-chip status-draft">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Draft</span>
+                    </span>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -53,6 +59,7 @@
                     <button type="button" class="domain-tab" data-domain="DSS">DSS</button>
                     <button type="button" class="domain-tab" data-domain="MEA">MEA</button>
                     <button type="button" class="domain-tab" data-domain="recap">Rekap Domain</button>
+                    <button type="button" class="domain-tab" data-domain="diagram">Diagram</button>
                 </div>
                 <div id="objective-filter-wrapper" class="objective-filter-wrapper" style="display: none;">
                     <div class="objective-filter-tabs" id="objective-filter-tabs" role="tablist"></div>
@@ -71,13 +78,25 @@
                         </div>
                         <span class="domain-level-pill" id="domain-level-pill">EDM</span>
                     </div>
-                    <div class="domain-level-table">
-                        <div class="domain-level-table-head">
-                            <span>Objective</span>
-                            <span>Capability Progress</span>
-                            <span class="text-end">Level Saat Ini</span>
-                        </div>
-                        <div id="domain-level-rows"></div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th rowspan="2" style="width: 10%; vertical-align: middle;">Gamo</th>
+                                    <th rowspan="2" style="width: 25%; vertical-align: middle;">Gamo Name</th>
+                                    <th colspan="5" class="text-center">Level</th>
+                                    <th rowspan="2" class="text-center" style="width: 15%; vertical-align: middle;">Rating</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center" style="width: 10%">1</th>
+                                    <th class="text-center" style="width: 10%">2</th>
+                                    <th class="text-center" style="width: 10%">3</th>
+                                    <th class="text-center" style="width: 10%">4</th>
+                                    <th class="text-center" style="width: 10%">5</th>
+                                </tr>
+                            </thead>
+                            <tbody id="domain-level-rows"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -93,6 +112,19 @@
                     </div>
                 </div>
                 <div id="recap-standalone-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" id="diagram-standalone-row" style="display: none;">
+        <div class="col-12">
+            <div class="diagram-standalone-wrapper" id="diagram-standalone-wrapper">
+                <div class="recap-standalone-header">
+                    <div>
+                        <h5 class="recap-title">Diagram Evaluasi Kapabilitas</h5>
+                    </div>
+                </div>
+                <div id="diagram-standalone-body"></div>
             </div>
         </div>
     </div>
@@ -345,12 +377,18 @@
 </div>
 
 <div class="sticky-action-group">
-    <a href="{{ route('assessment-eval.list') }}" class="sticky-action-btn btn btn-light" title="Back to List">
-        <i class="fas fa-arrow-left me-2"></i>Back
-    </a>
     <button type="button" class="sticky-action-btn btn btn-primary" id="save-assessment" title="Save Assessment">
         <i class="fas fa-save me-2"></i>Save
     </button>
+    <button type="button" class="sticky-action-btn btn btn-success" id="btn-finish-assessment" style="display: none;" title="Finish Assessment">
+        <i class="fas fa-check-circle me-2"></i>Finish
+    </button>
+    <button type="button" class="sticky-action-btn btn btn-warning" id="btn-unlock-assessment" style="display: none;" title="Edit Assessment">
+        <i class="fas fa-edit me-2"></i>Edit
+    </button>
+    <a href="{{ route('assessment-eval.list') }}" class="sticky-action-btn btn btn-light" title="Back to List">
+        <i class="fas fa-arrow-left me-2"></i>Back
+    </a>
     <button type="button" class="sticky-action-btn btn btn-light" id="back-to-top-btn" title="Back to Top">
         <i class="fas fa-arrow-up me-2"></i>Top
     </button>
@@ -359,13 +397,17 @@
     </a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 class COBITAssessmentManager {
-    constructor(evalId) {
+    constructor(evalId, status = 'draft') {
         this.assessmentData = {};
         this.levelScores = {};
         this.currentEvalId = evalId;
+        this.status = status;
         this.evidenceLibrary = new Set();
+        this.diagramChartInstance = null;
         this.objectiveCapabilityLevels = {};
         this.activeDomainFilter = 'all';
         this.activeObjectiveFilter = 'all';
@@ -421,6 +463,8 @@ class COBITAssessmentManager {
             this.initializeDefaultStates();
             this.updateLoadingProgress('Setting up buttons...', 70);
             
+            this.setupFinishUnlockButtons();
+            this.checkInitialStatus();
             this.setupSaveLoadButtons();
             this.setupDomainOverviewAccordion();
             this.setupBackToTopButton();
@@ -619,6 +663,9 @@ class COBITAssessmentManager {
         this.recapStandaloneRow = document.getElementById('recap-standalone-row');
         this.recapStandaloneWrapper = document.getElementById('recap-standalone-wrapper');
         this.recapStandaloneBody = document.getElementById('recap-standalone-body');
+        this.diagramStandaloneRow = document.getElementById('diagram-standalone-row');
+        this.diagramStandaloneWrapper = document.getElementById('diagram-standalone-wrapper');
+        this.diagramStandaloneBody = document.getElementById('diagram-standalone-body');
     }
 
     cacheObjectiveFilterElements() {
@@ -659,7 +706,7 @@ class COBITAssessmentManager {
             return;
         }
 
-        if (domain === 'all' || domain === 'recap' || !this.domainObjectiveMap[domain] || this.domainObjectiveMap[domain].length === 0) {
+        if (domain === 'all' || domain === 'recap' || domain === 'diagram' || !this.domainObjectiveMap[domain] || this.domainObjectiveMap[domain].length === 0) {
             this.objectiveFilterWrapper.style.display = 'none';
             this.objectiveFilterTabs.innerHTML = '';
             this.activeObjectiveFilter = 'all';
@@ -708,7 +755,7 @@ class COBITAssessmentManager {
         const noResultsDiv = document.getElementById('no-results');
         let visibleCount = 0;
 
-        if (this.activeDomainFilter === 'recap') {
+        if (this.activeDomainFilter === 'recap' || this.activeDomainFilter === 'diagram') {
             cards.forEach(card => {
                 card.style.display = 'none';
             });
@@ -723,6 +770,7 @@ class COBITAssessmentManager {
             const cardObjective = card.getAttribute('data-objective-id');
             const matchesDomain = this.activeDomainFilter === 'all'
                 || this.activeDomainFilter === 'recap'
+                || this.activeDomainFilter === 'diagram'
                 || cardDomain === this.activeDomainFilter;
             const matchesObjective = this.activeObjectiveFilter === 'all' || cardObjective === this.activeObjectiveFilter;
 
@@ -1743,6 +1791,23 @@ class COBITAssessmentManager {
 
         if (!selectedDomain || selectedDomain === 'all') {
             this.toggleRecapStandalone(false);
+            this.toggleDiagramStandalone(false);
+            this.domainChartHasData = false;
+            this.updateDomainOverviewVisibility();
+            return;
+        }
+
+        if (selectedDomain === 'diagram') {
+            const recapData = this.buildGamoRecapData();
+            if (!recapData.length) {
+                this.toggleDiagramStandalone(false);
+                this.domainChartHasData = false;
+                this.updateDomainOverviewVisibility();
+                return;
+            }
+
+            this.toggleRecapStandalone(false);
+            this.toggleDiagramStandalone(true, recapData);
             this.domainChartHasData = false;
             this.updateDomainOverviewVisibility();
             return;
@@ -1752,11 +1817,13 @@ class COBITAssessmentManager {
             const recapData = this.buildGamoRecapData();
             if (!recapData.length) {
                 this.toggleRecapStandalone(false);
+                this.toggleDiagramStandalone(false);
                 this.domainChartHasData = false;
                 this.updateDomainOverviewVisibility();
                 return;
             }
 
+            this.toggleDiagramStandalone(false);
             this.toggleRecapStandalone(true, recapData);
             this.domainChartHasData = false;
             this.updateDomainOverviewVisibility();
@@ -1764,16 +1831,29 @@ class COBITAssessmentManager {
         }
 
         this.toggleRecapStandalone(false);
+        this.toggleDiagramStandalone(false);
 
         const objectiveCards = document.querySelectorAll(`.objective-card[data-domain="${selectedDomain}"]`);
         const chartData = Array.from(objectiveCards).map(card => {
             const objectiveId = card.getAttribute('data-objective-id');
             const objectiveName = card.getAttribute('data-objective-name') || objectiveId;
             const currentLevel = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 1, 1), 5);
+            
+            // Get ratings for each level
+            const ratings = {};
+            for(let i=1; i<=5; i++) {
+                if (this.levelScores[objectiveId] && this.levelScores[objectiveId][i]) {
+                    ratings[i] = this.levelScores[objectiveId][i].letter; // N, P, L, F
+                } else {
+                    ratings[i] = 'N'; // Default if not initialized
+                }
+            }
+
             return {
                 objectiveId,
                 objectiveName,
-                level: currentLevel
+                level: currentLevel,
+                ratings: ratings
             };
         }).sort((a, b) => a.objectiveId.localeCompare(b.objectiveId, undefined, { numeric: true }));
 
@@ -1852,10 +1932,28 @@ class COBITAssessmentManager {
             <tr>
                 <th style="width:60px;">No</th>
                 <th style="width:110px;">Domain</th>
-                <th>Gamo / Objective</th>
-                <th style="width:140px;" class="text-center">Level</th>
+                <th style="width:100px;">Gamo</th>
+                <th>Gamo Name</th>
+                <th style="width:100px;" class="text-center">Level</th>
             </tr>
         `;
+
+        // Level Colors Mapping (Same as Domain Chart)
+        const levelColors = {
+            1: '#f97316', // Orange
+            2: '#facc15', // Yellow
+            3: '#86efac', // Light Green
+            4: '#15803d', // Green
+            5: '#0f6ad9'  // Blue
+        };
+        
+        const levelTextColors = {
+            1: '#fff',
+            2: '#7a5d07',
+            3: '#065f46',
+            4: '#fff',
+            5: '#fff'
+        };
 
         const tbody = document.createElement('tbody');
         data.forEach((row, index) => {
@@ -1863,18 +1961,28 @@ class COBITAssessmentManager {
             const safeDomain = this.escapeHtml(row.domain);
             const safeObjectiveId = this.escapeHtml(row.objectiveId);
             const safeObjectiveName = this.escapeHtml(row.objectiveName);
+            
+            const level = row.level;
+            const bgColor = levelColors[level] || '#f8f9fa';
+            const textColor = levelTextColors[level] || '#6c757d';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="text-center fw-semibold">${index + 1}</td>
-                <td>
-                    <span class="recap-domain-pill domain-pill-${domainCode}">${safeDomain}</span>
+                <td class="fw-bold text-secondary">
+                    ${safeDomain}
                 </td>
                 <td>
-                    <div class="recap-objective-code">${safeObjectiveId}</div>
-                    <div class="recap-objective-name">${safeObjectiveName}</div>
+                    <span class="fw-bold text-primary">${safeObjectiveId}</span>
                 </td>
-                <td class="text-center">
-                    <span class="level-badge level-badge-${row.level}">Level ${row.level}</span>
+                <td>
+                    <span class="small text-muted">${safeObjectiveName}</span>
+                </td>
+                <td class="text-center p-0">
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center fw-bold" 
+                         style="min-height: 40px; background-color: ${bgColor}; color: ${textColor};">
+                        Level ${level}
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1884,6 +1992,13 @@ class COBITAssessmentManager {
         table.appendChild(tbody);
         wrapper.appendChild(table);
         return wrapper;
+    }
+
+    getMaximumCapabilityData() {
+        return [
+            4, 5, 4, 4, 4, 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5, 5, 5, 5, 5,
+            4, 4, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4
+        ];
     }
 
     toggleRecapStandalone(show, data = []) {
@@ -1899,48 +2014,172 @@ class COBITAssessmentManager {
         }
 
         this.recapStandaloneBody.innerHTML = '';
-        this.recapStandaloneBody.appendChild(this.createRecapTable(data));
+
+        const tableContainer = document.createElement('div');
+        tableContainer.className = 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm';
+        tableContainer.appendChild(this.createRecapTable(data));
+
+        this.recapStandaloneBody.appendChild(tableContainer);
         this.recapStandaloneRow.style.display = 'flex';
         this.recapStandaloneWrapper.style.display = 'block';
     }
 
-    createDomainChartRow({ objectiveId, objectiveName, level, meta = {} }) {
-        const row = document.createElement('div');
-        row.className = 'domain-level-row';
-
-        const label = document.createElement('div');
-        label.className = 'domain-level-objective';
-        label.innerHTML = `<strong>${objectiveId}</strong><span>${objectiveName}</span>`;
-
-        const bar = document.createElement('div');
-        bar.className = 'domain-level-bar';
-        for (let i = 1; i <= 5; i++) {
-            const segment = document.createElement('span');
-            segment.className = 'level-segment';
-            segment.classList.add(`level-tier-${i}`);
-            segment.textContent = i;
-            if (i <= level) {
-                segment.classList.add('active');
-            }
-            bar.appendChild(segment);
+    toggleDiagramStandalone(show, data = []) {
+        if (!this.diagramStandaloneRow || !this.diagramStandaloneWrapper || !this.diagramStandaloneBody) {
+            return;
         }
 
-        const currentLevel = document.createElement('div');
-        currentLevel.className = 'domain-level-current';
-        const averageNote = meta && typeof meta.average === 'number'
-            ? `<small>Rata-rata ${meta.average.toFixed(2)}</small>`
-            : '';
-        currentLevel.innerHTML = `
-            <span class="level-badge level-badge-${level}" data-level="${level}">
-                <strong>Level ${level}</strong>
-                ${averageNote}
-            </span>
-        `;
+        if (!show || !data.length) {
+            this.diagramStandaloneRow.style.display = 'none';
+            this.diagramStandaloneWrapper.style.display = 'none';
+            this.diagramStandaloneBody.innerHTML = '';
+            if (this.diagramChartInstance) {
+                this.diagramChartInstance.destroy();
+                this.diagramChartInstance = null;
+            }
+            return;
+        }
 
-        row.appendChild(label);
-        row.appendChild(bar);
-        row.appendChild(currentLevel);
-        return row;
+        this.diagramStandaloneBody.innerHTML = '';
+
+        const container = document.createElement('div');
+        container.className = 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm';
+        container.innerHTML = '<canvas id="diagramRadarChart" height="640" class="w-100"></canvas>';
+        this.diagramStandaloneBody.appendChild(container);
+
+        this.diagramStandaloneRow.style.display = 'flex';
+        this.diagramStandaloneWrapper.style.display = 'block';
+
+        this.renderDiagramChart(data);
+    }
+
+    renderDiagramChart(data) {
+        const ctx = document.getElementById('diagramRadarChart');
+        if (!ctx) return;
+
+        if (this.diagramChartInstance) {
+            this.diagramChartInstance.destroy();
+        }
+
+        const labels = data.map(item => item.objectiveId);
+        const agreedData = data.map(item => item.level);
+        const dataMaximum = this.getMaximumCapabilityData();
+        const maxDataSliced = dataMaximum.slice(0, labels.length);
+
+        this.diagramChartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Agreed Target Capability',
+                    data: agreedData,
+                    fill: true,
+                    backgroundColor: 'rgba(54, 162, 235, 0.18)',
+                    borderColor: 'rgb(37, 99, 235)',
+                    pointBackgroundColor: 'rgb(37, 99, 235)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(37, 99, 235)'
+                }, {
+                    label: 'Maximum Capability',
+                    data: maxDataSliced,
+                    fill: true,
+                    backgroundColor: 'rgba(255, 159, 64, 0.25)',
+                    borderColor: 'rgb(255, 159, 64)',
+                    pointBackgroundColor: 'rgb(255, 159, 64)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(255, 159, 64)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: {
+                    line: { borderWidth: 3 }
+                },
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        ticks: {
+                            stepSize: 1,
+                            backdropColor: 'transparent'
+                        },
+                        pointLabels: {
+                            font: {
+                                size: labels.length > 30 ? 9 : 11,
+                                family: 'Inter, "Helvetica Neue", Arial, sans-serif'
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    title: {
+                        display: true,
+                        text: 'Capability Diagram (All Objectives)'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: (tooltipItems) => tooltipItems[0]?.label || '',
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.formattedValue}`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    createDomainChartRow({ objectiveId, objectiveName, level, ratings = {}, meta = {} }) {
+        const tr = document.createElement('tr');
+
+        // Gamo Column (ID)
+        const tdGamo = document.createElement('td');
+        tdGamo.innerHTML = `<span class="fw-bold text-primary">${objectiveId}</span>`;
+        tr.appendChild(tdGamo);
+
+        // Gamo Name Column
+        const tdGamoName = document.createElement('td');
+        tdGamoName.innerHTML = `<span class="small text-muted text-truncate d-block" style="max-width: 300px;" title="${objectiveName}">${objectiveName}</span>`;
+        tr.appendChild(tdGamoName);
+
+        const unifiedLevelColor = '#0f6ad9';
+
+        // Level 1-5 Columns
+        for (let i = 1; i <= 5; i++) {
+            const tdLevel = document.createElement('td');
+            tdLevel.className = 'text-center p-0';
+            tdLevel.style.height = '26px';
+
+            if (i <= level) {
+                tdLevel.style.backgroundColor = unifiedLevelColor;
+                tdLevel.style.color = unifiedLevelColor;
+                tdLevel.innerHTML = `<span class="d-block w-100" style="line-height: 24px; font-size: 0.78rem; font-weight: 600; color: inherit;">${i}</span>`;
+            } else {
+                tdLevel.style.backgroundColor = '#f8f9fa';
+                tdLevel.innerHTML = `<span class="d-block w-100 text-muted" style="line-height: 24px; font-size: 0.78rem; opacity: 0.45;">-</span>`;
+            }
+            tr.appendChild(tdLevel);
+        }
+
+        // Rating Column (Previously Level Saat Ini)
+        const tdCurrent = document.createElement('td');
+        tdCurrent.className = 'text-center';
+        
+        const currentRatingLetter = ratings[level] || 'N';
+        const averageNote = meta && typeof meta.average === 'number'
+            ? `<div class="mt-1"><small class="text-muted">Avg: ${meta.average.toFixed(2)}</small></div>`
+            : '';
+        
+        tdCurrent.innerHTML = `
+            <span class="fw-bold" style="font-size: 1rem;">${level} ${currentRatingLetter}</span>
+            ${averageNote}
+        `;
+        tr.appendChild(tdCurrent);
+
+        return tr;
     }
 
     getDomainFullName(domainCode) {
@@ -1991,10 +2230,362 @@ class COBITAssessmentManager {
 
         return emptyPayload;
     }
+
+    setupFinishUnlockButtons() {
+        const finishBtn = document.getElementById('btn-finish-assessment');
+        const unlockBtn = document.getElementById('btn-unlock-assessment');
+
+        if (finishBtn) {
+            finishBtn.addEventListener('click', async () => {
+                const confirmed = await this.confirmAction({
+                    title: 'Selesaikan assessment ini?',
+                    text: 'Status akan berubah menjadi selesai dan semua field terkunci sampai Anda memilih Edit.',
+                    icon: 'warning',
+                    confirmButtonText: 'Ya, selesaikan'
+                });
+                if (confirmed) {
+                    this.finishAssessment();
+                }
+            });
+        }
+
+        if (unlockBtn) {
+            unlockBtn.addEventListener('click', async () => {
+                const confirmed = await this.confirmAction({
+                    title: 'Buka mode edit?',
+                    text: 'Assessment akan dibuka kembali sehingga Anda bisa melakukan perubahan.',
+                    icon: 'info',
+                    confirmButtonText: 'Ya, edit sekarang'
+                });
+                if (confirmed) {
+                    this.unlockAssessment();
+                }
+            });
+        }
+    }
+
+    setActionButtonsDisabled(disabled) {
+        ['save-assessment', 'btn-finish-assessment', 'btn-unlock-assessment'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.disabled = disabled;
+                btn.classList.toggle('disabled', disabled);
+            }
+        });
+    }
+
+    async confirmAction({ title = 'Are you sure?', text = '', icon = 'question', confirmButtonText = 'Yes', cancelButtonText = 'Cancel' } = {}) {
+        if (window.Swal) {
+            const result = await Swal.fire({
+                title,
+                text,
+                icon,
+                showCancelButton: true,
+                confirmButtonColor: '#0f6ad9',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText,
+                cancelButtonText
+            });
+            return result.isConfirmed;
+        }
+        return confirm(text || title);
+    }
+
+    async showAlert({ title = 'Done', text = '', icon = 'success', confirmButtonText = 'OK' } = {}) {
+        if (window.Swal) {
+            await Swal.fire({
+                title,
+                text,
+                icon,
+                confirmButtonColor: '#0f6ad9',
+                confirmButtonText
+            });
+            return;
+        }
+        alert(text || title);
+    }
+
+    checkInitialStatus() {
+        this.updateStatusUI(this.status);
+        if (this.status === 'finished') {
+            this.lockInterface();
+        }
+    }
+
+    updateStatusUI(status) {
+        const finishBtn = document.getElementById('btn-finish-assessment');
+        const unlockBtn = document.getElementById('btn-unlock-assessment');
+        const statusBadge = document.getElementById('status-badge');
+        const statusText = statusBadge ? statusBadge.querySelector('.status-text') : null;
+        const saveBtn = document.getElementById('save-assessment');
+
+        if (status === 'finished') {
+            if (finishBtn) finishBtn.style.display = 'none';
+            if (unlockBtn) unlockBtn.style.display = 'inline-flex';
+            if (statusBadge) {
+                statusBadge.className = 'assessment-status-chip status-finished';
+            }
+            if (statusText) {
+                statusText.textContent = 'Finished';
+            }
+            if (saveBtn) saveBtn.style.display = 'none';
+        } else {
+            if (finishBtn) finishBtn.style.display = 'inline-flex';
+            if (unlockBtn) unlockBtn.style.display = 'none';
+            if (statusBadge) {
+                statusBadge.className = 'assessment-status-chip status-draft';
+            }
+            if (statusText) {
+                statusText.textContent = 'Draft';
+            }
+            if (saveBtn) saveBtn.style.display = 'inline-flex';
+        }
+    }
+
+    async finishAssessment() {
+        this.setActionButtonsDisabled(true);
+        try {
+            const response = await fetch(`/assessment-eval/${this.currentEvalId}/finish`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.message || 'Failed to finish assessment');
+            }
+
+            this.status = 'finished';
+            this.updateStatusUI('finished');
+            this.lockInterface();
+            await this.showAlert({
+                title: 'Assessment selesai',
+                text: 'Semua input dikunci. Gunakan tombol Edit bila perlu mengubah.',
+                icon: 'success'
+            });
+        } catch (error) {
+            console.error('Error finishing assessment:', error);
+            await this.showAlert({
+                title: 'Gagal menyelesaikan',
+                text: error.message || 'Silakan coba beberapa saat lagi.',
+                icon: 'error'
+            });
+        } finally {
+            this.setActionButtonsDisabled(false);
+        }
+    }
+
+    async unlockAssessment() {
+        this.setActionButtonsDisabled(true);
+        try {
+            const response = await fetch(`/assessment-eval/${this.currentEvalId}/unlock`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.message || 'Failed to enable editing');
+            }
+
+            this.status = 'in_progress';
+            this.updateStatusUI('in_progress');
+            this.unlockInterface();
+            await this.showAlert({
+                title: 'Mode edit aktif',
+                text: 'Anda sudah bisa memperbarui assessment kembali.',
+                icon: 'success'
+            });
+        } catch (error) {
+            console.error('Error unlocking assessment:', error);
+            await this.showAlert({
+                title: 'Gagal mengaktifkan mode edit',
+                text: error.message || 'Silakan coba beberapa saat lagi.',
+                icon: 'error'
+            });
+        } finally {
+            this.setActionButtonsDisabled(false);
+        }
+    }
+
+    lockInterface() {
+        const selectors = [
+            '.activity-rating-select',
+            '.evidence-input',
+            '.note-input',
+            '.evidence-history-select'
+        ];
+        document.querySelectorAll(selectors.join(',')).forEach(el => {
+            el.disabled = true;
+        });
+    }
+
+    unlockInterface() {
+        const selectors = [
+            '.activity-rating-select',
+            '.evidence-input',
+            '.note-input',
+            '.evidence-history-select'
+        ];
+        document.querySelectorAll(selectors.join(',')).forEach(el => {
+            el.disabled = false;
+        });
+    }
+
+    openRecapInNewTab() {
+        const data = this.buildGamoRecapData();
+        if (!data.length) {
+            this.showNotification('No data available for recap', 'warning');
+            return;
+        }
+
+        const newWindow = window.open('', '_blank');
+        if (!newWindow) {
+            this.showNotification('Pop-up blocked. Please allow pop-ups for this site.', 'error');
+            return;
+        }
+
+        const labels = data.map(item => item.domain);
+        const agreedData = data.map(item => item.level);
+        
+        // Maximum Capability Data from Step 4 reference
+        const dataMaximum = [
+            4, 5, 4, 4, 4, 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5, 5, 5, 5, 5,
+            4, 4, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4
+        ];
+        const maxDataSliced = dataMaximum.slice(0, labels.length);
+
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Assessment Recap</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
+                <style>
+                    body { padding: 20px; background-color: #f8f9fa; }
+                    .card { margin-bottom: 20px; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border: none; }
+                    .card-header { background-color: #0d6efd; color: white; padding: 1rem; }
+                    .table th { background-color: #f8f9fa; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h6 class="mb-0">Agreed Target Capability Radar</h6>
+                        </div>
+                        <div class="card-body" style="padding: 1rem;">
+                            <div class="mt-2" style="max-width:600px; margin:auto;">
+                                <canvas id="recapRadarChart" height="600"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h6 class="mb-0">Capability Level Summary</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-bordered table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Level</th>
+                                        <th>Rating</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.map(row => `
+                                        <tr>
+                                            <td>${row.domain}</td>
+                                            <td>${row.level}</td>
+                                            <td>
+                                                <div class="d-flex gap-1">
+                                                    ${Object.entries(row.ratings).map(([lvl, rating]) => 
+                                                        `<span class="badge ${rating === 'F' ? 'bg-success' : (rating === 'L' ? 'bg-warning text-dark' : (rating === 'P' ? 'bg-info text-dark' : 'bg-secondary'))}">${lvl}:${rating}</span>`
+                                                    ).join('')}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    const ctx = document.getElementById('recapRadarChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: ${JSON.stringify(labels)},
+                            datasets: [{
+                                label: 'Agreed Target Capability',
+                                data: ${JSON.stringify(agreedData)},
+                                fill: true,
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgb(54, 162, 235)',
+                                pointBackgroundColor: 'rgb(54, 162, 235)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgb(54, 162, 235)'
+                            }, {
+                                label: 'Maximum Capability',
+                                data: ${JSON.stringify(maxDataSliced)},
+                                fill: true,
+                                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                                borderColor: 'rgb(255, 159, 64)',
+                                pointBackgroundColor: 'rgb(255, 159, 64)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgb(255, 159, 64)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            elements: {
+                                line: { borderWidth: 3 }
+                            },
+                            scales: {
+                                r: {
+                                    angleLines: { display: true },
+                                    suggestedMin: 0,
+                                    suggestedMax: 5,
+                                    ticks: {
+                                        stepSize: 1,
+                                        backdropColor: 'transparent'
+                                    },
+                                    pointLabels: {
+                                        font: { size: 11 }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: { position: 'top' },
+                                title: { display: false }
+                            }
+                        }
+                    });
+                <\/script>
+            </body>
+            </html>
+        `;
+
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new COBITAssessmentManager({{ $evalId }});
+    new COBITAssessmentManager({{ $evalId }}, '{{ $evaluation->status ?? "draft" }}');
 });
 </script>
 
@@ -2002,6 +2593,39 @@ document.addEventListener('DOMContentLoaded', () => {
 <style>
 .objective-card {
     transition: transform 0.2s ease-in-out;
+}
+
+.assessment-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+.assessment-status-chip .status-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.25);
+}
+
+.assessment-status-chip.status-draft {
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.85);
+    border-color: rgba(255,255,255,0.25);
+}
+
+.assessment-status-chip.status-finished {
+    background: rgba(16, 185, 129, 0.18);
+    color: #d9ffe4;
+    border-color: rgba(16, 185, 129, 0.45);
 }
 
 .objective-card:hover {
@@ -2271,6 +2895,7 @@ document.addEventListener('DOMContentLoaded', () => {
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    border-bottom: 1px solid #e2e8fb;
 }
 
 .recap-table-wrapper {
@@ -2586,15 +3211,21 @@ document.addEventListener('DOMContentLoaded', () => {
     bottom: 25px;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    align-items: flex-end;
+    gap: 0.45rem;
     z-index: 1050;
 }
 
 .sticky-action-btn {
     border-radius: 999px;
-    padding: 0.65rem 1.4rem;
+    padding: 0.45rem 1.1rem;
     font-weight: 600;
-    box-shadow: 0 12px 32px rgba(15,106,217,0.2);
+    font-size: 0.85rem;
+    width: 170px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(15,106,217,0.18);
 }
 
 .sticky-action-btn.btn-light {

@@ -258,3 +258,11 @@ Route::get('/assessment-eval/{evalId}/load', [AssessmentEvalController::class, '
 Route::delete('/assessment-eval/{evalId}', [AssessmentEvalController::class, 'delete'])
      ->name('assessment-eval.delete')
      ->middleware('auth');
+
+Route::post('/assessment-eval/{evalId}/finish', [AssessmentEvalController::class, 'finish'])
+     ->name('assessment-eval.finish')
+     ->middleware('auth');
+
+Route::post('/assessment-eval/{evalId}/unlock', [AssessmentEvalController::class, 'unlock'])
+     ->name('assessment-eval.unlock')
+     ->middleware('auth');

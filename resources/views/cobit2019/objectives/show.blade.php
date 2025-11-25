@@ -1,7 +1,213 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-4">
+  <style>
+    /* Inline navbar & tabs styling for this view */
+    .navbar .nav-link,
+    .navbar .navbar-brand {
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      color: rgba(255,255,255,0.95) !important;
+      text-shadow: 0 1px 2px rgba(15,43,92,0.18);
+    }
+
+    /* Ensure nav-pills and nav-tabs keep COBIT colors and text styles */
+    .nav-pills .nav-link,
+    .nav-tabs .nav-link,
+    #componentGamoTabs .nav-link,
+    #componentGamoObjTabs .nav-link {
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+      color: rgba(15,43,92,0.9) !important;
+    }
+
+    /* Do not force a custom background for active tabs; preserve Bootstrap defaults */
+    .nav-pills .nav-link.active,
+    .nav-tabs .nav-link.active,
+    #componentGamoTabs .nav-link.active,
+    #componentGamoObjTabs .nav-link.active {
+      background: transparent !important;
+      background-image: none !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+      color: inherit !important;
+    }
+
+    /* Keep button text color but do not add a custom background */
+    .btn-primary {
+      color: #fff !important;
+    }
+
+    .btn-outline-primary {
+      color: #0f6ad9 !important;
+      border-color: rgba(15,106,217,0.18) !important;
+    }
+
+    /* Do not add hover background; only adjust hover color */
+    .nav-pills .nav-link:hover,
+    .nav-tabs .nav-link:hover {
+      color: #0f6ad9 !important;
+    }
+  </style>
+
+  <style>
+    /* Override primary color to match assessment-eval (dark blue) */
+    :root { --app-primary: #0f2b5c; }
+
+    .btn-primary {
+      background-color: var(--app-primary) !important;
+      background-image: none !important;
+      border-color: var(--app-primary) !important;
+      color: #fff !important;
+      box-shadow: 0 8px 20px rgba(15,43,92,0.08);
+    }
+
+    .btn-primary:hover, .btn-primary:focus {
+      background-color: #0d254a !important;
+      border-color: #0d254a !important;
+      color: #fff !important;
+    }
+
+    /* Cards and headers that use bg-primary / table-primary */
+    .bg-primary, .card-header.bg-primary, .table-primary {
+      background-color: var(--app-primary) !important;
+      color: #fff !important;
+      border-color: rgba(15,43,92,0.08) !important;
+    }
+
+    /* Nav/tab active using primary color */
+    .nav-pills .nav-link.active, .nav-tabs .nav-link.active {
+      background-color: var(--app-primary) !important;
+      border-color: var(--app-primary) !important;
+      color: #fff !important;
+    }
+
+    /* Keep outline-primary matching tint */
+    .btn-outline-primary {
+      color: var(--app-primary) !important;
+      border-color: rgba(15,43,92,0.12) !important;
+    }
+  </style>
+
+  <style>
+    /* Bring in hero / card styles similar to assessment-eval list view */
+    .hero-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 25px 60px rgba(9, 18, 56, 0.18);
+        overflow: hidden;
+    }
+
+    .hero-header {
+        background: linear-gradient(135deg, #081a3d, #0f2b5c);
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        border: none;
+    }
+
+    .hero-title { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.03em; }
+    .hero-subtitle { color: rgba(255,255,255,0.8); letter-spacing: 0.02em; }
+
+    .hero-pill {
+        border-radius: 999px; padding: 0.4rem 1.3rem; background: rgba(255,255,255,0.15);
+        font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+
+    .hero-body { padding: 1.75rem; background: #fff; }
+
+    .hero-stat-card { background: #f6f8ff; border-radius: 0.9rem; padding: 1rem 1.2rem; border: 1px solid #e3e8ff; height: 100%; }
+
+    .hero-status-summary { background: #ffffff; border: 1px solid #e3e8ff; border-radius: 0.9rem; padding: 0.75rem 1rem; min-width: 260px; }
+
+    .hero-status-card { flex: 1 1 120px; background: #f9fbff; border-radius: 0.85rem; padding: 0.9rem 1rem; border: 1px dashed #dbe2ff; }
+
+    .hero-status-card .status-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6f7491; }
+    .hero-status-card .status-value { display: block; font-size: 1.35rem; font-weight: 700; }
+
+    .hero-status-card.status-finished { background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.4); color: #0f5132; }
+    .hero-status-card.status-draft { background: rgba(253, 224, 71, 0.12); border-color: rgba(250, 204, 21, 0.45); color: #7a5d07; }
+
+    .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7392; }
+    .stat-value { display: block; font-size: 1.6rem; font-weight: 700; color: #0f2b5c; margin: 0.15rem 0; }
+    .stat-subtext { font-size: 0.9rem; color: #7b84a5; }
+
+    .hero-action-btn { border-radius: 999px; padding: 0.55rem 1.5rem; font-weight: 600; box-shadow: 0 12px 30px rgba(15,106,217,0.2); }
+
+    .assessment-card { border-radius: 0.9rem; transition: transform 0.22s cubic-bezier(.2,.9,.2,1), box-shadow 0.22s cubic-bezier(.2,.9,.2,1); box-shadow: 0 8px 20px rgba(15,43,92,0.06); will-change: transform; }
+    .assessment-card:hover, .assessment-card:focus-within { transform: translateY(-6px); box-shadow: 0 28px 60px rgba(15,43,92,0.14); }
+
+    .assessment-card-header { background: #f8f9ff; border-bottom: 1px solid rgba(15,43,92,0.08); display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+    .assessment-code { font-weight: 700; color: #0f2b5c; }
+    .assessment-meta { font-size: 0.85rem; color: #7a809b; }
+
+    .status-chip { border-radius: 999px; padding: 0.35rem 1rem; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.03em; }
+    .chip-success { background: #d1f2e2; color: #0f5132; }
+    .chip-info { background: #cff4fc; color: #055160; }
+    .chip-warning { background: #fff3cd; color: #7a5d07; }
+    .chip-muted { background: #f1f3f9; color: #5f6783; }
+
+    .assessment-progress-block { border: 1px solid #e4e8fb; border-radius: 0.9rem; padding: 1rem 1.25rem; background: #fff; }
+    .assessment-progress { height: 8px; border-radius: 6px; overflow: hidden; }
+
+    .rating-pill { display:inline-block; margin-right:6px; padding:4px 8px; border-radius:12px; font-weight:700; }
+    .pill-success { background: rgba(16,185,129,0.08); color:#0f5132; }
+    .pill-info { background: rgba(207,244,252,0.15); color:#055160; }
+    .pill-warning { background: rgba(255,243,205,0.15); color:#7a5d07; }
+    .pill-danger { background: rgba(255,205,210,0.12); color:#7f1d1d; }
+
+    /* Sticky action group (copy) */
+    .sticky-action-group { position: fixed; right: 20px; bottom: 20px; display:flex; gap:8px; z-index:1050; }
+    .sticky-action-btn { border-radius: 10px; padding: 10px 14px; }
+  </style>
+
+  <style>
+    /* Page layout tweaks scoped to objectives-page */
+    .objectives-page {
+      background: #f6f8ff;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    /* Make card areas contrast on the soft page background */
+    .objectives-page .card {
+      background: #fff;
+      border-radius: 10px;
+    }
+
+    /* Button hover styles to match assessment-eval look */
+    .objectives-page .btn-primary {
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .objectives-page .btn-primary:hover,
+    .objectives-page .btn-primary:focus {
+      background-color: #0d254a !important;
+      border-color: #0d254a !important;
+      box-shadow: 0 14px 30px rgba(15,43,92,0.12);
+      transform: translateY(-2px);
+    }
+
+    .objectives-page .btn-outline-primary:hover,
+    .objectives-page .btn-outline-primary:focus {
+      background-color: rgba(15,43,92,0.06) !important;
+      border-color: var(--app-primary) !important;
+      color: var(--app-primary) !important;
+    }
+
+    /* Slightly stronger link/nav hover contrast */
+    .objectives-page .nav-pills .nav-link:hover,
+    .objectives-page .nav-tabs .nav-link:hover {
+      color: var(--app-primary) !important;
+      background: rgba(15,43,92,0.04) !important;
+    }
+  </style>
+
+<div class="container py-4 objectives-page">
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0">Kamus Component</h1>
@@ -12,7 +218,7 @@
     <div class="btn-group w-100" role="group" aria-label="View mode">
       <button id="modeGamoBtn" type="button" class="btn btn-outline-primary flex-fill">View by GAMO</button>
       <button id="modeComponentBtn" type="button" class="btn btn-primary flex-fill">View by Component</button>
-      <button id="masterToggleBtn" type="button" class="btn btn-secondary flex-fill">MASTER</button>
+      <button id="masterToggleBtn" type="button" class="btn btn-outline-primary flex-fill">Master</button>
     </div>
   </div>
 
@@ -1462,7 +1668,7 @@ renderSinglePractice(practice) {
 
     createGamoTabs() {
       let html = `<div>`;
-      html += `<ul class="nav nav-pills nav-fill" id="componentGamoTabs">`;
+      html += `<ul class="nav nav-pills" id="componentGamoTabs">`;
       html += `<li class="nav-item"><button class="nav-link active" data-prefix="ALL" type="button">All</button></li>`;
       
       CONFIG.PREFERRED_ORDER.forEach(prefix => {
@@ -1952,37 +2158,52 @@ objTabsContainer.innerHTML = tabsHtml;
   };
 
   // ===================================================================
-  // MODE CONTROLLER
+  // MODE CONTROLLER (refactored)
+  // - centralizes button state handling
+  // - ensures only one primary (filled) button at a time
+  // - keeps DOM display logic isolated
   // ===================================================================
-  
+
   const ModeController = {
+    // Public API: setMode, activateGamoMode, activateComponentMode, toggleMaster
+
     setMode(mode) {
+      // hide master panel whenever switching mode
       DOM.masterPanel.style.display = 'none';
+
+      // normalize buttons first (ensure none are accidentally left as primary)
+      this._setInactive(DOM.modeGamoBtn);
+      this._setInactive(DOM.modeComponentBtn);
+      this._setInactive(DOM.masterToggleBtn);
 
       if (mode === 'gamo') {
         this.activateGamoMode();
-      } else if (mode === 'component') {
+      } else {
         this.activateComponentMode();
       }
     },
 
     activateGamoMode() {
-      DOM.modeGamoBtn.classList.replace('btn-outline-primary', 'btn-primary');
-      DOM.modeComponentBtn.classList.replace('btn-primary', 'btn-outline-primary');
+      this._setActive(DOM.modeGamoBtn);
+      this._setInactive(DOM.modeComponentBtn);
+      this._setInactive(DOM.masterToggleBtn);
+
       DOM.gamoPane.style.display = 'block';
       DOM.componentResults.style.display = 'none';
       if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
         DOM.componentSelect.closest('.row').style.display = 'none';
       }
-      
+
       GamoViewController.ensurePopulateGamo().catch(err => {
         console.error('Failed to populate GAMO:', err);
       });
     },
 
     activateComponentMode() {
-      DOM.modeGamoBtn.classList.replace('btn-primary', 'btn-outline-primary');
-      DOM.modeComponentBtn.classList.replace('btn-outline-primary', 'btn-primary');
+      this._setActive(DOM.modeComponentBtn);
+      this._setInactive(DOM.modeGamoBtn);
+      this._setInactive(DOM.masterToggleBtn);
+
       DOM.gamoPane.style.display = 'none';
       DOM.componentResults.style.display = 'block';
       if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
@@ -1991,10 +2212,17 @@ objTabsContainer.innerHTML = tabsHtml;
     },
 
     async toggleMaster() {
-      const isVisible = DOM.masterPanel.style.display !== 'none' && DOM.masterPanel.style.display !== '';
+      const isVisible = DOM.masterPanel.style.display !== 'block';
 
-      if (!isVisible) {
+      if (isVisible) {
+        // show master panel and mark Master button active
         DOM.masterPanel.style.display = 'block';
+        this._setActive(DOM.masterToggleBtn);
+
+        // ensure other mode buttons appear inactive
+        this._setInactive(DOM.modeGamoBtn);
+        this._setInactive(DOM.modeComponentBtn);
+
         DOM.gamoPane.style.display = 'none';
         DOM.componentResults.style.display = 'none';
         if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
@@ -2005,8 +2233,30 @@ objTabsContainer.innerHTML = tabsHtml;
           await MasterService.renderMaster();
         }
       } else {
+        // hide master and restore component mode visuals
         DOM.masterPanel.style.display = 'none';
+        this._setInactive(DOM.masterToggleBtn);
         this.setMode('component');
+      }
+    },
+
+    // Helper: mark button visually active (filled)
+    _setActive(btn) {
+      if (!btn) return;
+      // prefer removing any outline class and add primary
+      btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
+      if (!btn.classList.contains('btn-primary')) btn.classList.add('btn-primary');
+    },
+
+    // Helper: mark button visually inactive (outline)
+    _setInactive(btn) {
+      if (!btn) return;
+      if (btn.classList.contains('btn-primary')) {
+        btn.classList.replace('btn-primary', 'btn-outline-primary');
+      }
+      // ensure at least one outline class exists
+      if (!btn.classList.contains('btn-outline-primary') && !btn.classList.contains('btn-outline-secondary')) {
+        btn.classList.add('btn-outline-primary');
       }
     }
   };
