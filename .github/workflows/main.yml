@@ -1,0 +1,20 @@
+name: 🚀 Publish Website to MAIN Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ftp-deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Dev via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.PROD_USERNAME }}
+          password: ${{ secrets.PROD_PASSWORD }}
