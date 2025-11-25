@@ -5,9 +5,11 @@ namespace App\Http\Controllers\AssessmentEval;
 use App\Http\Controllers\Controller;
 use App\Services\EvaluationService;
 use App\Models\MstObjective;
+use App\Models\TrsEvalDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AssessmentEvalController extends Controller
 {
@@ -34,7 +36,7 @@ class AssessmentEvalController extends Controller
     /**
      * Create a new assessment for the current user
      */
-    public function createAssessment()
+    public function createAssessment(Request $request)
     {
         try {
             $evaluation = $this->evaluationService->createNewEvaluation(Auth::id());
@@ -53,6 +55,45 @@ class AssessmentEvalController extends Controller
                 throw new \Exception('Failed to verify created assessment');
             }
             
+            // store selected GAMO/domain mappings if provided (do in a transaction)
+            try {
+                $selected = $request->input('selected_gamos', []);
+                if ($selected && !is_array($selected)) {
+                    $selected = array_map('trim', explode(',', (string)$selected));
+                }
+
+                if (!empty($selected)) {
+                    DB::transaction(function () use ($evaluation, $selected) {
+                        // remove any existing mappings for this evaluation to avoid duplicates
+                        TrsEvalDetail::where('eval_id', $evaluation->eval_id)->delete();
+
+                        $inserts = [];
+                        foreach ($selected as $domainId) {
+                            $domainId = trim((string)$domainId);
+                            if ($domainId !== '') {
+                                $inserts[] = [
+                                    'eval_id' => $evaluation->eval_id,
+                                    'domain_id' => $domainId,
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ];
+                            }
+                        }
+
+                        if (!empty($inserts)) {
+                            // bulk insert for efficiency
+                            TrsEvalDetail::insert($inserts);
+                        }
+                    });
+                }
+            } catch (\Exception $e) {
+                // log but allow creation to succeed — mapping is optional
+                Log::warning('Failed to save selected GAMO mapping for eval', [
+                    'eval_id' => $evaluation->eval_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             return redirect()->route('assessment-eval.show', ['evalId' => $evaluation->eval_id]);
         } catch (\Exception $e) {
             Log::error("Failed to create assessment", [
@@ -92,8 +133,24 @@ class AssessmentEvalController extends Controller
                 abort(404, 'Assessment not found');
             }
 
-            $objectives = MstObjective::with(['practices.activities'])->get();
-            return view('assessment-eval.show', compact('objectives', 'evalId'));
+            // if evaluation has selected GAMO/domain mappings, only load those objectives
+            $selectedDomains = TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
+
+            if (!empty($selectedDomains)) {
+                $objectives = MstObjective::with(['practices.activities'])
+                    ->where(function ($q) use ($selectedDomains) {
+                        foreach ($selectedDomains as $domain) {
+                            $domain = trim((string)$domain);
+                            if ($domain !== '') {
+                                // match objective_id prefix (e.g. EDM -> EDM01, EDM02...)
+                                $q->orWhere('objective_id', 'like', $domain . '%');
+                            }
+                        }
+                    })->get();
+            } else {
+                $objectives = MstObjective::with(['practices.activities'])->get();
+            }
+            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation'));
         } catch (\Exception $e) {
             Log::error("Failed to load assessment", [
                 'eval_id' => $evalId,
@@ -132,6 +189,13 @@ class AssessmentEvalController extends Controller
                         'evaluation_user_id_type' => $evaluation ? gettype($evaluation->user_id) : null
                     ]
                 ], 404);
+            }
+
+            if ($evaluation->status === 'finished') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Assessment is finished and cannot be modified. Please unlock it first.'
+                ], 403);
             }
 
             $data = $this->evaluationService->convertAssessmentData($request->all());
@@ -277,4 +341,64 @@ class AssessmentEvalController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Finish the assessment
+     */
+    public function finish($evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            
+            if (!$evaluation) {
+                return response()->json(['message' => 'Assessment not found'], 404);
+            }
+            
+            if ((string)$evaluation->user_id !== (string)Auth::id()) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
+            $evaluation->status = 'finished';
+            $evaluation->save();
+
+            return response()->json(['message' => 'Assessment finished successfully']);
+        } catch (\Exception $e) {
+            Log::error("Failed to finish assessment", [
+                'eval_id' => $evalId,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['message' => 'Failed to finish assessment: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Unlock the assessment
+     */
+    public function unlock($evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            
+            if (!$evaluation) {
+                return response()->json(['message' => 'Assessment not found'], 404);
+            }
+            
+            if ((string)$evaluation->user_id !== (string)Auth::id()) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
+            $evaluation->status = 'in_progress';
+            $evaluation->save();
+
+            return response()->json(['message' => 'Assessment unlocked successfully']);
+        } catch (\Exception $e) {
+            Log::error("Failed to unlock assessment", [
+                'eval_id' => $evalId,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['message' => 'Failed to unlock assessment: ' . $e->getMessage()], 500);
+        }
+    }
+
+
 }

@@ -9,6 +9,10 @@
     $totalRatedActivities = $evaluationsCollection->sum(function($evaluation) {
         return ($evaluation->activityEvaluations ?? collect())->whereIn('level_achieved', ['F','L','P'])->count();
     });
+    $finishedAssessments = $evaluationsCollection->filter(function($evaluation) {
+        return strtolower($evaluation->status ?? '') === 'finished';
+    })->count();
+    $draftAssessments = max(0, $totalAssessments - $finishedAssessments);
 @endphp
 <div class="container mx-auto p-6" id="page-top">
     {{-- Main Hero Card --}}
@@ -23,18 +27,22 @@
             </span>
         </div>
         <div class="card-body hero-body">
-            <div class="hero-quick d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                <div class="hero-stat-card mb-0">
+            <div class="hero-quick d-flex flex-column flex-lg-row align-items-stretch justify-content-between gap-3">
+                <div class="hero-stat-card mb-0 flex-fill">
                     <span class="stat-label">Total Assessment</span>
                     <span class="stat-value">{{ number_format($totalAssessments) }}</span>
                     <span class="stat-subtext">Portofolio aktif</span>
                 </div>
-                <form action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline-flex">
-                    @csrf
-                    <button type="submit" class="btn btn-light hero-action-btn">
-                        <i class="fas fa-plus me-2"></i>Assessment Baru
-                    </button>
-                </form>
+                <div class="hero-status-summary flex-fill d-flex flex-wrap gap-3">
+                    <div class="hero-status-card status-finished">
+                        <span class="status-label">Assessment Finish</span>
+                        <span class="status-value">{{ number_format($finishedAssessments) }}</span>
+                    </div>
+                    <div class="hero-status-card status-draft">
+                        <span class="status-label">Assessment Draft</span>
+                        <span class="status-value">{{ number_format($draftAssessments) }}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -70,7 +78,11 @@
                         ]
                         : ['F' => 0, 'L' => 0, 'P' => 0, 'N' => 0];
                     $completion = $totalRatableActivities > 0 ? round(($totalRated / $totalRatableActivities) * 100, 1) : 0;
-                    if ($completion >= 90) {
+                    
+                    if (($evaluation->status ?? '') === 'finished') {
+                        $statusLabel = 'Selesai';
+                        $statusClass = 'chip-success';
+                    } elseif ($completion >= 90) {
                         $statusLabel = 'Siap Review';
                         $statusClass = 'chip-success';
                     } elseif ($completion >= 60) {
@@ -130,7 +142,9 @@
                             </ul>
                         </div>
                         <div class="card-footer assessment-card-footer">
-                            <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" class="btn btn-primary btn-sm assessment-view-btn" title="Lihat Assessment #{{ $evaluation->eval_id }}">
+                            <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
+                               class="btn btn-primary btn-sm" 
+                               title="Lihat Assessment #{{ $evaluation->eval_id }}">
                                 <i class="fas fa-eye me-1"></i>Lihat Detail
                             </a>
                             <button class="btn btn-outline-danger btn-sm delete-assessment" 
@@ -154,9 +168,13 @@
                     <p class="text-muted mb-4">
                         Mulai assessment pertama untuk membuka ringkasan domain seperti pada halaman detail.
                     </p>
-                    <form action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline">
+                    <form id="createAssessmentForm" action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline">
                         @csrf
-                        <button type="submit" class="btn btn-primary btn-lg hero-action-btn">
+                        <button type="button" 
+                                class="btn btn-primary btn-lg hero-action-btn"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#assessorModal"
+                                data-action="create">
                             <i class="fas fa-plus me-2"></i>Buat Assessment Pertama
                         </button>
                     </form>
@@ -168,10 +186,157 @@
     {{-- Debug removed for cleaner UI --}}
 </div>
 
+{{-- Assessor Info Modal (POC) --}}
+<div class="modal fade" id="assessorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="assessorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary" id="assessorModalLabel">Informasi Assessor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-4">
+                <p class="text-muted small mb-4">Silakan lengkapi data berikut sebelum melanjutkan ke halaman assessment.</p>
+                
+                <form id="assessorForm">
+                    {{-- Assessor name & organization removed for POC; only domain selection is required --}}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-uppercase text-muted d-flex justify-content-between align-items-center">
+                            Target Domain
+                        </label>
+                        
+                        <div class="gamo-selector border rounded p-3 bg-light-subtle" style="max-height: 300px; overflow-y: auto;">
+                            
+                            <div class="mb-3">
+                                <div class="fw-bold text-dark small mb-2 border-bottom pb-1">Evaluate, Direct and Monitor (EDM)</div>
+                                @foreach([
+                                    'EDM01' => 'Ensured Governance Framework Setting and Maintenance',
+                                    'EDM02' => 'Ensured Benefits Delivery',
+                                    'EDM03' => 'Ensured Risk Optimization',
+                                    'EDM04' => 'Ensured Resource Optimization',
+                                    'EDM05' => 'Ensured Stakeholder Engagement'
+                                ] as $code => $name)
+                                    <div class="form-check">
+                                        <input class="form-check-input gamo-checkbox" type="checkbox" value="{{ $code }}" id="gamo_{{ $code }}">
+                                        <label class="form-check-label small text-secondary" for="gamo_{{ $code }}">
+                                            <span class="fw-medium text-dark">{{ $code }}</span> - {{ $name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="fw-bold text-dark small mb-2 border-bottom pb-1">Align, Plan and Organize (APO)</div>
+                                @foreach([
+                                    'APO01' => 'Managed I&T Management Framework',
+                                    'APO02' => 'Managed Strategy',
+                                    'APO03' => 'Managed Enterprise Architecture',
+                                    'APO04' => 'Managed Innovation',
+                                    'APO05' => 'Managed Portfolio',
+                                    'APO06' => 'Managed Budget and Costs',
+                                    'APO07' => 'Managed Human Resources',
+                                    'APO08' => 'Managed Relationships',
+                                    'APO09' => 'Managed Service Agreements',
+                                    'APO10' => 'Managed Vendors',
+                                    'APO11' => 'Managed Quality',
+                                    'APO12' => 'Managed Risk',
+                                    'APO13' => 'Managed Security',
+                                    'APO14' => 'Managed Data'
+                                ] as $code => $name)
+                                    <div class="form-check">
+                                        <input class="form-check-input gamo-checkbox" type="checkbox" value="{{ $code }}" id="gamo_{{ $code }}">
+                                        <label class="form-check-label small text-secondary" for="gamo_{{ $code }}">
+                                            <span class="fw-medium text-dark">{{ $code }}</span> - {{ $name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="fw-bold text-dark small mb-2 border-bottom pb-1">Build, Acquire and Implement (BAI)</div>
+                                @foreach([
+                                    'BAI01' => 'Managed Programs',
+                                    'BAI02' => 'Managed Requirements Definition',
+                                    'BAI03' => 'Managed Solutions Identification and Build',
+                                    'BAI04' => 'Managed Availability and Capacity',
+                                    'BAI05' => 'Managed Organizational Change',
+                                    'BAI06' => 'Managed IT Changes',
+                                    'BAI07' => 'Managed IT Change Acceptance and Transition',
+                                    'BAI08' => 'Managed Knowledge',
+                                    'BAI09' => 'Managed Assets',
+                                    'BAI10' => 'Managed Configuration',
+                                    'BAI11' => 'Managed Projects'
+                                ] as $code => $name)
+                                    <div class="form-check">
+                                        <input class="form-check-input gamo-checkbox" type="checkbox" value="{{ $code }}" id="gamo_{{ $code }}">
+                                        <label class="form-check-label small text-secondary" for="gamo_{{ $code }}">
+                                            <span class="fw-medium text-dark">{{ $code }}</span> - {{ $name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="fw-bold text-dark small mb-2 border-bottom pb-1">Deliver, Service and Support (DSS)</div>
+                                @foreach([
+                                    'DSS01' => 'Managed Operations',
+                                    'DSS02' => 'Managed Service Requests and Incidents',
+                                    'DSS03' => 'Managed Problems',
+                                    'DSS04' => 'Managed Continuity',
+                                    'DSS05' => 'Managed Security Services',
+                                    'DSS06' => 'Managed Business Process Controls'
+                                ] as $code => $name)
+                                    <div class="form-check">
+                                        <input class="form-check-input gamo-checkbox" type="checkbox" value="{{ $code }}" id="gamo_{{ $code }}">
+                                        <label class="form-check-label small text-secondary" for="gamo_{{ $code }}">
+                                            <span class="fw-medium text-dark">{{ $code }}</span> - {{ $name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="fw-bold text-dark small mb-2 border-bottom pb-1">Monitor, Evaluate and Assess (MEA)</div>
+                                @foreach([
+                                    'MEA01' => 'Managed Performance and Conformance Monitoring',
+                                    'MEA02' => 'Managed System of Internal Control',
+                                    'MEA03' => 'Managed Compliance with External Requirements',
+                                    'MEA04' => 'Managed Assurance'
+                                ] as $code => $name)
+                                    <div class="form-check">
+                                        <input class="form-check-input gamo-checkbox" type="checkbox" value="{{ $code }}" id="gamo_{{ $code }}">
+                                        <label class="form-check-label small text-secondary" for="gamo_{{ $code }}">
+                                            <span class="fw-medium text-dark">{{ $code }}</span> - {{ $name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                        </div>
+                        <div class="form-text text-muted small mt-2"><i class="fas fa-info-circle me-1"></i> Pilih satu atau lebih domain yang akan menjadi fokus assessment.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="btnContinueAssessment">
+                    Lanjutkan <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="sticky-action-group">
-    <form action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline">
+    <form id="createAssessmentFormSticky" action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline">
         @csrf
-        <button type="submit" class="sticky-action-btn btn btn-primary" title="Assessment Baru">
+        <button type="button" 
+                id="open-new-assessment-modal" 
+                class="sticky-action-btn btn btn-primary" 
+                title="Assessment Baru"
+                data-bs-toggle="modal" 
+                data-bs-target="#assessorModal"
+                data-action="create">
             <i class="fas fa-plus me-2"></i>Assessment Baru
         </button>
     </form>
@@ -180,8 +345,81 @@
     </a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+let targetUrl = '';
+let currentAction = '';
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Capture click on buttons that open the modal to get the URL and Action
+    document.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-bs-target="#assessorModal"]');
+        if (btn) {
+            targetUrl = btn.getAttribute('data-url');
+            currentAction = btn.getAttribute('data-action');
+            
+            // Reset form if creating new
+            if (currentAction === 'create') {
+                document.getElementById('assessorForm').reset();
+                // Uncheck all checkboxes
+                document.querySelectorAll('.gamo-checkbox').forEach(cb => cb.checked = false);
+            }
+        }
+    });
+
+    // Assessor Modal Logic
+    const btnContinue = document.getElementById('btnContinueAssessment');
+    if(btnContinue) {
+        btnContinue.addEventListener('click', function() {
+            // Get selected GAMOs
+            const selectedGamos = Array.from(document.querySelectorAll('.gamo-checkbox:checked')).map(cb => cb.value);
+
+            if (selectedGamos.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Domain Belum Dipilih',
+                    text: 'Mohon pilih minimal satu domain untuk melanjutkan.'
+                });
+                return;
+            }
+
+            // Handle action based on type
+            if (currentAction === 'create') {
+                // Submit the create form
+                // We can use either the sticky form or the empty state form, they go to the same route.
+                // Or we can create a hidden form submission here.
+                // Since we have two forms, let's just pick one or create a dynamic submission.
+                
+                // For POC, we might want to pass these values to the backend?
+                // But the user said "hanya dummy aja ...untuk poc".
+                // So we just proceed to create the assessment.
+                
+                // Let's submit the sticky form as it's always present (or check which one exists)
+                const form = document.getElementById('createAssessmentFormSticky') || document.getElementById('createAssessmentForm');
+                if (form) {
+                    // Ensure previous hidden input is removed to avoid duplicates
+                    const existing = form.querySelector('input[name="selected_gamos"]');
+                    if (existing) existing.remove();
+
+                    // Add selected GAMOs as a comma-separated hidden input so backend can accept array or CSV
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'selected_gamos';
+                    hidden.value = selectedGamos.join(',');
+                    form.appendChild(hidden);
+
+                    // Submit the form to create the assessment; controller will read selected_gamos
+                    form.submit();
+                }
+            } else if (currentAction === 'view' && targetUrl) {
+                // Redirect to show page
+                window.location.href = targetUrl;
+            } else {
+                console.error('Unknown action or missing URL');
+            }
+        });
+    }
+
     const deleteButtons = document.querySelectorAll('.delete-assessment');
     console.log('Found delete buttons:', deleteButtons.length);
 
@@ -191,24 +429,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const evalId = this.getAttribute('data-eval-id');
             const dbId = this.getAttribute('data-db-id');
             console.log('Delete button clicked for eval ID:', evalId, 'DB ID:', dbId);
-            
+
             if (!evalId && !dbId) {
-                alert('Unable to determine assessment id to delete.');
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'ID tidak ditemukan',
+                    text: 'Tidak dapat menentukan assessment untuk dihapus.'
+                });
                 return;
             }
 
-            if (confirm(`Are you sure you want to delete Assessment #${evalId ?? dbId}? This action cannot be undone.`)) {
-                try {
-                    // Prefer DB ID when it's numeric (common for primary keys),
-                    // otherwise fallback to evalId. This makes the frontend flexible.
-                    let idToUse = null;
-                    if (dbId && !isNaN(dbId)) {
-                        idToUse = dbId;
-                    } else {
-                        idToUse = evalId;
-                    }
+            const idToUse = (dbId && !isNaN(dbId)) ? dbId : evalId;
 
-                    console.log(`/assessment-eval/${encodeURIComponent(idToUse)}`);
+            const { value: confirmDelete } = await Swal.fire({
+                title: `Hapus Assessment ${evalId ?? dbId}?`,
+                text: 'Tindakan ini tidak dapat dibatalkan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#0f6ad9'
+            });
+
+            if (confirmDelete) {
+                Swal.fire({
+                    title: 'Menghapus...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                try {
                     const response = await fetch(`/assessment-eval/${encodeURIComponent(idToUse)}`, {
                         method: 'DELETE',
                         headers: {
@@ -216,23 +466,36 @@ document.addEventListener('DOMContentLoaded', function() {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({}) // some servers expect body; safe to send empty object
+                        body: JSON.stringify({})
                     });
 
-                    const result = await response.json();
+                    let result = {};
+                    try { result = await response.json(); } catch(e) { /* ignore parse error */ }
+
+                    Swal.close();
 
                     if (response.ok && result.success) {
-                        showNotification('Assessment deleted successfully!', 'success');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1200);
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Terhapus',
+                            text: result.message || 'Assessment berhasil dihapus.'
+                        });
+                        setTimeout(() => window.location.reload(), 700);
                     } else {
-                        // show server message if any, fallback to generic
-                        showNotification(result.message || 'Failed to delete assessment', 'error');
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: result.message || 'Gagal menghapus assessment.'
+                        });
                     }
                 } catch (error) {
                     console.error('Delete error:', error);
-                    showNotification('Failed to delete assessment', 'error');
+                    Swal.close();
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Terjadi kesalahan saat menghapus assessment.'
+                    });
                 }
             }
         });
@@ -246,9 +509,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.remove();
@@ -315,6 +578,47 @@ document.addEventListener('DOMContentLoaded', function() {
     height: 100%;
 }
 
+.hero-status-summary {
+    background: #ffffff;
+    border: 1px solid #e3e8ff;
+    border-radius: 0.9rem;
+    padding: 0.75rem 1rem;
+    min-width: 260px;
+}
+
+.hero-status-card {
+    flex: 1 1 120px;
+    background: #f9fbff;
+    border-radius: 0.85rem;
+    padding: 0.9rem 1rem;
+    border: 1px dashed #dbe2ff;
+}
+
+.hero-status-card .status-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6f7491;
+}
+
+.hero-status-card .status-value {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.hero-status-card.status-finished {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #0f5132;
+}
+
+.hero-status-card.status-draft {
+    background: rgba(253, 224, 71, 0.12);
+    border-color: rgba(250, 204, 21, 0.45);
+    color: #7a5d07;
+}
+
 .stat-label {
     font-size: 0.85rem;
     text-transform: uppercase;
@@ -353,8 +657,22 @@ document.addEventListener('DOMContentLoaded', function() {
     text-decoration: none;
 }
 
+.assessment-card {
+    border-radius: 0.9rem;
+    transition: transform 0.22s cubic-bezier(.2,.9,.2,1), box-shadow 0.22s cubic-bezier(.2,.9,.2,1);
+    box-shadow: 0 8px 20px rgba(15,43,92,0.06);
+    will-change: transform;
+}
+
+.assessment-card:hover,
+.assessment-card:focus-within {
+    transform: translateY(-6px);
+    box-shadow: 0 28px 60px rgba(15,43,92,0.14);
+}
+
+/* keep generic card grid transition for non-assessment cards but prefer .assessment-card rules */
 .assessment-grid .card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .assessment-grid .card:hover {
@@ -515,6 +833,16 @@ document.addEventListener('DOMContentLoaded', function() {
     .hero-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .hero-quick {
+        align-items: stretch !important;
+    }
+
+    .hero-status-summary,
+    .hero-stat-card,
+    .hero-status-card {
+        width: 100%;
     }
 
     .assessment-card-footer {

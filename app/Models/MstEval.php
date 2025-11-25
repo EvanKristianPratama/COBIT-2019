@@ -15,7 +15,8 @@ class MstEval extends Model
     protected $keyType = 'int';
     
     protected $fillable = [
-        'user_id'
+        'user_id',
+        'status'
     ];
 
     /**
