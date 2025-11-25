@@ -293,22 +293,21 @@
                     <div class="row g-0 align-items-stretch">
                         <div class="col-lg-5 d-none d-lg-flex hero-panel">
                             <div class="hero-content">
-                                <span class="badge text-uppercase">COBIT 2019</span>
-                                <h2>Insights that guide every decision</h2>
+                                <span class="badge text-uppercase">PT LAPI Divusi</span>
+                                <h2>COBIT 2019</h2>
                                 <p>
-                                    Access dashboards, benchmark progress, and collaborate across teams with a secure COBIT assessment workspace.
-                                </p>
+                                    The latest global framework for the governance and management of enterprise information and technology </p>
                                 <ul class="ps-0">
-                                    <li><i class="fas fa-check-circle"></i>Comprehensive governance scoring</li>
-                                    <li><i class="fas fa-check-circle"></i>Guided remediation roadmap</li>
-                                    <li><i class="fas fa-check-circle"></i>Secure multi-role access</li>
+                                    <li><i class="fas fa-check-circle"></i>COBIT Component Dictionary</li>
+                                    <li><i class="fas fa-check-circle"></i>COBIT Design Toolkit</li>
+                                    <li><i class="fas fa-check-circle"></i>COBIT Assessment</li>
                                 </ul>
                             </div>
                         </div>
                         <div class="col-lg-7 form-panel">
                             <div class="form-heading">
                                 <h3>{{ __('Welcome Back') }}</h3>
-                                <p>Sign in to continue your COBIT maturity journey</p>
+                                <p>Sign in to continue</p>
                             </div>
                             <form method="POST" action="{{ route('login') }}">
                                 @csrf
@@ -344,12 +343,6 @@
                                 </div>
 
                                 <div class="form-meta">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="remember">
-                                            {{ __('Remember Me') }}
-                                        </label>
-                                    </div>
                                     @if (Route::has('password.request'))
                                         <a class="text-decoration-none" href="{{ route('password.request') }}">
                                             {{ __('Forgot Password?') }}
