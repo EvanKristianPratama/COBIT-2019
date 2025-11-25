@@ -352,7 +352,7 @@
 
                                         <div class="mb-4">
                                             <label for="jabatan" class="form-label">
-                                                <i class="fas fa-briefcase me-1"></i>Position / Role
+                                                <i class="fas fa-briefcase me-1"></i>Position
                                             </label>
                                             <div class="input-icon-wrapper">
                                                 <i class="fas fa-briefcase"></i>
