@@ -33,10 +33,31 @@ class AssessmentEvalController extends Controller
 
             if ($org) {
                 // load all evaluations created by users in the same organization
-                $evaluations = MstEval::with(['activityEvaluations', 'user'])
+                // NOTE: do NOT eager-load full activityEvaluations for other users — expose only aggregated counts
+                $evaluations = MstEval::with(['user'])
                     ->whereHas('user', function ($q) use ($org) {
                         $q->where('organisasi', $org);
                     })->get();
+
+                // attach aggregated achievement counts per evaluation (F/L/P) without loading full rows
+                $evalIds = $evaluations->pluck('eval_id')->filter()->unique()->values()->all();
+                if (!empty($evalIds)) {
+                    $rows = \App\Models\TrsActivityeval::whereIn('eval_id', $evalIds)
+                        ->select('eval_id', 'level_achieved', DB::raw('count(*) as cnt'))
+                        ->groupBy('eval_id', 'level_achieved')
+                        ->get();
+
+                    $countsMap = [];
+                    foreach ($rows as $r) {
+                        $eid = $r->eval_id;
+                        $lvl = $r->level_achieved;
+                        $countsMap[$eid][$lvl] = (int) $r->cnt;
+                    }
+
+                    foreach ($evaluations as $ev) {
+                        $ev->achievement_counts = $countsMap[$ev->eval_id] ?? [];
+                    }
+                }
             } else {
                 // fallback to current user's evaluations
                 $evaluations = $this->evaluationService->getUserEvaluations();
@@ -142,9 +163,11 @@ class AssessmentEvalController extends Controller
             $currentUser = Auth::user();
 
             $canView = false;
+            $isOwner = false;
             if ($owner && $currentUser) {
                 if ((string)$evaluation->user_id === (string)$currentUser->id) {
                     $canView = true; // owner
+                    $isOwner = true;
                 } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && $owner->organisasi === $currentUser->organisasi) {
                     $canView = true; // same organization -> view-only
                 }
@@ -174,7 +197,8 @@ class AssessmentEvalController extends Controller
             } else {
                 $objectives = MstObjective::with(['practices.activities'])->get();
             }
-            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation'));
+            // Pass isOwner to the view. Non-owners may view the full content in read-only mode.
+            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation', 'isOwner'));
         } catch (\Exception $e) {
             Log::error("Failed to load assessment", [
                 'eval_id' => $evalId,
@@ -262,22 +286,29 @@ class AssessmentEvalController extends Controller
                 ], 404);
             }
             
-            // Convert to same type (string) before comparison
-            if ((string)$evaluation->user_id !== (string)Auth::id()) {
+            // Allow load if requester is owner OR belongs to the same organization as owner
+            $owner = User::find($evaluation->user_id);
+            $currentUser = Auth::user();
+
+            $isOwner = false;
+            $canLoad = false;
+            if ($currentUser && $owner) {
+                if ((string)$evaluation->user_id === (string)$currentUser->id) {
+                    $isOwner = true;
+                    $canLoad = true;
+                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && $owner->organisasi === $currentUser->organisasi) {
+                    $canLoad = true; // same organization -> view-only
+                }
+            }
+
+            if (!$canLoad) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Access denied - you are not the owner of this assessment',
+                    'message' => 'Access denied - you are not allowed to view this assessment',
                     'debug' => [
                         'auth_id' => Auth::id(),
-                        'auth_id_type' => gettype(Auth::id()),
-                        'evaluation_user_id' => $evaluation->user_id,
-                        'evaluation_user_id_type' => gettype($evaluation->user_id),
                         'requested_eval_id' => $evalId,
-                        'evaluation' => [
-                            'id' => $evaluation->id,
-                            'eval_id' => $evaluation->eval_id,
-                            'user_id' => $evaluation->user_id
-                        ]
+                        'owner_user_id' => $evaluation->user_id
                     ]
                 ], 403);
             }
@@ -300,7 +331,8 @@ class AssessmentEvalController extends Controller
                     'assessmentData' => $assessmentData,
                     'notes' => $notes,
                     'evidence' => $evidence,
-                    'activityData' => $data['activity_evaluations']
+                    'activityData' => $data['activity_evaluations'],
+                    'isOwner' => $isOwner
                 ]
             ]);
         } catch (\Exception $e) {

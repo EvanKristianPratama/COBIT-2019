@@ -16,7 +16,8 @@
     
     $totalRatableActivities = \App\Models\MstActivities::count();
     $totalRatedActivities = $evaluationsCollection->sum(function($evaluation) {
-        return ($evaluation->activityEvaluations ?? collect())->whereIn('level_achieved', ['F','L','P'])->count();
+        $counts = $evaluation->achievement_counts ?? [];
+        return ($counts['F'] ?? 0) + ($counts['L'] ?? 0) + ($counts['P'] ?? 0);
     });
     $finishedAssessments = $evaluationsCollection->filter(function($evaluation) {
         return strtolower($evaluation->status ?? '') === 'finished';
@@ -79,8 +80,7 @@
                 <div class="row g-4 assessment-grid" id="my-assessments-grid">
                     @foreach($myAssessments as $evaluation)
                         @php
-                            $activityEvaluations = $evaluation->activityEvaluations ?? collect();
-                            $achievementCounts = $activityEvaluations->groupBy('level_achieved')->map->count();
+                            $achievementCounts = $evaluation->achievement_counts ?? [];
                             $ratedCounts = [
                                 'F' => $achievementCounts['F'] ?? 0,
                                 'L' => $achievementCounts['L'] ?? 0,
@@ -200,8 +200,7 @@
                             <div class="row g-4 assessment-grid" id="other-assessments-grid">
                                 @foreach($otherAssessments as $evaluation)
                                     @php
-                                        $activityEvaluations = $evaluation->activityEvaluations ?? collect();
-                                        $achievementCounts = $activityEvaluations->groupBy('level_achieved')->map->count();
+                                        $achievementCounts = $evaluation->achievement_counts ?? [];
                                         $ratedCounts = [
                                             'F' => $achievementCounts['F'] ?? 0,
                                             'L' => $achievementCounts['L'] ?? 0,

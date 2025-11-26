@@ -402,12 +402,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Server-provided owner flag to control data loading and sensitive UI
+window.IS_OWNER = {{ isset($isOwner) && $isOwner ? 'true' : 'false' }};
 class COBITAssessmentManager {
-    constructor(evalId, status = 'draft') {
+    constructor(evalId, status = 'draft', isOwner = false) {
         this.assessmentData = {};
         this.levelScores = {};
         this.currentEvalId = evalId;
         this.status = status;
+        this.isOwner = (isOwner === true || isOwner === 'true');
         this.evidenceLibrary = new Set();
         this.diagramChartInstance = null;
         this.objectiveCapabilityLevels = {};
@@ -589,12 +592,7 @@ class COBITAssessmentManager {
             this.elementCache.evidenceDropdowns.set(el.dataset.activityId, el);
         });
         
-        console.log('Element cache built:', {
-            ratings: this.elementCache.ratingSelects.size,
-            evidence: this.elementCache.evidenceInputs.size,
-            notes: this.elementCache.noteInputs.size,
-            evidenceDropdowns: this.elementCache.evidenceDropdowns.size
-        });
+        // element cache populated
     }
 
     getEvidenceSelectElements() {
@@ -997,6 +995,13 @@ class COBITAssessmentManager {
 
             updateProgressFn('Complete!', 100);
             hideLoadingFn();
+
+            // If viewer is not owner, force read-only mode after data is loaded
+            if (!this.isOwner) {
+                this.setActionButtonsDisabled(true);
+                this.lockInterface();
+            }
+
             if (triggeredManually) {
                 this.showNotification('Assessment loaded successfully!', 'success');
             }
@@ -2587,7 +2592,8 @@ class COBITAssessmentManager {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new COBITAssessmentManager({{ $evalId }}, '{{ $evaluation->status ?? "draft" }}');
+    const isOwnerFlag = window.IS_OWNER === true || window.IS_OWNER === 'true';
+    new COBITAssessmentManager({{ $evalId }}, '{{ $evaluation->status ?? "draft" }}', isOwnerFlag);
 });
 </script>
 
