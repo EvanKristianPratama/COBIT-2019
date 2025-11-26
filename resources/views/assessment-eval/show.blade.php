@@ -293,9 +293,9 @@
                                                                             data-level="{{ $level }}">
                                                                             <option value="">Select Rating</option>
                                                                             <option value="N">None</option>
-                                                                            <option value="P">Partially</option>
+                                                                            <option value="P">Partial</option>
                                                                             <option value="L">Largely</option>
-                                                                            <option value="F">Fully</option>
+                                                                            <option value="F">Full</option>
                                                                         </select>
                                                                     </td>
                                                                     <td class="evidence-cell">
@@ -377,7 +377,7 @@
 </div>
 
 <div class="sticky-action-group">
-    @if(Auth::id() === ($evaluation->user_id ?? null))
+    @if((int) (Auth::id() ?? 0) === (int) ($evaluation->user_id ?? 0))
         <button type="button" class="sticky-action-btn btn btn-primary" id="save-assessment" title="Save Assessment">
             <i class="fas fa-save me-2"></i>Save
         </button>
@@ -2587,39 +2587,6 @@ class COBITAssessmentManager {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // expose ownership to client - used to toggle editability
-    window.IS_OWNER = {{ (Auth::id() === ($evaluation->user_id ?? null)) ? 'true' : 'false' }};
-
-    // If not owner, set view-only mode: ONLY disable editing controls (ratings, evidence, notes)
-    if (!window.IS_OWNER) {
-        document.body.classList.add('view-only');
-
-        // Disable the main editable controls while preserving navigation, filters, and diagram interactions
-        const editSelectors = [
-            'select.activity-rating-select',
-            'textarea.evidence-input',
-            'textarea.note-input',
-            'select.evidence-history-select'
-        ];
-
-        document.querySelectorAll(editSelectors.join(',')).forEach(el => {
-            try { el.disabled = true; } catch(e) { /* ignore */ }
-        });
-
-        // Also disable any inputs/selects/textarea that live inside the assessment tables (safety)
-        document.querySelectorAll('.assessment-table input, .assessment-table select, .assessment-table textarea').forEach(el => {
-            try { el.disabled = true; } catch(e) { /* ignore */ }
-        });
-
-        // Hide or remove primary action buttons that perform edits
-        document.querySelectorAll('#save-assessment, #btn-finish-assessment, #btn-unlock-assessment').forEach(b => {
-            if (b && b.style) b.style.display = 'none';
-        });
-
-        // Keep domain tabs, objective filters, toggle buttons and diagram interactions enabled
-        // (no further action required — we only targeted editing controls above)
-    }
-
     new COBITAssessmentManager({{ $evalId }}, '{{ $evaluation->status ?? "draft" }}');
 });
 </script>
