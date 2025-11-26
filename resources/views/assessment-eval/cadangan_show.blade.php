@@ -292,7 +292,7 @@
                                                                             data-level="{{ $level }}">
                                                                             <option value="">Select Rating</option>
                                                                             <option value="N">None</option>
-                                                                            <option value="P">Partial</option>
+                                                                            <option value="P">Partially</option>
                                                                             <option value="L">Largely</option>
                                                                             <option value="F">Full</option>
                                                                         </select>
