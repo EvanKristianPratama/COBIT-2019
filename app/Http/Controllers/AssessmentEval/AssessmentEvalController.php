@@ -5,7 +5,9 @@ namespace App\Http\Controllers\AssessmentEval;
 use App\Http\Controllers\Controller;
 use App\Services\EvaluationService;
 use App\Models\MstObjective;
+use App\Models\MstEval;
 use App\Models\TrsEvalDetail;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -26,7 +28,20 @@ class AssessmentEvalController extends Controller
     public function listAssessments()
     {
         try {
-            $evaluations = $this->evaluationService->getUserEvaluations();
+            $user = Auth::user();
+            $org = $user->organisasi ?? null;
+
+            if ($org) {
+                // load all evaluations created by users in the same organization
+                $evaluations = MstEval::with(['activityEvaluations', 'user'])
+                    ->whereHas('user', function ($q) use ($org) {
+                        $q->where('organisasi', $org);
+                    })->get();
+            } else {
+                // fallback to current user's evaluations
+                $evaluations = $this->evaluationService->getUserEvaluations();
+            }
+
             return view('assessment-eval.list', compact('evaluations'));
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to load assessments: ' . $e->getMessage()]);
@@ -122,18 +137,27 @@ class AssessmentEvalController extends Controller
                 abort(404, 'Assessment not found');
             }
             
-            if ((string)$evaluation->user_id !== (string)Auth::id()) {
+            // Allow viewing if requester is owner OR belongs to the same organization as owner
+            $owner = User::find($evaluation->user_id);
+            $currentUser = Auth::user();
+
+            $canView = false;
+            if ($owner && $currentUser) {
+                if ((string)$evaluation->user_id === (string)$currentUser->id) {
+                    $canView = true; // owner
+                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && $owner->organisasi === $currentUser->organisasi) {
+                    $canView = true; // same organization -> view-only
+                }
+            }
+
+            if (!$canView) {
                 Log::error("Assessment access denied", [
                     'eval_id' => $evalId,
                     'requesting_user_id' => Auth::id(),
-                    'requesting_user_id_type' => gettype(Auth::id()),
                     'owner_user_id' => $evaluation->user_id,
-                    'owner_user_id_type' => gettype($evaluation->user_id)
                 ]);
                 abort(404, 'Assessment not found');
             }
-
-            // if evaluation has selected GAMO/domain mappings, only load those objectives
             $selectedDomains = TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
 
             if (!empty($selectedDomains)) {
