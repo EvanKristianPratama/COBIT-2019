@@ -52,7 +52,8 @@
 
             <div class="domain-tabs-wrapper">
                 <div class="domain-tabs" role="tablist">
-                    <button type="button" class="domain-tab active" data-domain="all">All Domains</button>
+                    <button type="button" class="domain-tab " data-domain="all">All</button>
+                    <button type="button" class="domain-tab active " data-domain="all">All</button>
                     <button type="button" class="domain-tab" data-domain="EDM">EDM</button>
                     <button type="button" class="domain-tab" data-domain="APO">APO</button>
                     <button type="button" class="domain-tab" data-domain="BAI">BAI</button>
@@ -65,6 +66,8 @@
                     <div class="objective-filter-tabs" id="objective-filter-tabs" role="tablist"></div>
                 </div>
             </div>
+
+            {{-- Selected domains scope display removed per request --}}
 
             <div id="domain-overview-wrapper" class="domain-overview-wrapper mt-3" style="display: none;">
                 <button class="domain-overview-toggle" type="button" id="domain-overview-toggle" aria-expanded="true">
@@ -293,9 +296,9 @@
                                                                             data-level="{{ $level }}">
                                                                             <option value="">Select Rating</option>
                                                                             <option value="N">None</option>
-                                                                            <option value="P">Partial</option>
+                                                                            <option value="P">Partially</option>
                                                                             <option value="L">Largely</option>
-                                                                            <option value="F">Full</option>
+                                                                            <option value="F">Fully</option>
                                                                         </select>
                                                                     </td>
                                                                     <td class="evidence-cell">
@@ -404,6 +407,8 @@
 <script>
 // Server-provided owner flag to control data loading and sensitive UI
 window.IS_OWNER = {{ isset($isOwner) && $isOwner ? 'true' : 'false' }};
+// Selected domains (GAMO) provided by server — used by the Scope tab
+window.SELECTED_DOMAINS = {!! json_encode($selectedDomains ?? []) !!};
 class COBITAssessmentManager {
     constructor(evalId, status = 'draft', isOwner = false) {
         this.assessmentData = {};
@@ -1792,6 +1797,26 @@ class COBITAssessmentManager {
     }
 
     updateDomainChart(selectedDomain = 'all') {
+        // Special handling for 'scope' tab: show recap only for selected domains
+        if (selectedDomain === 'scope') {
+            const selected = (window.SELECTED_DOMAINS || []).map(s => (s || '').toString().replace(/\d+/g, ''))
+                .filter(Boolean)
+                .map(s => s.toUpperCase());
+            const recapData = this.buildGamoRecapData().filter(item => selected.includes(item.domain));
+            if (!recapData.length) {
+                this.toggleRecapStandalone(false);
+                this.toggleDiagramStandalone(false);
+                this.domainChartHasData = false;
+                this.updateDomainOverviewVisibility();
+                return;
+            }
+
+            this.toggleDiagramStandalone(false);
+            this.toggleRecapStandalone(true, recapData);
+            this.domainChartHasData = false;
+            this.updateDomainOverviewVisibility();
+            return;
+        }
         if (!this.domainChartContainer || !this.domainChartRows) {
             return;
         }
@@ -3575,5 +3600,15 @@ document.addEventListener('DOMContentLoaded', () => {
         min-width: 240px;
     }
 }
+
+    .domain-scope-pill {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(15,106,217,0.08);
+        color: #0f2b5c;
+        font-weight: 600;
+        border: 1px solid rgba(15,106,217,0.12);
+    }
 </style>
 @endsection

@@ -236,15 +236,14 @@ class AssessmentEvalController extends Controller
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             
             if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+                Log::warning('Save access denied', [
+                    'auth_id' => Auth::id(),
+                    'eval_id' => $evalId,
+                    'evaluation_user_id' => $evaluation ? $evaluation->user_id : null
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Assessment not found or access denied',
-                    'debug' => [
-                        'auth_id' => Auth::id(),
-                        'auth_id_type' => gettype(Auth::id()),
-                        'evaluation_user_id' => $evaluation ? $evaluation->user_id : null,
-                        'evaluation_user_id_type' => $evaluation ? gettype($evaluation->user_id) : null
-                    ]
+                    'message' => 'Assessment not found or access denied'
                 ], 404);
             }
 
@@ -284,14 +283,10 @@ class AssessmentEvalController extends Controller
             
             // Separate checks for better debugging
             if (!$evaluation) {
+                Log::warning('Load requested for missing assessment', ['requested_eval_id' => $evalId, 'auth_id' => Auth::id()]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Assessment not found',
-                    'debug' => [
-                        'auth_id' => Auth::id(),
-                        'requested_eval_id' => $evalId,
-                        'evaluation_exists' => false
-                    ]
+                    'message' => 'Assessment not found'
                 ], 404);
             }
             
@@ -312,14 +307,14 @@ class AssessmentEvalController extends Controller
             }
 
             if (!$canLoad) {
+                Log::warning('Load access denied', [
+                    'auth_id' => Auth::id(),
+                    'requested_eval_id' => $evalId,
+                    'owner_user_id' => $evaluation->user_id
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Access denied - you are not allowed to view this assessment',
-                    'debug' => [
-                        'auth_id' => Auth::id(),
-                        'requested_eval_id' => $evalId,
-                        'owner_user_id' => $evaluation->user_id
-                    ]
+                    'message' => 'Access denied - you are not allowed to view this assessment'
                 ], 403);
             }
 
@@ -382,15 +377,14 @@ class AssessmentEvalController extends Controller
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             
             if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+                Log::warning('Delete access denied', [
+                    'auth_id' => Auth::id(),
+                    'eval_id' => $evalId,
+                    'evaluation_user_id' => $evaluation ? $evaluation->user_id : null
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Assessment not found or access denied',
-                    'debug' => [
-                        'auth_id' => Auth::id(),
-                        'auth_id_type' => gettype(Auth::id()),
-                        'evaluation_user_id' => $evaluation ? $evaluation->user_id : null,
-                        'evaluation_user_id_type' => $evaluation ? gettype($evaluation->user_id) : null
-                    ]
+                    'message' => 'Assessment not found or access denied'
                 ], 404);
             }
             
