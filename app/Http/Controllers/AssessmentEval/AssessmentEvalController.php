@@ -150,12 +150,12 @@ class AssessmentEvalController extends Controller
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             
             if (!$evaluation) {
-                Log::error("Assessment not found in database", [
-                    'eval_id' => $evalId,
-                    'user_id' => Auth::id(),
-                    'all_evaluations' => $this->evaluationService->getUserEvaluations()
+                Log::warning("Assessment not found in database when showing", [
+                    'requested_eval_id' => $evalId,
+                    'requesting_user_id' => Auth::id(),
+                    'user_evaluations_count' => count($this->evaluationService->getUserEvaluations() ?? [])
                 ]);
-                abort(404, 'Assessment not found');
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Assessment not found']);
             }
             
             // Allow viewing if requester is owner OR belongs to the same organization as owner
@@ -168,18 +168,27 @@ class AssessmentEvalController extends Controller
                 if ((string)$evaluation->user_id === (string)$currentUser->id) {
                     $canView = true; // owner
                     $isOwner = true;
-                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && $owner->organisasi === $currentUser->organisasi) {
+                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0) {
+                    // treat organisasi as equal if same after trimming and case-insensitive compare
                     $canView = true; // same organization -> view-only
                 }
             }
 
             if (!$canView) {
-                Log::error("Assessment access denied", [
+                // Log detailed context to help debug ownership/organization mismatches
+                $requestingUserOrg = $currentUser->organisasi ?? null;
+                $ownerOrg = $owner->organisasi ?? null;
+                Log::warning('Assessment access denied (showAssessment)', [
                     'eval_id' => $evalId,
                     'requesting_user_id' => Auth::id(),
+                    'requesting_user_org' => $requestingUserOrg,
                     'owner_user_id' => $evaluation->user_id,
+                    'owner_org' => $ownerOrg,
+                    'is_owner_flag' => $isOwner
                 ]);
-                abort(404, 'Assessment not found');
+
+                // Provide a friendly error to the UI; logs contain the debug info.
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Assessment not found or access denied']);
             }
             $selectedDomains = TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
 
@@ -296,7 +305,8 @@ class AssessmentEvalController extends Controller
                 if ((string)$evaluation->user_id === (string)$currentUser->id) {
                     $isOwner = true;
                     $canLoad = true;
-                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && $owner->organisasi === $currentUser->organisasi) {
+                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0) {
+                    // normalize organisasi comparison (trim + case-insensitive)
                     $canLoad = true; // same organization -> view-only
                 }
             }
