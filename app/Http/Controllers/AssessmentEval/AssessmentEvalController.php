@@ -64,17 +64,38 @@ class AssessmentEvalController extends Controller
             }
 
             $evalIds = $evaluations->pluck('eval_id')->filter()->unique()->values()->all();
-            $selectedDomainCounts = [];
+            $selectedDomainsMap = [];
             if (!empty($evalIds)) {
-                $selectedDomainCounts = TrsEvalDetail::whereIn('eval_id', $evalIds)
-                    ->select('eval_id', DB::raw('count(*) as selected_count'))
-                    ->groupBy('eval_id')
-                    ->pluck('selected_count', 'eval_id')
-                    ->toArray();
+                $rows = TrsEvalDetail::whereIn('eval_id', $evalIds)->get();
+                foreach ($rows as $row) {
+                    $selectedDomainsMap[$row->eval_id][] = $row->domain_id;
+                }
             }
 
-            $evaluations->transform(function ($evaluation) use ($selectedDomainCounts) {
-                $evaluation->selected_gamo_count = $selectedDomainCounts[$evaluation->eval_id] ?? 40;
+            // Calculate activity counts per domain to determine denominator for progress
+            $domainActivityCounts = DB::table('mst_activities')
+                ->join('mst_practice', 'mst_activities.practice_id', '=', 'mst_practice.practice_id')
+                ->select('mst_practice.objective_id', DB::raw('count(*) as cnt'))
+                ->groupBy('mst_practice.objective_id')
+                ->pluck('cnt', 'objective_id')
+                ->toArray();
+            
+            $totalSystemActivities = array_sum($domainActivityCounts);
+
+            $evaluations->transform(function ($evaluation) use ($selectedDomainsMap, $domainActivityCounts, $totalSystemActivities) {
+                $selectedDomains = $selectedDomainsMap[$evaluation->eval_id] ?? [];
+                $evaluation->selected_gamo_count = count($selectedDomains) > 0 ? count($selectedDomains) : 40;
+                
+                $totalRatable = 0;
+                if (empty($selectedDomains)) {
+                    $totalRatable = $totalSystemActivities;
+                } else {
+                    foreach ($selectedDomains as $domain) {
+                        $totalRatable += $domainActivityCounts[$domain] ?? 0;
+                    }
+                }
+                $evaluation->total_ratable_activities = $totalRatable > 0 ? $totalRatable : 1; // avoid division by zero
+
                 return $evaluation;
             });
 

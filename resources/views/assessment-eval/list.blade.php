@@ -87,16 +87,20 @@
                                 'P' => $achievementCounts['P'] ?? 0,
                             ];
                             $totalRated = array_sum($ratedCounts);
-                            $noneCount = max(0, $totalRatableActivities - $totalRated);
-                            $percentages = $totalRatableActivities > 0
+                            
+                            // Use the calculated total ratable activities for this specific evaluation
+                            $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
+                            
+                            $noneCount = max(0, $currentTotalRatable - $totalRated);
+                            $percentages = $currentTotalRatable > 0
                                 ? [
-                                    'F' => round(($ratedCounts['F'] / $totalRatableActivities) * 100, 1),
-                                    'L' => round(($ratedCounts['L'] / $totalRatableActivities) * 100, 1),
-                                    'P' => round(($ratedCounts['P'] / $totalRatableActivities) * 100, 1),
-                                    'N' => round(($noneCount / $totalRatableActivities) * 100, 1),
+                                    'F' => round(($ratedCounts['F'] / $currentTotalRatable) * 100, 1),
+                                    'L' => round(($ratedCounts['L'] / $currentTotalRatable) * 100, 1),
+                                    'P' => round(($ratedCounts['P'] / $currentTotalRatable) * 100, 1),
+                                    'N' => round(($noneCount / $currentTotalRatable) * 100, 1),
                                 ]
                                 : ['F' => 0, 'L' => 0, 'P' => 0, 'N' => 0];
-                            $completion = $totalRatableActivities > 0 ? round(($totalRated / $totalRatableActivities) * 100, 1) : 0;
+                            $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
                             
                             if (($evaluation->status ?? '') === 'finished') {
                                 $statusLabel = 'Selesai';
@@ -123,16 +127,16 @@
                                         <div class="assessment-meta">
                                             Dibuat {{ optional($evaluation->created_at)->format('d M Y') ?? '—' }}
                                         </div>
-                                            <div class="text-muted small selected-gamo-count">
-                                                GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong>
-                                            </div>
                                     </div>
                                     <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
                                 </div>
                                 <div class="card-body assessment-card-body">
                                     <div class="assessment-progress-block">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="progress-label">Progress Assessment</span>
+                                            <div>
+                                                <span class="progress-label d-block">Progress Assessment</span>
+                                                <small class="text-muted">GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong></small>
+                                            </div>
                                             <span class="progress-value">{{ number_format($completion, 1) }}%</span>
                                         </div>
                                         <div class="progress assessment-progress">
@@ -149,12 +153,6 @@
                                                 <div class="progress-bar bg-danger" style="width: {{ $percentages['N'] }}%" title="None"></div>
                                             @endif
                                         </div>
-                                        <!-- <div class="rating-breakdown">
-                                            <span class="rating-pill pill-success">F <strong>{{ $ratedCounts['F'] }}</strong></span>
-                                            <span class="rating-pill pill-info">L <strong>{{ $ratedCounts['L'] }}</strong></span>
-                                            <span class="rating-pill pill-warning">P <strong>{{ $ratedCounts['P'] }}</strong></span>
-                                            <span class="rating-pill pill-danger">N <strong>{{ $noneCount }}</strong></span>
-                                        </div> -->
                                     </div>
                                     <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
                                         <li>
@@ -210,16 +208,20 @@
                                             'P' => $achievementCounts['P'] ?? 0,
                                         ];
                                         $totalRated = array_sum($ratedCounts);
-                                        $noneCount = max(0, $totalRatableActivities - $totalRated);
-                                        $percentages = $totalRatableActivities > 0
+                                        
+                                        // Use the calculated total ratable activities for this specific evaluation
+                                        $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
+                                        
+                                        $noneCount = max(0, $currentTotalRatable - $totalRated);
+                                        $percentages = $currentTotalRatable > 0
                                             ? [
-                                                'F' => round(($ratedCounts['F'] / $totalRatableActivities) * 100, 1),
-                                                'L' => round(($ratedCounts['L'] / $totalRatableActivities) * 100, 1),
-                                                'P' => round(($ratedCounts['P'] / $totalRatableActivities) * 100, 1),
-                                                'N' => round(($noneCount / $totalRatableActivities) * 100, 1),
+                                                'F' => round(($ratedCounts['F'] / $currentTotalRatable) * 100, 1),
+                                                'L' => round(($ratedCounts['L'] / $currentTotalRatable) * 100, 1),
+                                                'P' => round(($ratedCounts['P'] / $currentTotalRatable) * 100, 1),
+                                                'N' => round(($noneCount / $currentTotalRatable) * 100, 1),
                                             ]
                                             : ['F' => 0, 'L' => 0, 'P' => 0, 'N' => 0];
-                                        $completion = $totalRatableActivities > 0 ? round(($totalRated / $totalRatableActivities) * 100, 1) : 0;
+                                        $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
                                         
                                         if (($evaluation->status ?? '') === 'finished') {
                                             $statusLabel = 'Selesai';
@@ -246,16 +248,16 @@
                                                     <div class="assessment-meta">
                                                         Dibuat {{ optional($evaluation->created_at)->format('d M Y') ?? '—' }}
                                                     </div>
-                                                        <div class="text-muted small selected-gamo-count">
-                                                            GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong>
-                                                        </div>
                                                 </div>
                                                 <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
                                             </div>
                                             <div class="card-body assessment-card-body">
                                                 <div class="assessment-progress-block">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <span class="progress-label">Progress Capability</span>
+                                                        <div>
+                                                            <span class="progress-label d-block">Progress Capability</span>
+                                                            <small class="text-muted">GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong></small>
+                                                        </div>
                                                         <span class="progress-value">{{ number_format($completion, 1) }}%</span>
                                                     </div>
                                                     <div class="progress assessment-progress">

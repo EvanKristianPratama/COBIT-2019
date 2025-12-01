@@ -128,6 +128,11 @@
             color: #6c757d;
             font-weight: 500;
         }
+
+        .breadcrumb-item a.active {
+            color: var(--cobit-accent) !important;
+            font-weight: 700;
+        }
         
         /* --- Offcanvas --- */
         .offcanvas {
@@ -206,22 +211,22 @@
           <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <a href="{{ route('home') }}">
+            <a href="{{ route('home') }}" class="{{ Route::is('home') ? 'active' : '' }}">
               <i class="fas fa-home"></i> Home
             </a>
           </li>
           <li class="breadcrumb-item">
-            <a href="{{ route('cobit2019.objectives.show', 'APO01') }}">
+            <a href="{{ route('cobit2019.objectives.show', 'APO01') }}" class="{{ Route::is('cobit2019.*') ? 'active' : '' }}">
               <i class="fas fa-book"></i> Dictionary
             </a>
           </li>
           <li class="breadcrumb-item">
-            <a href="{{ route('cobit.home') }}">
+            <a href="{{ route('cobit.home') }}" class="{{ Route::is('cobit.*') ? 'active' : '' }}">
               <i class="fas fa-tools"></i> Design I&T Tailored Governance System
             </a>
           </li>
           <li class="breadcrumb-item">
-            <a href="{{ route('assessment-eval.index') }}">
+            <a href="{{ route('assessment-eval.index') }}" class="{{ Route::is('assessment-eval.*') ? 'active' : '' }}">
               <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
             </a>
           </li>
