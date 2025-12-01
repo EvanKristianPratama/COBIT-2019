@@ -52,7 +52,6 @@
 
             <div class="domain-tabs-wrapper">
                 <div class="domain-tabs" role="tablist">
-                    <button type="button" class="domain-tab " data-domain="all">All</button>
                     <button type="button" class="domain-tab active " data-domain="all">All</button>
                     <button type="button" class="domain-tab" data-domain="EDM">EDM</button>
                     <button type="button" class="domain-tab" data-domain="APO">APO</button>
