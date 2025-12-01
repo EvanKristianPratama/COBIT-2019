@@ -206,7 +206,7 @@
             <ol class="breadcrumb">
               <li class="breadcrumb-item">
                   <a href="{{ route('home') }}">
-                      <i class="fas fa-home"></i> Home
+                      <i class="fas fa-home"></i> Homee
                   </a>
               </li>
               <li class="breadcrumb-item">
