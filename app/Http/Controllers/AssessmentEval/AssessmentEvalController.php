@@ -63,6 +63,21 @@ class AssessmentEvalController extends Controller
                 $evaluations = $this->evaluationService->getUserEvaluations();
             }
 
+            $evalIds = $evaluations->pluck('eval_id')->filter()->unique()->values()->all();
+            $selectedDomainCounts = [];
+            if (!empty($evalIds)) {
+                $selectedDomainCounts = TrsEvalDetail::whereIn('eval_id', $evalIds)
+                    ->select('eval_id', DB::raw('count(*) as selected_count'))
+                    ->groupBy('eval_id')
+                    ->pluck('selected_count', 'eval_id')
+                    ->toArray();
+            }
+
+            $evaluations->transform(function ($evaluation) use ($selectedDomainCounts) {
+                $evaluation->selected_gamo_count = $selectedDomainCounts[$evaluation->eval_id] ?? 40;
+                return $evaluation;
+            });
+
             return view('assessment-eval.list', compact('evaluations'));
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to load assessments: ' . $e->getMessage()]);

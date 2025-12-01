@@ -136,6 +136,7 @@
         }
         .offcanvas-header { border-bottom: 1px solid rgba(255,255,255,0.1); }
         .offcanvas .nav-link:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .offcanvas .logout-btn { color: #dc3545 !important; }
         
         /* --- Main Content --- */
         .main-content {
@@ -237,7 +238,7 @@
       </main>
 
       @auth
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
           <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
               <i class="fas fa-user-circle me-2"></i> Menu Pengguna

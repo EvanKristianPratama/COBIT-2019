@@ -123,13 +123,16 @@
                                         <div class="assessment-meta">
                                             Dibuat {{ optional($evaluation->created_at)->format('d M Y') ?? '—' }}
                                         </div>
+                                            <div class="text-muted small selected-gamo-count">
+                                                GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong>
+                                            </div>
                                     </div>
                                     <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body assessment-card-body">
                                     <div class="assessment-progress-block">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="progress-label">Progress Capability</span>
+                                            <span class="progress-label">Progress Assessment</span>
                                             <span class="progress-value">{{ number_format($completion, 1) }}%</span>
                                         </div>
                                         <div class="progress assessment-progress">
@@ -146,12 +149,12 @@
                                                 <div class="progress-bar bg-danger" style="width: {{ $percentages['N'] }}%" title="None"></div>
                                             @endif
                                         </div>
-                                        <div class="rating-breakdown">
+                                        <!-- <div class="rating-breakdown">
                                             <span class="rating-pill pill-success">F <strong>{{ $ratedCounts['F'] }}</strong></span>
                                             <span class="rating-pill pill-info">L <strong>{{ $ratedCounts['L'] }}</strong></span>
                                             <span class="rating-pill pill-warning">P <strong>{{ $ratedCounts['P'] }}</strong></span>
                                             <span class="rating-pill pill-danger">N <strong>{{ $noneCount }}</strong></span>
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
                                         <li>
@@ -243,10 +246,13 @@
                                                     <div class="assessment-meta">
                                                         Dibuat {{ optional($evaluation->created_at)->format('d M Y') ?? '—' }}
                                                     </div>
+                                                        <div class="text-muted small selected-gamo-count">
+                                                            GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong>
+                                                        </div>
                                                 </div>
                                                 <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
                                             </div>
-                                            <div class="card-body">
+                                            <div class="card-body assessment-card-body">
                                                 <div class="assessment-progress-block">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <span class="progress-label">Progress Capability</span>
@@ -797,15 +803,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .assessment-card {
     border-radius: 0.9rem;
-    transition: transform 0.22s cubic-bezier(.2,.9,.2,1), box-shadow 0.22s cubic-bezier(.2,.9,.2,1);
-    box-shadow: 0 8px 20px rgba(15,43,92,0.06);
+    transition: transform 0.28s cubic-bezier(.2,.9,.2,1), box-shadow 0.28s cubic-bezier(.2,.9,.2,1);
+    box-shadow: 0 18px 45px rgba(9,18,56,0.15);
     will-change: transform;
+    position: relative;
+    overflow: hidden;
 }
 
 .assessment-card:hover,
 .assessment-card:focus-within {
-    transform: translateY(-6px);
-    box-shadow: 0 28px 60px rgba(15,43,92,0.14);
+    transform: translateY(-8px);
+    box-shadow: 0 32px 70px rgba(9,18,56,0.25);
 }
 
 /* keep generic card grid transition for non-assessment cards but prefer .assessment-card rules */
@@ -819,7 +827,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .assessment-card-header {
-    background: #f8f9ff;
+    background: linear-gradient(135deg, rgba(15,43,92,0.12), rgba(15,106,217,0.1));
     border-bottom: 1px solid rgba(15,43,92,0.08);
     display: flex;
     justify-content: space-between;
@@ -899,6 +907,10 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 0.9rem;
 }
 
+.selected-gamo-count {
+    letter-spacing: 0.03em;
+}
+
 .pill-success { background: #d1f2e2; color: #0f5132; }
 .pill-info { background: #cff4fc; color: #055160; }
 .pill-warning { background: #fff3cd; color: #7a5d07; }
@@ -916,6 +928,27 @@ document.addEventListener('DOMContentLoaded', function() {
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
+}
+
+.assessment-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(15,106,217,0.18), transparent 40%);
+    pointer-events: none;
+    opacity: 0.55;
+}
+
+.assessment-card-header,
+.assessment-card-footer {
+    position: relative;
+    z-index: 2;
+}
+
+.assessment-card-body,
+.assessment-progress-block {
+    position: relative;
+    z-index: 2;
 }
 
 .assessment-view-btn {
