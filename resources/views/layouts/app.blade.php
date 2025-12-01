@@ -116,12 +116,12 @@
         }
 
         .breadcrumb-item + .breadcrumb-item::before {
-            content: "\f054"; /* FontAwesome chevron-right */
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            font-size: 0.7rem;
+            content: "/";
+            /* font-family: "Font Awesome 6 Free"; removed to use text slash */
+            font-weight: 600;
+            font-size: 0.9rem;
             color: #ccc;
-            padding-top: 3px; 
+            /* padding-top: 3px; removed alignment tweak for icon */
         }
 
         .breadcrumb-item.active {
@@ -203,28 +203,28 @@
       <div class="breadcrumb-wrapper">
         <div class="container">
           <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-              <li class="breadcrumb-item">
-                  <a href="{{ route('home') }}">
-                      <i class="fas fa-home"></i> Homee
-                  </a>
-              </li>
-              <li class="breadcrumb-item">
-                  <a href="{{ route('cobit2019.objectives.show', 'APO01') }}">
-                      <i class="fas fa-book"></i> Dictionary
-                  </a>
-              </li>
-              <li class="breadcrumb-item">
-                  <a href="{{ route('cobit.home') }}">
-                      <i class="fas fa-tools"></i> Toolkit
-                  </a>
-              </li>
-                <li class="breadcrumb-item">
-                  <a href="{{ route('assessment-eval.index') }}">
-                    <i class="fas fa-clipboard-check"></i> Assessmentt
-                  </a>
-                </li>
-            </ol>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{{ route('home') }}">
+              <i class="fas fa-home"></i> Home
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{{ route('cobit2019.objectives.show', 'APO01') }}">
+              <i class="fas fa-book"></i> Dictionary
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{{ route('cobit.home') }}">
+              <i class="fas fa-tools"></i> Design I&T Tailored Governance System
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{{ route('assessment-eval.index') }}">
+              <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
+            </a>
+          </li>
+        </ol>
           </nav>
         </div>
       </div>
