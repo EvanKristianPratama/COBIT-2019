@@ -8,8 +8,6 @@
             align-items: center;
             justify-content: center;
             padding: 2rem 1rem;
-            background: radial-gradient(circle at 10% 20%, rgba(15, 106, 217, 0.3), transparent 45%),
-                linear-gradient(135deg, #081a3d, #0f2b5c, #1a3d6b);
         }
 
         .auth-card {

@@ -35,6 +35,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            padding-top: var(--navbar-height);
         }
         
         #app {
@@ -47,7 +48,7 @@
         .navbar {
             background: var(--cobit-gradient) !important;
             box-shadow: 0 4px 20px rgba(15, 43, 92, 0.4);
-            height: var(--navbar-height);
+            min-height: var(--navbar-height);
             z-index: 1030;
         }
         
@@ -89,9 +90,9 @@
             background: #ffffff;
             border-bottom: 1px solid #e9ecef;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            margin-top: var(--navbar-height); /* Otomatis ikut tinggi navbar */
             padding: 12px 0;
-            position: relative;
+            position: sticky;
+            top: var(--navbar-height);
             z-index: 1020;
         }
 

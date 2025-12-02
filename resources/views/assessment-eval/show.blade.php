@@ -1590,31 +1590,60 @@ class COBITAssessmentManager {
     }
 
     updateObjectiveCapabilityLevel(objectiveId) {
-        // Find the highest level that is at least L (Largely)
-        let highestLevel = 1; // Default to level 1
+        let finalLevel = 0;
         
-        // Get all levels for this objective
-        const objectiveCard = document.querySelector(`[data-objective-id="${objectiveId}"].objective-card`);
-        if (objectiveCard) {
-            const levelSections = objectiveCard.querySelectorAll('.capability-level-section');
-            
-            levelSections.forEach(section => {
-                const level = parseInt(section.getAttribute('data-level'));
-                const levelData = this.levelScores[objectiveId] && this.levelScores[objectiveId][level];
-                
-                if (levelData && levelData.score >= 0.50) { // L (Largely) threshold is 0.50
-                    highestLevel = Math.max(highestLevel, level);
+        // Helper to get score safely
+        const getScore = (lvl) => {
+            if (this.levelScores[objectiveId] && this.levelScores[objectiveId][lvl]) {
+                return this.levelScores[objectiveId][lvl].score || 0;
+            }
+            return 0;
+        };
+
+        const score2 = getScore(2);
+        const score3 = getScore(3);
+        const score4 = getScore(4);
+        const score5 = getScore(5);
+
+        // Logic based on user formula:
+        // =IF(K17<=0.15,0, IF(K17<=0.5,1,IF(K17<=0.85,2,IF(K30<=0.5,2,IF(K30<=0.85,3,IF(K40<=0.5,3,IF(K40<=0.85,4,IF(K46<=0.5,4,5))))))))
+        
+        if (score2 <= 0.15) {
+            finalLevel = 0;
+        } else if (score2 <= 0.50) {
+            finalLevel = 1;
+        } else if (score2 <= 0.85) {
+            finalLevel = 2;
+        } else {
+            // Level 2 > 0.85, check Level 3
+            if (score3 <= 0.50) {
+                finalLevel = 2;
+            } else if (score3 <= 0.85) {
+                finalLevel = 3;
+            } else {
+                // Level 3 > 0.85, check Level 4
+                if (score4 <= 0.50) {
+                    finalLevel = 3;
+                } else if (score4 <= 0.85) {
+                    finalLevel = 4;
+                } else {
+                    // Level 4 > 0.85, check Level 5
+                    if (score5 <= 0.50) {
+                        finalLevel = 4;
+                    } else {
+                        finalLevel = 5;
+                    }
                 }
-            });
+            }
         }
         
         // Update the objective capability level badge
         const capabilityBadge = document.getElementById(`capability-level-${objectiveId}`);
         if (capabilityBadge) {
-            this.updateCapabilityBadge(capabilityBadge, highestLevel);
+            this.updateCapabilityBadge(capabilityBadge, finalLevel);
         }
 
-        this.objectiveCapabilityLevels[objectiveId] = highestLevel;
+        this.objectiveCapabilityLevels[objectiveId] = finalLevel;
     }
 
     getMinLevelForObjective(objectiveId) {
@@ -1689,9 +1718,9 @@ class COBITAssessmentManager {
     }
 
     updateCapabilityBadge(badge, level) {
-        const badgeClasses = ['badge-level-1','badge-level-2','badge-level-3','badge-level-4','badge-level-5'];
+        const badgeClasses = ['badge-level-0', 'badge-level-1','badge-level-2','badge-level-3','badge-level-4','badge-level-5'];
         badgeClasses.forEach(c => badge.classList.remove(c));
-        const levelKey = Math.min(Math.max(level, 1), 5);
+        const levelKey = Math.min(Math.max(level, 0), 5);
         badge.classList.add(`badge-level-${levelKey}`);
         
         const levelNumber = badge.querySelector('.level-number');
@@ -1868,7 +1897,7 @@ class COBITAssessmentManager {
         const chartData = Array.from(objectiveCards).map(card => {
             const objectiveId = card.getAttribute('data-objective-id');
             const objectiveName = card.getAttribute('data-objective-name') || objectiveId;
-            const currentLevel = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 1, 1), 5);
+            const currentLevel = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 0, 0), 5);
             
             // Get ratings for each level
             const ratings = {};
@@ -1931,7 +1960,7 @@ class COBITAssessmentManager {
                 if (!domain || !objectiveId) {
                     return null;
                 }
-                const level = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 1, 1), 5);
+                const level = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 0, 0), 5);
                 return {
                     domain,
                     objectiveId,
@@ -2701,6 +2730,7 @@ document.addEventListener('DOMContentLoaded', () => {
     font-weight: 600;
 }
 
+.capability-badge.badge-level-0 { background-color: #e2e3e5; color: #41464b; }
 .capability-badge.badge-level-1 { background-color: #f8d7da; color: #58151c; }
 .capability-badge.badge-level-2 { background-color: #fff3cd; color: #664d03; }
 .capability-badge.badge-level-3 { background-color: #cff4fc; color: #055160; }
