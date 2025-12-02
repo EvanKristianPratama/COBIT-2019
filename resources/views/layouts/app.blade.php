@@ -218,7 +218,7 @@
           </li>
           <li class="breadcrumb-item">
             <a href="{{ route('cobit2019.objectives.show', 'APO01') }}" class="{{ Route::is('cobit2019.*') ? 'active' : '' }}">
-              <i class="fas fa-book"></i> Dictionary
+              <i class="fas fa-book"></i> COBIT Components
             </a>
           </li>
           <li class="breadcrumb-item">

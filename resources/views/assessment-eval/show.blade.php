@@ -35,7 +35,7 @@
         <div class="card-header hero-header py-4" style="background:linear-gradient(135deg,#081a3d,#0f2b5c);color:#fff;border:none;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="hero-title" style="font-size:1.5rem;font-weight:700;letter-spacing:0.04em;">COBIT 2019 Assessment Evaluation</div>
+                    <div class="hero-title" style="font-size:1.5rem;font-weight:700;letter-spacing:0.04em;">COBIT 2019 : I&T Assessment Capability and Maturity</div>
                     <div class="hero-eval-id" style="font-size:1.05rem;font-weight:600;margin-top:0.25rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);">
                         Assessment Id: {{ $evalId }}
                     </div>
@@ -129,6 +129,10 @@
                     </div>
                 </div>
                 <div id="diagram-standalone-body"></div>
+                <div id="diagram-maturity-container" class="text-center mt-4 pb-4" style="display: none;">
+                    <h5 class="text-muted mb-2">Maturity Score</h5>
+                    <div id="diagram-maturity-value" class="display-4 fw-bold text-primary"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -2059,6 +2063,8 @@ class COBITAssessmentManager {
         const levelTextColors = this.config.levelTextColors;
 
         const tbody = document.createElement('tbody');
+        let totalLevel = 0;
+
         data.forEach((row, index) => {
             const domainCode = (row.domain || '').toLowerCase();
             const safeDomain = this.escapeHtml(row.domain);
@@ -2066,6 +2072,8 @@ class COBITAssessmentManager {
             const safeObjectiveName = this.escapeHtml(row.objectiveName);
             
             const level = row.level;
+            totalLevel += level;
+
             const bgColor = levelColors[level] || '#f8f9fa';
             const textColor = levelTextColors[level] || '#6c757d';
             
@@ -2102,8 +2110,19 @@ class COBITAssessmentManager {
             tbody.appendChild(tr);
         });
 
+        const maturity = data.length > 0 ? (totalLevel / data.length).toFixed(2) : '0.00';
+        const tfoot = document.createElement('tfoot');
+        tfoot.innerHTML = `
+            <tr class="table-light fw-bold border-top-2">
+                <td colspan="4" class="text-end pe-3">Maturity Level</td>
+                <td class="text-center bg-primary text-white">${maturity}</td>
+                <td colspan="3" class="bg-light"></td>
+            </tr>
+        `;
+
         table.appendChild(thead);
         table.appendChild(tbody);
+        table.appendChild(tfoot);
         wrapper.appendChild(table);
         return wrapper;
     }
@@ -2146,6 +2165,8 @@ class COBITAssessmentManager {
     }
 
     toggleDiagramStandalone(show, data = []) {
+        const maturityContainer = document.getElementById('diagram-maturity-container');
+
         if (!this.diagramStandaloneRow || !this.diagramStandaloneWrapper || !this.diagramStandaloneBody) {
             return;
         }
@@ -2154,6 +2175,7 @@ class COBITAssessmentManager {
             this.diagramStandaloneRow.style.display = 'none';
             this.diagramStandaloneWrapper.style.display = 'none';
             this.diagramStandaloneBody.innerHTML = '';
+            if (maturityContainer) maturityContainer.style.display = 'none';
             if (this.diagramChartInstance) {
                 this.diagramChartInstance.destroy();
                 this.diagramChartInstance = null;
@@ -2170,6 +2192,7 @@ class COBITAssessmentManager {
 
         this.diagramStandaloneRow.style.display = 'flex';
         this.diagramStandaloneWrapper.style.display = 'block';
+        if (maturityContainer) maturityContainer.style.display = 'block';
 
         this.renderDiagramChart(data);
     }
@@ -2187,6 +2210,16 @@ class COBITAssessmentManager {
         const dataMaximum = this.getMaximumCapabilityData();
         const maxDataSliced = dataMaximum.slice(0, labels.length);
 
+        // Calculate Maturity Level
+        const totalLevel = agreedData.reduce((sum, val) => sum + val, 0);
+        const maturity = data.length > 0 ? (totalLevel / data.length).toFixed(2) : '0.00';
+
+        // Update the static element
+        const maturityValueDiv = document.getElementById('diagram-maturity-value');
+        if (maturityValueDiv) {
+            maturityValueDiv.textContent = maturity;
+        }
+
         this.diagramChartInstance = new Chart(ctx, {
             type: 'radar',
             data: {
@@ -2201,17 +2234,7 @@ class COBITAssessmentManager {
                     pointBorderColor: '#fff',
                     pointHoverBackgroundColor: '#fff',
                     pointHoverBorderColor: 'rgb(37, 99, 235)'
-                }, {
-                    label: 'Maximum Capability',
-                    data: maxDataSliced,
-                    fill: true,
-                    backgroundColor: 'rgba(255, 159, 64, 0.25)',
-                    borderColor: 'rgb(255, 159, 64)',
-                    pointBackgroundColor: 'rgb(255, 159, 64)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(255, 159, 64)'
-                }, {
+                },  {
                     label: 'Target Capability',
                     data: Array(labels.length).fill(3), // Target Capability: semua 3
                     fill: true,
@@ -2221,6 +2244,16 @@ class COBITAssessmentManager {
                     pointBorderColor: '#fff',
                     pointHoverBackgroundColor: '#fff',
                     pointHoverBorderColor: 'rgb(16, 185, 129)'
+                },{
+                    label: 'Maximum Capability',
+                    data: maxDataSliced,
+                    fill: true,
+                    backgroundColor: 'rgba(255, 159, 64, 0.25)',
+                    borderColor: 'rgb(255, 159, 64)',
+                    pointBackgroundColor: 'rgb(255, 159, 64)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(255, 159, 64)'
                 }]
             },
             options: {
@@ -2250,7 +2283,7 @@ class COBITAssessmentManager {
                     legend: { position: 'top' },
                     title: {
                         display: true,
-                        text: `I&T Maturity Level Assessment  - ${data.length} Goverment & Management Objectives`,
+                        text: `I&T Maturity Level Assessment - ${data.length} Goverment & Management Objectives`,
                         font: {
                             size: 18,
                             weight: 'bold'
@@ -2804,7 +2837,7 @@ document.addEventListener('DOMContentLoaded', () => {
     font-weight: 600;
 }
 
-.capability-badge.badge-level-0 { background-color: #FF4F30; color: #FF4F30; }
+.capability-badge.badge-level-0 { background-color: #FF4F30; color: #FFffff; }
 .capability-badge.badge-level-1 { background-color: #f8d7da; color: #58151c; }
 .capability-badge.badge-level-2 { background-color: #fff3cd; color: #664d03; }
 .capability-badge.badge-level-3 { background-color: #cff4fc; color: #055160; }
