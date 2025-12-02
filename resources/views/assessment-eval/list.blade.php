@@ -134,12 +134,12 @@
                                     <div class="assessment-progress-block">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <div>
-                                                <span class="progress-label d-block">Progress Assessment</span>
+                                                <!-- <span class="progress-label d-block">Progress Assessment</span> -->
                                                 <small class="text-muted">GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong></small>
                                             </div>
-                                            <span class="progress-value">{{ number_format($completion, 1) }}%</span>
+                                            <!-- <span class="progress-value">{{ number_format($completion, 1) }}%</span> -->
                                         </div>
-                                        <div class="progress assessment-progress">
+                                        <!-- <div class="progress assessment-progress">
                                             @if($percentages['F'] > 0)
                                                 <div class="progress-bar bg-success" style="width: {{ $percentages['F'] }}%" title="Fully"></div>
                                             @endif
@@ -152,7 +152,7 @@
                                             @if($percentages['N'] > 0)
                                                 <div class="progress-bar bg-danger" style="width: {{ $percentages['N'] }}%" title="None"></div>
                                             @endif
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
                                         <li>
