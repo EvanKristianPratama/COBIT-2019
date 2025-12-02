@@ -123,7 +123,7 @@
             <div class="diagram-standalone-wrapper" id="diagram-standalone-wrapper">
                 <div class="recap-standalone-header">
                     <div>
-                        <h5 class="recap-title">Diagram Evaluasi Kapabilitas</h5>
+                        <h5 class="recap-title">Spider Web Diagram</h5>
                     </div>
                 </div>
                 <div id="diagram-standalone-body"></div>
