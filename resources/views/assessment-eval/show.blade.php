@@ -1961,11 +1961,19 @@ class COBITAssessmentManager {
                     return null;
                 }
                 const level = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 0, 0), 5);
+                
+                // Get rating letter for the current level
+                let ratingLetter = 'N';
+                if (level > 0 && this.levelScores[objectiveId] && this.levelScores[objectiveId][level]) {
+                    ratingLetter = this.levelScores[objectiveId][level].letter;
+                }
+
                 return {
                     domain,
                     objectiveId,
                     objectiveName,
-                    level
+                    level,
+                    ratingLetter
                 };
             })
             .filter(Boolean)
@@ -1995,6 +2003,9 @@ class COBITAssessmentManager {
                 <th style="width:100px;">Gamo</th>
                 <th>Gamo Name</th>
                 <th style="width:100px;" class="text-center">Level</th>
+                <th style="width:100px;" class="text-center">Rating</th>
+                <th style="width:100px;" class="text-center">Target</th>
+                <th style="width:100px;" class="text-center">Gap</th>
             </tr>
         `;
 
@@ -2025,6 +2036,8 @@ class COBITAssessmentManager {
             const level = row.level;
             const bgColor = levelColors[level] || '#f8f9fa';
             const textColor = levelTextColors[level] || '#6c757d';
+            
+            const ratingDisplay = level > 0 ? `${level} ${row.ratingLetter}` : '0 N';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -2043,6 +2056,15 @@ class COBITAssessmentManager {
                          style="min-height: 40px; background-color: ${bgColor}; color: ${textColor};">
                         Level ${level}
                     </div>
+                </td>
+                <td class="text-center fw-bold text-dark">
+                    ${ratingDisplay}
+                </td>
+                <td class="text-center text-muted">
+                    -
+                </td>
+                <td class="text-center text-muted">
+                    -
                 </td>
             `;
             tbody.appendChild(tr);
