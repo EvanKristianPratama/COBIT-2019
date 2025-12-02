@@ -2201,7 +2201,11 @@ class COBITAssessmentManager {
                     legend: { position: 'top' },
                     title: {
                         display: true,
-                        text: `Assessment Capability & Maturity Result ${data.length} Goverment & Management Objectives`
+                        text: `Assessment Capability & Maturity Result ${data.length} Goverment & Management Objectives`,
+                        font: {
+                            size: 18,
+                            weight: 'bold'
+                        }
                     },
                     tooltip: {
                         callbacks: {
