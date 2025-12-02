@@ -86,10 +86,12 @@
                                 <tr>
                                     <th rowspan="2" style="width: 10%; vertical-align: middle;">Gamo</th>
                                     <th rowspan="2" style="width: 25%; vertical-align: middle;">Gamo Name</th>
-                                    <th colspan="5" class="text-center">Level</th>
+                                    <th colspan="6" class="text-center">Level</th>
                                     <th rowspan="2" class="text-center" style="width: 15%; vertical-align: middle;">Rating</th>
+                                    <th rowspan="2" class="text-center" style="width: 15%; vertical-align: middle;">Maximum Capability</th>
                                 </tr>
                                 <tr>
+                                    <th class="text-center" style="width: 10%">0</th>
                                     <th class="text-center" style="width: 10%">1</th>
                                     <th class="text-center" style="width: 10%">2</th>
                                     <th class="text-center" style="width: 10%">3</th>
@@ -110,7 +112,7 @@
             <div class="recap-standalone-wrapper" id="recap-standalone-wrapper">
                 <div class="recap-standalone-header">
                     <div>
-                        <h5 class="recap-title">Rekap Level Seluruh Gamo</h5>
+                        <h5 class="recap-title">Assessment Recapitulation Result</h5>
                     </div>
                 </div>
                 <div id="recap-standalone-body"></div>
@@ -442,6 +444,53 @@ class COBITAssessmentManager {
             noteInputs: new Map(),
             evidenceDropdowns: new Map()
         };
+
+        // Configuration Variables
+        this.config = {
+            levelColors: {
+                0: '#dc3545', // Red
+                1: '#f97316', // Orange
+                2: '#facc15', // Yellow
+                3: '#86efac', // Light Green
+                4: '#15803d', // Green
+                5: '#0f6ad9'  // Blue
+            },
+            levelTextColors: {
+                0: '#fff',
+                1: '#fff',
+                2: '#7a5d07',
+                3: '#065f46',
+                4: '#fff',
+                5: '#fff'
+            },
+            domainOrder: ['EDM', 'APO', 'BAI', 'DSS', 'MEA'],
+            domainNames: {
+                'EDM': 'Evaluate, Direct, and Monitor',
+                'APO': 'Align, Plan, and Organize',
+                'BAI': 'Build, Acquire, and Implement',
+                'DSS': 'Deliver, Service, and Support',
+                'MEA': 'Monitor, Evaluate, and Assess'
+            },
+            ratingMap: {
+                'N': 0,
+                'P': 1/3,
+                'L': 2/3,
+                'F': 1
+            },
+            badgeClasses: ['badge-level-0', 'badge-level-1','badge-level-2','badge-level-3','badge-level-4','badge-level-5'],
+            allObjectives: [
+                'EDM01', 'EDM02', 'EDM03', 'EDM04', 'EDM05',
+                'APO01', 'APO02', 'APO03', 'APO04', 'APO05', 'APO06', 'APO07', 'APO08', 'APO09', 'APO10', 'APO11', 'APO12', 'APO13', 'APO14',
+                'BAI01', 'BAI02', 'BAI03', 'BAI04', 'BAI05', 'BAI06', 'BAI07', 'BAI08', 'BAI09', 'BAI10', 'BAI11',
+                'DSS01', 'DSS02', 'DSS03', 'DSS04', 'DSS05', 'DSS06',
+                'MEA01', 'MEA02', 'MEA03', 'MEA04'
+            ],
+            maxCaps: [
+                4, 5, 4, 4, 4, 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5, 5, 5, 5, 5,
+                4, 4, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4
+            ]
+        };
+
         this.init();
     }
 
@@ -1718,7 +1767,7 @@ class COBITAssessmentManager {
     }
 
     updateCapabilityBadge(badge, level) {
-        const badgeClasses = ['badge-level-0', 'badge-level-1','badge-level-2','badge-level-3','badge-level-4','badge-level-5'];
+        const badgeClasses = this.config.badgeClasses;
         badgeClasses.forEach(c => badge.classList.remove(c));
         const levelKey = Math.min(Math.max(level, 0), 5);
         badge.classList.add(`badge-level-${levelKey}`);
@@ -1768,13 +1817,7 @@ class COBITAssessmentManager {
     }
 
     getRatingValue(rating) {
-        const ratingMap = {
-            'N': 0,
-            'P': 1/3,
-            'L': 2/3,
-            'F': 1
-        };
-        return ratingMap[rating] || 0;
+        return this.config.ratingMap[rating] || 0;
     }
 
     addEvidenceToLibrary(value, { refresh = true } = {}) {
@@ -1913,7 +1956,8 @@ class COBITAssessmentManager {
                 objectiveId,
                 objectiveName,
                 level: currentLevel,
-                ratings: ratings
+                ratings: ratings,
+                maxCapability: this.getMaxCapabilityForObjective(objectiveId)
             };
         }).sort((a, b) => a.objectiveId.localeCompare(b.objectiveId, undefined, { numeric: true }));
 
@@ -1946,7 +1990,7 @@ class COBITAssessmentManager {
             return [];
         }
 
-        const domainOrder = ['EDM', 'APO', 'BAI', 'DSS', 'MEA'];
+        const domainOrder = this.config.domainOrder;
         const domainRank = (domain) => {
             const idx = domainOrder.indexOf(domain);
             return idx === -1 ? domainOrder.length : idx;
@@ -2010,21 +2054,9 @@ class COBITAssessmentManager {
         `;
 
         // Level Colors Mapping (Same as Domain Chart)
-        const levelColors = {
-            1: '#f97316', // Orange
-            2: '#facc15', // Yellow
-            3: '#86efac', // Light Green
-            4: '#15803d', // Green
-            5: '#0f6ad9'  // Blue
-        };
+        const levelColors = this.config.levelColors;
         
-        const levelTextColors = {
-            1: '#fff',
-            2: '#7a5d07',
-            3: '#065f46',
-            4: '#fff',
-            5: '#fff'
-        };
+        const levelTextColors = this.config.levelTextColors;
 
         const tbody = document.createElement('tbody');
         data.forEach((row, index) => {
@@ -2054,7 +2086,7 @@ class COBITAssessmentManager {
                 <td class="text-center p-0">
                     <div class="w-100 h-100 d-flex align-items-center justify-content-center fw-bold" 
                          style="min-height: 40px; background-color: ${bgColor}; color: ${textColor};">
-                        Level ${level}
+                        ${level}
                     </div>
                 </td>
                 <td class="text-center fw-bold text-dark">
@@ -2076,11 +2108,18 @@ class COBITAssessmentManager {
         return wrapper;
     }
 
+    getMaxCapabilityForObjective(objectiveId) {
+        const allObjectives = this.config.allObjectives;
+        const maxCaps = this.getMaximumCapabilityData();
+        const index = allObjectives.indexOf(objectiveId);
+        if (index !== -1 && index < maxCaps.length) {
+            return maxCaps[index];
+        }
+        return 5; // Default fallback
+    }
+
     getMaximumCapabilityData() {
-        return [
-            4, 5, 4, 4, 4, 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5, 5, 5, 5, 5,
-            4, 4, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4
-        ];
+        return this.config.maxCaps;
     }
 
     toggleRecapStandalone(show, data = []) {
@@ -2153,7 +2192,7 @@ class COBITAssessmentManager {
             data: {
                 labels,
                 datasets: [{
-                    label: 'Capability Level Result',
+                    label: 'Capability Level',
                     data: agreedData,
                     fill: true,
                     backgroundColor: 'rgba(54, 162, 235, 0.18)',
@@ -2172,6 +2211,16 @@ class COBITAssessmentManager {
                     pointBorderColor: '#fff',
                     pointHoverBackgroundColor: '#fff',
                     pointHoverBorderColor: 'rgb(255, 159, 64)'
+                }, {
+                    label: 'Target Capability',
+                    data: Array(labels.length).fill(3), // Target Capability: semua 3
+                    fill: true,
+                    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    pointBackgroundColor: 'rgb(16, 185, 129)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(16, 185, 129)'
                 }]
             },
             options: {
@@ -2201,7 +2250,7 @@ class COBITAssessmentManager {
                     legend: { position: 'top' },
                     title: {
                         display: true,
-                        text: `Assessment Capability & Maturity Result ${data.length} Goverment & Management Objectives`,
+                        text: `I&T Maturity Level Assessment  - ${data.length} Goverment & Management Objectives`,
                         font: {
                             size: 18,
                             weight: 'bold'
@@ -2218,7 +2267,7 @@ class COBITAssessmentManager {
         });
     }
 
-    createDomainChartRow({ objectiveId, objectiveName, level, ratings = {}, meta = {} }) {
+    createDomainChartRow({ objectiveId, objectiveName, level, ratings = {}, meta = {}, maxCapability = 5 }) {
         const tr = document.createElement('tr');
 
         // Gamo Column (ID)
@@ -2233,8 +2282,8 @@ class COBITAssessmentManager {
 
         const unifiedLevelColor = '#0f6ad9';
 
-        // Level 1-5 Columns
-        for (let i = 1; i <= 5; i++) {
+        // Level 0-5 Columns
+        for (let i = 0; i <= 5; i++) {
             const tdLevel = document.createElement('td');
             tdLevel.className = 'text-center p-0';
             tdLevel.style.height = '26px';
@@ -2265,18 +2314,17 @@ class COBITAssessmentManager {
         `;
         tr.appendChild(tdCurrent);
 
+        // Maximum Capability Column
+        const tdMax = document.createElement('td');
+        tdMax.className = 'text-center fw-bold text-secondary';
+        tdMax.textContent = maxCapability;
+        tr.appendChild(tdMax);
+
         return tr;
     }
 
     getDomainFullName(domainCode) {
-        const names = {
-            'EDM': 'Evaluate, Direct, and Monitor',
-            'APO': 'Align, Plan, and Organize',
-            'BAI': 'Build, Acquire, and Implement',
-            'DSS': 'Deliver, Service, and Support',
-            'MEA': 'Monitor, Evaluate, and Assess'
-        };
-        return names[domainCode] || domainCode;
+        return this.config.domainNames[domainCode] || domainCode;
     }
 
     parseNotePayload(rawValue, rawEvidence = null) {
@@ -2756,7 +2804,7 @@ document.addEventListener('DOMContentLoaded', () => {
     font-weight: 600;
 }
 
-.capability-badge.badge-level-0 { background-color: #e2e3e5; color: #41464b; }
+.capability-badge.badge-level-0 { background-color: #FF4F30; color: #FF4F30; }
 .capability-badge.badge-level-1 { background-color: #f8d7da; color: #58151c; }
 .capability-badge.badge-level-2 { background-color: #fff3cd; color: #664d03; }
 .capability-badge.badge-level-3 { background-color: #cff4fc; color: #055160; }
