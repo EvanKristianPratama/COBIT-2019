@@ -130,7 +130,7 @@
                 </div>
                 <div id="diagram-standalone-body"></div>
                 <div id="diagram-maturity-container" class="text-center mt-4 pb-4" style="display: none;">
-                    <h5 class="text-muted mb-2">Maturity Score</h5>
+                    <h5 class="text-muted mb-2">I&T Maturity Score</h5>
                     <div id="diagram-maturity-value" class="display-4 fw-bold text-primary"></div>
                 </div>
             </div>
@@ -2114,7 +2114,7 @@ class COBITAssessmentManager {
         const tfoot = document.createElement('tfoot');
         tfoot.innerHTML = `
             <tr class="table-light fw-bold border-top-2">
-                <td colspan="4" class="text-end pe-3">Maturity Level</td>
+                <td colspan="4" class="text-end pe-3">I&T Maturity Score</td>
                 <td class="text-center bg-primary text-white">${maturity}</td>
                 <td colspan="3" class="bg-light"></td>
             </tr>
