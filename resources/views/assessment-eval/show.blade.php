@@ -2131,7 +2131,7 @@ class COBITAssessmentManager {
             data: {
                 labels,
                 datasets: [{
-                    label: 'Agreed Target Capability',
+                    label: 'Capability Level Result',
                     data: agreedData,
                     fill: true,
                     backgroundColor: 'rgba(54, 162, 235, 0.18)',
@@ -2179,7 +2179,7 @@ class COBITAssessmentManager {
                     legend: { position: 'top' },
                     title: {
                         display: true,
-                        text: 'Capability Diagram (All Objectives)'
+                        text: `Assessment Capability & Maturity Result ${data.length} Goverment & Management Objectives`
                     },
                     tooltip: {
                         callbacks: {
