@@ -643,9 +643,9 @@ Dokumen ini menjelaskan alur proses bisnis (Business Process) dalam aplikasi COB
 | Code | Description |
 |------|-------------|
 | F | Fully Achieved (85-100%) |
-| L | Largely Achieved (50-85%) |
-| P | Partially Achieved (15-50%) |
-| N | Not Achieved (0-15%) |
+| L | Largely Achieved (50-84%) |
+| P | Partially Achieved (15-49%) |
+| N | Not Achieved (0-14%) |
 
 ### 5.3 Change Log
 

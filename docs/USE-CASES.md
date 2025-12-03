@@ -511,8 +511,9 @@
 | UC-ADMIN-003: Approve Request | - | - | ✓ | ✓ |
 
 **Keterangan:**
-- ✓* = Akses terbatas sesuai organisasi
-- ✓** = Akses penuh atau extended
+- ✓ = Memiliki akses penuh ke use case
+- ✓* = Akses terbatas sesuai organisasi (User hanya melihat assessment organisasinya)
+- ✓** = Akses extended (PIC/Admin dapat melihat semua assessment)
 
 ---
 

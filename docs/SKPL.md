@@ -239,7 +239,7 @@ Fungsi utama sistem meliputi:
 ### 4.2 Performa
 
 #### NFR-PERF-001: Response Time
-- Halaman harus dimuat dalam waktu < 3 detik dalam kondisi normal
+- Halaman harus dimuat dalam waktu < 2 detik dalam kondisi normal
 - **Prioritas**: Menengah
 
 #### NFR-PERF-002: Concurrent Users
