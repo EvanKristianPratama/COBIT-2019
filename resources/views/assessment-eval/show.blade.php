@@ -70,7 +70,7 @@
 
             <div id="domain-overview-wrapper" class="domain-overview-wrapper mt-3" style="display: none;">
                 <button class="domain-overview-toggle" type="button" id="domain-overview-toggle" aria-expanded="true">
-                    <span><i class="fas fa-chart-line me-2"></i>Ringkasan Level Domain</span>
+                    <span><i class="fas fa-chart-line me-2"></i>Domain Summary Result</span>
                     <i class="fas fa-chevron-up toggle-indicator"></i>
                 </button>
                 <div class="domain-level-card" id="domain-level-overview">
