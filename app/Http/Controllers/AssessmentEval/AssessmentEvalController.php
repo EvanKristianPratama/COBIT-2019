@@ -65,11 +65,18 @@ class AssessmentEvalController extends Controller
 
             $evalIds = $evaluations->pluck('eval_id')->filter()->unique()->values()->all();
             $selectedDomainsMap = [];
+            $lastActivityDates = [];
             if (!empty($evalIds)) {
                 $rows = TrsEvalDetail::whereIn('eval_id', $evalIds)->get();
                 foreach ($rows as $row) {
                     $selectedDomainsMap[$row->eval_id][] = $row->domain_id;
                 }
+
+                // Fetch last activity update time
+                $lastActivityDates = \App\Models\TrsActivityeval::whereIn('eval_id', $evalIds)
+                    ->select('eval_id', DB::raw('MAX(updated_at) as last_activity_at'))
+                    ->groupBy('eval_id')
+                    ->pluck('last_activity_at', 'eval_id');
             }
 
             // Calculate activity counts per domain to determine denominator for progress
@@ -82,7 +89,7 @@ class AssessmentEvalController extends Controller
             
             $totalSystemActivities = array_sum($domainActivityCounts);
 
-            $evaluations->transform(function ($evaluation) use ($selectedDomainsMap, $domainActivityCounts, $totalSystemActivities) {
+            $evaluations->transform(function ($evaluation) use ($selectedDomainsMap, $domainActivityCounts, $totalSystemActivities, $lastActivityDates) {
                 $selectedDomains = $selectedDomainsMap[$evaluation->eval_id] ?? [];
                 $evaluation->selected_gamo_count = count($selectedDomains) > 0 ? count($selectedDomains) : 40;
                 
@@ -95,6 +102,9 @@ class AssessmentEvalController extends Controller
                     }
                 }
                 $evaluation->total_ratable_activities = $totalRatable > 0 ? $totalRatable : 1; // avoid division by zero
+
+                // Use activity date if available, otherwise fallback to created_at
+                $evaluation->last_saved_at = $lastActivityDates[$evaluation->eval_id] ?? $evaluation->created_at;
 
                 return $evaluation;
             });

@@ -32,9 +32,6 @@
                 <div class="hero-title">COBIT 2019 Assessments</div>
                 <p class="hero-subtitle mb-0">Ringkasan portofolio asesmen yang siap dilanjutkan.</p>
             </div>
-            <span class="hero-pill">
-                <i class="fas fa-layer-group me-2"></i>List View
-            </span>
         </div>
         <div class="card-body hero-body">
             <div class="hero-quick d-flex flex-column flex-lg-row align-items-stretch justify-content-between gap-3">
@@ -157,22 +154,16 @@
                                     <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
                                         <li>
                                             <i class="fas fa-clock me-2 text-muted"></i>
-                                            Terakhir diperbarui {{ optional($evaluation->updated_at)->diffForHumans() ?? '—' }}
+                                            Terakhir diperbarui {{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}
                                         </li>
                                     </ul>
                                 </div>
                                 <div class="card-footer assessment-card-footer">
                                     <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
-                                       class="btn btn-primary btn-sm" 
+                                       class="btn btn-primary w-100" 
                                        title="Lihat Assessment #{{ $evaluation->eval_id }}">
                                         <i class="fas fa-eye me-1"></i>Lihat Detail
                                     </a>
-                                    <button class="btn btn-outline-danger btn-sm delete-assessment" 
-                                            data-eval-id="{{ $evaluation->eval_id }}"
-                                            data-db-id="{{ $evaluation->id }}"
-                                            title="Hapus Assessment #{{ $evaluation->eval_id }}">
-                                        <i class="fas fa-trash me-1"></i>Hapus
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -284,13 +275,13 @@
                                                 <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
                                                     <li>
                                                         <i class="fas fa-clock me-2 text-muted"></i>
-                                                        Terakhir diperbarui {{ optional($evaluation->updated_at)->diffForHumans() ?? '—' }}
+                                                        Terakhir diperbarui {{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}
                                                     </li>
                                                 </ul>
                                             </div>
                                             <div class="card-footer assessment-card-footer">
                                                 <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
-                                                   class="btn btn-primary btn-sm" 
+                                                   class="btn btn-primary w-100" 
                                                    title="Lihat Assessment #{{ $evaluation->eval_id }}">
                                                     <i class="fas fa-eye me-1"></i>Lihat Detail
                                                 </a>
