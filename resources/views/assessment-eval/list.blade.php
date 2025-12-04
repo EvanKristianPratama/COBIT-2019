@@ -29,8 +29,7 @@
     <div class="card shadow-sm mb-4 hero-card">
         <div class="card-header hero-header py-4">
             <div>
-                <div class="hero-title">COBIT 2019 Assessments</div>
-                <p class="hero-subtitle mb-0">Ringkasan portofolio asesmen yang siap dilanjutkan.</p>
+                <div class="hero-title">COBIT 2019 : I&T Assessment Capability and Maturity</div>
             </div>
         </div>
         <div class="card-body hero-body">
@@ -120,9 +119,10 @@
                             <div class="card h-100 assessment-card shadow-sm border-0">
                                 <div class="card-header assessment-card-header">
                                     <div>
-                                        <div class="assessment-code">Assessment {{ $evaluation->eval_id ?? '—' }}</div>
+                                        <div class="assessment-code" style="font-size: 1.1rem;">Assessment Tahun {{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</div>
                                         <div class="assessment-meta">
-                                            Dibuat {{ optional($evaluation->created_at)->format('d M Y') ?? '—' }}
+                                            ID: {{ $evaluation->eval_id ?? '—' }}
+                                            <div class="text-muted small mt-1">{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</div>
                                         </div>
                                     </div>
                                     <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
@@ -230,9 +230,10 @@
                                         <div class="card h-100 assessment-card shadow-sm border-0">
                                             <div class="card-header assessment-card-header">
                                                 <div>
-                                                    <div class="assessment-code">Assessment {{ $evaluation->eval_id ?? '—' }}</div>
+                                                    <div class="assessment-code" style="font-size: 1.1rem;">Tahun {{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</div>
                                                     <div class="assessment-meta">
-                                                        Dibuat {{ optional($evaluation->created_at)->format('d M Y') ?? '—' }}
+                                                        ID: {{ $evaluation->eval_id ?? '—' }}
+                                                        <div class="text-muted small mt-1">{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</div>
                                                     </div>
                                                 </div>
                                                 <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
@@ -537,14 +538,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (existing) existing.remove();
 
                     // Add selected GAMOs as a comma-separated hidden input so backend can accept array or CSV
-                    const hidden = document.createElement('input');
-                    hidden.type = 'hidden';
-                    hidden.name = 'selected_gamos';
-                    hidden.value = selectedGamos.join(',');
-                    form.appendChild(hidden);
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'selected_gamos';
+                hidden.value = selectedGamos.join(',');
+                form.appendChild(hidden);
 
-                    // Submit the form to create the assessment; controller will read selected_gamos
-                    form.submit();
+                // Add assessment year
+                const yearInput = document.getElementById('assessment_year');
+                if (yearInput) {
+                    const hiddenYear = document.createElement('input');
+                    hiddenYear.type = 'hidden';
+                    hiddenYear.name = 'tahun';
+                    hiddenYear.value = yearInput.value;
+                    form.appendChild(hiddenYear);
+                }
+
+                // Submit the form to create the assessment; controller will read selected_gamos
+                form.submit();
                 }
             } else if (currentAction === 'view' && targetUrl) {
                 // Redirect to show page

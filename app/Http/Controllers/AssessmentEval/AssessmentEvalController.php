@@ -136,8 +136,15 @@ class AssessmentEvalController extends Controller
     public function createAssessment(Request $request)
     {
         try {
+            // 1. Buat evaluasi dasar via service
             $evaluation = $this->evaluationService->createNewEvaluation(Auth::id());
             
+            // 2. Update Tahun Assessment (Tambahan Baru)
+            // Ambil dari request, jika kosong default ke tahun sekarang
+            $tahun = $request->input('tahun', date('Y'));
+            $evaluation->tahun = $tahun;
+            $evaluation->save();
+
             $verifyEvaluation = $this->evaluationService->getEvaluationById($evaluation->eval_id);
             
             if (!$verifyEvaluation || (string)$verifyEvaluation->user_id !== (string)Auth::id()) {

@@ -16,7 +16,8 @@ class MstEval extends Model
     
     protected $fillable = [
         'user_id',
-        'status'
+        'status',
+        'tahun'
     ];
 
     /**
