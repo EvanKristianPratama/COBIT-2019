@@ -36,6 +36,14 @@ class MstEval extends Model
     }
 
     /**
+     * Get all evidences for this evaluation
+     */
+    public function evidences()
+    {
+        return $this->hasMany(MstEvidence::class, 'eval_id', 'eval_id');
+    }
+
+    /**
      * Scope for filtering by user
      */
     public function scopeByUser($query, $userId)

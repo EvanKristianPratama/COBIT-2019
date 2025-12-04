@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\EvaluationService;
 use App\Models\MstObjective;
 use App\Models\MstEval;
+use App\Models\MstEvidence;
 use App\Models\TrsEvalDetail;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -252,8 +253,12 @@ class AssessmentEvalController extends Controller
             } else {
                 $objectives = MstObjective::with(['practices.activities'])->get();
             }
+
+            // Fetch evidences for this evaluation
+            $evidences = MstEvidence::where('eval_id', $evalId)->orderBy('created_at', 'desc')->get();
+
             // Pass isOwner to the view. Non-owners may view the full content in read-only mode.
-            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation', 'isOwner'));
+            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'evidences'));
         } catch (\Exception $e) {
             Log::error("Failed to load assessment", [
                 'eval_id' => $evalId,
@@ -506,5 +511,139 @@ class AssessmentEvalController extends Controller
         }
     }
 
+    /**
+     * Display the evidence list for an assessment
+     */
+    public function evidenceIndex($evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            
+            if (!$evaluation) {
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Assessment not found']);
+            }
 
+            // Check authorization (similar to showAssessment)
+            $owner = User::find($evaluation->user_id);
+            $currentUser = Auth::user();
+            $canView = false;
+            $isOwner = false;
+
+            if ($owner && $currentUser) {
+                if ((string)$evaluation->user_id === (string)$currentUser->id) {
+                    $canView = true;
+                    $isOwner = true;
+                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0) {
+                    $canView = true;
+                }
+            }
+
+            if (!$canView) {
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
+            }
+
+            $evidences = MstEvidence::where('eval_id', $evalId)->orderBy('created_at', 'desc')->get();
+
+            return view('assessment-eval.evidence', compact('evaluation', 'evidences', 'evalId', 'isOwner'));
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to load evidence: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Store evidence for an assessment
+     */
+    public function storeEvidence(Request $request, $evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            
+            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $validated = $request->validate([
+                'judul_dokumen' => 'required|string|max:255',
+                'no_dokumen' => 'nullable|string|max:100',
+                'tahun_terbit' => 'nullable|integer',
+                'tahun_kadaluarsa' => 'nullable|integer',
+                'tipe' => 'nullable|string|max:100',
+                'pengesahan' => 'nullable|string|max:255',
+                'pemilik_dokumen' => 'nullable|string|max:255',
+                'klasifikasi' => 'nullable|string|max:100',
+                'grup' => 'nullable|string|max:100',
+                'notes' => 'nullable|string',
+                'summary' => 'nullable|string',
+            ]);
+
+            $evidence = MstEvidence::create([
+                'eval_id' => $evalId,
+                ...$validated
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Evidence added successfully',
+                'data' => $evidence
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to store evidence", [
+                'eval_id' => $evalId,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to store evidence: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update evidence
+     */
+    public function updateEvidence(Request $request, $evidenceId)
+    {
+        try {
+            $evidence = MstEvidence::findOrFail($evidenceId);
+            $evaluation = $this->evaluationService->getEvaluationById($evidence->eval_id);
+
+            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $validated = $request->validate([
+                'judul_dokumen' => 'required|string|max:255',
+                'no_dokumen' => 'nullable|string|max:100',
+                'tahun_terbit' => 'nullable|integer',
+                'tahun_kadaluarsa' => 'nullable|integer',
+                'tipe' => 'nullable|string|max:100',
+                'pengesahan' => 'nullable|string|max:255',
+                'pemilik_dokumen' => 'nullable|string|max:255',
+                'klasifikasi' => 'nullable|string|max:100',
+                'grup' => 'nullable|string|max:100',
+                'notes' => 'nullable|string',
+                'summary' => 'nullable|string',
+            ]);
+
+            $evidence->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Evidence updated successfully',
+                'data' => $evidence
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to update evidence", [
+                'evidence_id' => $evidenceId,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update evidence: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

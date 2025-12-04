@@ -266,3 +266,15 @@ Route::post('/assessment-eval/{evalId}/finish', [AssessmentEvalController::class
 Route::post('/assessment-eval/{evalId}/unlock', [AssessmentEvalController::class, 'unlock'])
      ->name('assessment-eval.unlock')
      ->middleware('auth');
+
+Route::post('/assessment-eval/{evalId}/evidence', [AssessmentEvalController::class, 'storeEvidence'])
+     ->name('assessment-eval.evidence.store')
+     ->middleware('auth');
+
+Route::get('/assessment-eval/{evalId}/evidence', [AssessmentEvalController::class, 'evidenceIndex'])
+     ->name('assessment-eval.evidence.index')
+     ->middleware('auth');
+
+Route::put('/assessment-eval/evidence/{evidenceId}', [AssessmentEvalController::class, 'updateEvidence'])
+     ->name('assessment-eval.evidence.update')
+     ->middleware('auth');

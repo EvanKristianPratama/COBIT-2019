@@ -52,6 +52,9 @@
 
             <div class="domain-tabs-wrapper">
                 <div class="domain-tabs" role="tablist">
+                    <a href="{{ route('assessment-eval.evidence.index', $evalId) }}" class="domain-tab text-decoration-none d-flex align-items-center" style="background-color: #0f2b5c; color: #fff;">
+                        <i class="fas fa-plus me-2"></i>Evidence
+                    </a>
                     <button type="button" class="domain-tab active " data-domain="all">All</button>
                     <button type="button" class="domain-tab" data-domain="EDM">EDM</button>
                     <button type="button" class="domain-tab" data-domain="APO">APO</button>
@@ -317,7 +320,9 @@
                                                                                 data-objective-id="{{ $objective->objective_id }}"
                                                                                 data-level="{{ $level }}"
                                                                                 rows="2" 
-                                                                                placeholder="Enter evidence or document references..."></textarea>
+                                                                                readonly
+                                                                                style="background-color: #f8f9fa;"
+                                                                                placeholder="Select evidence from the list..."></textarea>
                                                                             <select 
                                                                                 class="form-select form-select-sm evidence-history-select"
                                                                                 data-activity-id="{{ $activity->activity_id }}"
@@ -414,6 +419,8 @@
 window.IS_OWNER = {{ isset($isOwner) && $isOwner ? 'true' : 'false' }};
 // Selected domains (GAMO) provided by server — used by the Scope tab
 window.SELECTED_DOMAINS = {!! json_encode($selectedDomains ?? []) !!};
+// Server-provided evidences
+window.SERVER_EVIDENCES = {!! json_encode($evidences ?? []) !!};
 class COBITAssessmentManager {
     constructor(evalId, status = 'draft', isOwner = false) {
         this.assessmentData = {};
@@ -501,6 +508,7 @@ class COBITAssessmentManager {
     init() {
         this.cacheLoadingElements();
         this.buildElementCache();
+        this.initializeEvidenceLibrary();
         this.showLoading('Initializing assessment...', 0);
         
         setTimeout(() => {
@@ -530,6 +538,7 @@ class COBITAssessmentManager {
             this.setupSaveLoadButtons();
             this.setupDomainOverviewAccordion();
             this.setupBackToTopButton();
+            this.setupEvidenceListener();
             this.updateLoadingProgress('Loading assessment data...', 80);
             
             this.loadAssessment();
@@ -540,6 +549,22 @@ class COBITAssessmentManager {
             
             setTimeout(() => this.hideLoading(), 500);
         }, 100);
+    }
+
+    initializeEvidenceLibrary() {
+        this.evidenceLibrary = new Set();
+        if (window.SERVER_EVIDENCES && Array.isArray(window.SERVER_EVIDENCES)) {
+            window.SERVER_EVIDENCES.forEach(ev => {
+                let label = ev.judul_dokumen;
+                if (ev.no_dokumen) {
+                    label += ' - ' + ev.no_dokumen;
+                }
+                if (ev.grup) {
+                    label += ' [' + ev.grup + ']';
+                }
+                this.evidenceLibrary.add(label);
+            });
+        }
     }
 
     initializeDefaultStates() {
@@ -566,7 +591,7 @@ class COBITAssessmentManager {
     resetAssessmentFields() {
         this.levelScores = {};
         this.objectiveCapabilityLevels = {};
-        this.evidenceLibrary = new Set();
+        this.initializeEvidenceLibrary();
 
         if (this.elementCache.ratingSelects) {
             this.elementCache.ratingSelects.forEach(select => {
@@ -884,6 +909,15 @@ class COBITAssessmentManager {
         });
     }
 
+    setupEvidenceListener() {
+        document.addEventListener('evidenceAdded', (e) => {
+            if (e.detail && e.detail.judul_dokumen) {
+                const evidenceText = e.detail.judul_dokumen + (e.detail.no_dokumen ? ' - ' + e.detail.no_dokumen : '');
+                this.addEvidenceToLibrary(evidenceText, { refresh: true });
+            }
+        });
+    }
+
     async saveAssessment() {
         this.showLoading('Collecting assessment data...', 0);
         
@@ -1073,7 +1107,7 @@ class COBITAssessmentManager {
 
     async populateAssessmentDataParallel(data) {
         this.levelScores = {};
-        this.evidenceLibrary = new Set();
+        this.initializeEvidenceLibrary();
         
         // Clear fields dengan chunk size lebih kecil untuk smooth interaction
         const allSelects = document.querySelectorAll('.activity-rating-select');
@@ -1198,7 +1232,7 @@ class COBITAssessmentManager {
 
     async populateAssessmentData(data) {
         this.levelScores = {};
-        this.evidenceLibrary = new Set();
+        this.initializeEvidenceLibrary();
         
         const allSelects = document.querySelectorAll('.activity-rating-select');
         const allTextareas = document.querySelectorAll('.assessment-textarea');
@@ -1527,9 +1561,7 @@ class COBITAssessmentManager {
         evidenceSelects.forEach(select => {
             select.addEventListener('change', () => {
                 const selectedEvidence = select.value;
-                if (!selectedEvidence) {
-                    return;
-                }
+                // Allow clearing if empty value is selected
                 const wrapper = select.closest('.evidence-input-wrapper');
                 const textarea = wrapper ? wrapper.querySelector('.evidence-input') : null;
                 if (textarea) {
@@ -1839,14 +1871,9 @@ class COBITAssessmentManager {
     }
 
     addEvidenceToLibrary(value, { refresh = true } = {}) {
-        const trimmed = (value || '').trim();
-        if (!trimmed || this.evidenceLibrary.has(trimmed)) {
-            return;
-        }
-        this.evidenceLibrary.add(trimmed);
-        if (refresh) {
-            this.refreshEvidenceDropdowns();
-        }
+        // Only use server-provided evidence in the dropdown.
+        // Do not add dynamic values from textareas.
+        return;
     }
 
     async refreshEvidenceDropdownsParallel() {
@@ -3766,4 +3793,5 @@ document.addEventListener('DOMContentLoaded', () => {
         border: 1px solid rgba(15,106,217,0.12);
     }
 </style>
+
 @endsection
