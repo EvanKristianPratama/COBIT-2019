@@ -58,8 +58,8 @@
                     <button type="button" class="domain-tab" data-domain="BAI">BAI</button>
                     <button type="button" class="domain-tab" data-domain="DSS">DSS</button>
                     <button type="button" class="domain-tab" data-domain="MEA">MEA</button>
-                    <button type="button" class="domain-tab" data-domain="recap">Rekap Domain</button>
-                    <button type="button" class="domain-tab" data-domain="diagram">Diagram</button>
+                    <button type="button" class="domain-tab" data-domain="recap">Summary Result</button>
+                    <button type="button" class="domain-tab" data-domain="diagram">Spider Web Diagram</button>
                 </div>
                 <div id="objective-filter-wrapper" class="objective-filter-wrapper" style="display: none;">
                     <div class="objective-filter-tabs" id="objective-filter-tabs" role="tablist"></div>
@@ -1644,9 +1644,13 @@ class COBITAssessmentManager {
 
     updateObjectiveCapabilityLevel(objectiveId) {
         let finalLevel = 0;
+        const minLevel = this.getMinLevelForObjective(objectiveId);
         
         // Helper to get score safely
         const getScore = (lvl) => {
+            if (lvl < minLevel) {
+                return 1.0;
+            }
             if (this.levelScores[objectiveId] && this.levelScores[objectiveId][lvl]) {
                 return this.levelScores[objectiveId][lvl].score || 0;
             }
@@ -1687,6 +1691,16 @@ class COBITAssessmentManager {
                         finalLevel = 5;
                     }
                 }
+            }
+        }
+
+        // Special handling for objectives starting at higher levels (e.g. MEA02 starts at Level 3)
+        // If the score for the minimum level is low (<= 0.15), force level 0
+        // This ensures the default state is 0 instead of the implied previous level
+        if (minLevel > 2) {
+            const startScore = getScore(minLevel);
+            if (startScore <= 0.15) {
+                finalLevel = 0;
             }
         }
         
@@ -1771,9 +1785,9 @@ class COBITAssessmentManager {
     }
 
     updateCapabilityBadge(badge, level) {
-        const badgeClasses = this.config.badgeClasses;
+        const badgeClasses = ['badge-level-1','badge-level-2','badge-level-3','badge-level-4','badge-level-5'];
         badgeClasses.forEach(c => badge.classList.remove(c));
-        const levelKey = Math.min(Math.max(level, 0), 5);
+        const levelKey = Math.min(Math.max(level, 1), 5);
         badge.classList.add(`badge-level-${levelKey}`);
         
         const levelNumber = badge.querySelector('.level-number');
@@ -2035,7 +2049,7 @@ class COBITAssessmentManager {
 
         return data;
     }
-
+// ini isi rekap table
     createRecapTable(data) {
         const wrapper = document.createElement('div');
         wrapper.className = 'recap-table-wrapper';
@@ -2054,6 +2068,7 @@ class COBITAssessmentManager {
                 <th style="width:100px;" class="text-center">Rating</th>
                 <th style="width:100px;" class="text-center">Target</th>
                 <th style="width:100px;" class="text-center">Gap</th>
+                <th style="width:100px;" class="text-center">Max Level</th>
             </tr>
         `;
 
@@ -2078,6 +2093,7 @@ class COBITAssessmentManager {
             const textColor = levelTextColors[level] || '#6c757d';
             
             const ratingDisplay = level > 0 ? `${level} ${row.ratingLetter}` : '0 N';
+            const maxCap = this.getMaxCapabilityForObjective(row.objectiveId);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -2106,6 +2122,9 @@ class COBITAssessmentManager {
                 <td class="text-center text-muted">
                     -
                 </td>
+                <td class="text-center fw-bold text-secondary">
+                    ${maxCap}
+                </td>
             `;
             tbody.appendChild(tr);
         });
@@ -2116,7 +2135,7 @@ class COBITAssessmentManager {
             <tr class="table-light fw-bold border-top-2">
                 <td colspan="4" class="text-end pe-3">I&T Maturity Score</td>
                 <td class="text-center bg-primary text-white">${maturity}</td>
-                <td colspan="3" class="bg-light"></td>
+                <td colspan="4" class="bg-light"></td>
             </tr>
         `;
 

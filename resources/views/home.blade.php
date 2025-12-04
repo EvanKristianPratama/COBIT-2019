@@ -43,7 +43,7 @@
                       <div class="home-icon-circle bg-danger-light mb-3 mx-auto">
                         <i class="fas fa-cogs fa-2x text-danger"></i>
                       </div>
-                      <h6 class="card-title fw-bold mb-1">COBIT Desain Toolkit</h6>
+                      <h6 class="card-title fw-bold mb-1">Design I&T Tailored Governance System</h6>
                       <p class="text-muted small mb-0">Manajemen tata kelola TI</p>
                     </div>
                   </a>
@@ -57,7 +57,7 @@
                       <div class="home-icon-circle bg-info-light mb-3 mx-auto">
                         <i class="fas fa-clipboard-check fa-2x text-info"></i>
                       </div>
-                      <h6 class="card-title fw-bold mb-1">Assessment</h6>
+                      <h6 class="card-title fw-bold mb-1">Assessment Maturity & Capability</h6>
                       <p class="text-muted small mb-0">Evaluasi tata kelola TI</p>
                     </div>
                   </a>
