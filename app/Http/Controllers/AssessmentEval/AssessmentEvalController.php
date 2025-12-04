@@ -80,6 +80,19 @@ class AssessmentEvalController extends Controller
                     ->pluck('last_activity_at', 'eval_id');
             }
 
+            // Calculate filled GAMO counts (distinct objectives with at least one rated activity)
+            $filledGamoCounts = [];
+            if (!empty($evalIds)) {
+                $filledGamoCounts = DB::table('trs_activityeval')
+                    ->join('mst_activities', 'trs_activityeval.activity_id', '=', 'mst_activities.activity_id')
+                    ->join('mst_practice', 'mst_activities.practice_id', '=', 'mst_practice.practice_id')
+                    ->whereIn('trs_activityeval.eval_id', $evalIds)
+                    ->select('trs_activityeval.eval_id', DB::raw('count(distinct mst_practice.objective_id) as filled_count'))
+                    ->groupBy('trs_activityeval.eval_id')
+                    ->pluck('filled_count', 'eval_id')
+                    ->toArray();
+            }
+
             // Calculate activity counts per domain to determine denominator for progress
             $domainActivityCounts = DB::table('mst_activities')
                 ->join('mst_practice', 'mst_activities.practice_id', '=', 'mst_practice.practice_id')
@@ -90,9 +103,10 @@ class AssessmentEvalController extends Controller
             
             $totalSystemActivities = array_sum($domainActivityCounts);
 
-            $evaluations->transform(function ($evaluation) use ($selectedDomainsMap, $domainActivityCounts, $totalSystemActivities, $lastActivityDates) {
+            $evaluations->transform(function ($evaluation) use ($selectedDomainsMap, $domainActivityCounts, $totalSystemActivities, $lastActivityDates, $filledGamoCounts) {
                 $selectedDomains = $selectedDomainsMap[$evaluation->eval_id] ?? [];
                 $evaluation->selected_gamo_count = count($selectedDomains) > 0 ? count($selectedDomains) : 40;
+                $evaluation->filled_gamo_count = $filledGamoCounts[$evaluation->eval_id] ?? 0;
                 
                 $totalRatable = 0;
                 if (empty($selectedDomains)) {

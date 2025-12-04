@@ -131,25 +131,20 @@
                                     <div class="assessment-progress-block">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <div>
-                                                <!-- <span class="progress-label d-block">Progress Assessment</span> -->
                                                 <small class="text-muted">GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong></small>
                                             </div>
-                                            <!-- <span class="progress-value">{{ number_format($completion, 1) }}%</span> -->
+                                            <span class="progress-value" style="font-size: 0.9rem;">
+                                                {{ $evaluation->filled_gamo_count ?? 0 }} / {{ $evaluation->selected_gamo_count ?? 40 }} Terisi
+                                            </span>
                                         </div>
-                                        <!-- <div class="progress assessment-progress">
-                                            @if($percentages['F'] > 0)
-                                                <div class="progress-bar bg-success" style="width: {{ $percentages['F'] }}%" title="Fully"></div>
-                                            @endif
-                                            @if($percentages['L'] > 0)
-                                                <div class="progress-bar bg-info" style="width: {{ $percentages['L'] }}%" title="Largely"></div>
-                                            @endif
-                                            @if($percentages['P'] > 0)
-                                                <div class="progress-bar bg-warning" style="width: {{ $percentages['P'] }}%" title="Partial"></div>
-                                            @endif
-                                            @if($percentages['N'] > 0)
-                                                <div class="progress-bar bg-danger" style="width: {{ $percentages['N'] }}%" title="None"></div>
-                                            @endif
-                                        </div> -->
+                                        <div class="progress assessment-progress" style="height: 6px;">
+                                            @php
+                                                $gamoProgress = ($evaluation->selected_gamo_count > 0) 
+                                                    ? min(100, round(($evaluation->filled_gamo_count / $evaluation->selected_gamo_count) * 100)) 
+                                                    : 0;
+                                            @endphp
+                                            <div class="progress-bar bg-primary" style="width: {{ $gamoProgress }}%"></div>
+                                        </div>
                                     </div>
                                     <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
                                         <li>
@@ -328,15 +323,18 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-primary" id="assessorModalLabel">Informasi Assessor</h5>
+                <h5 class="modal-title fw-bold text-primary" id="assessorModalLabel">Informasi Assessment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body pt-4">
                 <p class="text-muted small mb-4">Silakan lengkapi data berikut sebelum melanjutkan ke halaman assessment.</p>
                 
                 <form id="assessorForm">
-                    {{-- Assessor name & organization removed for POC; only domain selection is required --}}
-                    
+                    <div class="mb-3">
+                        <label for="assessment_year" class="form-label fw-semibold small text-uppercase text-muted">Tahun Assessment</label>
+                        <input type="number" class="form-control" id="assessment_year" name="assessment_year" placeholder="YYYY" min="2000" max="2099" value="{{ date('Y') }}">
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold small text-uppercase text-muted d-flex justify-content-between align-items-center">
                             Target Domain
