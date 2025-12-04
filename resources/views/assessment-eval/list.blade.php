@@ -41,7 +41,7 @@
                 </div>
                 <div class="hero-status-summary flex-fill d-flex flex-wrap gap-3">
                     <div class="hero-status-card status-finished">
-                        <span class="status-label">Assessment Finish</span>
+                        <span class="status-label">Assessment Finish </span>
                         <span class="status-value">{{ number_format($finishedAssessments) }}</span>
                     </div>
                     <div class="hero-status-card status-draft">
