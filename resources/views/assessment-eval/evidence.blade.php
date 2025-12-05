@@ -43,38 +43,53 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive" style="overflow-x: auto;">
-                <table class="table table-bordered table-sm mb-0" id="evidence-table" style="font-size: 0.9rem; min-width: 1400px;">
-                    <thead style="background-color: #e9ecef;">
-                        <tr>
-                            <th class="text-center" style="width: 50px;">No</th>
-                            <th>Judul Dokumen</th>
-                            <th>No. Dokumen</th>
-                            <th class="text-center">Grup</th>
-                            <th>Tipe</th>
-                            <th class="text-center">Tahun Terbit</th>
-                            <th class="text-center">Tahun Kadaluarsa</th>
-                            <th>Pemilik</th>
-                            <th>Pengesahan</th>
-                            <th class="text-center">Klasifikasi</th>
-                            <th>Ringkasan</th>
-                            <th>Link Dokumen</th>
-                            <th class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
+                    <table class="table table-bordered table-sm mb-0" id="evidence-table" style="font-size: 0.9rem; min-width: 1400px;">
+                        <thead style="background-color: #e9ecef;">
+                            <tr>
+                                <th class="text-center" style="width: 50px;">No</th>
+                                <th>Judul Dokumen</th>
+                                <th>No. Dokumen</th>
+                                <th class="text-center">Grup</th>
+                                <th>Tipe</th>
+                                <th class="text-center">Tahun Terbit</th>
+                                <th class="text-center">Tahun Kadaluarsa</th>
+                                <th>Pemilik</th>
+                                <th>Pengesahan</th>
+                                <th class="text-center">Klasifikasi</th>
+                                <th>Ringkasan</th>
+                                <th>Link Dokumen</th>
+                                <th class="text-center">Aksi</th>
+                            </tr>
+                            <tr class="table-light">
+                                <th></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari judul" data-filter-field="judul_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari no dok" data-filter-field="no_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari grup" data-filter-field="grup"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari tipe" data-filter-field="tipe"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari terbit" data-filter-field="tahun_terbit"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari kadaluarsa" data-filter-field="tahun_kadaluarsa"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pemilik" data-filter-field="pemilik_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pengesahan" data-filter-field="pengesahan"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari klasifikasi" data-filter-field="klasifikasi"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari ringkasan" data-filter-field="summary"></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
                     <tbody>
                         @forelse($evidences as $evidence)
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
-                                <td>{{ $evidence->judul_dokumen }}</td>
-                                <td>{{ $evidence->no_dokumen ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->grup ?? '-' }}</td>
-                                <td>{{ $evidence->tipe ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->tahun_terbit ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->tahun_kadaluarsa ?? '-' }}</td>
-                                <td>{{ $evidence->pemilik_dokumen ?? '-' }}</td>
-                                <td>{{ $evidence->pengesahan ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->klasifikasi ?? '-' }}</td>
-                                <td>{{ $evidence->summary ?? '-' }}</td>
+                                <td data-field="judul_dokumen">{{ $evidence->judul_dokumen }}</td>
+                                <td data-field="no_dokumen">{{ $evidence->no_dokumen ?? '-' }}</td>
+                                <td class="text-center" data-field="grup">{{ $evidence->grup ?? '-' }}</td>
+                                <td data-field="tipe">{{ $evidence->tipe ?? '-' }}</td>
+                                <td class="text-center" data-field="tahun_terbit">{{ $evidence->tahun_terbit ?? '-' }}</td>
+                                <td class="text-center" data-field="tahun_kadaluarsa">{{ $evidence->tahun_kadaluarsa ?? '-' }}</td>
+                                <td data-field="pemilik_dokumen">{{ $evidence->pemilik_dokumen ?? '-' }}</td>
+                                <td data-field="pengesahan">{{ $evidence->pengesahan ?? '-' }}</td>
+                                <td class="text-center" data-field="klasifikasi">{{ $evidence->klasifikasi ?? '-' }}</td>
+                                <td data-field="summary">{{ $evidence->summary ?? '-' }}</td>
                                 <td>
                                     @if($evidence->notes)
                                         <a href="{{ $evidence->notes }}" target="_blank" class="text-decoration-none">Link</a>
@@ -205,16 +220,36 @@
                 <div id="import-empty" class="text-muted d-none">No previous evidences found.</div>
                 <div class="table-responsive" id="import-table-wrapper" style="max-height: 420px; overflow-y: auto;">
                     <table class="table table-sm align-middle" id="import-table">
-                        <thead>
+                        <thead class="align-middle">
                             <tr>
-                                <th style="width:40px;">Add</th>
+                                <th style="width:40px;" class="text-center">
+                                    <input type="checkbox" id="import-check-all" class="form-check-input" title="Pilih semua yang terlihat">
+                                </th>
+                                <th class="text-center" style="width:50px;">No</th>
                                 <th>Judul Dokumen</th>
                                 <th>No. Dokumen</th>
-                                <th>Group</th>
-                                <th>Ringkasan</th>
-                                <th class="text-center" style="width:140px;">Tahun Assessment</th>
+                                <th class="text-center">Grup</th>
+                                <th>Tipe</th>
                                 <th class="text-center" style="width:110px;">Tahun Terbit</th>
                                 <th class="text-center" style="width:130px;">Tahun Kadaluarsa</th>
+                                <th>Pemilik</th>
+                                <th>Pengesahan</th>
+                                <th class="text-center">Klasifikasi</th>
+                                <th>Ringkasan</th>
+                            </tr>
+                            <tr class="table-light">
+                                <th></th>
+                                <th></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari judul" data-filter-field="judul_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari no dok" data-filter-field="no_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari grup" data-filter-field="grup"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari tipe" data-filter-field="tipe"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari terbit" data-filter-field="tahun_terbit"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari kadaluarsa" data-filter-field="tahun_kadaluarsa"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pemilik" data-filter-field="pemilik_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pengesahan" data-filter-field="pengesahan"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari klasifikasi" data-filter-field="klasifikasi"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari ringkasan" data-filter-field="summary"></th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -239,12 +274,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAddNew: document.getElementById('btn-add-new'),
         importModalEl: document.getElementById('importEvidenceModal'),
         importTableBody: document.querySelector('#import-table tbody'),
+        importCheckAll: document.getElementById('import-check-all'),
         importLoading: document.getElementById('import-loading'),
         importError: document.getElementById('import-error'),
         importEmpty: document.getElementById('import-empty'),
         btnUseImported: document.getElementById('btn-use-imported'),
         btnImportPrev: document.getElementById('btn-import-prev'),
-        evidenceTableBody: document.querySelector('#evidence-table tbody')
+        evidenceTableBody: document.querySelector('#evidence-table tbody'),
+        evidenceTableFilterInputs: Array.from(document.querySelectorAll('#evidence-table thead input[data-filter-field]'))
     };
 
     const state = {
@@ -252,7 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEvidenceId: null,
         importList: [],
         selectedImportIndices: new Set(),
-        existingEvidenceKeys: new Set((window.CURRENT_EVIDENCE_KEYS || []).map(k => k.toLowerCase()))
+        existingEvidenceKeys: new Set((window.CURRENT_EVIDENCE_KEYS || []).map(k => k.toLowerCase())),
+        importFilters: {},
+        tableFilters: {}
     };
 
     const flags = {
@@ -290,6 +329,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dom.btnUseImported) return;
         dom.btnUseImported.disabled = state.selectedImportIndices.size === 0;
         dom.btnUseImported.style.display = 'inline-block';
+    };
+
+    const bindImportFilters = () => {
+        document.querySelectorAll('#import-table thead input[data-filter-field]').forEach((input) => {
+            input.addEventListener('input', (e) => {
+                const field = e.target.getAttribute('data-filter-field');
+                state.importFilters[field] = e.target.value || '';
+                renderImportTable();
+            });
+        });
+    };
+
+    const bindEvidenceTableFilters = () => {
+        if (!dom.evidenceTableFilterInputs.length || !dom.evidenceTableBody) return;
+        dom.evidenceTableFilterInputs.forEach((input) => {
+            const field = input.getAttribute('data-filter-field');
+            if (!field) return;
+            input.addEventListener('input', (e) => {
+                state.tableFilters[field] = e.target.value || '';
+                applyEvidenceTableFilters();
+            });
+        });
+    };
+
+    const applyEvidenceTableFilters = () => {
+        if (!dom.evidenceTableBody) return;
+        const filters = Object.entries(state.tableFilters).filter(([, v]) => v && v.toString().trim());
+        const rows = Array.from(dom.evidenceTableBody.querySelectorAll('tr'));
+        rows.forEach((row) => {
+            if (row.hasAttribute('data-empty-row')) return;
+            if (!filters.length) {
+                row.style.display = '';
+                return;
+            }
+            const matches = filters.every(([field, value]) => {
+                const cell = row.querySelector(`[data-field="${field}"]`);
+                const hay = (cell ? cell.textContent : '').toString().toLowerCase();
+                return hay.includes(value.toLowerCase());
+            });
+            row.style.display = matches ? '' : 'none';
+        });
     };
 
     const resetImportState = () => {
@@ -464,38 +544,59 @@ document.addEventListener('DOMContentLoaded', () => {
     /* --------------------
      * Import helpers
      * -------------------- */
+    const getFilteredImportList = () => {
+        const entries = Object.entries(state.importFilters || {});
+        if (!entries.length) return state.importList;
+        return state.importList.filter((item) => {
+            return entries.every(([field, value]) => {
+                if (!value) return true;
+                const hay = (item[field] ?? '').toString().toLowerCase();
+                return hay.includes(value.toLowerCase());
+            });
+        });
+    };
+
     const renderImportTable = () => {
         if (!dom.importTableBody) return;
         dom.importTableBody.innerHTML = '';
 
-        state.importList.forEach((item, idx) => {
+        const filtered = getFilteredImportList();
+
+        filtered.forEach((item, idx) => {
             const key = evidenceKey(item);
             const isDuplicate = state.existingEvidenceKeys.has(key);
+            const originalIndex = typeof item.__idx === 'number' ? item.__idx : idx;
 
             const row = document.createElement('tr');
-            row.dataset.index = idx;
+            row.dataset.index = originalIndex;
             row.innerHTML = `
                 <td class="text-center">
-                    <input type="checkbox" name="importEvidence" value="${idx}" ${isDuplicate ? 'disabled' : ''} />
+                    <input type="checkbox" name="importEvidence" value="${originalIndex}" ${isDuplicate ? 'disabled' : ''} />
                 </td>
+                <td class="text-center">${idx + 1}</td>
                 <td>${item.judul_dokumen || '-'}</td>
                 <td>${item.no_dokumen || '-'}</td>
-                <td>${item.grup || '-'}</td>
-                <td>${item.summary || '-'}</td>
-                <td class="text-center">${item.assessment_year || '-'}</td>
+                <td class="text-center">${item.grup || '-'}</td>
+                <td>${item.tipe || '-'}</td>
                 <td class="text-center">${item.tahun_terbit || '-'}</td>
                 <td class="text-center">${item.tahun_kadaluarsa || '-'}</td>
+                <td>${item.pemilik_dokumen || '-'}</td>
+                <td>${item.pengesahan || '-'}</td>
+                <td class="text-center">${item.klasifikasi || '-'}</td>
+                <td>${item.summary || '-'}</td>
             `;
 
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (!isDuplicate) {
+                checkbox.checked = state.selectedImportIndices.has(originalIndex);
                 checkbox.addEventListener('change', (e) => {
                     if (e.target.checked) {
-                        state.selectedImportIndices.add(idx);
+                        state.selectedImportIndices.add(originalIndex);
                     } else {
-                        state.selectedImportIndices.delete(idx);
+                        state.selectedImportIndices.delete(originalIndex);
                     }
                     updateImportButtonState();
+                    updateImportCheckAllState();
                 });
             } else {
                 checkbox.title = 'Already added';
@@ -504,6 +605,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             dom.importTableBody.appendChild(row);
         });
+
+        updateImportCheckAllState();
     };
 
     const loadPreviousEvidences = async () => {
@@ -544,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            state.importList = filtered;
+            state.importList = filtered.map((item, idx) => ({ ...item, __idx: idx }));
             renderImportTable();
         } catch (err) {
             console.error('Load previous evidences error:', err);
@@ -633,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const indices = Array.from(state.selectedImportIndices);
             for (const idx of indices) {
-                const item = state.importList[idx];
+                const item = state.importList.find((entry) => entry.__idx === idx) || state.importList[idx];
                 const row = dom.importTableBody.querySelector(`tr[data-index="${idx}"]`);
                 const checkbox = row ? row.querySelector('input[type="checkbox"]') : null;
                 if (!item || !row || !checkbox) continue;
@@ -643,6 +746,44 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.btnUseImported.innerHTML = 'Tambahkan';
             updateImportButtonState();
         }
+    };
+
+    const updateImportCheckAllState = () => {
+        if (!dom.importCheckAll || !dom.importTableBody) return;
+        const visibleRows = Array.from(dom.importTableBody.querySelectorAll('tr'));
+        const checkboxes = visibleRows
+            .map(row => row.querySelector('input[type="checkbox"]'))
+            .filter(cb => cb && !cb.disabled);
+        if (!checkboxes.length) {
+            dom.importCheckAll.checked = false;
+            dom.importCheckAll.indeterminate = false;
+            return;
+        }
+        const checkedCount = checkboxes.filter(cb => cb.checked).length;
+        dom.importCheckAll.checked = checkedCount === checkboxes.length;
+        dom.importCheckAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+    };
+
+    const bindImportCheckAll = () => {
+        if (!dom.importCheckAll) return;
+        dom.importCheckAll.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            const rows = Array.from(dom.importTableBody.querySelectorAll('tr'));
+            rows.forEach((row) => {
+                const cb = row.querySelector('input[type="checkbox"]');
+                if (!cb || cb.disabled) return;
+                cb.checked = checked;
+                const idx = parseInt(row.dataset.index, 10);
+                if (Number.isNaN(idx)) return;
+                if (checked) {
+                    state.selectedImportIndices.add(idx);
+                } else {
+                    state.selectedImportIndices.delete(idx);
+                }
+            });
+            updateImportButtonState();
+            updateImportCheckAllState();
+        });
     };
 
     /* --------------------
@@ -662,6 +803,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.btnUseImported) dom.btnUseImported.addEventListener('click', importSelected);
 
     bindEditButtons();
+    bindImportFilters();
+    bindImportCheckAll();
+    bindEvidenceTableFilters();
 });
 </script>
 

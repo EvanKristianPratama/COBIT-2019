@@ -411,14 +411,48 @@
 
 <!-- Evidence modal -->
 <div class="modal fade" id="evidenceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Pilih Evidence</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="evidence-modal-list" class="d-flex flex-column gap-2"></div>
+                <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-hover mb-0" id="evidence-modal-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Pilih</th>
+                                <th class="text-center" style="width: 50px;">No</th>
+                                <th>Judul Dokumen</th>
+                                <th>No. Dokumen</th>
+                                <th class="text-center">Grup</th>
+                                <th>Tipe</th>
+                                <th class="text-center" style="width: 110px;">Tahun Terbit</th>
+                                <th class="text-center" style="width: 130px;">Tahun Kadaluarsa</th>
+                                <th>Pemilik</th>
+                                <th>Pengesahan</th>
+                                <th class="text-center">Klasifikasi</th>
+                                <th>Ringkasan</th>
+                            </tr>
+                            <tr class="table-light">
+                                <th></th>
+                                <th></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari judul" data-filter-field="judul_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari no dok" data-filter-field="no_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari grup" data-filter-field="grup"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari tipe" data-filter-field="tipe"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari terbit" data-filter-field="tahun_terbit"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari kadaluarsa" data-filter-field="tahun_kadaluarsa"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pemilik" data-filter-field="pemilik_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pengesahan" data-filter-field="pengesahan"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari klasifikasi" data-filter-field="klasifikasi"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari ringkasan" data-filter-field="summary"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="evidence-modal-table-body"></tbody>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -494,6 +528,11 @@ class COBITAssessmentManager {
             noteInputs: new Map(),
             evidenceDropdowns: new Map()
         };
+        this.evidenceModalTableBody = null;
+        this.evidenceModalFilterInputs = [];
+        this.evidenceModalFilters = {};
+        this.currentEvidenceModalExistingValues = [];
+        this.evidenceModalData = Array.isArray(window.SERVER_EVIDENCES) ? window.SERVER_EVIDENCES : [];
 
         // Configuration Variables
         this.config = {
@@ -607,7 +646,8 @@ class COBITAssessmentManager {
 
     setupEvidenceModal() {
         this.evidenceModalEl = document.getElementById('evidenceModal');
-        this.evidenceModalList = document.getElementById('evidence-modal-list');
+        this.evidenceModalTableBody = this.evidenceModalEl ? this.evidenceModalEl.querySelector('#evidence-modal-table-body') : null;
+        this.evidenceModalFilterInputs = this.evidenceModalEl ? Array.from(this.evidenceModalEl.querySelectorAll('#evidence-modal-table thead input[data-filter-field]')) : [];
         this.evidenceModalApplyBtn = document.getElementById('evidence-modal-apply');
 
         if (this.evidenceModalEl && window.bootstrap) {
@@ -617,63 +657,107 @@ class COBITAssessmentManager {
         if (this.evidenceModalApplyBtn) {
             this.evidenceModalApplyBtn.addEventListener('click', () => this.applyEvidenceModalSelection());
         }
+
+        this.bindEvidenceModalFilters();
     }
 
     setupEvidenceModalTriggers() {
     }
 
+    bindEvidenceModalFilters() {
+        this.evidenceModalFilterInputs.forEach((input) => {
+            const field = input.getAttribute('data-filter-field');
+            if (!field) return;
+            if (this.evidenceModalFilters[field]) {
+                input.value = this.evidenceModalFilters[field];
+            }
+            input.addEventListener('input', (event) => {
+                this.evidenceModalFilters[field] = event.target.value || '';
+                this.renderEvidenceModalRows();
+            });
+        });
+    }
+
+    getFilteredEvidenceModalList() {
+        if (!Array.isArray(this.evidenceModalData) || !this.evidenceModalData.length) {
+            return [];
+        }
+        const filters = Object.entries(this.evidenceModalFilters || {}).filter(([, value]) => value && value.toString().trim());
+        if (!filters.length) {
+            return this.evidenceModalData;
+        }
+        return this.evidenceModalData.filter((item) => {
+            return filters.every(([field, value]) => {
+                const hay = (item[field] ?? '').toString().toLowerCase();
+                return hay.includes(value.toLowerCase());
+            });
+        });
+    }
+
+    formatEvidenceLabel(item) {
+        if (!item) return '';
+        let label = (item.judul_dokumen || '').trim();
+        if (item.no_dokumen) {
+            label += label ? ` - ${item.no_dokumen.trim()}` : item.no_dokumen.trim();
+        }
+        return label || '-';
+    }
+
+    renderEvidenceModalRows() {
+        if (!this.evidenceModalTableBody) return;
+        this.evidenceModalTableBody.innerHTML = '';
+
+        const list = this.getFilteredEvidenceModalList();
+        if (!list.length) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = '<td colspan="12" class="text-center text-muted py-4">Belum ada evidence yang sesuai.</td>';
+            this.evidenceModalTableBody.appendChild(emptyRow);
+            return;
+        }
+
+        list.forEach((item, index) => {
+            const rawLabel = this.formatEvidenceLabel(item);
+            const safeLabel = this.escapeHtml(rawLabel);
+            const isChecked = this.currentEvidenceModalExistingValues.includes(rawLabel);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center align-middle">
+                    <input type="checkbox" class="form-check-input" value="${safeLabel}" id="evidence-modal-checkbox-${index}" ${isChecked ? 'checked' : ''}>
+                </td>
+                <td class="text-center align-middle">${index + 1}</td>
+                <td class="align-middle">${this.escapeHtml(item.judul_dokumen || '-')}</td>
+                <td class="align-middle">${this.escapeHtml(item.no_dokumen || '-')}</td>
+                <td class="text-center align-middle">${this.escapeHtml(item.grup || '-')}</td>
+                <td class="align-middle">${this.escapeHtml(item.tipe || '-')}</td>
+                <td class="text-center align-middle">${this.escapeHtml(item.tahun_terbit || '-')}</td>
+                <td class="text-center align-middle">${this.escapeHtml(item.tahun_kadaluarsa || '-')}</td>
+                <td class="align-middle">${this.escapeHtml(item.pemilik_dokumen || '-')}</td>
+                <td class="align-middle">${this.escapeHtml(item.pengesahan || '-')}</td>
+                <td class="text-center align-middle">${this.escapeHtml(item.klasifikasi || '-')}</td>
+                <td class="align-middle">${this.escapeHtml(item.summary || '-')}</td>
+            `;
+            this.evidenceModalTableBody.appendChild(tr);
+        });
+    }
+
     openEvidenceModal(activityId) {
-        if (!this.evidenceModalList || !this.evidenceModalInstance) {
+        if (!this.evidenceModalTableBody || !this.evidenceModalInstance) {
             return;
         }
 
         this.currentEvidenceModalActivityId = activityId;
-        this.evidenceModalList.innerHTML = '';
-
-        const evidences = Array.from(this.evidenceLibrary)
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
-
-        const existingValues = this.getExistingEvidenceValues(activityId);
-
-        if (!evidences.length) {
-            this.evidenceModalList.innerHTML = '<div class="text-muted small">Belum ada evidence tersimpan.</div>';
-            this.evidenceModalInstance.show();
-            return;
-        }
-
-        evidences.forEach((evidence, index) => {
-            const checkboxId = `evidence-modal-${activityId}-${index}`;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'form-check';
-
-            const input = document.createElement('input');
-            input.className = 'form-check-input';
-            input.type = 'checkbox';
-            input.id = checkboxId;
-            input.value = evidence;
-            input.checked = existingValues.includes(evidence);
-
-            const label = document.createElement('label');
-            label.className = 'form-check-label';
-            label.htmlFor = checkboxId;
-            label.textContent = evidence;
-
-            wrapper.appendChild(input);
-            wrapper.appendChild(label);
-            this.evidenceModalList.appendChild(wrapper);
-        });
-
+        this.currentEvidenceModalExistingValues = this.getExistingEvidenceValues(activityId);
+        this.renderEvidenceModalRows();
         this.evidenceModalInstance.show();
     }
 
     applyEvidenceModalSelection() {
         const activityId = this.currentEvidenceModalActivityId;
-        if (!activityId || !this.evidenceModalList) {
+        if (!activityId || !this.evidenceModalTableBody) {
             return;
         }
 
-        const checked = Array.from(this.evidenceModalList.querySelectorAll('input[type="checkbox"]:checked'))
+        const checked = Array.from(this.evidenceModalTableBody.querySelectorAll('input[type="checkbox"]:checked'))
             .map(cb => cb.value)
             .filter(Boolean);
 
