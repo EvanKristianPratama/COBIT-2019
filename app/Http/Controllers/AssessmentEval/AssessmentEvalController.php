@@ -573,6 +573,109 @@ class AssessmentEvalController extends Controller
     }
 
     /**
+     * Fetch evidences from previous assessments in the same organization (excluding current eval).
+     */
+    public function previousEvidences($evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            if (!$evaluation) {
+                return response()->json(['success' => false, 'message' => 'Assessment not found'], 404);
+            }
+
+            $currentUser = Auth::user();
+            $owner = User::find($evaluation->user_id);
+
+            if (!$currentUser || !$owner) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            // Authorization: allow owner or same organization
+            $sameOrg = !empty($owner->organisasi) && !empty($currentUser->organisasi)
+                && strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0;
+
+            if ((string)$currentUser->id !== (string)$owner->id && !$sameOrg) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $orgName = trim((string)$owner->organisasi);
+            $userIds = User::when($orgName !== '', function ($q) use ($orgName) {
+                    $q->whereRaw('LOWER(TRIM(organisasi)) = ?', [strtolower($orgName)]);
+                })
+                ->orWhere('id', $owner->id)
+                ->pluck('id');
+
+            $evalIds = MstEval::whereIn('user_id', $userIds)
+                ->where('eval_id', '!=', $evalId)
+                ->pluck('eval_id');
+
+            if ($evalIds->isEmpty()) {
+                return response()->json(['success' => true, 'data' => []]);
+            }
+
+            $evidences = MstEvidence::whereIn('eval_id', $evalIds)
+                ->with(['evaluation' => function ($q) {
+                    $q->select('eval_id', 'tahun');
+                }])
+                ->orderByDesc('created_at')
+                ->limit(200)
+                ->get([
+                    'id',
+                    'eval_id',
+                    'judul_dokumen',
+                    'no_dokumen',
+                    'grup',
+                    'tipe',
+                    'tahun_terbit',
+                    'tahun_kadaluarsa',
+                    'pemilik_dokumen',
+                    'pengesahan',
+                    'klasifikasi',
+                    'summary',
+                    'notes',
+                    'created_at'
+                ]);
+
+            $mapped = $evidences->map(function ($evidence) {
+                $assessmentYear = optional($evidence->evaluation)->year
+                    ?? optional($evidence->evaluation)->assessment_year
+                    ?? optional($evidence->evaluation)->tahun
+                    ?? null;
+
+                return [
+                    'id' => $evidence->id,
+                    'eval_id' => $evidence->eval_id,
+                    'judul_dokumen' => $evidence->judul_dokumen,
+                    'no_dokumen' => $evidence->no_dokumen,
+                    'grup' => $evidence->grup,
+                    'tipe' => $evidence->tipe,
+                    'tahun_terbit' => $evidence->tahun_terbit,
+                    'tahun_kadaluarsa' => $evidence->tahun_kadaluarsa,
+                    'pemilik_dokumen' => $evidence->pemilik_dokumen,
+                    'pengesahan' => $evidence->pengesahan,
+                    'klasifikasi' => $evidence->klasifikasi,
+                    'summary' => $evidence->summary,
+                    'notes' => $evidence->notes,
+                    'created_at' => $evidence->created_at,
+                    'assessment_year' => $assessmentYear,
+                ];
+            });
+
+            return response()->json(['success' => true, 'data' => $mapped]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch previous evidences', [
+                'eval_id' => $evalId,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load previous evidences'
+            ], 500);
+        }
+    }
+
+    /**
      * Store evidence for an assessment
      */
     public function storeEvidence(Request $request, $evalId)

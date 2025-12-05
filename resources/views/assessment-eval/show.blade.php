@@ -40,7 +40,7 @@
                         Assessment Id: {{ $evalId }}
                     </div>
                     <div class="hero-eval-year text-uppercase" style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:0.06em;">
-                        Assessment Year: {{ $evaluation->year ?? $evaluation->assessment_year ?? 'N/A' }}
+                        Assessment Year: {{ $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->tahun ?? 'N/A' }}
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
@@ -2786,10 +2786,15 @@ class COBITAssessmentManager {
             '.activity-rating-select',
             '.evidence-input',
             '.note-input',
-            '.evidence-history-select'
+            '.evidence-history-select',
+            '.evidence-modal-trigger'
         ];
         document.querySelectorAll(selectors.join(',')).forEach(el => {
             el.disabled = true;
+            if (el.tagName === 'TEXTAREA') {
+                el.readOnly = true;
+                el.classList.add('bg-light');
+            }
         });
     }
 
@@ -2798,10 +2803,15 @@ class COBITAssessmentManager {
             '.activity-rating-select',
             '.evidence-input',
             '.note-input',
-            '.evidence-history-select'
+            '.evidence-history-select',
+            '.evidence-modal-trigger'
         ];
         document.querySelectorAll(selectors.join(',')).forEach(el => {
             el.disabled = false;
+            if (el.tagName === 'TEXTAREA') {
+                el.readOnly = false;
+                el.classList.remove('bg-light');
+            }
         });
     }
 
