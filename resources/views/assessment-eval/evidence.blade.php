@@ -13,6 +13,9 @@
                     <div class="hero-eval-id" style="font-size:1.05rem;font-weight:600;margin-top:0.25rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);">
                         Assessment Id: {{ $evalId }}
                     </div>
+                    <div class="hero-eval-year text-uppercase" style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:0.06em;">
+                        Assessment Year: {{ $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->tahun ?? 'N/A' }}
+                    </div>
                 </div>
                 <div>
                     <a href="{{ route('assessment-eval.show', $evalId) }}" class="btn btn-light btn-sm rounded-pill px-3">
@@ -28,45 +31,65 @@
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-bold text-primary">List of Evidence</h5>
             @if($isOwner)
-                <button type="button" class="btn btn-primary rounded-pill" id="btn-add-new" data-bs-toggle="modal" data-bs-target="#addEvidenceModal">
-                    <i class="fas fa-plus me-2"></i>Add New Evidence
-                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-import-prev" data-bs-toggle="modal" data-bs-target="#importEvidenceModal">
+                        <i class="fas fa-history me-2"></i>Add Evidence from Previous
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill" id="btn-add-new" data-bs-toggle="modal" data-bs-target="#addEvidenceModal">
+                        <i class="fas fa-plus me-2"></i>Add New Evidence
+                    </button>
+                </div>
             @endif
         </div>
         <div class="card-body p-0">
             <div class="table-responsive" style="overflow-x: auto;">
-                <table class="table table-bordered table-sm mb-0" style="font-size: 0.9rem; min-width: 1400px;">
-                    <thead style="background-color: #e9ecef;">
-                        <tr>
-                            <th class="text-center" style="width: 50px;">No</th>
-                            <th>Judul Dokumen</th>
-                            <th>No. Dokumen</th>
-                            <th class="text-center">Grup</th>
-                            <th>Tipe</th>
-                            <th class="text-center">Tahun Terbit</th>
-                            <th class="text-center">Tahun Kadaluarsa</th>
-                            <th>Pemilik</th>
-                            <th>Pengesahan</th>
-                            <th class="text-center">Klasifikasi</th>
-                            <th>Ringkasan</th>
-                            <th>Link Dokumen</th>
-                            <th class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
+                    <table class="table table-bordered table-sm mb-0" id="evidence-table" style="font-size: 0.9rem; min-width: 1400px;">
+                        <thead style="background-color: #e9ecef;">
+                            <tr>
+                                <th class="text-center" style="width: 50px;">No</th>
+                                <th>Judul Dokumen</th>
+                                <th>No. Dokumen</th>
+                                <th class="text-center">Grup</th>
+                                <th>Tipe</th>
+                                <th class="text-center">Tahun Terbit</th>
+                                <th class="text-center">Tahun Kadaluarsa</th>
+                                <th>Pemilik</th>
+                                <th>Pengesahan</th>
+                                <th class="text-center">Klasifikasi</th>
+                                <th>Ringkasan</th>
+                                <th>Link Dokumen</th>
+                                <th class="text-center">Aksi</th>
+                            </tr>
+                            <tr class="table-light">
+                                <th></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari judul" data-filter-field="judul_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari no dok" data-filter-field="no_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari grup" data-filter-field="grup"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari tipe" data-filter-field="tipe"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari terbit" data-filter-field="tahun_terbit"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari kadaluarsa" data-filter-field="tahun_kadaluarsa"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pemilik" data-filter-field="pemilik_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pengesahan" data-filter-field="pengesahan"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari klasifikasi" data-filter-field="klasifikasi"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari ringkasan" data-filter-field="summary"></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
                     <tbody>
                         @forelse($evidences as $evidence)
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
-                                <td>{{ $evidence->judul_dokumen }}</td>
-                                <td>{{ $evidence->no_dokumen ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->grup ?? '-' }}</td>
-                                <td>{{ $evidence->tipe ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->tahun_terbit ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->tahun_kadaluarsa ?? '-' }}</td>
-                                <td>{{ $evidence->pemilik_dokumen ?? '-' }}</td>
-                                <td>{{ $evidence->pengesahan ?? '-' }}</td>
-                                <td class="text-center">{{ $evidence->klasifikasi ?? '-' }}</td>
-                                <td>{{ $evidence->Description ?? '-' }}</td>
+                                <td data-field="judul_dokumen">{{ $evidence->judul_dokumen }}</td>
+                                <td data-field="no_dokumen">{{ $evidence->no_dokumen ?? '-' }}</td>
+                                <td class="text-center" data-field="grup">{{ $evidence->grup ?? '-' }}</td>
+                                <td data-field="tipe">{{ $evidence->tipe ?? '-' }}</td>
+                                <td class="text-center" data-field="tahun_terbit">{{ $evidence->tahun_terbit ?? '-' }}</td>
+                                <td class="text-center" data-field="tahun_kadaluarsa">{{ $evidence->tahun_kadaluarsa ?? '-' }}</td>
+                                <td data-field="pemilik_dokumen">{{ $evidence->pemilik_dokumen ?? '-' }}</td>
+                                <td data-field="pengesahan">{{ $evidence->pengesahan ?? '-' }}</td>
+                                <td class="text-center" data-field="klasifikasi">{{ $evidence->klasifikasi ?? '-' }}</td>
+                                <td data-field="summary">{{ $evidence->summary ?? '-' }}</td>
                                 <td>
                                     @if($evidence->notes)
                                         <a href="{{ $evidence->notes }}" target="_blank" class="text-decoration-none">Link</a>
@@ -87,7 +110,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
+                            <tr data-empty-row="true">
                                 <td colspan="13" class="text-center py-3 text-muted">
                                     Tidak ada dokumen evidence ditemukan.
                                 </td>
@@ -180,38 +203,206 @@
     </div>
 </div>
 
+<!-- Import Evidence Modal -->
+<div class="modal fade" id="importEvidenceModal" tabindex="-1" aria-labelledby="importEvidenceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importEvidenceModalLabel">Add Evidence from Previous Assessments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="import-loading" class="d-none text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="mt-2 text-muted">Loading previous evidences...</div>
+                </div>
+                <div id="import-error" class="alert alert-danger d-none"></div>
+                <div id="import-empty" class="text-muted d-none">No previous evidences found.</div>
+                <div class="table-responsive" id="import-table-wrapper" style="max-height: 420px; overflow-y: auto;">
+                    <table class="table table-sm align-middle" id="import-table">
+                        <thead class="align-middle">
+                            <tr>
+                                <th style="width:40px;" class="text-center">
+                                    <input type="checkbox" id="import-check-all" class="form-check-input" title="Pilih semua yang terlihat">
+                                </th>
+                                <th class="text-center" style="width:50px;">No</th>
+                                <th>Judul Dokumen</th>
+                                <th>No. Dokumen</th>
+                                <th class="text-center">Grup</th>
+                                <th>Tipe</th>
+                                <th class="text-center" style="width:110px;">Tahun Terbit</th>
+                                <th class="text-center" style="width:130px;">Tahun Kadaluarsa</th>
+                                <th>Pemilik</th>
+                                <th>Pengesahan</th>
+                                <th class="text-center">Klasifikasi</th>
+                                <th>Ringkasan</th>
+                            </tr>
+                            <tr class="table-light">
+                                <th></th>
+                                <th></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari judul" data-filter-field="judul_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari no dok" data-filter-field="no_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari grup" data-filter-field="grup"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari tipe" data-filter-field="tipe"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari terbit" data-filter-field="tahun_terbit"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari kadaluarsa" data-filter-field="tahun_kadaluarsa"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pemilik" data-filter-field="pemilik_dokumen"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari pengesahan" data-filter-field="pengesahan"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari klasifikasi" data-filter-field="klasifikasi"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari ringkasan" data-filter-field="summary"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btn-use-imported" disabled style="display:none;">Tambahkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const saveEvidenceBtn = document.getElementById('btn-save-evidence');
-    const evidenceForm = document.getElementById('addEvidenceForm');
-    const modalTitle = document.getElementById('addEvidenceModalLabel');
-    const btnAddNew = document.getElementById('btn-add-new');
-    let isEditing = false;
-    let currentEvidenceId = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const dom = {
+        saveEvidenceBtn: document.getElementById('btn-save-evidence'),
+        evidenceForm: document.getElementById('addEvidenceForm'),
+        modalTitle: document.getElementById('addEvidenceModalLabel'),
+        btnAddNew: document.getElementById('btn-add-new'),
+        importModalEl: document.getElementById('importEvidenceModal'),
+        importTableBody: document.querySelector('#import-table tbody'),
+        importCheckAll: document.getElementById('import-check-all'),
+        importLoading: document.getElementById('import-loading'),
+        importError: document.getElementById('import-error'),
+        importEmpty: document.getElementById('import-empty'),
+        btnUseImported: document.getElementById('btn-use-imported'),
+        btnImportPrev: document.getElementById('btn-import-prev'),
+        evidenceTableBody: document.querySelector('#evidence-table tbody'),
+        evidenceTableFilterInputs: Array.from(document.querySelectorAll('#evidence-table thead input[data-filter-field]'))
+    };
 
-    function resetForm() {
-        evidenceForm.reset();
+    const state = {
+        isEditing: false,
+        currentEvidenceId: null,
+        importList: [],
+        selectedImportIndices: new Set(),
+        existingEvidenceKeys: new Set((window.CURRENT_EVIDENCE_KEYS || []).map(k => k.toLowerCase())),
+        importFilters: {},
+        tableFilters: {}
+    };
+
+    const flags = {
+        isOwner: @json($isOwner)
+    };
+
+    const importModal = dom.importModalEl ? new bootstrap.Modal(dom.importModalEl) : null;
+
+    /* --------------------
+     * Helpers
+     * -------------------- */
+    const evidenceKey = (item) => {
+        const title = (item.judul_dokumen || '').trim().toLowerCase();
+        const no = (item.no_dokumen || '').trim().toLowerCase();
+        return `${title}|${no}`;
+    };
+
+    const setImportLoading = (isLoading) => {
+        if (!dom.importLoading) return;
+        dom.importLoading.classList.toggle('d-none', !isLoading);
+    };
+
+    const showImportError = (message) => {
+        if (!dom.importError) return;
+        dom.importError.textContent = message;
+        dom.importError.classList.remove('d-none');
+    };
+
+    const toggleEmptyState = (show) => {
+        if (!dom.importEmpty) return;
+        dom.importEmpty.classList.toggle('d-none', !show);
+    };
+
+    const updateImportButtonState = () => {
+        if (!dom.btnUseImported) return;
+        dom.btnUseImported.disabled = state.selectedImportIndices.size === 0;
+        dom.btnUseImported.style.display = 'inline-block';
+    };
+
+    const bindImportFilters = () => {
+        document.querySelectorAll('#import-table thead input[data-filter-field]').forEach((input) => {
+            input.addEventListener('input', (e) => {
+                const field = e.target.getAttribute('data-filter-field');
+                state.importFilters[field] = e.target.value || '';
+                renderImportTable();
+            });
+        });
+    };
+
+    const bindEvidenceTableFilters = () => {
+        if (!dom.evidenceTableFilterInputs.length || !dom.evidenceTableBody) return;
+        dom.evidenceTableFilterInputs.forEach((input) => {
+            const field = input.getAttribute('data-filter-field');
+            if (!field) return;
+            input.addEventListener('input', (e) => {
+                state.tableFilters[field] = e.target.value || '';
+                applyEvidenceTableFilters();
+            });
+        });
+    };
+
+    const applyEvidenceTableFilters = () => {
+        if (!dom.evidenceTableBody) return;
+        const filters = Object.entries(state.tableFilters).filter(([, v]) => v && v.toString().trim());
+        const rows = Array.from(dom.evidenceTableBody.querySelectorAll('tr'));
+        rows.forEach((row) => {
+            if (row.hasAttribute('data-empty-row')) return;
+            if (!filters.length) {
+                row.style.display = '';
+                return;
+            }
+            const matches = filters.every(([field, value]) => {
+                const cell = row.querySelector(`[data-field="${field}"]`);
+                const hay = (cell ? cell.textContent : '').toString().toLowerCase();
+                return hay.includes(value.toLowerCase());
+            });
+            row.style.display = matches ? '' : 'none';
+        });
+    };
+
+    const resetImportState = () => {
+        state.importList = [];
+        state.selectedImportIndices.clear();
+        if (dom.importTableBody) dom.importTableBody.innerHTML = '';
+        toggleEmptyState(false);
+        if (dom.importError) dom.importError.classList.add('d-none');
+        updateImportButtonState();
+    };
+
+    /* --------------------
+     * Evidence Form
+     * -------------------- */
+    const resetForm = () => {
+        dom.evidenceForm.reset();
         document.getElementById('evidence_id').value = '';
-        modalTitle.textContent = 'Add New Evidence';
-        saveEvidenceBtn.textContent = 'Save Evidence';
-        isEditing = false;
-        currentEvidenceId = null;
-    }
+        dom.modalTitle.textContent = 'Add New Evidence';
+        dom.saveEvidenceBtn.textContent = 'Save Evidence';
+        state.isEditing = false;
+        state.currentEvidenceId = null;
+    };
 
-    if (btnAddNew) {
-        btnAddNew.addEventListener('click', resetForm);
-    }
+    const attachEditHandler = (btn) => {
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const evidence = JSON.parse(btn.getAttribute('data-evidence'));
+            state.isEditing = true;
+            state.currentEvidenceId = evidence.id;
 
-    document.querySelectorAll('.btn-edit-evidence').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const evidence = JSON.parse(this.getAttribute('data-evidence'));
-            isEditing = true;
-            currentEvidenceId = evidence.id;
-            
-            modalTitle.textContent = 'Edit Evidence';
-            saveEvidenceBtn.textContent = 'Update Evidence';
-            
+            dom.modalTitle.textContent = 'Edit Evidence';
+            dom.saveEvidenceBtn.textContent = 'Update Evidence';
+
             document.getElementById('evidence_id').value = evidence.id;
             document.getElementById('judul_dokumen').value = evidence.judul_dokumen;
             document.getElementById('no_dokumen').value = evidence.no_dokumen || '';
@@ -225,81 +416,401 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('summary').value = evidence.summary || '';
             document.getElementById('notes').value = evidence.notes || '';
         });
-    });
-    
-    if(saveEvidenceBtn) {
-        saveEvidenceBtn.addEventListener('click', async function() {
-            if (!evidenceForm.checkValidity()) {
-                evidenceForm.reportValidity();
+    };
+
+    const bindEditButtons = () => {
+        document.querySelectorAll('.btn-edit-evidence').forEach(attachEditHandler);
+    };
+
+    const removeEmptyRow = () => {
+        if (!dom.evidenceTableBody) return;
+        const emptyRow = dom.evidenceTableBody.querySelector('[data-empty-row]');
+        if (emptyRow) emptyRow.remove();
+    };
+
+    const renumberEvidenceRows = () => {
+        if (!dom.evidenceTableBody) return;
+        Array.from(dom.evidenceTableBody.querySelectorAll('tr')).forEach((row, idx) => {
+            const noCell = row.querySelector('td');
+            if (noCell) noCell.textContent = idx + 1;
+        });
+    };
+
+    const appendEvidenceRow = (evidence) => {
+        if (!dom.evidenceTableBody) return;
+        removeEmptyRow();
+
+        const safe = (val) => val ?? '-';
+        const tr = document.createElement('tr');
+        tr.classList.add('table-success');
+
+        const linkHtml = evidence.notes ? `<a href="${evidence.notes}" target="_blank" class="text-decoration-none">Link</a>` : '-';
+
+        let actionHtml = '-';
+        if (flags.isOwner) {
+            actionHtml = `
+                <button class="btn btn-sm btn-outline-warning btn-edit-evidence"
+                        title="Edit"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addEvidenceModal"
+                        data-evidence='${JSON.stringify(evidence)}'>
+                    Edit
+                </button>`;
+        }
+
+        tr.innerHTML = `
+            <td class="text-center"></td>
+            <td>${safe(evidence.judul_dokumen)}</td>
+            <td>${safe(evidence.no_dokumen)}</td>
+            <td class="text-center">${safe(evidence.grup)}</td>
+            <td>${safe(evidence.tipe)}</td>
+            <td class="text-center">${safe(evidence.tahun_terbit)}</td>
+            <td class="text-center">${safe(evidence.tahun_kadaluarsa)}</td>
+            <td>${safe(evidence.pemilik_dokumen)}</td>
+            <td>${safe(evidence.pengesahan)}</td>
+            <td class="text-center">${safe(evidence.klasifikasi)}</td>
+            <td>${safe(evidence.summary)}</td>
+            <td>${linkHtml}</td>
+            <td class="text-center">${actionHtml}</td>
+        `;
+
+        dom.evidenceTableBody.prepend(tr);
+
+        const editBtn = tr.querySelector('.btn-edit-evidence');
+        if (editBtn) attachEditHandler(editBtn);
+        renumberEvidenceRows();
+    };
+
+    const handleSaveEvidence = async () => {
+        if (!dom.evidenceForm.checkValidity()) {
+            dom.evidenceForm.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(dom.evidenceForm);
+        const data = Object.fromEntries(formData.entries());
+
+        const originalText = dom.saveEvidenceBtn.innerHTML;
+        dom.saveEvidenceBtn.disabled = true;
+        dom.saveEvidenceBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+        try {
+            let url = '{{ route("assessment-eval.evidence.store", $evalId) }}';
+            let method = 'POST';
+
+            if (state.isEditing && state.currentEvidenceId) {
+                url = `/assessment-eval/evidence/${state.currentEvidenceId}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                const modalInstance = bootstrap.Modal.getInstance(document.getElementById('addEvidenceModal'));
+                modalInstance.hide();
+                resetForm();
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: result.message || 'Evidence saved successfully!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                window.location.reload();
+            } else {
+                throw new Error(result.message || 'Failed to save evidence');
+            }
+        } catch (error) {
+            console.error('Error saving evidence:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'An error occurred while saving evidence.'
+            });
+        } finally {
+            dom.saveEvidenceBtn.disabled = false;
+            dom.saveEvidenceBtn.innerHTML = originalText;
+        }
+    };
+
+    /* --------------------
+     * Import helpers
+     * -------------------- */
+    const getFilteredImportList = () => {
+        const entries = Object.entries(state.importFilters || {});
+        if (!entries.length) return state.importList;
+        return state.importList.filter((item) => {
+            return entries.every(([field, value]) => {
+                if (!value) return true;
+                const hay = (item[field] ?? '').toString().toLowerCase();
+                return hay.includes(value.toLowerCase());
+            });
+        });
+    };
+
+    const renderImportTable = () => {
+        if (!dom.importTableBody) return;
+        dom.importTableBody.innerHTML = '';
+
+        const filtered = getFilteredImportList();
+
+        filtered.forEach((item, idx) => {
+            const key = evidenceKey(item);
+            const isDuplicate = state.existingEvidenceKeys.has(key);
+            const originalIndex = typeof item.__idx === 'number' ? item.__idx : idx;
+
+            const row = document.createElement('tr');
+            row.dataset.index = originalIndex;
+            row.innerHTML = `
+                <td class="text-center">
+                    <input type="checkbox" name="importEvidence" value="${originalIndex}" ${isDuplicate ? 'disabled' : ''} />
+                </td>
+                <td class="text-center">${idx + 1}</td>
+                <td>${item.judul_dokumen || '-'}</td>
+                <td>${item.no_dokumen || '-'}</td>
+                <td class="text-center">${item.grup || '-'}</td>
+                <td>${item.tipe || '-'}</td>
+                <td class="text-center">${item.tahun_terbit || '-'}</td>
+                <td class="text-center">${item.tahun_kadaluarsa || '-'}</td>
+                <td>${item.pemilik_dokumen || '-'}</td>
+                <td>${item.pengesahan || '-'}</td>
+                <td class="text-center">${item.klasifikasi || '-'}</td>
+                <td>${item.summary || '-'}</td>
+            `;
+
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            if (!isDuplicate) {
+                checkbox.checked = state.selectedImportIndices.has(originalIndex);
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        state.selectedImportIndices.add(originalIndex);
+                    } else {
+                        state.selectedImportIndices.delete(originalIndex);
+                    }
+                    updateImportButtonState();
+                    updateImportCheckAllState();
+                });
+            } else {
+                checkbox.title = 'Already added';
+                row.classList.add('table-light');
+            }
+
+            dom.importTableBody.appendChild(row);
+        });
+
+        updateImportCheckAllState();
+    };
+
+    const loadPreviousEvidences = async () => {
+        resetImportState();
+        setImportLoading(true);
+
+        try {
+            const url = `/assessment-eval/{{ $evalId }}/evidence/previous`;
+            const response = await fetch(url, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load previous evidences');
+
+            const result = await response.json();
+            const list = Array.isArray(result.data) ? result.data : [];
+
+            // Filter out evidences already present in current assessment and remove duplicates within the list
+            const seenKeys = new Set(state.existingEvidenceKeys);
+            const filtered = list
+                .map((item) => ({ ...item, created_at: item.created_at || null }))
+                .sort((a, b) => {
+                    const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+                    const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+                    return db - da; // newest first
+                })
+                .filter((item) => {
+                    const key = evidenceKey(item);
+                    if (seenKeys.has(key)) return false;
+                    seenKeys.add(key);
+                    return true;
+                });
+
+            if (!filtered.length) {
+                toggleEmptyState(true);
                 return;
             }
 
-            const formData = new FormData(evidenceForm);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Show loading state
-            const originalText = saveEvidenceBtn.innerHTML;
-            saveEvidenceBtn.disabled = true;
-            saveEvidenceBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+            state.importList = filtered.map((item, idx) => ({ ...item, __idx: idx }));
+            renderImportTable();
+        } catch (err) {
+            console.error('Load previous evidences error:', err);
+            showImportError(err.message || 'Unable to fetch previous evidences.');
+        } finally {
+            setImportLoading(false);
+        }
+    };
 
-            try {
-                let url = '{{ route("assessment-eval.evidence.store", $evalId) }}';
-                let method = 'POST';
+    const addFromPrevious = async (item, checkboxEl, rowEl) => {
+        const key = evidenceKey(item);
+        if (state.existingEvidenceKeys.has(key)) {
+            checkboxEl.checked = false;
+            return false;
+        }
 
-                if (isEditing && currentEvidenceId) {
-                    url = `/assessment-eval/evidence/${currentEvidenceId}`;
-                    method = 'PUT';
-                }
+        checkboxEl.disabled = true;
+        rowEl.classList.add('table-warning');
 
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify(data)
-                });
+        try {
+            const response = await fetch(`{{ route('assessment-eval.evidence.store', $evalId) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    judul_dokumen: item.judul_dokumen || '',
+                    no_dokumen: item.no_dokumen || '',
+                    grup: item.grup || '',
+                    tipe: item.tipe || '',
+                    tahun_terbit: item.tahun_terbit || null,
+                    tahun_kadaluarsa: item.tahun_kadaluarsa || null,
+                    pemilik_dokumen: item.pemilik_dokumen || '',
+                    pengesahan: item.pengesahan || '',
+                    klasifikasi: item.klasifikasi || '',
+                    summary: item.summary || '',
+                    notes: item.notes || ''
+                })
+            });
 
-                const result = await response.json();
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || 'Failed to import evidence');
 
-                if (response.ok && result.success) {
-                    // Close modal
-                    const modalEl = document.getElementById('addEvidenceModal');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
-                    modal.hide();
-                    
-                    // Reset form
-                    resetForm();
-                    
-                    // Show success message
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: result.message || 'Evidence saved successfully!',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
+            const newEvidence = result.data || item;
+            state.existingEvidenceKeys.add(key);
+            rowEl.classList.remove('table-warning');
+            rowEl.classList.add('table-success');
+            checkboxEl.checked = true;
+            checkboxEl.disabled = true;
+            state.selectedImportIndices.delete(rowEl.dataset.index ? parseInt(rowEl.dataset.index, 10) : null);
+            updateImportButtonState();
+            appendEvidenceRow(newEvidence);
+            return true;
+        } catch (err) {
+            console.error('Import error:', err);
+            checkboxEl.checked = false;
+            checkboxEl.disabled = false;
+            rowEl.classList.remove('table-warning');
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed',
+                text: err.message || 'Failed to import evidence'
+            });
+            return false;
+        }
+    };
 
-                    // Reload page to show new evidence
-                    window.location.reload();
+    const importSelected = async () => {
+        if (!dom.btnUseImported || !state.importList.length) return;
 
-                } else {
-                    throw new Error(result.message || 'Failed to save evidence');
-                }
-            } catch (error) {
-                console.error('Error saving evidence:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'An error occurred while saving evidence.'
-                });
-            } finally {
-                saveEvidenceBtn.disabled = false;
-                saveEvidenceBtn.innerHTML = originalText;
+        const confirmation = await Swal.fire({
+            icon: 'question',
+            title: 'Tambahkan evidence terpilih?',
+            text: 'Semua evidence yang dicentang akan disalin ke assessment ini.',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, tambahkan',
+            cancelButtonText: 'Batal'
+        });
+
+        if (!confirmation.isConfirmed) return;
+
+        dom.btnUseImported.disabled = true;
+        dom.btnUseImported.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menambahkan...';
+
+        try {
+            const indices = Array.from(state.selectedImportIndices);
+            for (const idx of indices) {
+                const item = state.importList.find((entry) => entry.__idx === idx) || state.importList[idx];
+                const row = dom.importTableBody.querySelector(`tr[data-index="${idx}"]`);
+                const checkbox = row ? row.querySelector('input[type="checkbox"]') : null;
+                if (!item || !row || !checkbox) continue;
+                await addFromPrevious(item, checkbox, row);
             }
+        } finally {
+            dom.btnUseImported.innerHTML = 'Tambahkan';
+            updateImportButtonState();
+        }
+    };
+
+    const updateImportCheckAllState = () => {
+        if (!dom.importCheckAll || !dom.importTableBody) return;
+        const visibleRows = Array.from(dom.importTableBody.querySelectorAll('tr'));
+        const checkboxes = visibleRows
+            .map(row => row.querySelector('input[type="checkbox"]'))
+            .filter(cb => cb && !cb.disabled);
+        if (!checkboxes.length) {
+            dom.importCheckAll.checked = false;
+            dom.importCheckAll.indeterminate = false;
+            return;
+        }
+        const checkedCount = checkboxes.filter(cb => cb.checked).length;
+        dom.importCheckAll.checked = checkedCount === checkboxes.length;
+        dom.importCheckAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+    };
+
+    const bindImportCheckAll = () => {
+        if (!dom.importCheckAll) return;
+        dom.importCheckAll.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            const rows = Array.from(dom.importTableBody.querySelectorAll('tr'));
+            rows.forEach((row) => {
+                const cb = row.querySelector('input[type="checkbox"]');
+                if (!cb || cb.disabled) return;
+                cb.checked = checked;
+                const idx = parseInt(row.dataset.index, 10);
+                if (Number.isNaN(idx)) return;
+                if (checked) {
+                    state.selectedImportIndices.add(idx);
+                } else {
+                    state.selectedImportIndices.delete(idx);
+                }
+            });
+            updateImportButtonState();
+            updateImportCheckAllState();
+        });
+    };
+
+    /* --------------------
+     * Event bindings
+     * -------------------- */
+    if (dom.btnAddNew) dom.btnAddNew.addEventListener('click', resetForm);
+
+    if (dom.saveEvidenceBtn) dom.saveEvidenceBtn.addEventListener('click', handleSaveEvidence);
+
+    if (dom.btnImportPrev && importModal) {
+        dom.btnImportPrev.addEventListener('click', () => {
+            resetImportState();
+            loadPreviousEvidences();
         });
     }
+
+    if (dom.btnUseImported) dom.btnUseImported.addEventListener('click', importSelected);
+
+    bindEditButtons();
+    bindImportFilters();
+    bindImportCheckAll();
+    bindEvidenceTableFilters();
 });
+</script>
+
+<script>
+    window.CURRENT_EVIDENCE_KEYS = @json($evidences->map(fn($e) => strtolower(trim(($e->judul_dokumen ?? '')."|".($e->no_dokumen ?? '')))));
 </script>
 
 <style>

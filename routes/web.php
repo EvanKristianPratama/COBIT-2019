@@ -275,6 +275,10 @@ Route::get('/assessment-eval/{evalId}/evidence', [AssessmentEvalController::clas
      ->name('assessment-eval.evidence.index')
      ->middleware('auth');
 
+Route::get('/assessment-eval/{evalId}/evidence/previous', [AssessmentEvalController::class, 'previousEvidences'])
+    ->name('assessment-eval.evidence.previous')
+    ->middleware('auth');
+
 Route::put('/assessment-eval/evidence/{evidenceId}', [AssessmentEvalController::class, 'updateEvidence'])
      ->name('assessment-eval.evidence.update')
      ->middleware('auth');
