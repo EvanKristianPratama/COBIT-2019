@@ -39,6 +39,9 @@
                     <div class="hero-eval-id" style="font-size:1.05rem;font-weight:600;margin-top:0.25rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);">
                         Assessment Id: {{ $evalId }}
                     </div>
+                    <div class="hero-eval-year text-uppercase" style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:0.06em;">
+                        Assessment Year: {{ $evaluation->year ?? $evaluation->assessment_year ?? 'N/A' }}
+                    </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                     <span id="status-badge" class="assessment-status-chip status-draft">
@@ -267,8 +270,8 @@
                                                         <tr>
                                                             <th class="text-center" style="width: 55px;">No</th>
                                                             <th style="width: 120px;">Practice</th>
-                                                            <th style="width: 220px;">Practice Name</th>
-                                                            <th>Activity</th>
+                                                            <th style="width: 200px;">Practice Name</th>
+                                                            <th style="width: 340px;">Activity</th>
                                                             <th style="width: 160px;">Answer</th>
                                                             <th style="width: 220px;">Evidence</th>
                                                             <th style="width: 220px;">Notes</th>
@@ -294,7 +297,7 @@
                                                                         <div class="fw-semibold">{{ trim($practice->practice_name, '"') }}</div>
                                                                     </td>
                                                                     <td class="description-cell">
-                                                                        <p class="mb-1 fw-medium">{{ $activity->description }}</p>
+                                                                        <p class="mb-1 fw-medium">{{ trim($activity->description, '"') }}</p>
                                                                     </td>
                                                                     <td class="rating-cell">
                                                                         <select 
@@ -311,26 +314,37 @@
                                                                     </td>
                                                                     <td class="evidence-cell">
                                                                         <div class="evidence-input-wrapper">
-                                                                            <textarea 
-                                                                                class="form-control form-control-sm assessment-textarea evidence-input" 
-                                                                                id="evidence_{{ $activity->activity_id }}" 
+                                                                            <textarea
+                                                                                class="form-control form-control-sm assessment-textarea evidence-input d-none"
+                                                                                id="evidence_{{ $activity->activity_id }}"
                                                                                 name="evidence_{{ $activity->activity_id }}"
                                                                                 data-field-type="evidence"
                                                                                 data-activity-id="{{ $activity->activity_id }}"
                                                                                 data-objective-id="{{ $objective->objective_id }}"
                                                                                 data-level="{{ $level }}"
-                                                                                rows="2" 
+                                                                                rows="2"
                                                                                 readonly
                                                                                 style="background-color: #f8f9fa;"
                                                                                 placeholder="Select evidence from the list..."></textarea>
-                                                                            <select 
-                                                                                class="form-select form-select-sm evidence-history-select"
-                                                                                data-activity-id="{{ $activity->activity_id }}"
-                                                                                data-objective-id="{{ $objective->objective_id }}"
-                                                                                data-level="{{ $level }}"
-                                                                                data-placeholder="Select saved evidence">
-                                                                                <option value="">Select saved evidence...</option>
-                                                                            </select>
+                                                                            <div class="evidence-display" data-activity-id="{{ $activity->activity_id }}">
+                                                                                <span class="text-muted small">No evidence added</span>
+                                                                            </div>
+                                                                            <div class="d-flex gap-2 align-items-center">
+                                                                                <button type="button" class="btn btn-outline-secondary btn-sm evidence-modal-trigger"
+                                                                                    data-activity-id="{{ $activity->activity_id }}"
+                                                                                    data-objective-id="{{ $objective->objective_id }}"
+                                                                                    data-level="{{ $level }}">
+                                                                                    Pilih Evidence
+                                                                                </button>
+                                                                                <select 
+                                                                                    class="form-select form-select-sm evidence-history-select d-none"
+                                                                                    data-activity-id="{{ $activity->activity_id }}"
+                                                                                    data-objective-id="{{ $objective->objective_id }}"
+                                                                                    data-level="{{ $level }}"
+                                                                                    data-placeholder="Select saved evidence">
+                                                                                    <option value="">Select saved evidence...</option>
+                                                                                </select>
+                                                                            </div>
                                                                         </div>
                                                                     </td>
                                                                     <td class="notes-cell">
@@ -384,6 +398,25 @@
                 <i class="fas fa-search text-muted mb-3" style="font-size: 3rem;"></i>
                 <h5 class="text-muted">No objectives found</h5>
                 <p class="text-muted">Try selecting a different domain filter.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evidence modal -->
+<div class="modal fade" id="evidenceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pilih Evidence</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="evidence-modal-list" class="d-flex flex-column gap-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="evidence-modal-apply">Gunakan Evidence</button>
             </div>
         </div>
     </div>
@@ -510,6 +543,8 @@ class COBITAssessmentManager {
         this.buildElementCache();
         this.initializeEvidenceLibrary();
         this.showLoading('Initializing assessment...', 0);
+        this.setupEvidenceModal();
+        this.setupEvidenceModalTriggers();
         
         setTimeout(() => {
             this.cacheDomainChartElements();
@@ -559,12 +594,101 @@ class COBITAssessmentManager {
                 if (ev.no_dokumen) {
                     label += ' - ' + ev.no_dokumen;
                 }
-                if (ev.grup) {
-                    label += ' [' + ev.grup + ']';
-                }
                 this.evidenceLibrary.add(label);
             });
         }
+    }
+
+    setupEvidenceModal() {
+        this.evidenceModalEl = document.getElementById('evidenceModal');
+        this.evidenceModalList = document.getElementById('evidence-modal-list');
+        this.evidenceModalApplyBtn = document.getElementById('evidence-modal-apply');
+
+        if (this.evidenceModalEl && window.bootstrap) {
+            this.evidenceModalInstance = bootstrap.Modal.getOrCreateInstance(this.evidenceModalEl);
+        }
+
+        if (this.evidenceModalApplyBtn) {
+            this.evidenceModalApplyBtn.addEventListener('click', () => this.applyEvidenceModalSelection());
+        }
+    }
+
+    setupEvidenceModalTriggers() {
+    }
+
+    openEvidenceModal(activityId) {
+        if (!this.evidenceModalList || !this.evidenceModalInstance) {
+            return;
+        }
+
+        this.currentEvidenceModalActivityId = activityId;
+        this.evidenceModalList.innerHTML = '';
+
+        const evidences = Array.from(this.evidenceLibrary)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b));
+
+        const existingValues = this.getExistingEvidenceValues(activityId);
+
+        if (!evidences.length) {
+            this.evidenceModalList.innerHTML = '<div class="text-muted small">Belum ada evidence tersimpan.</div>';
+            this.evidenceModalInstance.show();
+            return;
+        }
+
+        evidences.forEach((evidence, index) => {
+            const checkboxId = `evidence-modal-${activityId}-${index}`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'form-check';
+
+            const input = document.createElement('input');
+            input.className = 'form-check-input';
+            input.type = 'checkbox';
+            input.id = checkboxId;
+            input.value = evidence;
+            input.checked = existingValues.includes(evidence);
+
+            const label = document.createElement('label');
+            label.className = 'form-check-label';
+            label.htmlFor = checkboxId;
+            label.textContent = evidence;
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(label);
+            this.evidenceModalList.appendChild(wrapper);
+        });
+
+        this.evidenceModalInstance.show();
+    }
+
+    applyEvidenceModalSelection() {
+        const activityId = this.currentEvidenceModalActivityId;
+        if (!activityId || !this.evidenceModalList) {
+            return;
+        }
+
+        const checked = Array.from(this.evidenceModalList.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(cb => cb.value)
+            .filter(Boolean);
+
+        const textarea = this.elementCache.evidenceInputs.get(activityId);
+        if (textarea) {
+            textarea.value = checked.join('\n');
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            this.updateEvidenceDisplay(activityId, textarea.value);
+        }
+
+        if (this.evidenceModalInstance) {
+            this.evidenceModalInstance.hide();
+        }
+    }
+
+    getExistingEvidenceValues(activityId) {
+        const textarea = this.elementCache.evidenceInputs.get(activityId);
+        if (!textarea || !textarea.value) {
+            return [];
+        }
+        return textarea.value.split('\n').map(v => v.trim()).filter(Boolean);
     }
 
     initializeDefaultStates() {
@@ -673,8 +797,6 @@ class COBITAssessmentManager {
         document.querySelectorAll('.evidence-history-select').forEach(el => {
             this.elementCache.evidenceDropdowns.set(el.dataset.activityId, el);
         });
-        
-        // element cache populated
     }
 
     getEvidenceSelectElements() {
@@ -1035,6 +1157,7 @@ class COBITAssessmentManager {
                 const textarea = this.elementCache.evidenceInputs.get(activityId);
                 if (textarea) {
                     textarea.value = evidenceValue || '';
+                    this.updateEvidenceDisplay(activityId, evidenceValue || '');
                 }
                 const meta = this.getActivityMeta(activityId);
                 if (meta) {
@@ -1109,19 +1232,18 @@ class COBITAssessmentManager {
         this.levelScores = {};
         this.initializeEvidenceLibrary();
         
-        // Clear fields dengan chunk size lebih kecil untuk smooth interaction
         const allSelects = document.querySelectorAll('.activity-rating-select');
         const allTextareas = document.querySelectorAll('.assessment-textarea');
         const chunkSize = 25; // Smaller chunks = more responsive
         
-        // Clear selects
+        // Clear rating selects in small chunks to keep the UI responsive
         for (let i = 0; i < allSelects.length; i += chunkSize) {
             const chunk = Array.from(allSelects).slice(i, i + chunkSize);
             chunk.forEach(select => select.value = '');
             await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
         }
         
-        // Clear textareas
+        // Clear textareas in small chunks
         for (let i = 0; i < allTextareas.length; i += chunkSize) {
             const chunk = Array.from(allTextareas).slice(i, i + chunkSize);
             chunk.forEach(textarea => textarea.value = '');
@@ -1129,8 +1251,6 @@ class COBITAssessmentManager {
         }
 
         this.updateCornerProgress('Initializing scores...', 55);
-        
-        // Initialize level scores
         const objectiveCards = document.querySelectorAll('.objective-card');
         for (const card of objectiveCards) {
             const objectiveId = card.getAttribute('data-objective-id');
@@ -1150,8 +1270,6 @@ class COBITAssessmentManager {
         }
 
         this.updateCornerProgress('Loading notes and evidence...', 65);
-        
-        // Load notes and evidence
         if (data.notes || data.evidence) {
             const activityIds = new Set();
             if (data.notes) Object.keys(data.notes).forEach(id => activityIds.add(id));
@@ -1170,7 +1288,10 @@ class COBITAssessmentManager {
                     // Use cached elements instead of querySelector
                     const evidenceField = this.elementCache.evidenceInputs.get(activityId);
                     const noteField = this.elementCache.noteInputs.get(activityId);
-                    if (evidenceField) evidenceField.value = parsedNotes.evidence || '';
+                    if (evidenceField) {
+                        evidenceField.value = parsedNotes.evidence || '';
+                        this.updateEvidenceDisplay(activityId, parsedNotes.evidence || '');
+                    }
                     if (noteField) noteField.value = parsedNotes.note || '';
                     this.addEvidenceToLibrary(parsedNotes.evidence, { refresh: false });
                 });
@@ -1180,8 +1301,6 @@ class COBITAssessmentManager {
         }
 
         this.updateCornerProgress('Loading activity ratings...', 75);
-        
-        // Load activity data
         if (data.activityData) {
             const activityIds = Object.keys(data.activityData);
             const totalActivities = activityIds.length;
@@ -1214,11 +1333,9 @@ class COBITAssessmentManager {
                     }
                 });
                 
-                // Update progress dynamically
                 const progress = 75 + Math.round((i / totalActivities) * 15);
                 this.updateCornerProgress(`Loading: ${Math.min(i + chunk.length, totalActivities)}/${totalActivities} activities`, progress);
                 
-                // Use requestAnimationFrame for smoother updates
                 await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
             }
         }
@@ -1236,9 +1353,9 @@ class COBITAssessmentManager {
         
         const allSelects = document.querySelectorAll('.activity-rating-select');
         const allTextareas = document.querySelectorAll('.assessment-textarea');
-        
-        // Clear in chunks untuk avoid blocking
         const chunkSize = 100;
+        
+        // Clear fields in chunks to avoid blocking the UI
         for (let i = 0; i < allSelects.length; i += chunkSize) {
             const chunk = Array.from(allSelects).slice(i, i + chunkSize);
             chunk.forEach(select => select.value = '');
@@ -1292,10 +1409,11 @@ class COBITAssessmentManager {
                     data.evidence ? data.evidence[activityId] : null
                 );
 
-                const evidenceField = document.querySelector(`textarea.evidence-input[data-activity-id="${activityId}"]`);
+                const evidenceField = document.querySelector(`.evidence-input[data-activity-id="${activityId}"]`);
                 const noteField = document.querySelector(`textarea.note-input[data-activity-id="${activityId}"]`);
                 if (evidenceField) {
                     evidenceField.value = parsedNotes.evidence || '';
+                    this.updateEvidenceDisplay(activityId, parsedNotes.evidence || '');
                 }
                 if (noteField) {
                     noteField.value = parsedNotes.note || '';
@@ -1337,11 +1455,9 @@ class COBITAssessmentManager {
                     }
                 });
                 
-                // Update progress
                 const progress = 70 + Math.round((i / totalActivities) * 20);
                 this.updateLoadingProgress(`Loading activities: ${i + chunk.length}/${totalActivities}`, progress);
                 
-                // Yield to browser untuk avoid freeze
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
@@ -1559,17 +1675,53 @@ class COBITAssessmentManager {
         });
 
         evidenceSelects.forEach(select => {
-            select.addEventListener('change', () => {
-                const selectedEvidence = select.value;
-                // Allow clearing if empty value is selected
-                const wrapper = select.closest('.evidence-input-wrapper');
-                const textarea = wrapper ? wrapper.querySelector('.evidence-input') : null;
-                if (textarea) {
-                    textarea.value = selectedEvidence;
-                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                }
+            select.addEventListener('click', (e) => {
+                e.preventDefault();
+                const activityId = select.getAttribute('data-activity-id');
+                this.openEvidenceModal(activityId);
+            });
+            select.addEventListener('change', (e) => {
+                e.preventDefault();
+                select.value = '';
             });
         });
+
+        const modalTriggers = document.querySelectorAll('.evidence-modal-trigger');
+        modalTriggers.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const activityId = btn.getAttribute('data-activity-id');
+                this.openEvidenceModal(activityId);
+            });
+        });
+    }
+
+    renderEvidenceDisplay(displayElement, values) {
+        if (!displayElement) return;
+
+        displayElement.innerHTML = '';
+        const cleanValues = (values || []).map(v => v.trim()).filter(Boolean);
+
+        if (!cleanValues.length) {
+            displayElement.innerHTML = '<span class="text-muted small">No evidence added</span>';
+            return;
+        }
+
+        const list = document.createElement('ul');
+        list.className = 'mb-0 ps-3 evidence-list';
+
+        cleanValues.forEach(val => {
+            const li = document.createElement('li');
+            li.textContent = val;
+            list.appendChild(li);
+        });
+
+        displayElement.appendChild(list);
+    }
+
+    updateEvidenceDisplay(activityId, value) {
+        const display = document.querySelector(`.evidence-display[data-activity-id="${activityId}"]`);
+        const values = typeof value === 'string' ? value.split('\n') : [];
+        this.renderEvidenceDisplay(display, values);
     }
 
     setActivityRating(objectiveId, level, activityId, rating) {
@@ -1584,6 +1736,7 @@ class COBITAssessmentManager {
     setActivityEvidence(objectiveId, level, activityId, evidence) {
         this.initializeLevelScore(objectiveId, level);
         this.levelScores[objectiveId][level].evidence[activityId] = evidence;
+        this.updateEvidenceDisplay(activityId, evidence);
     }
 
     setActivityNote(objectiveId, level, activityId, note) {
@@ -1601,6 +1754,8 @@ class COBITAssessmentManager {
             if (evidenceTextarea) {
                 evidenceTextarea.value = '';
             }
+
+            this.updateEvidenceDisplay(activityId, '');
 
             const noteTextarea = document.getElementById(`note_${activityId}`);
             if (noteTextarea) {
@@ -2076,7 +2231,6 @@ class COBITAssessmentManager {
 
         return data;
     }
-// ini isi rekap table
     createRecapTable(data) {
         const wrapper = document.createElement('div');
         wrapper.className = 'recap-table-wrapper';
@@ -3039,13 +3193,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 .domain-level-card {
     background: #fff;
-    border-top: 1px solid #e2e8fb;
-    border-radius: 0 0 0.9rem 0.9rem;
-    padding: 1.25rem 1.5rem 1.5rem;
-}
-
-.domain-level-card {
-    background: #fff;
     border: 1px solid #e2e8fb;
     border-radius: 0.85rem;
     padding: 1.5rem;
@@ -3586,6 +3733,24 @@ document.addEventListener('DOMContentLoaded', () => {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+}
+
+.evidence-display {
+    min-height: 38px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background-color: #f8f9fa;
+    font-size: 0.9rem;
+}
+
+.evidence-list li {
+    margin-bottom: 0.15rem;
+    line-height: 1.35;
+}
+
+.evidence-list li:last-child {
+    margin-bottom: 0;
 }
 
 .evidence-history-select {
