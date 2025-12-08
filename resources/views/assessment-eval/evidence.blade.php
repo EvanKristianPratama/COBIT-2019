@@ -119,6 +119,31 @@
                     </tbody>
                 </table>
             </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Show</span>
+                <select class="form-select form-select-sm" id="items-per-page" style="width: 70px;">
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="-1">All</option>
+                </select>
+                <span class="text-muted small">entries</span>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <span id="evidence-page-info" class="text-muted small">Showing 0 to 0 of 0 entries</span>
+                <nav aria-label="Evidence pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled" id="evidence-prev-item">
+                            <button class="page-link" id="evidence-prev" type="button"><i class="fas fa-chevron-left"></i></button>
+                        </li>
+                        <li class="page-item disabled" id="evidence-next-item">
+                            <button class="page-link" id="evidence-next" type="button"><i class="fas fa-chevron-right"></i></button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
@@ -266,7 +291,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    window.SERVER_EVIDENCES_FULL = @json($evidences);
+    window.CURRENT_EVIDENCE_KEYS = @json($evidences->map(function($item) {
+        return trim(strtolower($item->judul_dokumen . '|' . ($item->no_dokumen ?? '')));
+    }));
+</script>
+<script>
 document.addEventListener('DOMContentLoaded', () => {
+    const state = {
+        isEditing: false,
+        currentEvidenceId: null,
+        importList: [],
+        selectedImportIndices: new Set(),
+        existingEvidenceKeys: new Set((window.CURRENT_EVIDENCE_KEYS || []).map(k => k.toLowerCase())),
+        importFilters: {},
+        tableFilters: {},
+        // Pagination state
+        pagination: {
+            currentPage: 1,
+            itemsPerPage: 25,
+            totalItems: 0,
+            filteredItems: []
+        },
+        // Store full evidence list in memory
+        evidenceList: window.SERVER_EVIDENCES_FULL || []
+    };
+
     const dom = {
         saveEvidenceBtn: document.getElementById('btn-save-evidence'),
         evidenceForm: document.getElementById('addEvidenceForm'),
@@ -281,17 +331,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btnUseImported: document.getElementById('btn-use-imported'),
         btnImportPrev: document.getElementById('btn-import-prev'),
         evidenceTableBody: document.querySelector('#evidence-table tbody'),
-        evidenceTableFilterInputs: Array.from(document.querySelectorAll('#evidence-table thead input[data-filter-field]'))
-    };
-
-    const state = {
-        isEditing: false,
-        currentEvidenceId: null,
-        importList: [],
-        selectedImportIndices: new Set(),
-        existingEvidenceKeys: new Set((window.CURRENT_EVIDENCE_KEYS || []).map(k => k.toLowerCase())),
-        importFilters: {},
-        tableFilters: {}
+        evidenceTableFilterInputs: Array.from(document.querySelectorAll('#evidence-table thead input[data-filter-field]')),
+        // Pagination DOM
+        itemsPerPageSelect: document.getElementById('items-per-page'),
+        pageInfo: document.getElementById('evidence-page-info'),
+        prevBtn: document.getElementById('evidence-prev'),
+        nextBtn: document.getElementById('evidence-next'),
+        prevItem: document.getElementById('evidence-prev-item'),
+        nextItem: document.getElementById('evidence-next-item')
     };
 
     const flags = {
@@ -341,49 +388,136 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const applyPagination = () => {
+        // 1. Filter
+        const filters = Object.entries(state.tableFilters).filter(([, v]) => v && v.toString().trim());
+        let filtered = state.evidenceList;
+
+        if (filters.length > 0) {
+            filtered = state.evidenceList.filter((item) => {
+                return filters.every(([field, value]) => {
+                    const hay = (item[field] ?? '').toString().toLowerCase();
+                    return hay.includes(value.toLowerCase());
+                });
+            });
+        }
+        
+        state.pagination.filteredItems = filtered;
+        state.pagination.totalItems = filtered.length;
+
+        // 2. Paginate
+        const totalPages = Math.max(1, Math.ceil(state.pagination.totalItems / state.pagination.itemsPerPage));
+        
+        if (state.pagination.itemsPerPage === -1) {
+             state.pagination.currentPage = 1;
+        } else {
+             if (state.pagination.currentPage > totalPages) state.pagination.currentPage = totalPages;
+             if (state.pagination.currentPage < 1) state.pagination.currentPage = 1;
+        }
+
+        const startIndex = state.pagination.itemsPerPage === -1 ? 0 : (state.pagination.currentPage - 1) * state.pagination.itemsPerPage;
+        let endIndex = state.pagination.itemsPerPage === -1 ? state.pagination.totalItems : startIndex + state.pagination.itemsPerPage;
+        
+        if (endIndex > state.pagination.totalItems) endIndex = state.pagination.totalItems;
+
+        const pagedData = filtered.slice(startIndex, endIndex);
+        
+        renderEvidenceTable(pagedData, startIndex);
+        updatePaginationUI(startIndex, endIndex, state.pagination.totalItems);
+    };
+
+    const renderEvidenceTable = (data, startIndex) => {
+        if (!dom.evidenceTableBody) return;
+        dom.evidenceTableBody.innerHTML = '';
+
+        if (!data.length) {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-empty-row', 'true');
+            tr.innerHTML = `
+                <td colspan="13" class="text-center py-3 text-muted">
+                    Tidak ada dokumen evidence ditemukan.
+                </td>
+            `;
+            dom.evidenceTableBody.appendChild(tr);
+            return;
+        }
+
+        const safe = (val) => val ?? '-';
+        
+        data.forEach((evidence, idx) => {
+            const tr = document.createElement('tr');
+            const linkHtml = evidence.notes ? `<a href="${evidence.notes}" target="_blank" class="text-decoration-none">Link</a>` : '-';
+            
+            let actionHtml = '-';
+            if (flags.isOwner) {
+                // escape json for data attribute
+                const jsonStr = JSON.stringify(evidence).replace(/'/g, "&#39;");
+                actionHtml = `
+                    <button class="btn btn-sm btn-outline-warning btn-edit-evidence" 
+                            title="Edit" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#addEvidenceModal"
+                            data-evidence='${jsonStr}'>
+                        Edit
+                    </button>`;
+            }
+
+            tr.innerHTML = `
+                <td class="text-center">${startIndex + idx + 1}</td>
+                <td data-field="judul_dokumen">${safe(evidence.judul_dokumen)}</td>
+                <td data-field="no_dokumen">${safe(evidence.no_dokumen)}</td>
+                <td class="text-center" data-field="grup">${safe(evidence.grup)}</td>
+                <td data-field="tipe">${safe(evidence.tipe)}</td>
+                <td class="text-center" data-field="tahun_terbit">${safe(evidence.tahun_terbit)}</td>
+                <td class="text-center" data-field="tahun_kadaluarsa">${safe(evidence.tahun_kadaluarsa)}</td>
+                <td data-field="pemilik_dokumen">${safe(evidence.pemilik_dokumen)}</td>
+                <td data-field="pengesahan">${safe(evidence.pengesahan)}</td>
+                <td class="text-center" data-field="klasifikasi">${safe(evidence.klasifikasi)}</td>
+                <td data-field="summary">${safe(evidence.summary)}</td>
+                <td>${linkHtml}</td>
+                <td class="text-center">${actionHtml}</td>
+            `;
+            dom.evidenceTableBody.appendChild(tr);
+        });
+
+        bindEditButtons();
+    };
+
+    const updatePaginationUI = (start, end, total) => {
+        if (dom.pageInfo) {
+            dom.pageInfo.textContent = `Showing ${total === 0 ? 0 : start + 1} to ${end} of ${total} entries`;
+        }
+        
+        const totalPages = Math.ceil(total / state.pagination.itemsPerPage);
+
+        if (dom.prevItem) {
+            dom.prevItem.classList.toggle('disabled', state.pagination.currentPage <= 1 || state.pagination.itemsPerPage === -1);
+        }
+        if (dom.nextItem) {
+            dom.nextItem.classList.toggle('disabled', state.pagination.currentPage >= totalPages || state.pagination.itemsPerPage === -1);
+            if (total === 0) dom.nextItem.classList.add('disabled');
+        }
+    };
+
+    const changePage = (direction) => {
+        if (state.pagination.itemsPerPage === -1) return;
+        state.pagination.currentPage += direction;
+        applyPagination();
+    };
+
     const bindEvidenceTableFilters = () => {
-        if (!dom.evidenceTableFilterInputs.length || !dom.evidenceTableBody) return;
+        if (!dom.evidenceTableFilterInputs.length) return;
         dom.evidenceTableFilterInputs.forEach((input) => {
             const field = input.getAttribute('data-filter-field');
             if (!field) return;
             input.addEventListener('input', (e) => {
                 state.tableFilters[field] = e.target.value || '';
-                applyEvidenceTableFilters();
+                state.pagination.currentPage = 1; // Reset to page 1
+                applyPagination();
             });
         });
     };
 
-    const applyEvidenceTableFilters = () => {
-        if (!dom.evidenceTableBody) return;
-        const filters = Object.entries(state.tableFilters).filter(([, v]) => v && v.toString().trim());
-        const rows = Array.from(dom.evidenceTableBody.querySelectorAll('tr'));
-        rows.forEach((row) => {
-            if (row.hasAttribute('data-empty-row')) return;
-            if (!filters.length) {
-                row.style.display = '';
-                return;
-            }
-            const matches = filters.every(([field, value]) => {
-                const cell = row.querySelector(`[data-field="${field}"]`);
-                const hay = (cell ? cell.textContent : '').toString().toLowerCase();
-                return hay.includes(value.toLowerCase());
-            });
-            row.style.display = matches ? '' : 'none';
-        });
-    };
-
-    const resetImportState = () => {
-        state.importList = [];
-        state.selectedImportIndices.clear();
-        if (dom.importTableBody) dom.importTableBody.innerHTML = '';
-        toggleEmptyState(false);
-        if (dom.importError) dom.importError.classList.add('d-none');
-        updateImportButtonState();
-    };
-
-    /* --------------------
-     * Evidence Form
-     * -------------------- */
     const resetForm = () => {
         dom.evidenceForm.reset();
         document.getElementById('evidence_id').value = '';
@@ -396,7 +530,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const attachEditHandler = (btn) => {
         if (!btn) return;
         btn.addEventListener('click', () => {
-            const evidence = JSON.parse(btn.getAttribute('data-evidence'));
+            // Because we re-render, sometimes the json in data-evidence might need parsing carefully
+            // but usually standard JSON.parse works if stringified correctly.
+            const raw = btn.getAttribute('data-evidence');
+            // If data attributes were HTMLEntities encoded, browser decodes them in getAttribute usually.
+            const evidence = JSON.parse(raw);
+            
             state.isEditing = true;
             state.currentEvidenceId = evidence.id;
 
@@ -786,6 +925,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const resetImportState = () => {
+        state.importList = [];
+        state.selectedImportIndices.clear();
+        if (dom.importTableBody) dom.importTableBody.innerHTML = '';
+        toggleEmptyState(false);
+        if (dom.importError) dom.importError.classList.add('d-none');
+        updateImportButtonState();
+    };
+
     /* --------------------
      * Event bindings
      * -------------------- */
@@ -800,12 +948,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (dom.importCheckAll) bindImportCheckAll();
+    
     if (dom.btnUseImported) dom.btnUseImported.addEventListener('click', importSelected);
 
-    bindEditButtons();
     bindImportFilters();
-    bindImportCheckAll();
     bindEvidenceTableFilters();
+    bindEditButtons(); // Initial bind for server-rendered rows before first JS render
+
+    // Pagination Events
+    if (dom.itemsPerPageSelect) {
+        dom.itemsPerPageSelect.addEventListener('change', (e) => {
+            state.pagination.itemsPerPage = parseInt(e.target.value, 10);
+            state.pagination.currentPage = 1;
+            applyPagination();
+        });
+    }
+
+    if (dom.prevBtn) {
+        dom.prevBtn.addEventListener('click', () => changePage(-1));
+    }
+
+    if (dom.nextBtn) {
+        dom.nextBtn.addEventListener('click', () => changePage(1));
+    }
+
+    // Initial Render
+    applyPagination();
 });
 </script>
 
