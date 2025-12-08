@@ -454,9 +454,22 @@
                     </table>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" id="evidence-modal-apply">Gunakan Evidence</button>
+            <div class="modal-footer justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <span id="evidence-modal-page-info" class="text-muted small">page 1 of 1</span>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary" id="evidence-modal-prev">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="evidence-modal-next">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" id="evidence-modal-apply">Gunakan Evidence</button>
+                </div>
             </div>
         </div>
     </div>
@@ -533,6 +546,12 @@ class COBITAssessmentManager {
         this.evidenceModalFilters = {};
         this.currentEvidenceModalExistingValues = [];
         this.evidenceModalData = Array.isArray(window.SERVER_EVIDENCES) ? window.SERVER_EVIDENCES : [];
+        
+        // Modal Pagination
+        this.evidenceModalPagination = {
+            currentPage: 1,
+            itemsPerPage: 50
+        };
 
         // Configuration Variables
         this.config = {
@@ -649,6 +668,11 @@ class COBITAssessmentManager {
         this.evidenceModalTableBody = this.evidenceModalEl ? this.evidenceModalEl.querySelector('#evidence-modal-table-body') : null;
         this.evidenceModalFilterInputs = this.evidenceModalEl ? Array.from(this.evidenceModalEl.querySelectorAll('#evidence-modal-table thead input[data-filter-field]')) : [];
         this.evidenceModalApplyBtn = document.getElementById('evidence-modal-apply');
+        
+        // Pagination Elements
+        this.evidenceModalPrevBtn = document.getElementById('evidence-modal-prev');
+        this.evidenceModalNextBtn = document.getElementById('evidence-modal-next');
+        this.evidenceModalPageInfo = document.getElementById('evidence-modal-page-info');
 
         if (this.evidenceModalEl && window.bootstrap) {
             this.evidenceModalInstance = bootstrap.Modal.getOrCreateInstance(this.evidenceModalEl);
@@ -656,6 +680,14 @@ class COBITAssessmentManager {
 
         if (this.evidenceModalApplyBtn) {
             this.evidenceModalApplyBtn.addEventListener('click', () => this.applyEvidenceModalSelection());
+        }
+        
+        if (this.evidenceModalPrevBtn) {
+            this.evidenceModalPrevBtn.addEventListener('click', () => this.changeEvidenceModalPage(-1));
+        }
+
+        if (this.evidenceModalNextBtn) {
+            this.evidenceModalNextBtn.addEventListener('click', () => this.changeEvidenceModalPage(1));
         }
 
         this.bindEvidenceModalFilters();
@@ -671,8 +703,9 @@ class COBITAssessmentManager {
             if (this.evidenceModalFilters[field]) {
                 input.value = this.evidenceModalFilters[field];
             }
-            input.addEventListener('input', (event) => {
+        input.addEventListener('input', (event) => {
                 this.evidenceModalFilters[field] = event.target.value || '';
+                this.evidenceModalPagination.currentPage = 1; // Reset to page 1 on filter
                 this.renderEvidenceModalRows();
             });
         });
@@ -708,6 +741,30 @@ class COBITAssessmentManager {
         this.evidenceModalTableBody.innerHTML = '';
 
         const list = this.getFilteredEvidenceModalList();
+        
+        // Calculate pagination
+        const totalItems = list.length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / this.evidenceModalPagination.itemsPerPage));
+        
+        // Ensure current page is valid
+        if (this.evidenceModalPagination.currentPage > totalPages) {
+            this.evidenceModalPagination.currentPage = totalPages;
+        }
+        if (this.evidenceModalPagination.currentPage < 1) {
+            this.evidenceModalPagination.currentPage = 1;
+        }
+
+        // Update UI controls
+        if (this.evidenceModalPageInfo) {
+            this.evidenceModalPageInfo.textContent = `page ${this.evidenceModalPagination.currentPage} of ${totalPages} (${totalItems} items)`;
+        }
+        if (this.evidenceModalPrevBtn) {
+            this.evidenceModalPrevBtn.disabled = this.evidenceModalPagination.currentPage <= 1;
+        }
+        if (this.evidenceModalNextBtn) {
+            this.evidenceModalNextBtn.disabled = this.evidenceModalPagination.currentPage >= totalPages;
+        }
+
         if (!list.length) {
             const emptyRow = document.createElement('tr');
             emptyRow.innerHTML = '<td colspan="12" class="text-center text-muted py-4">Belum ada evidence yang sesuai.</td>';
@@ -715,16 +772,24 @@ class COBITAssessmentManager {
             return;
         }
 
-        list.forEach((item, index) => {
+        // Slice data for current page
+        const startIndex = (this.evidenceModalPagination.currentPage - 1) * this.evidenceModalPagination.itemsPerPage;
+        const endIndex = startIndex + this.evidenceModalPagination.itemsPerPage;
+        const displayList = list.slice(startIndex, endIndex);
+
+        displayList.forEach((item, index) => {
             const rawLabel = this.formatEvidenceLabel(item);
             const safeLabel = this.escapeHtml(rawLabel);
             const isChecked = this.currentEvidenceModalExistingValues.includes(rawLabel);
             const tr = document.createElement('tr');
+            // Show global index instead of page index
+            const globalIndex = startIndex + index + 1;
+            
             tr.innerHTML = `
                 <td class="text-center align-middle">
-                    <input type="checkbox" class="form-check-input" value="${safeLabel}" id="evidence-modal-checkbox-${index}" ${isChecked ? 'checked' : ''}>
+                    <input type="checkbox" class="form-check-input" value="${safeLabel}" id="evidence-modal-checkbox-${startIndex + index}" ${isChecked ? 'checked' : ''}>
                 </td>
-                <td class="text-center align-middle">${index + 1}</td>
+                <td class="text-center align-middle">${globalIndex}</td>
                 <td class="align-middle">${this.escapeHtml(item.judul_dokumen || '-')}</td>
                 <td class="align-middle">${this.escapeHtml(item.no_dokumen || '-')}</td>
                 <td class="text-center align-middle">${this.escapeHtml(item.grup || '-')}</td>
@@ -738,6 +803,13 @@ class COBITAssessmentManager {
             `;
             this.evidenceModalTableBody.appendChild(tr);
         });
+    }
+
+    changeEvidenceModalPage(direction) {
+        const next = this.evidenceModalPagination.currentPage + direction;
+        if (next < 1) return;
+        this.evidenceModalPagination.currentPage = next;
+        this.renderEvidenceModalRows();
     }
 
     openEvidenceModal(activityId) {
@@ -2154,35 +2226,12 @@ class COBITAssessmentManager {
     }
 
     async refreshEvidenceDropdowns() {
-        const selectsArray = this.getEvidenceSelectElements();
-        if (!selectsArray.length) {
-            return;
-        }
-
-        const evidenceList = Array.from(this.evidenceLibrary)
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
-
-        const optionsHtml = evidenceList.map(entry => {
-            const safeValue = this.escapeHtml(entry);
-            const truncated = entry.length > 90 ? `${this.escapeHtml(entry.slice(0, 87))}...` : safeValue;
-            return `<option value="${safeValue}">${truncated}</option>`;
-        }).join('');
-
-        for (let i = 0; i < selectsArray.length; i++) {
-            const select = selectsArray[i];
-            const placeholder = select.getAttribute('data-placeholder') || 'Select saved evidence';
-            const previousValue = select.value;
-
-            select.innerHTML = `<option value="">${this.escapeHtml(placeholder)}...</option>${optionsHtml}`;
-            if (previousValue && this.evidenceLibrary.has(previousValue)) {
-                select.value = previousValue;
-            }
-
-            if (i > 0 && i % 120 === 0) {
-                await new Promise(resolve => requestAnimationFrame(resolve));
-            }
-        }
+        // Optimization: These select elements are configured to open the Evidence Modal on click
+        // (see setupActivityRating). They are not used as standard dropdowns.
+        // Populating them with thousands of evidence options creates millions of DOM nodes
+        // and freezes the browser during initialization.
+        // We skip this heavy operation to ensure smooth page load.
+        return;
     }
 
     updateDomainChart(selectedDomain = 'all') {
