@@ -21,6 +21,7 @@ use App\Http\Controllers\cobit2019\Df10Controller;
 use App\Http\Controllers\cobit2019\Step2Controller;
 use App\Http\Controllers\cobit2019\Step3Controller;
 use App\Http\Controllers\cobit2019\Step4Controller;
+use App\Http\Controllers\cobit2019\TargetCapabilityController;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
 
@@ -115,6 +116,15 @@ Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware(
 Route::get('/cobit2019/cobit_home', function () {
     return view('cobit2019.cobit_home');
 })->name('cobit.home')->middleware('auth');
+
+// Target capability routes
+Route::middleware('auth')->group(function () {
+    Route::get('/cobit2019/target-capability/{id?}', [TargetCapabilityController::class, 'edit'])
+        ->name('target-capability.edit');
+    Route::post('/cobit2019/target-capability/save', [TargetCapabilityController::class, 'save'])
+        ->name('target-capability.save');
+    Route::post('target-capability/add-year', [TargetCapabilityController::class, 'addYear'])->name('target-capability.addYear');
+});
 
 // Route untuk Step 2 (Summary) - pastikan view Step2 sudah didefinisikan
 Route::get('/step2', [Step2Controller::class, 'index'])->name('step2.index')->middleware('auth');
@@ -281,4 +291,8 @@ Route::get('/assessment-eval/{evalId}/evidence/previous', [AssessmentEvalControl
 
 Route::put('/assessment-eval/evidence/{evidenceId}', [AssessmentEvalController::class, 'updateEvidence'])
      ->name('assessment-eval.evidence.update')
+     ->middleware('auth');
+
+Route::get('/assessment-eval/{evalId}/report', [AssessmentEvalController::class, 'report'])
+     ->name('assessment-eval.report')
      ->middleware('auth');

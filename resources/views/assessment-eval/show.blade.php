@@ -66,6 +66,9 @@
                     <button type="button" class="domain-tab" data-domain="MEA">MEA</button>
                     <button type="button" class="domain-tab" data-domain="recap">Summary Result</button>
                     <button type="button" class="domain-tab" data-domain="diagram">Spider Web Diagram</button>
+                    <a href="{{ route('assessment-eval.report', $evalId) }}" class="domain-tab text-decoration-none d-flex align-items-center" style="background-color: #0f2b5c; color: #fff;">
+                        <i class="fas fa-file-alt me-2"></i>Report
+                    </a>
                 </div>
                 <div id="objective-filter-wrapper" class="objective-filter-wrapper" style="display: none;">
                     <div class="objective-filter-tabs" id="objective-filter-tabs" role="tablist"></div>
@@ -92,7 +95,7 @@
                                 <tr>
                                     <th rowspan="2" style="width: 10%; vertical-align: middle;">Gamo</th>
                                     <th rowspan="2" style="width: 25%; vertical-align: middle;">Gamo Name</th>
-                                    <th colspan="6" class="text-center">Level</th>
+                                    <th colspan="6" class="text-center">Score</th>
                                     <th rowspan="2" class="text-center" style="width: 15%; vertical-align: middle;">Rating</th>
                                     <th rowspan="2" class="text-center" style="width: 15%; vertical-align: middle;">Maximum Capability</th>
                                 </tr>
@@ -507,6 +510,8 @@ window.IS_OWNER = {{ isset($isOwner) && $isOwner ? 'true' : 'false' }};
 window.SELECTED_DOMAINS = {!! json_encode($selectedDomains ?? []) !!};
 // Server-provided evidences
 window.SERVER_EVIDENCES = {!! json_encode($evidences ?? []) !!};
+// Target capability map keyed by GAMO (only when assessment year matches Target Capability year)
+window.TARGET_CAPABILITY_MAP = {!! json_encode($targetCapabilityMap ?? []) !!};
 class COBITAssessmentManager {
     constructor(evalId, status = 'draft', isOwner = false) {
         this.assessmentData = {};
@@ -531,6 +536,7 @@ class COBITAssessmentManager {
         this.objectiveFilterTabs = null;
         this.domainObjectiveMap = {};
         this.objectiveCards = [];
+        this.targetCapabilityMap = window.TARGET_CAPABILITY_MAP || {};
         this.cache = {
             elements: new Map(),
             data: new Map()
@@ -2404,7 +2410,7 @@ class COBITAssessmentManager {
 
         const table = document.createElement('table');
         table.className = 'table table-sm table-bordered recap-table align-middle mb-0';
-
+// Assessment Recapitulation Result Head
         const thead = document.createElement('thead');
         thead.innerHTML = `
             <tr>
@@ -2412,7 +2418,7 @@ class COBITAssessmentManager {
                 <th style="width:110px;">Domain</th>
                 <th style="width:100px;">Gamo</th>
                 <th>Gamo Name</th>
-                <th style="width:100px;" class="text-center">Level</th>
+                <th style="width:100px;" class="text-center">Score</th>
                 <th style="width:100px;" class="text-center">Rating</th>
                 <th style="width:100px;" class="text-center">Target</th>
                 <th style="width:100px;" class="text-center">Gap</th>
@@ -2442,6 +2448,21 @@ class COBITAssessmentManager {
             
             const ratingDisplay = level > 0 ? `${level} ${row.ratingLetter}` : '0 N';
             const maxCap = this.getMaxCapabilityForObjective(row.objectiveId);
+            const targetVal = this.getTargetCapabilityForObjective(row.objectiveId);
+            const gap = (targetVal === null || targetVal === undefined) ? null : (targetVal - level);
+            const gapIsNegative = gap !== null && gap < 0;
+            const gapIsPositive = gap !== null && gap > 0;
+            const gapDisplay = gap === null ? '-' : gap;
+            const targetDisplay = targetVal === null ? '-' : targetVal;
+
+            const gapClasses = ['gap-box'];
+            if (gapIsNegative) {
+                gapClasses.push('text-danger', 'fw-bold');
+            } else if (gapIsPositive) {
+                gapClasses.push('text-success', 'fw-bold');
+            } else {
+                gapClasses.push(gap === null ? 'text-muted' : 'text-dark', 'fw-bold');
+            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -2455,20 +2476,17 @@ class COBITAssessmentManager {
                 <td>
                     <span class="small text-muted">${safeObjectiveName}</span>
                 </td>
-                <td class="text-center p-0">
-                    <div class="w-100 h-100 d-flex align-items-center justify-content-center fw-bold" 
-                         style="min-height: 40px; background-color: ${bgColor}; color: ${textColor};">
-                        ${level}
-                    </div>
+                <td class="text-center fw-bold" style="background-color: ${bgColor}; color: ${textColor};">
+                    ${level}
                 </td>
                 <td class="text-center fw-bold text-dark">
                     ${ratingDisplay}
                 </td>
                 <td class="text-center text-muted">
-                    -
+                    ${targetDisplay}
                 </td>
-                <td class="text-center text-muted">
-                    -
+                <td class="text-center">
+                    <div class="${gapClasses.join(' ')}">${gapDisplay}</div>
                 </td>
                 <td class="text-center fw-bold text-secondary">
                     ${maxCap}
@@ -2506,6 +2524,14 @@ class COBITAssessmentManager {
 
     getMaximumCapabilityData() {
         return this.config.maxCaps;
+    }
+
+    getTargetCapabilityForObjective(objectiveId) {
+        if (!objectiveId || !this.targetCapabilityMap) return null;
+        const val = this.targetCapabilityMap[objectiveId];
+        if (val === null || val === undefined || val === '') return null;
+        const num = Number(val);
+        return isNaN(num) ? null : num;
     }
 
     toggleRecapStandalone(show, data = []) {
@@ -2576,6 +2602,7 @@ class COBITAssessmentManager {
         const agreedData = data.map(item => item.level);
         const dataMaximum = this.getMaximumCapabilityData();
         const maxDataSliced = dataMaximum.slice(0, labels.length);
+        const targetData = labels.map(id => this.getTargetCapabilityForObjective(id));
 
         // Calculate Maturity Level
         const totalLevel = agreedData.reduce((sum, val) => sum + val, 0);
@@ -2603,7 +2630,7 @@ class COBITAssessmentManager {
                     pointHoverBorderColor: 'rgb(37, 99, 235)'
                 },  {
                     label: 'Target Capability',
-                    data: Array(labels.length).fill(3), // Target Capability: semua 3
+                    data: targetData,
                     fill: true,
                     backgroundColor: 'rgba(16, 185, 129, 0.18)',
                     borderColor: 'rgb(16, 185, 129)',
@@ -3010,7 +3037,8 @@ class COBITAssessmentManager {
         }
 
         const labels = data.map(item => item.domain);
-        const agreedData = data.map(item => item.level);
+        const targetMap = this.targetCapabilityMap || {};
+        const targetData = data.map(item => targetMap[item.objectiveId] ?? null);
         
         // Maximum Capability Data from Step 4 reference
         const dataMaximum = [
@@ -3086,7 +3114,7 @@ class COBITAssessmentManager {
                             labels: ${JSON.stringify(labels)},
                             datasets: [{
                                 label: 'Agreed Target Capability',
-                                data: ${JSON.stringify(agreedData)},
+                                data: ${JSON.stringify(targetData)},
                                 fill: true,
                                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                                 borderColor: 'rgb(54, 162, 235)',
@@ -3284,23 +3312,25 @@ document.addEventListener('DOMContentLoaded', () => {
 .domain-tabs-wrapper {
     background: #f7f9ff;
     border-radius: 0.8rem;
-    padding: 0.75rem 1rem 0.25rem;
+    padding: 0.25rem 0.5rem 0.2rem;
     border: 1px solid #e1e6f5;
+    overflow-x: auto;
 }
 
 .domain-tabs {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 0.65rem;
+    justify-content: flex-start;
+    min-width: max-content;
 }
 
 .domain-tab {
     border: none;
     background: transparent;
     color: #0f6ad9;
-    padding: 0.4rem 1.4rem;
-    border-radius: 0.75rem;
+    padding: 0.22rem 0.85rem;
+    border-radius: 0.55rem;
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -3459,6 +3489,25 @@ document.addEventListener('DOMContentLoaded', () => {
 .recap-table {
     margin: 0;
     background: #fff;
+    border-collapse: collapse;
+}
+
+.recap-table th,
+.recap-table td {
+}
+
+.recap-table .level-box,
+.recap-table .gap-box {
+    width: 100%;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.recap-table .gap-box {
+    background: transparent;
 }
 
 .recap-table thead th {

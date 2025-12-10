@@ -8,6 +8,7 @@ use App\Models\MstObjective;
 use App\Models\MstEval;
 use App\Models\MstEvidence;
 use App\Models\TrsEvalDetail;
+use App\Models\TargetCapability;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -278,8 +279,31 @@ class AssessmentEvalController extends Controller
             // Fetch evidences for this evaluation
             $evidences = MstEvidence::where('eval_id', $evalId)->orderBy('created_at', 'desc')->get();
 
+            // Fetch Target Capability for matching assessment year (if available)
+            $targetCapabilityMap = [];
+            $assessmentYear = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? null;
+            if ($assessmentYear) {
+                $targetCapability = TargetCapability::where('user_id', $evaluation->user_id)
+                    ->where('tahun', (int) $assessmentYear)
+                    ->latest('updated_at')
+                    ->first();
+
+                if ($targetCapability) {
+                    $fields = [
+                        'EDM01','EDM02','EDM03','EDM04','EDM05',
+                        'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
+                        'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
+                        'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
+                        'MEA01','MEA02','MEA03','MEA04',
+                    ];
+                    foreach ($fields as $field) {
+                        $targetCapabilityMap[$field] = $targetCapability->$field !== null ? (int) $targetCapability->$field : null;
+                    }
+                }
+            }
+
             // Pass isOwner to the view. Non-owners may view the full content in read-only mode.
-            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'evidences'));
+            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'evidences', 'targetCapabilityMap'));
         } catch (\Exception $e) {
             Log::error("Failed to load assessment", [
                 'eval_id' => $evalId,
@@ -569,6 +593,83 @@ class AssessmentEvalController extends Controller
 
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to load evidence: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Display the report page for an assessment
+     */
+    public function report($evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            
+            if (!$evaluation) {
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Assessment not found']);
+            }
+
+            // Check authorization
+            $owner = User::find($evaluation->user_id);
+            $currentUser = Auth::user();
+            $canView = false;
+            $isOwner = false;
+
+            if ($owner && $currentUser) {
+                if ((string)$evaluation->user_id === (string)$currentUser->id) {
+                    $canView = true;
+                    $isOwner = true;
+                } elseif (!empty($owner->organisasi) && !empty($currentUser->organisasi) && strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0) {
+                    $canView = true;
+                }
+            }
+
+            if (!$canView) {
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
+            }
+
+            $selectedDomains = TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
+
+            if (!empty($selectedDomains)) {
+                $objectives = MstObjective::with(['practices.activities'])
+                    ->where(function ($q) use ($selectedDomains) {
+                        foreach ($selectedDomains as $domain) {
+                            $domain = trim((string)$domain);
+                            if ($domain !== '') {
+                                $q->orWhere('objective_id', 'like', $domain . '%');
+                            }
+                        }
+                    })->get();
+            } else {
+                $objectives = MstObjective::with(['practices.activities'])->get();
+            }
+
+            // Fetch Target Capability for matching assessment year (if available)
+            $targetCapabilityMap = [];
+            $assessmentYear = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? null;
+            if ($assessmentYear) {
+                $targetCapability = TargetCapability::where('user_id', $evaluation->user_id)
+                    ->where('tahun', (int) $assessmentYear)
+                    ->latest('updated_at')
+                    ->first();
+
+                if ($targetCapability) {
+                    $fields = [
+                        'EDM01','EDM02','EDM03','EDM04','EDM05',
+                        'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
+                        'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
+                        'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
+                        'MEA01','MEA02','MEA03','MEA04',
+                    ];
+                    foreach ($fields as $field) {
+                        $targetCapabilityMap[$field] = $targetCapability->$field !== null ? (int) $targetCapability->$field : null;
+                    }
+                }
+            }
+
+            return view('assessment-eval.report', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'targetCapabilityMap'));
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to load report: ' . $e->getMessage()]);
         }
     }
 

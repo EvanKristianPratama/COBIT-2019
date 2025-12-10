@@ -87,16 +87,10 @@
 <div class="container">
   <div class="row g-4 justify-content-center">
     <div class="col-md-9">
-      <div class="card shadow-sm rounded-3 overflow-hidden">
-        <div class="card-header bg-primary text-white py-3">
-          <div class="d-flex align-items-center">
-            <h3 class="mb-0 flex-grow-1 text-center text-md-start">COBIT 2019 Design Toolkit</h3>
-            <a href="{{ route('home') }}" class="home-btn btn btn-sm ms-3" aria-label="Kembali ke Home">
-              <span class="d-flex align-items-center">
-                <i class="fas fa-home me-2"></i>
-                <span class="fw-semibold">Kembali ke Home</span>
-              </span>
-            </a>
+      <div class="card shadow-sm rounded-3 overflow-hidden cobit-card">
+        <div class="card-header cobit-hero text-white py-3">
+          <div class="d-flex align-items-center justify-content-between gap-3">
+            <h3 class="mb-0 text-center text-md-start">COBIT 2019 Design Toolkit</h3>
           </div>
         </div>
 
@@ -119,14 +113,18 @@
               <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
                 @csrf
                 <input type="hidden" name="kode_assessment" value="new">
-                <button type="submit" class="btn btn-primary btn-sm">
+                <button type="submit" class="btn btn-primary btn-sm cobit-btn">
                   <i class="fas fa-plus me-1"></i> Buat Design Factor
                 </button>
               </form>
 
-              <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#quickJoinBox" aria-expanded="false">
+              <button class="btn btn-outline-secondary btn-sm cobit-btn-outline" data-bs-toggle="collapse" data-bs-target="#quickJoinBox" aria-expanded="false">
                 <i class="fas fa-sign-in-alt me-1"></i> Join Design Factor
               </button>
+
+              <a href="{{ route('target-capability.edit') }}" class="btn btn-info btn-sm text-white">
+                <i class="fas fa-bullseye me-1"></i> Target Capability
+              </a>
 
             </div>
 
@@ -138,7 +136,7 @@
                     <input name="kode_assessment" type="text" class="form-control form-control-sm" placeholder="Masukkan kode assessment" required>
                   </div>
                   <div class="col-4 d-grid">
-                    <button class="btn btn-sm btn-primary">Join</button>
+                    <button class="btn btn-sm btn-primary cobit-btn">Join</button>
                   </div>
                 </form>
               </div>
@@ -173,7 +171,7 @@
                                 <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
                                   @csrf
                                   <input type="hidden" name="kode_assessment" value="{{ $assessment->kode_assessment }}">
-                                  <button class="btn btn-sm btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
+                                    <button class="btn btn-sm btn-success cobit-btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
                                 </form>
                               </div>
                             </div>
@@ -211,7 +209,7 @@
                                     <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
                                       @csrf
                                       <input type="hidden" name="kode_assessment" value="{{ $assessment->kode_assessment }}">
-                                      <button class="btn btn-sm btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
+                                      <button class="btn btn-sm btn-success cobit-btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
                                     </form>
                                   </div>
                                 </div>
@@ -242,7 +240,7 @@
                           <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
                             @csrf
                             <input type="hidden" name="kode_assessment" value="{{ $assessment->kode_assessment }}">
-                            <button class="btn btn-sm btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
+                            <button class="btn btn-sm btn-success cobit-btn-success"><i class="fas fa-sign-in-alt me-1"></i>Masuk</button>
                           </form>
                         </div>
                       </div>
@@ -266,7 +264,98 @@
   </div>
 </div>
 
+  <!-- Floating Home Button -->
+  <div class="cobit-floating-actions">
+    <a href="{{ route('home') }}" class="floating-btn" aria-label="Home">
+      <i class="fas fa-home me-2"></i>
+      <span>Home</span>
+    </a>
+  </div>
+
 <style>
+  .cobit-card {
+    border: 1px solid #e1e6f5;
+    box-shadow: 0 22px 45px rgba(14,33,70,0.08);
+  }
+
+  .cobit-hero {
+    background: linear-gradient(135deg,#081a3d,#0f2b5c);
+    border: none;
+  }
+
+  .cobit-card .card-body {
+    background: #f9fbff;
+  }
+
+  .cobit-btn {
+    background: linear-gradient(135deg,#0f73c9,#0f2b5c);
+    border: none;
+    color: #fff;
+    box-shadow: 0 10px 22px rgba(15,106,217,0.18);
+  }
+
+  .cobit-btn-outline {
+    border: 1px solid #0f73c9;
+    color: #0f73c9;
+    background: #fff;
+  }
+
+  .cobit-btn-outline:hover {
+    background: rgba(15,115,201,0.08);
+    color: #0f2b5c;
+  }
+
+  .cobit-btn-success {
+    background: linear-gradient(135deg,#1fb981,#0f7a55);
+    border: none;
+    color: #fff;
+    box-shadow: 0 10px 22px rgba(16,122,85,0.16);
+  }
+
+  .cobit-floating-actions {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 0.75rem;
+    z-index: 1050;
+  }
+
+  .floating-btn {
+    background: #fff;
+    color: #0f2b5c;
+    border: 1px solid rgba(15,43,92,0.15);
+    border-radius: 999px;
+    padding: 0.65rem 1.4rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    box-shadow: 0 12px 32px rgba(15,106,217,0.2);
+  }
+
+  .floating-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 36px rgba(12,37,78,0.33);
+  }
+
+  .floating-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 12px 20px rgba(12,37,78,0.24);
+  }
+
+  @media (max-width: 576px) {
+    .cobit-floating-actions {
+      right: 12px;
+      left: 12px;
+      justify-content: flex-end;
+    }
+    .floating-btn {
+      padding: 0.55rem 1rem;
+    }
+  }
+
   /* kalender dihapus => gaya terkait dihapus/dirapikan */
   .home-btn {
     --accent: #0d6efd; /* bootstrap primary */
