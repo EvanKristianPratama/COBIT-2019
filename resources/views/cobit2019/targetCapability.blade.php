@@ -15,6 +15,7 @@
 
     $flatCodes = collect($domains)->flatten()->values()->all();
     $totalFields = $totalFields ?? (count($flatCodes) ?: 40);
+    $allTargets = collect($allTargets ?? []);
     $title = 'Target Capability & Maturity';
     $target = $target ?? null;
 
@@ -133,6 +134,78 @@
                     <button type="submit" class="btn btn-primary cobit-btn">Simpan Target</button>
                 </div>
             </form>
+
+            {{-- Riwayat Target per Tahun (side-by-side) --}}
+            @if($allTargets->count() > 0)
+                @php
+                    $years = $allTargets->pluck('tahun')->unique()->values();
+                    // hitung rata-rata per tahun dengan hanya nilai yang terisi
+                    $avgPerYear = [];
+                    foreach ($years as $yr) {
+                        $records = $allTargets->where('tahun', $yr);
+                        $sum = 0; $count = 0;
+                        foreach ($records as $rec) {
+                            foreach ($flatCodes as $code) {
+                                $val = $rec->$code;
+                                if ($val !== null && $val !== '') { $sum += (float)$val; $count++; }
+                            }
+                        }
+                        $avgPerYear[$yr] = $count > 0 ? number_format($sum / $count, 2) : '0.00';
+                    }
+                @endphp
+
+                <div class="mt-5">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="mb-0 fw-bold">Riwayat Target per Tahun</h5>
+                        <small class="text-muted">Nilai kosong ditampilkan sebagai '-'</small>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle cobit-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 18%">Gamo</th>
+                                    @foreach($years as $yr)
+                                        <th class="text-center" style="min-width: 90px;">{{ $yr }}</th>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="text-muted small">Aksi</th>
+                                    @foreach($years as $yr)
+                                        @php $rec = $allTargets->firstWhere('tahun', $yr); @endphp
+                                        <th class="text-center">
+                                            @if($rec)
+                                                <a href="{{ route('target-capability.edit', ['id' => $rec->target_id]) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                            @else
+                                                <span class="text-muted small">-</span>
+                                            @endif
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($flatCodes as $code)
+                                    <tr>
+                                        <td class="text-uppercase fw-semibold">{{ $code }}</td>
+                                        @foreach($years as $yr)
+                                            @php
+                                                $rec = $allTargets->firstWhere('tahun', $yr);
+                                                $val = $rec->$code ?? null;
+                                            @endphp
+                                            <td class="text-center">{{ ($val === null || $val === '') ? '-' : $val }}</td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                                <tr class="table-secondary fw-semibold">
+                                    <td>Rata-rata Terisi</td>
+                                    @foreach($years as $yr)
+                                        <td class="text-center">{{ $avgPerYear[$yr] ?? '0.00' }}</td>
+                                    @endforeach
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>

@@ -34,7 +34,12 @@ class TargetCapabilityController extends Controller
         $maxMap = array_combine(self::FIELDS, self::DATA_MAXIMUM);
         $totalFields = count(self::FIELDS);
 
-        return view('cobit2019.targetCapability', compact('target', 'maxMap', 'totalFields'));
+        // ambil seluruh target user untuk ditampilkan berdampingan per tahun
+        $allTargets = TargetCapability::where('user_id', Auth::id())
+            ->orderBy('tahun', 'desc')
+            ->get();
+
+        return view('cobit2019.targetCapability', compact('target', 'maxMap', 'totalFields', 'allTargets'));
     }
 
     public function save(Request $request)
