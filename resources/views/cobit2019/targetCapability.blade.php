@@ -111,7 +111,7 @@
                                                class="form-control form-control-sm capability-input"
                                                id="{{ $code }}" name="{{ $code }}"
                                                min="0" max="{{ (int)$maxValue }}" step="1"
-                                               value="{{ $value }}" placeholder="0-{{ $maxValue }}">
+                                               value="{{ $value }}" placeholder="-">
                                     </td>
                                 </tr>
                             @endforeach
@@ -153,18 +153,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputs = Array.from(document.querySelectorAll('.capability-input'));
     const totalCell = document.getElementById('totalTargetCell');
     const totalInput = document.getElementById('total_target_input');
-    const TOTAL_FIELDS = Number({{ json_encode($totalFields) }}) || 40;
 
     function sumValues() {
         return inputs.reduce((acc, el) => {
             const v = Number(el.value);
-            return acc + (Number.isFinite(v) ? v : 0);
-        }, 0);
+            if (Number.isFinite(v)) {
+                acc.total += v;
+                acc.count += 1;
+            }
+            return acc;
+        }, { total: 0, count: 0 });
     }
 
     function updateTotal() {
-        const total = sumValues();
-        const avg = TOTAL_FIELDS > 0 ? (total / TOTAL_FIELDS) : 0;
+        const { total, count } = sumValues();
+        const avg = count > 0 ? (total / count) : 0;
         const display = Number.isFinite(avg) ? avg.toFixed(2) : '0.00';
         if (totalCell) totalCell.textContent = display;
         if (totalInput) totalInput.value = display;
