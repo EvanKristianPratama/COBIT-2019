@@ -257,6 +257,10 @@ Route::get('/assessment-eval/{evalId}', [AssessmentEvalController::class, 'showA
      ->name('assessment-eval.show')
      ->middleware('auth');
 
+Route::post('/assessment-eval/{evalId}/update-scope', [AssessmentEvalController::class, 'updateScope'])
+     ->name('assessment-eval.update-scope')
+     ->middleware('auth');
+
 Route::post('/assessment-eval/{evalId}/save', [AssessmentEvalController::class, 'save'])
      ->name('assessment-eval.save')
      ->middleware('auth');

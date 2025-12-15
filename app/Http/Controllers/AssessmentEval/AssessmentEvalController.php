@@ -302,8 +302,11 @@ class AssessmentEvalController extends Controller
                 }
             }
 
+            // Pass all objectives for scope editing modal
+            $allObjectives = MstObjective::all();
+
             // Pass isOwner to the view. Non-owners may view the full content in read-only mode.
-            return view('assessment-eval.show', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'evidences', 'targetCapabilityMap'));
+            return view('assessment-eval.show', compact('objectives', 'allObjectives', 'evalId', 'evaluation', 'isOwner', 'evidences', 'targetCapabilityMap'));
         } catch (\Exception $e) {
             Log::error("Failed to load assessment", [
                 'eval_id' => $evalId,
@@ -313,6 +316,71 @@ class AssessmentEvalController extends Controller
             ]);
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Failed to load assessment: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Update the scope (selected objectives) for an assessment
+     */
+    public function updateScope(Request $request, $evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+
+            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            if ($evaluation->status === 'finished') {
+                return response()->json(['success' => false, 'message' => 'Assessment is finished'], 403);
+            }
+
+            $selectedScopes = $request->input('scopes', []); // Expecting array of objective IDs like ['EDM01', 'APO02']
+
+            DB::transaction(function () use ($evalId, $selectedScopes) {
+                // Remove existing scope
+                TrsEvalDetail::where('eval_id', $evalId)->delete();
+
+                // Insert new scope
+                $inserts = [];
+                foreach ($selectedScopes as $scope) {
+                    $scope = trim((string)$scope);
+                    if ($scope !== '') {
+                        $inserts[] = [
+                            'eval_id' => $evalId,
+                            'domain_id' => $scope,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ];
+                    }
+                }
+
+                if (!empty($inserts)) {
+                    TrsEvalDetail::insert($inserts);
+                }
+            });
+            
+            // NOTE: We do NOT delete assessment data (TrsActivityeval) for removed scopes.
+            // This is safer. Orphaned data just won't show up in the view because the view filters based on selected scope.
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Scope updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to update scope", [
+                'eval_id' => $evalId,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['success' => false, 'message' => 'Failed to update scope: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get all objectives for the modal (optional helper if needed via AJAX, but passing to view is easier)
+     */
+    public function getObjectives() {
+        return response()->json(MstObjective::select('objective_id', 'objective')->get());
     }
 
     /**
