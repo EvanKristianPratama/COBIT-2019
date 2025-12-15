@@ -4082,14 +4082,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 .sticky-action-btn {
     border-radius: 999px;
-    padding: 0.45rem 1.1rem;
+    padding: 0;
     font-weight: 600;
-    font-size: 0.85rem;
-    width: 170px;
+    font-size: 0 !important; /* Hide text completely in collapsed mode */
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: center; /* Center the icon perfectly */
     box-shadow: 0 10px 24px rgba(15,106,217,0.18);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sticky-action-btn:hover {
+    width: 140px;
+    padding: 0 1.25rem;
+    justify-content: flex-start;
+    font-size: 0.85rem !important; /* Restore text size on hover */
+}
+
+.sticky-action-btn i {
+    font-size: 1.2rem !important; /* Ensure icon stays visible */
+    margin-right: 0 !important;
+    transition: margin 0.3s ease;
+}
+
+.sticky-action-btn:hover i {
+    margin-right: 0.5rem !important;
 }
 
 .sticky-action-btn.btn-light {
