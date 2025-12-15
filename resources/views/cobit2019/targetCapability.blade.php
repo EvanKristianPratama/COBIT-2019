@@ -2,16 +2,14 @@
 
 @section('content')
 @php
-    // Local map of COBIT objectives (fallback jika controller tidak mengirim)
-    // Hanya tampilkan daftar GAMO (tanpa header domain), EDM dihilangkan sesuai permintaan
+    // Local map of COBIT objectives
     $domains = collect($domains ?? [
         'EDM' => ['EDM01','EDM02','EDM03','EDM04','EDM05'],
         'APO' => ['APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14'],
         'BAI' => ['BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11'],
         'DSS' => ['DSS01','DSS02','DSS03','DSS04','DSS05','DSS06'],
         'MEA' => ['MEA01','MEA02','MEA03','MEA04'],
-    ])
-;
+    ]);
 
     $flatCodes = collect($domains)->flatten()->values()->all();
     $totalFields = $totalFields ?? (count($flatCodes) ?: 40);
@@ -19,7 +17,7 @@
     $title = 'Target Capability & Maturity';
     $target = $target ?? null;
 
-    // fallback max map (controller boleh kirimkan $maxMap untuk override)
+    // Max capability map
     $maxMap = $maxMap ?? array_reduce($flatCodes, function ($carry, $c) {
         $carry[$c] = 5; return $carry;
     }, []);
@@ -28,28 +26,19 @@
 <div class="container py-4">
     <div class="card shadow-sm border-0 cobit-card">
         {{-- Header --}}
-        <div class="card-header cobit-hero text-white py-3 d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-0 fw-bold">{{ $title }}</h4>
-                <small class="text-white-50">Set target kapabilitas per tujuan COBIT 2019</small>
-            </div>
+        <div class="card-header cobit-hero text-white py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ $title }}</h4>
+                    <small class="text-white-50">Set target kapabilitas per tujuan COBIT 2019</small>
+                </div>
 
-            <div class="d-flex align-items-center gap-2">
-                <a href="{{ url()->previous() }}" class="home-btn btn btn-sm" aria-label="Kembali">
-                    <span class="d-flex align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ url()->previous() }}" class="btn btn-light btn-sm d-flex align-items-center" aria-label="Kembali">
                         <i class="fas fa-arrow-left me-2"></i>
                         <span class="fw-semibold">Kembali</span>
-                    </span>
-                </a>
-
-                {{-- Form untuk tambah tahun (POST) --}}
-                <form id="addYearForm" action="{{ route('target-capability.addYear') }}" method="POST" class="m-0">
-                    @csrf
-                    <input type="hidden" name="tahun" value="{{ old('tahun', $target->tahun ?? now()->year) }}">
-                    <button type="button" id="addYearBtn" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-calendar-plus me-1"></i> Tambah Tahun
-                    </button>
-                </form>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -61,66 +50,99 @@
                     <input type="hidden" name="target_id" value="{{ $target->target_id }}">
                 @endif
 
-                {{-- Meta --}}
-                <div class="row g-3 mb-3 align-items-end">
-                    <div class="col-md-5">
-                        <label class="form-label fw-semibold">Organisasi</label>
+                {{-- Meta Information --}}
+                <div class="row g-3 mb-4 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-secondary">
+                            <i class="fas fa-building me-1"></i> Organisasi
+                        </label>
                         <input type="text" name="organisasi" class="form-control"
                                value="{{ old('organisasi', $target->organisasi ?? Auth::user()->organisasi ?? '') }}" readonly>
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold">Tahun</label>
+                        <label class="form-label fw-semibold text-secondary">
+                            <i class="fas fa-calendar me-1"></i> Tahun Target
+                        </label>
                         <input type="number" name="tahun" class="form-control" min="2000" max="2099"
                                value="{{ old('tahun', $target->tahun ?? now()->year) }}" required>
                     </div>
 
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">User ID</label>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-secondary">
+                            <i class="fas fa-user me-1"></i> User ID
+                        </label>
                         <input type="number" name="user_id" class="form-control"
                                value="{{ old('user_id', $target->user_id ?? Auth::id()) }}" readonly required>
                     </div>
 
-                    <div class="col-md-2 text-md-end d-none d-md-block">
-                        {{-- duplikat tombol tambah tahun pada layout grid (opsional) --}}
-                        <button type="button" id="addYearBtnInline" class="btn btn-outline-primary btn-sm w-100">
-                            <i class="fas fa-calendar-plus me-1"></i> Tambah Tahun
+                    <div class="col-md-2">
+                        {{-- Add Year Button --}}
+                        <button type="button" id="addYearBtn" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-calendar-plus me-1"></i>
+                            <span class="d-none d-lg-inline">Tahun Baru</span>
+                            <span class="d-inline d-lg-none">Baru</span>
                         </button>
                     </div>
                 </div>
 
-                {{-- Table --}}
+                {{-- Average Display Card --}}
+                <div class="alert alert-info border-0 mb-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-chart-line me-2"></i>
+                        <strong>Rata-rata Target Capability:</strong>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary fs-6 px-3 py-2" id="totalTargetBadge">0.00</span>
+                    </div>
+                </div>
+
+                {{-- Target Capability Table --}}
                 <div class="table-responsive mb-4">
-                    <table class="table table-bordered table-sm align-middle cobit-table">
+                    <table class="table table-bordered table-hover align-middle cobit-table">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 30%">Gamo</th>
-                                <th class="text-center">Target</th>
+                                <th style="width: 35%" class="fw-bold">GAMO</th>
+                                <th class="text-center fw-bold">Target Level</th>
+                                <th class="text-center fw-bold" style="width: 20%">Max Level</th>
                             </tr>
                         </thead>
 
                         <tbody>
+                            @php $lastDomain = null; @endphp
                             @foreach($flatCodes as $code)
                                 @php
                                     $value = old($code, $target->$code ?? '');
                                     $maxValue = $maxMap[$code] ?? 5;
+                                    $currentDomain = preg_replace('/\d+/', '', $code);
+                                    $showDomainHeader = $currentDomain !== $lastDomain;
+                                    $lastDomain = $currentDomain;
                                 @endphp
+                                
+                                @if($showDomainHeader)
+                                    <tr class="table-secondary">
+                                        <td colspan="3" class="fw-bold text-uppercase py-2">
+                                            <i class="fas fa-folder me-2"></i>{{ $currentDomain }}
+                                        </td>
+                                    </tr>
+                                @endif
+                                
                                 <tr>
-                                    <td class="text-uppercase fw-semibold">{{ $code }}</td>
-                                    <td>
-                                        <input type="number"
-                                               class="form-control form-control-sm capability-input"
-                                               id="{{ $code }}" name="{{ $code }}"
-                                               min="0" max="{{ (int)$maxValue }}" step="1"
-                                               value="{{ $value }}" placeholder="-">
+                                    <td class="fw-semibold text-primary">{{ $code }}</td>
+                                    <td class="text-center">
+                                        <select class="form-select form-select-sm capability-input text-center"
+                                                id="{{ $code }}" name="{{ $code }}">
+                                            <option value="">-</option>
+                                            @for($i = 0; $i <= $maxValue; $i++)
+                                                <option value="{{ $i }}" {{ $value == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                            @endfor
+                                        </select>
+                                    </td>
+                                    <td class="text-center text-muted">
+                                        <span class="badge bg-secondary">{{ $maxValue }}</span>
                                     </td>
                                 </tr>
                             @endforeach
-
-                            <tr class="table-secondary fw-semibold">
-                                <td>Total</td>
-                                <td id="totalTargetCell" class="text-center">0.00</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -128,18 +150,22 @@
                 {{-- Hidden input untuk total target --}}
                 <input type="hidden" name="total_target" id="total_target_input" value="{{ old('total_target', $target->total_target ?? '') }}">
 
-                {{-- Actions --}}
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="reset" class="btn btn-outline-secondary cobit-btn-outline">Reset</button>
-                    <button type="submit" class="btn btn-primary cobit-btn">Simpan Target</button>
+                {{-- Action Buttons --}}
+                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                    <button type="reset" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-1"></i> Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Simpan Target
+                    </button>
                 </div>
             </form>
 
-            {{-- Riwayat Target per Tahun (side-by-side) --}}
+            {{-- Riwayat Target per Tahun --}}
             @if($allTargets->count() > 0)
                 @php
-                    $years = $allTargets->pluck('tahun')->unique()->values();
-                    // hitung rata-rata per tahun dengan hanya nilai yang terisi
+                    $years = $allTargets->pluck('tahun')->unique()->sort()->values();
+                    // Calculate average per year
                     $avgPerYear = [];
                     foreach ($years as $yr) {
                         $records = $allTargets->where('tahun', $yr);
@@ -155,26 +181,35 @@
                 @endphp
 
                 <div class="mt-5">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <h5 class="mb-0 fw-bold">Riwayat Target per Tahun</h5>
+                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-history me-2 text-primary"></i>
+                            Riwayat Target per Tahun
+                        </h5>
                         <small class="text-muted">Nilai kosong ditampilkan sebagai '-'</small>
                     </div>
+                    
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm align-middle cobit-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 18%">Gamo</th>
+                                    <th style="width: 15%" class="fw-bold">GAMO</th>
                                     @foreach($years as $yr)
-                                        <th class="text-center" style="min-width: 90px;">{{ $yr }}</th>
+                                        <th class="text-center fw-bold" style="min-width: 90px;">{{ $yr }}</th>
                                     @endforeach
                                 </tr>
-                                <tr>
-                                    <th class="text-muted small">Aksi</th>
+                                <tr class="table-active">
+                                    <th class="text-muted small">
+                                        <i class="fas fa-cog me-1"></i>Aksi
+                                    </th>
                                     @foreach($years as $yr)
                                         @php $rec = $allTargets->firstWhere('tahun', $yr); @endphp
                                         <th class="text-center">
                                             @if($rec)
-                                                <a href="{{ route('target-capability.edit', ['id' => $rec->target_id]) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                                <a href="{{ route('target-capability.edit', ['id' => $rec->target_id]) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit me-1"></i>Edit
+                                                </a>
                                             @else
                                                 <span class="text-muted small">-</span>
                                             @endif
@@ -183,22 +218,48 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @php $lastDomain = null; @endphp
                                 @foreach($flatCodes as $code)
+                                    @php
+                                        $currentDomain = preg_replace('/\d+/', '', $code);
+                                        $showDomainHeader = $currentDomain !== $lastDomain;
+                                        $lastDomain = $currentDomain;
+                                    @endphp
+                                    
+                                    @if($showDomainHeader)
+                                        <tr class="table-secondary">
+                                            <td colspan="{{ count($years) + 1 }}" class="fw-bold text-uppercase py-1 small">
+                                                {{ $currentDomain }}
+                                            </td>
+                                        </tr>
+                                    @endif
+                                    
                                     <tr>
-                                        <td class="text-uppercase fw-semibold">{{ $code }}</td>
+                                        <td class="fw-semibold text-primary">{{ $code }}</td>
                                         @foreach($years as $yr)
                                             @php
                                                 $rec = $allTargets->firstWhere('tahun', $yr);
                                                 $val = $rec->$code ?? null;
                                             @endphp
-                                            <td class="text-center">{{ ($val === null || $val === '') ? '-' : $val }}</td>
+                                            <td class="text-center">
+                                                @if($val === null || $val === '')
+                                                    <span class="text-muted">-</span>
+                                                @else
+                                                    <span class="badge bg-light text-dark">{{ $val }}</span>
+                                                @endif
+                                            </td>
                                         @endforeach
                                     </tr>
                                 @endforeach
-                                <tr class="table-secondary fw-semibold">
-                                    <td>Rata-rata Terisi</td>
+                                
+                                <tr class="table-primary fw-semibold">
+                                    <td>
+                                        <i class="fas fa-calculator me-2"></i>Rata-rata Terisi
+                                    </td>
                                     @foreach($years as $yr)
-                                        <td class="text-center">{{ $avgPerYear[$yr] ?? '0.00' }}</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary">{{ $avgPerYear[$yr] ?? '0.00' }}</span>
+                                        </td>
                                     @endforeach
                                 </tr>
                             </tbody>
@@ -210,73 +271,103 @@
     </div>
 </div>
 
-{{-- Styles (lokal, ringkas dan terpisah tanggung jawabnya) --}}
+{{-- Hidden Form for Add Year --}}
+<form id="addYearForm" action="{{ route('target-capability.addYear') }}" method="POST" style="display: none;">
+    @csrf
+    <input type="hidden" name="tahun" value="{{ old('tahun', $target->tahun ?? now()->year) }}">
+</form>
+
+{{-- Styles --}}
 <style>
-    .cobit-card { border: 1px solid #e1e6f5; box-shadow: 0 18px 35px rgba(14,33,70,0.08); }
-    .cobit-hero { background: linear-gradient(135deg,#081a3d,#0f2b5c); border: none; }
-    .cobit-form { background: #f9fbff; border-radius: 0.75rem; }
-    .cobit-table td, .cobit-table th { vertical-align: middle; }
-    .cobit-table input { max-width: 160px; }
-    .home-btn { --accent: #0d6efd; background: linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); color: var(--accent); border-radius: 999px; padding:.38rem .9rem; display:inline-flex; align-items:center; gap:.4rem; text-decoration:none; }
+    .cobit-card {
+        border: 1px solid #e1e6f5;
+        box-shadow: 0 18px 35px rgba(14, 33, 70, 0.08);
+        border-radius: 0.75rem;
+    }
+    
+    .cobit-hero {
+        background: linear-gradient(135deg, #081a3d, #0f2b5c);
+        border: none;
+        border-radius: 0.75rem 0.75rem 0 0;
+    }
+    
+    .cobit-form {
+        background: #f9fbff;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+    }
+    
+    .cobit-table td,
+    .cobit-table th {
+        vertical-align: middle;
+    }
+    
+    .capability-input {
+        max-width: 120px;
+        margin: 0 auto;
+        font-weight: 600;
+        text-align: center;
+        text-align-last: center; /* For select dropdown */
+    }
+    
+    .capability-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
 </style>
 
-{{-- Script: bersih, hanya tangani perhitungan rata-rata dan tombol tambah tahun --}}
+{{-- Script --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const inputs = Array.from(document.querySelectorAll('.capability-input'));
-    const totalCell = document.getElementById('totalTargetCell');
+    const selects = Array.from(document.querySelectorAll('.capability-input'));
+    const totalBadge = document.getElementById('totalTargetBadge');
     const totalInput = document.getElementById('total_target_input');
 
-    function sumValues() {
-        return inputs.reduce((acc, el) => {
-            const v = Number(el.value);
-            if (Number.isFinite(v)) {
-                acc.total += v;
+    // Calculate sum and count
+    function calculateTotal() {
+        return selects.reduce((acc, el) => {
+            const value = el.value === '' ? null : Number(el.value);
+            if (value !== null && Number.isFinite(value) && value >= 0) {
+                acc.sum += value;
                 acc.count += 1;
             }
             return acc;
-        }, { total: 0, count: 0 });
+        }, { sum: 0, count: 0 });
     }
 
+    // Update display
     function updateTotal() {
-        const { total, count } = sumValues();
-        const avg = count > 0 ? (total / count) : 0;
-        const display = Number.isFinite(avg) ? avg.toFixed(2) : '0.00';
-        if (totalCell) totalCell.textContent = display;
-        if (totalInput) totalInput.value = display;
+        const { sum, count } = calculateTotal();
+        const average = count > 0 ? (sum / count) : 0;
+        const displayValue = Number.isFinite(average) ? average.toFixed(2) : '0.00';
+        
+        if (totalBadge) totalBadge.textContent = displayValue;
+        if (totalInput) totalInput.value = displayValue;
     }
 
-    // clamp on blur and update
-    inputs.forEach(i => {
-        i.addEventListener('input', updateTotal);
-        i.addEventListener('blur', (e) => {
-            const el = e.target;
-            const min = Number(el.getAttribute('min')) || 0;
-            const max = Number(el.getAttribute('max')) || 5;
-            let v = Number(el.value);
-            if (!Number.isFinite(v)) { el.value = ''; updateTotal(); return; }
-            if (v < min) v = min;
-            if (v > max) v = max;
-            el.value = String(Math.round(v));
-            updateTotal();
-        });
+    // Listen to changes
+    selects.forEach(select => {
+        select.addEventListener('change', updateTotal);
     });
 
+    // Initialize total
     updateTotal();
 
-    // Add Year: submit hidden form (exists in header)
-    const addYearForm = document.getElementById('addYearForm');
+    // Add Year Button Handler
     const addYearBtn = document.getElementById('addYearBtn');
-    const addYearBtnInline = document.getElementById('addYearBtnInline');
+    const addYearForm = document.getElementById('addYearForm');
 
-    function submitAddYear() {
-        if (!addYearForm) { alert('Form tambahkan tahun tidak ditemukan. Muat ulang halaman.'); return; }
-        if (!confirm('Buat tahun baru (salin organisasi & user)?')) return;
-        addYearForm.submit();
+    if (addYearBtn && addYearForm) {
+        addYearBtn.addEventListener('click', function() {
+            if (confirm('Buat target untuk tahun baru?\n\nData organisasi dan user akan disalin dari tahun ini.')) {
+                addYearForm.submit();
+            }
+        });
     }
-
-    if (addYearBtn) addYearBtn.addEventListener('click', submitAddYear);
-    if (addYearBtnInline) addYearBtnInline.addEventListener('click', submitAddYear);
 });
 </script>
 @endsection
