@@ -42,65 +42,35 @@
 
             @php
               use Illuminate\Support\Str;
-              // 1) Kumpulkan semua kode Design Factor unik dari DF5–DF10 (menggunakan record pertama dari masing-masing relasi)
-              $allCodes = collect();
+              
+              // Daftar lengkap 40 kode COBIT 2019 (1-indexed)
+              $cobitCodes = [
+                '',  // index 0 (tidak digunakan)
+                'EDM01','EDM02','EDM03','EDM04','EDM05',
+                'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
+                'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
+                'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
+                'MEA01','MEA02','MEA03','MEA04'
+              ];
+
+              // Kumpulkan kode yang ada dari database (jika ada)
+              $existingCodes = collect();
               for ($n = 5; $n <= 10; $n++) {
-                $ris = $assessment->{'df' . $n . 'RelativeImportances'}->first() ?? collect();
-                foreach ($ris->toArray() as $col => $val) {
-                  if (Str::startsWith($col, "r_df{$n}_")) {
-                    $allCodes->push(Str::after($col, "r_df{$n}_"));
+                $ris = $assessment->{'df' . $n . 'RelativeImportances'}->first();
+                if ($ris) {
+                  foreach ($ris->toArray() as $col => $val) {
+                    if (Str::startsWith($col, "r_df{$n}_")) {
+                      $existingCodes->push(Str::after($col, "r_df{$n}_"));
+                    }
                   }
                 }
               }
-              $allCodes = $allCodes->unique()->sort()->values();
 
-              // Daftar lengkap kode COBIT 2019 untuk label
-              $cobitCodes = [
-                '',
-                'EDM01',
-                'EDM02',
-                'EDM03',
-                'EDM04',
-                'EDM05',
-                'APO01',
-                'APO02',
-                'APO03',
-                'APO04',
-                'APO05',
-                'APO06',
-                'APO07',
-                'APO08',
-                'APO09',
-                'APO10',
-                'APO11',
-                'APO12',
-                'APO13',
-                'APO14',
-                'BAI01',
-                'BAI02',
-                'BAI03',
-                'BAI04',
-                'BAI05',
-                'BAI06',
-                'BAI07',
-                'BAI08',
-                'BAI09',
-                'BAI10',
-                'BAI11',
-                'DSS01',
-                'DSS02',
-                'DSS03',
-                'DSS04',
-                'DSS05',
-                'DSS06',
-                'MEA01',
-                'MEA02',
-                'MEA03',
-                'MEA04'
-              ];
+              // Gunakan semua 40 kode (index 1-40) sebagai default, agar tabel selalu muncul
+              // Bahkan ketika belum ada data DF sama sekali
+              $allCodes = collect(range(1, 40));
 
-              // 2) Berat masing-masing dimensi (bisa diisi user)
-              // Ambil bobot terakhir dari DB (savedWeights3) atau session default
+              // Berat masing-masing dimensi (bisa diisi user)
               $default3 = [1,1,1,1,1,1];
               $weightsSource3 = $savedWeights3 ?? session('step3.weights', $default3);
               $weights = old('weight', $weightsSource3);
@@ -158,8 +128,10 @@
                           @endphp
                           @for ($n = 5; $n <= 10; $n++)
                             @php
-                              $rec = $assessment->{'df' . $n . 'RelativeImportances'}->firstWhere('id', auth()->id());
+                              // Get first record from relation (already scoped to current assessment)
+                              $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
                               $col = "r_df{$n}_{$code}";
+                              // Default value: 0 if Relative Importance not yet set (KISS principle)
                               $val = ($rec && isset($rec->$col)) ? $rec->$col : 0;
                               $values[] = $val;
                               $cls = $val < 0 ? 'bg-danger bg-opacity-10' : ($val > 0 ? 'bg-success bg-opacity-10' : '');
@@ -186,25 +158,19 @@
             </div>
             <p>
               @php
-                // Ambil semua kode GMO (sama seperti allCodes tapi untuk DF1–10)
-                $allCodes = collect();
-                for ($n = 1; $n <= 10; $n++) {
-                  $ris = $assessment->{'df' . $n . 'RelativeImportances'}->first() ?? collect();
-                  foreach ($ris->toArray() as $col => $val) {
-                    if (Str::startsWith($col, "r_df{$n}_")) {
-                      $allCodes->push(Str::after($col, "r_df{$n}_"));
-                    }
-                  }
-                }
-                $allCodes = $allCodes->unique()->sort()->values();
+                // Gunakan semua 40 kode COBIT (1-40) untuk aggregasi DF1-10
+                // Sama seperti di tabel utama, untuk konsistensi
+                $allCodesForAggregation = collect(range(1, 40));
 
                 // Kumpulkan satu array per code, DF1–DF10
                 $AllRelImps = [];
-                foreach ($allCodes as $code) {
+                foreach ($allCodesForAggregation as $code) {
                   $arr = [];
                   for ($n = 1; $n <= 10; $n++) {
-                    $rec = $assessment->{'df' . $n . 'RelativeImportances'}->firstWhere('id', auth()->id());
+                    // Get first record from relation (already scoped to current assessment)
+                    $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
                     $col = "r_df{$n}_{$code}";
+                    // Default value: 0 if Relative Importance not yet set (KISS principle)
                     $arr[] = ($rec && isset($rec->$col)) ? $rec->$col : 0;
                   }
                   $AllRelImps[$code] = $arr;
@@ -513,21 +479,82 @@
       // ensure defaults for allRelImps (if server returned empty)
       ensureRelImpsDefault();
 
-      // bind dirty flag
+      // bind dirty flag & Auto-save
+      let saveInterval;
+      
+      // Indikator status save
+      const statusIndicator = document.createElement('span');
+      statusIndicator.className = 'ms-2 text-muted small';
+      statusIndicator.style.transition = 'opacity 0.5s';
+      const headerTitle = document.querySelector('.card-header h5');
+      if(headerTitle) headerTitle.appendChild(statusIndicator);
+
+      function showSavingStatus(status) {
+        if (status === 'saving') {
+          statusIndicator.textContent = 'Saving...';
+          statusIndicator.className = 'ms-2 text-warning small';
+          statusIndicator.style.opacity = '1';
+        } else if (status === 'saved') {
+          statusIndicator.textContent = 'All changes saved';
+          statusIndicator.className = 'ms-2 text-success small';
+          setTimeout(() => { statusIndicator.style.opacity = '0'; }, 3000);
+        } else if (status === 'error') {
+          statusIndicator.textContent = 'Error saving';
+          statusIndicator.className = 'ms-2 text-danger small';
+        }
+      }
+
+      function autoSave3() {
+        calculateRefinedScope(); // update inputs
+        // Clear dirty flag karena kita sedang saving otomatis
+        clearDirty3();
+
+        const form = document.getElementById('step3Form');
+        const formData = new FormData(form);
+
+        showSavingStatus('saving');
+
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            showSavingStatus('saved');
+            console.log(data.message);
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          showSavingStatus('error');
+          // Jika error, kembalikan flag dirty agar user aware
+          markDirty3();
+        });
+      }
+
       weightInputs.forEach(i => i.addEventListener('input', function () {
         markDirty3();
         calculateRefinedScope();
+        
+        // Debounce auto-save
+        clearTimeout(saveInterval);
+        saveInterval = setTimeout(autoSave3, 1000);
       }));
 
       // initial calc
       calculateRefinedScope();
 
-      // simpan sementara
+      // simpan sementara manual
       if (save3Button) {
         save3Button.addEventListener('click', () => {
           // calculate & set hidden inputs
           calculateRefinedScope();
-          clearDirty3();
+          clearDirty3(); // manual save also clears dirty
           document.getElementById('step3Form').submit();
         });
       }

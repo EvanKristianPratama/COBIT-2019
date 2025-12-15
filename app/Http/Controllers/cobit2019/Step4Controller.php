@@ -42,15 +42,25 @@ class Step4Controller extends Controller
                     ->orderBy('id','desc')
                     ->first();
 
-        // gunakan values dari DB bila ada, fallback ke session / empty array
+        // gunakan values dari DB bila ada, fallback ke session, kemudian default
+        $defaultWeights2 = [1, 1, 1, 1];
+        $defaultWeights3 = [1, 1, 1, 1, 1, 1];
+
+        $weights2 = is_array($dfStep2->weights ?? null) ? $dfStep2->weights : session('step2.weights', []);
+        $weights3 = is_array($dfStep3->weights ?? null) ? $dfStep3->weights : session('step3.weights', []);
+
+        // Ensure not empty
+        if (empty($weights2)) $weights2 = $defaultWeights2;
+        if (empty($weights3)) $weights3 = $defaultWeights3;
+
         $step2 = [
-            'weights' => is_array($dfStep2->weights ?? null) ? $dfStep2->weights : session('step2.weights', []),
+            'weights' => $weights2,
             'relative_importances' => session('step2.relative_importances', []), // kept in session if needed
             'totals' => session('step2.totals', []),
         ];
 
         $step3 = [
-            'weights' => is_array($dfStep3->weights ?? null) ? $dfStep3->weights : session('step3.weights', []),
+            'weights' => $weights3,
             'refined_scopes' => session('step3.refined_scopes', []),
         ];
 

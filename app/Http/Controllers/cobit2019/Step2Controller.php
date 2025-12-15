@@ -9,78 +9,99 @@ use App\Models\DfStep2;
 
 class Step2Controller extends Controller
 {
+    private const DEFAULT_WEIGHTS = [1, 1, 1, 1];
+    private const DF_RANGE = [1, 2, 3, 4]; // DF1 to DF4
+
+    /**
+     * Display Step 2 summary page
+     */
     public function index(Request $request)
     {
-
-        // Ambil assessment_id dari session
-        $assessmentId = session('assessment_id');
+        $assessmentId = $this->getAssessmentId($request);
         if (!$assessmentId) {
             return redirect()->back()->with('error', 'Assessment ID tidak ditemukan.');
         }
-        
-        // Jika user adalah guest, langsung gunakan assessment ID 1
-        if ($request->user()->role === 'guest') {
-            $assessmentId = 1;
-        }
-        
-        // Ambil data Assessment beserta relative importance untuk DF1 sampai DF4
-        $assessment = Assessment::with([
-            'df1RelativeImportances' => function($query) {
-                $query->latest();
-            },
-            'df2RelativeImportances' => function($query) {
-                $query->latest();
-            },
-            'df3RelativeImportances' => function($query) {
-                $query->latest();
-            },
-            'df4RelativeImportances' => function($query) {
-                $query->latest();
-            },
-        ])->where('assessment_id', $assessmentId)->first();
 
+        $assessment = $this->getAssessmentWithRelativeImportances($assessmentId);
         if (!$assessment) {
             return redirect()->back()->with('error', 'Data Assessment tidak ditemukan.');
         }
 
-        // Ambil saved weights dari tabel df_step2 untuk current user (jika ada)
-        $dfStep2 = DfStep2::where('assessment_id', $assessmentId)
-                    ->where('user_id', auth()->id())
-                    ->orderBy('created_at', 'desc')
-                    ->orderBy('id', 'desc')
-                    ->first();
-
-        // default weights jika belum ada
-        $defaultWeights = [1,1,1,1];
-        $savedWeights = is_array($dfStep2->weights ?? null) ? $dfStep2->weights : $defaultWeights;
-
-        // Gunakan hanya ID user yang sedang login.
+        $savedWeights = $this->getSavedWeights($assessmentId);
         $userIds = collect([auth()->id()]);
 
-        // Oper data ke view summary (kirim $savedWeights)
         return view('cobit2019.step2.step2sumaryblade', compact('assessment', 'userIds', 'savedWeights'));
     }
 
-  public function storeStep2(Request $request)
-{
-    $request->validate([
-        'weights'              => 'required|json',
-    ]);
+    /**
+     * Store Step 2 data
+     */
+    public function storeStep2(Request $request)
+    {
+        $request->validate([
+            'weights' => 'required|json',
+        ]);
 
-    $assessmentId = session('assessment_id') ?? $request->input('assessment_id');
-    $userId = Auth::id();
+        $assessmentId = session('assessment_id') ?? $request->input('assessment_id');
+        $userId = Auth::id();
+        $weights = json_decode($request->input('weights'), true);
 
-    $weights = json_decode($request->input('weights'), true);
+        DfStep2::updateOrCreate(
+            ['assessment_id' => $assessmentId, 'user_id' => $userId],
+            ['weights' => $weights]
+        );
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status' => 'success', 
+                'message' => 'Data Step 2 berhasil disimpan otomatis.'
+            ]);
+        }
 
-    DfStep2::updateOrCreate(
-        ['assessment_id' => $assessmentId, 'user_id' => $userId],
-        [
-            'weights' => $weights,
-        ]
-    );
-
-    return redirect()->route('step2.index')->with('success', 'Data Step 2 berhasil disimpan.');
+        return redirect()->route('step2.index')->with('success', 'Data Step 2 berhasil disimpan.');
     }
 
+    /**
+     * Get assessment ID from session or guest fallback
+     */
+    private function getAssessmentId(Request $request): ?int
+    {
+        // Guest users always use assessment ID 1
+        if ($request->user()->role === 'guest') {
+            return 1;
+        }
+
+        return session('assessment_id');
+    }
+
+    /**
+     * Get assessment with all relative importances for DF1-DF4
+     */
+    private function getAssessmentWithRelativeImportances(int $assessmentId): ?Assessment
+    {
+        $relations = [];
+        foreach (self::DF_RANGE as $n) {
+            $relations["df{$n}RelativeImportances"] = fn($query) => $query->latest();
+        }
+
+        return Assessment::with($relations)
+            ->where('assessment_id', $assessmentId)
+            ->first();
+    }
+
+    /**
+     * Get saved weights from database or return default
+     */
+    private function getSavedWeights(int $assessmentId): array
+    {
+        $dfStep2 = DfStep2::where('assessment_id', $assessmentId)
+            ->where('user_id', auth()->id())
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        return is_array($dfStep2->weights ?? null) 
+            ? $dfStep2->weights 
+            : self::DEFAULT_WEIGHTS;
+    }
 }

@@ -27,29 +27,36 @@
 
           @php
             use Illuminate\Support\Str;
-            // Kumpulkan semua kode Design Factor unik (DF1–DF4)
-            $allCodes = collect();
-            for ($n = 1; $n <= 4; $n++) {
-              $ris = $assessment->{'df' . $n . 'RelativeImportances'}->first() ?? collect();
-              foreach ($ris->toArray() as $col => $val) {
-                if (Str::startsWith($col, "r_df{$n}_")) {
-                  $allCodes->push(Str::after($col, "r_df{$n}_"));
-                }
-              }
-            }
-            $allCodes = $allCodes->unique()->sort()->values();
-            // Daftar lengkap kode COBIT 2019 untuk label
+            
+            // Daftar lengkap 40 kode COBIT 2019 (1-indexed untuk konsistensi dengan kolom database)
             $cobitCodes = [
-              '',
+              '',  // index 0 (tidak digunakan)
               'EDM01','EDM02','EDM03','EDM04','EDM05',
               'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
               'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
               'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
               'MEA01','MEA02','MEA03','MEA04'
             ];
-            // Berat tiap dimensi (dapat diubah oleh user)
+            
+            // Kumpulkan kode yang ada dari database (jika ada)
+            $existingCodes = collect();
+            for ($n = 1; $n <= 4; $n++) {
+              $ris = $assessment->{'df' . $n . 'RelativeImportances'}->first();
+              if ($ris) {
+                foreach ($ris->toArray() as $col => $val) {
+                  if (Str::startsWith($col, "r_df{$n}_")) {
+                    $existingCodes->push(Str::after($col, "r_df{$n}_"));
+                  }
+                }
+              }
+            }
+            
+            // Gunakan semua 40 kode (index 1-40) sebagai default, agar tabel selalu muncul
+            // Bahkan ketika belum ada data DF sama sekali
+            $allCodes = collect(range(1, 40));
+            
+            // Weights dari controller atau session
             $sessionWeights = session('step2.weights') ?? [1, 1, 1, 1];
-            // Pakai savedWeights dari controller jika ada, fallback ke session
             $weights = $savedWeights ?? old('weight', $sessionWeights);
           @endphp
 
@@ -103,8 +110,10 @@
                         @endphp
                         @for ($n = 1; $n <= 4; $n++)
                           @php
-                            $rec = $assessment->{'df' . $n . 'RelativeImportances'}->firstWhere('id', auth()->id());
+                            // Get first record from relation (already scoped to current assessment)
+                            $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
                             $col = "r_df{$n}_{$code}";
+                            // Default value: 0 if Relative Importance not yet set (KISS principle)
                             $val = ($rec && isset($rec->$col)) ? $rec->$col : 0;
                             $values[] = $val;
                             $total += $val;
@@ -355,17 +364,71 @@
       }
 
       // Event listener untuk input weight
+      let saveInterval;
+      const statusIndicator = document.createElement('span');
+      statusIndicator.className = 'ms-2 text-muted small';
+      statusIndicator.style.transition = 'opacity 0.5s';
+      document.querySelector('.card-header h5').appendChild(statusIndicator);
+
+      function showSavingStatus(status) {
+        if (status === 'saving') {
+          statusIndicator.textContent = 'Saving...';
+          statusIndicator.className = 'ms-2 text-warning small';
+          statusIndicator.style.opacity = '1';
+        } else if (status === 'saved') {
+          statusIndicator.textContent = 'All changes saved';
+          statusIndicator.className = 'ms-2 text-success small';
+          setTimeout(() => { statusIndicator.style.opacity = '0'; }, 3000);
+        } else if (status === 'error') {
+          statusIndicator.textContent = 'Error saving';
+          statusIndicator.className = 'ms-2 text-danger small';
+        }
+      }
+
+      function autoSave() {
+        calculateInitialScope(); // pastikan hidden inputs terupdate
+        
+        const form = document.getElementById('step2Form');
+        const formData = new FormData(form);
+
+        showSavingStatus('saving');
+
+        fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest', // tandai sebagai AJAX
+            'Accept': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            showSavingStatus('saved');
+            console.log(data.message);
+          }
+        })
+        .catch(error => {
+          showSavingStatus('error');
+          console.error('Auto-save error:', error);
+        });
+      }
+
       weightInputs.forEach(input => {
         input.addEventListener('input', function () {
           calculateInitialScope();
+          
+          // Debounce auto-save (tunggu 1 detik setelah berhenti mengetik)
+          clearTimeout(saveInterval);
+          saveInterval = setTimeout(autoSave, 1000);
         });
       });
 
       // Hitung ulang saat halaman dimuat awal
       calculateInitialScope();
 
-      // Tombol kecil Simpan Sementara: saat diklik, form disubmit
-      document.getElementById('saveButton').addEventListener('click', function () {
+      // Tombol simpan manual (optional sekarang, tapi tetap berguna)
+      document.getElementById('saveButton')?.addEventListener('click', function () {
         calculateInitialScope();
         document.getElementById('step2Form').submit();
       });

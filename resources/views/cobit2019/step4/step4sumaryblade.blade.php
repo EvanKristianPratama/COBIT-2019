@@ -6,111 +6,44 @@
   @php
     use Illuminate\Support\Str;
 
-    //
-    // 1) Siapkan daftar kode COBIT (1..40) sekali, untuk label baris di kedua tabel
-    //
+    // Daftar lengkap 40 kode COBIT 2019 (1-indexed untuk konsistensi dengan kolom database)
     $cobitCodes = [
-      '',
-      'EDM01',
-      'EDM02',
-      'EDM03',
-      'EDM04',
-      'EDM05',
-      'APO01',
-      'APO02',
-      'APO03',
-      'APO04',
-      'APO05',
-      'APO06',
-      'APO07',
-      'APO08',
-      'APO09',
-      'APO10',
-      'APO11',
-      'APO12',
-      'APO13',
-      'APO14',
-      'BAI01',
-      'BAI02',
-      'BAI03',
-      'BAI04',
-      'BAI05',
-      'BAI06',
-      'BAI07',
-      'BAI08',
-      'BAI09',
-      'BAI10',
-      'BAI11',
-      'DSS01',
-      'DSS02',
-      'DSS03',
-      'DSS04',
-      'DSS05',
-      'DSS06',
-      'MEA01',
-      'MEA02',
-      'MEA03',
-      'MEA04'
+      '',  // index 0 (tidak digunakan)
+      'EDM01','EDM02','EDM03','EDM04','EDM05',
+      'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
+      'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
+      'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
+      'MEA01','MEA02','MEA03','MEA04'
     ];
 
-    //
-    // 2) Kumpulkan “allCodes2” = semua kode yang muncul di tabel df1..df4
-    //
-    $allCodes2 = collect();
-    for ($n = 1; $n <= 4; $n++) {
-      $firstRow = $assessment->{'df' . $n . 'RelativeImportances'}->first() ?? collect();
-      foreach ($firstRow->toArray() as $col => $val) {
-        if (Str::startsWith($col, "r_df{$n}_")) {
-          $allCodes2->push(Str::after($col, "r_df{$n}_"));
-        }
-      }
-    }
-    $allCodes2 = $allCodes2->unique()->sort()->values();
-
-    //
-    // 3) Kumpulkan “allCodes3” = semua kode yang muncul di tabel df5..df10
-    //
-    $allCodes3 = collect();
-    for ($n = 5; $n <= 10; $n++) {
-      $firstRow = $assessment->{'df' . $n . 'RelativeImportances'}->first() ?? collect();
-      foreach ($firstRow->toArray() as $col => $val) {
-        if (Str::startsWith($col, "r_df{$n}_")) {
-          $allCodes3->push(Str::after($col, "r_df{$n}_"));
-        }
-      }
-    }
-    $allCodes3 = $allCodes3->unique()->sort()->values();
-
-    //
-    // 4) Ambil bobot dari session
-    //
-    // controller mengirim: $step2['weights'] dan $step3['weights']
+    // Gunakan semua 40 kode (index 1-40) untuk semua tabel, agar konsisten dengan Step 2 & 3
+    // Bahkan ketika belum ada data DF sama sekali
+    $allCodes2 = collect(range(1, 40));
+    $allCodes3 = collect(range(1, 40));
+    
+    // Ambil bobot dari session/controller
     $weights2 = $step2['weights'] ?? session('step2.weights', [0, 0, 0, 0]);
     $weights3 = $step3['weights'] ?? session('step3.weights', [0, 0, 0, 0, 0, 0]);
 
-    //
-    // 5) Siapkan array “Refined Scope” dari Step 3 untuk Step 4 nanti
-    //
+    // Siapkan array "Refined Scope" dari Step 3 untuk Step 4
+    // Gunakan $code sebagai key untuk menghindari index mismatch
     $step3RefinedScopes = [];
-    foreach ($allCodes3 as $idx => $code) {
-      // Hitung kembali “Refined Scope” di server (meski JS juga menghitungnya)
+    foreach ($allCodes3 as $code) {
+      // Hitung kembali "Refined Scope" di server
       $total3 = 0;
       for ($n = 5; $n <= 10; $n++) {
-        $rec = $assessment->{'df' . $n . 'RelativeImportances'}->firstWhere('id', auth()->id());
+        // Use first() instead of firstWhere since relation is already scoped
+        $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
         $colKey = "r_df{$n}_{$code}";
         $v = ($rec && isset($rec->$colKey)) ? $rec->$colKey : 0;
         $total3 += $v * ($weights3[$n - 5] ?? 0);
       }
-      // Simpan di array
-      $step3RefinedScopes[] = $total3;
+      // Use code as key, not index
+      $step3RefinedScopes[$code] = $total3;
     }
 
-    //
-    // 6) Gabungkan kedua list kode untuk Step 4 (urutkan seperti allCodes2 + allCodes3)
-    //
-    $allCodes = $allCodes2->merge($allCodes3)
-      ->unique()
-      ->values();
+    // Gabungkan kedua list kode untuk Step 4 (semuanya menggunakan 1-40)
+    $allCodes = $allCodes2->merge($allCodes3)->unique()->values();
   @endphp
   <form action="{{ route('step4.store') }}" method="POST" id="step4Form">
     @csrf
@@ -153,14 +86,15 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @foreach ($allCodes2 as $idx => $code)
-                      @php
-                        $values2 = [];
-                        $total2 = 0;
-                        for ($n = 1; $n <= 4; $n++) {
-                          $rec = $assessment->{'df' . $n . 'RelativeImportances'}->firstWhere('id', auth()->id());
-                          $colKey = "r_df{$n}_{$code}";
-                          $v = ($rec && isset($rec->$colKey)) ? $rec->$colKey : 0;
+                      @foreach ($allCodes2 as $idx => $code)
+                       @php
+                         $values2 = [];
+                         $total2 = 0;
+                         for ($n = 1; $n <= 4; $n++) {
+                           // Use first() instead of firstWhere since relation is already scoped
+                           $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
+                           $colKey = "r_df{$n}_{$code}";
+                           $v = ($rec && isset($rec->$colKey)) ? $rec->$colKey : 0;
                           $values2[] = $v;
                           $total2 += ($v * ($weights2[$n - 1] ?? 0));
                         }
@@ -237,7 +171,8 @@
                         $values3 = [];
                         $total3 = 0;
                         for ($n = 5; $n <= 10; $n++) {
-                          $rec = $assessment->{'df' . $n . 'RelativeImportances'}->firstWhere('id', auth()->id());
+                          // Use first() instead of firstWhere since relation is already scoped
+                          $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
                           $colKey = "r_df{$n}_{$code}";
                           $v = ($rec && isset($rec->$colKey)) ? $rec->$colKey : 0;
                           $values3[] = $v;
