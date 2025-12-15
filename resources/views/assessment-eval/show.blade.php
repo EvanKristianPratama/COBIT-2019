@@ -2496,12 +2496,36 @@ class COBITAssessmentManager {
         });
 
         const maturity = data.length > 0 ? (totalLevel / data.length).toFixed(2) : '0.00';
+        
+        // Calculate average Target Capability
+        let totalTarget = 0;
+        let targetCount = 0;
+        data.forEach(row => {
+            const targetVal = this.getTargetCapabilityForObjective(row.objectiveId);
+            if (targetVal !== null && targetVal !== undefined) {
+                totalTarget += targetVal;
+                targetCount++;
+            }
+        });
+        const avgTarget = targetCount > 0 ? (totalTarget / targetCount).toFixed(2) : '-';
+        
+        // Calculate average Max Level
+        let totalMaxLevel = 0;
+        data.forEach(row => {
+            const maxCap = this.getMaxCapabilityForObjective(row.objectiveId);
+            totalMaxLevel += maxCap;
+        });
+        const avgMaxLevel = data.length > 0 ? (totalMaxLevel / data.length).toFixed(2) : '0.00';
+        
         const tfoot = document.createElement('tfoot');
         tfoot.innerHTML = `
             <tr class="table-light fw-bold border-top-2">
                 <td colspan="4" class="text-end pe-3">I&T Maturity Score</td>
                 <td class="text-center bg-primary text-white">${maturity}</td>
-                <td colspan="4" class="bg-light"></td>
+                <td class="bg-light"></td>
+                <td class="text-center bg-info text-white">${avgTarget}</td>
+                <td class="bg-light"></td>
+                <td class="text-center bg-secondary text-white">${avgMaxLevel}</td>
             </tr>
         `;
 
