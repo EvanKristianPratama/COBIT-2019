@@ -69,7 +69,7 @@
                     </a>
                     @if($isOwner && $evaluation->status !== 'finished')
                     <button type="button" class="d-flex align-items-center px-3 py-2 me-1 border-0 fw-bold" data-bs-toggle="modal" data-bs-target="#editScopeModal" style="background-color: #0f2b5c; color: #ffffffff; border-radius: 10px; font-size: 0.9rem;">
-                        <span class="me-2">Scope</span> <i class="fas fa-pen small"></i> 
+                        <span class="me-2">SCOPE</span> <i class="fas fa-pen small"></i> 
                     </button>
                     @endif
                     <button type="button" class="domain-tab active " data-domain="all">All</button>
