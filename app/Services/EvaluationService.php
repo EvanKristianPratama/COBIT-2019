@@ -28,22 +28,29 @@ class EvaluationService
             );
 
             if (isset($data['activity_evaluations'])) {
-                // First, remove all existing activity evaluations for this assessment
+                // Get all activity IDs from the request
+                $incomingActivityIds = collect($data['activity_evaluations'])->pluck('activity_id')->toArray();
+                
+                // Delete activities that are not in the incoming data (completely removed from form)
                 TrsActivityeval::withTrashed()
                     ->where('eval_id', $evaluation->eval_id)
+                    ->whereNotIn('activity_id', $incomingActivityIds)
                     ->forceDelete();
                 
                 foreach ($data['activity_evaluations'] as $activityData) {
-                    // Only save activities that are not rated as 'N' (None)
-                    if ($activityData['level_achieved'] !== 'N') {
-                        TrsActivityeval::create([
+                    // Always save or update the activity, even if rated as 'N'
+                    // This preserves evidence and notes when levels are changed
+                    TrsActivityeval::updateOrCreate(
+                        [
                             'eval_id' => $evaluation->eval_id,
-                            'activity_id' => $activityData['activity_id'],
+                            'activity_id' => $activityData['activity_id']
+                        ],
+                        [
                             'level_achieved' => $activityData['level_achieved'],
                             'evidence' => $activityData['evidence'] ?? null,
                             'notes' => $activityData['notes'] ?? null
-                        ]);
-                    }
+                        ]
+                    );
                 }
             }
 
@@ -109,15 +116,14 @@ class EvaluationService
                         foreach ($levelData['activities'] as $activityId => $score) {
                             $levelAchieved = $this->scoreToLetter($score);
                             
-                            // Only include activities that are not rated as 'N' (None)
-                            if ($levelAchieved !== 'N') {
-                                $activityEvaluations[] = [
-                                    'activity_id' => $activityId,
-                                    'level_achieved' => $levelAchieved,
-                                    'evidence' => $evidence[$activityId] ?? null,
-                                    'notes' => $notes[$activityId] ?? null
-                                ];
-                            }
+                            // Include all activities, even those rated as 'N'
+                            // This preserves evidence and notes when levels are changed
+                            $activityEvaluations[] = [
+                                'activity_id' => $activityId,
+                                'level_achieved' => $levelAchieved,
+                                'evidence' => $evidence[$activityId] ?? null,
+                                'notes' => $notes[$activityId] ?? null
+                            ];
                         }
                     }
                 }
@@ -128,15 +134,14 @@ class EvaluationService
                     foreach ($levelData['activities'] as $activityId => $score) {
                         $levelAchieved = $this->scoreToLetter($score);
                         
-                        // Only include activities that are not rated as 'N' (None)
-                        if ($levelAchieved !== 'N') {
-                            $activityEvaluations[] = [
-                                'activity_id' => $activityId,
-                                'level_achieved' => $levelAchieved,
-                                'evidence' => $levelData['evidence'][$activityId] ?? null,
-                                'notes' => $levelData['notes'][$activityId] ?? null
-                            ];
-                        }
+                        // Include all activities, even those rated as 'N'
+                        // This preserves evidence and notes when levels are changed
+                        $activityEvaluations[] = [
+                            'activity_id' => $activityId,
+                            'level_achieved' => $levelAchieved,
+                            'evidence' => $levelData['evidence'][$activityId] ?? null,
+                            'notes' => $levelData['notes'][$activityId] ?? null
+                        ];
                     }
                 }
             }

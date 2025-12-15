@@ -1942,21 +1942,23 @@ class COBITAssessmentManager {
 
     clearActivityRating(objectiveId, level, activityId) {
         if (this.levelScores[objectiveId] && this.levelScores[objectiveId][level]) {
+            // Only clear the rating, preserve evidence and notes
             delete this.levelScores[objectiveId][level].activities[activityId];
-            delete this.levelScores[objectiveId][level].evidence[activityId];
-            delete this.levelScores[objectiveId][level].notes[activityId];
             
-            const evidenceTextarea = document.getElementById(`evidence_${activityId}`);
-            if (evidenceTextarea) {
-                evidenceTextarea.value = '';
-            }
-
-            this.updateEvidenceDisplay(activityId, '');
-
-            const noteTextarea = document.getElementById(`note_${activityId}`);
-            if (noteTextarea) {
-                noteTextarea.value = '';
-            }
+            // DO NOT delete evidence and notes - they should be preserved
+            // delete this.levelScores[objectiveId][level].evidence[activityId];
+            // delete this.levelScores[objectiveId][level].notes[activityId];
+            
+            // DO NOT clear textarea values - evidence and notes should remain visible
+            // const evidenceTextarea = document.getElementById(`evidence_${activityId}`);
+            // if (evidenceTextarea) {
+            //     evidenceTextarea.value = '';
+            // }
+            // this.updateEvidenceDisplay(activityId, '');
+            // const noteTextarea = document.getElementById(`note_${activityId}`);
+            // if (noteTextarea) {
+            //     noteTextarea.value = '';
+            // }
         }
     }
 
@@ -2126,13 +2128,17 @@ class COBITAssessmentManager {
                 scoreElement.textContent = 'N (0.00)';
                 scoreElement.className = 'capability-score level-score-chip score-chip-muted';
                 
-                // Also lock the level data
+                // Preserve existing evidence and notes when locking
+                const existingEvidence = this.levelScores[objectiveId]?.[level]?.evidence || {};
+                const existingNotes = this.levelScores[objectiveId]?.[level]?.notes || {};
+                
+                // Lock the level data but preserve evidence and notes
                 this.levelScores[objectiveId][level] = {
                     letter: 'N',
                     score: 0.00,
                     activities: {},
-                    evidence: {},
-                    notes: {}
+                    evidence: existingEvidence,  // Preserve evidence
+                    notes: existingNotes         // Preserve notes
                 };
             } else {
                 button.querySelector('.toggle-text').textContent = 'Start Assessment';
