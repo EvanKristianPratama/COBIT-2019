@@ -541,8 +541,8 @@
                                                             <th style="width: 200px;">Practice Name</th>
                                                             <th style="width: 340px;">Activity</th>
                                                             <th style="width: 160px;">Answer</th>
-                                                            <th style="width: 220px;">Evidence</th>
 
+                                                            <th style="width: 220px;">Evidence</th>
                                                             <th style="width: 220px;">Notes</th>
                                                             <th class="text-center" style="width: 70px;">Level</th>
                                                         </tr>
@@ -583,6 +583,7 @@
                                                                             <option value="F">Fully</option>
                                                                         </select>
                                                                     </td>
+
                                                                     <td class="evidence-cell">
                                                                         <div class="evidence-input-wrapper">
                                                                             <textarea
@@ -807,8 +808,7 @@ class COBITAssessmentManager {
         this.elementCache = {
             ratingSelects: new Map(),
             evidenceInputs: new Map(),
-            noteInputs: new Map(),
-            evidenceDropdowns: new Map()
+            noteInputs: new Map()
         };
         this.evidenceModalTableBody = null;
         this.evidenceModalFilterInputs = [];
@@ -877,7 +877,6 @@ class COBITAssessmentManager {
         this.initializeEvidenceLibrary();
         this.showLoading('Initializing assessment...', 0);
         this.setupEvidenceModal();
-        this.setupEvidenceModalTriggers();
         
         setTimeout(() => {
             this.cacheDomainChartElements();
@@ -960,9 +959,6 @@ class COBITAssessmentManager {
         }
 
         this.bindEvidenceModalFilters();
-    }
-
-    setupEvidenceModalTriggers() {
     }
 
     bindEvidenceModalFilters() {
@@ -1224,17 +1220,6 @@ class COBITAssessmentManager {
         document.querySelectorAll('.note-input').forEach(el => {
             this.elementCache.noteInputs.set(el.dataset.activityId, el);
         });
-
-        document.querySelectorAll('.evidence-history-select').forEach(el => {
-            this.elementCache.evidenceDropdowns.set(el.dataset.activityId, el);
-        });
-    }
-
-    getEvidenceSelectElements() {
-        if (this.elementCache && this.elementCache.evidenceDropdowns.size) {
-            return Array.from(this.elementCache.evidenceDropdowns.values());
-        }
-        return Array.from(document.querySelectorAll('.evidence-history-select'));
     }
 
     showLoading(message = 'Loading...', percentage = 0) {
@@ -1825,31 +1810,20 @@ class COBITAssessmentManager {
             });
         });
 
-        if (data.notes || data.evidence) {
+        if (data.notes) {
             const activityIds = new Set();
-            if (data.notes) {
-                Object.keys(data.notes).forEach(id => activityIds.add(id));
-            }
-            if (data.evidence) {
-                Object.keys(data.evidence).forEach(id => activityIds.add(id));
-            }
+            Object.keys(data.notes).forEach(id => activityIds.add(id));
 
             activityIds.forEach(activityId => {
                 const parsedNotes = this.parseNotePayload(
                     data.notes ? data.notes[activityId] : null,
-                    data.evidence ? data.evidence[activityId] : null
+                    null // No evidence field anymore
                 );
 
-                const evidenceField = document.querySelector(`.evidence-input[data-activity-id="${activityId}"]`);
                 const noteField = document.querySelector(`textarea.note-input[data-activity-id="${activityId}"]`);
-                if (evidenceField) {
-                    evidenceField.value = parsedNotes.evidence || '';
-                    this.updateEvidenceDisplay(activityId, parsedNotes.evidence || '');
-                }
                 if (noteField) {
                     noteField.value = parsedNotes.note || '';
                 }
-                this.addEvidenceToLibrary(parsedNotes.evidence, { refresh: false });
             });
         }
 
@@ -1874,11 +1848,9 @@ class COBITAssessmentManager {
                         if (this.levelScores[objectiveId] && this.levelScores[objectiveId][capabilityLevel]) {
                             this.levelScores[objectiveId][capabilityLevel].activities[activityId] = this.getRatingValue(levelAchieved);
                             
-                            if (activityData.notes || activityData.evidence) {
-                                const parsedNotes = this.parseNotePayload(activityData.notes, activityData.evidence);
-                                this.levelScores[objectiveId][capabilityLevel].evidence[activityId] = parsedNotes.evidence || '';
+                            if (activityData.notes) {
+                                const parsedNotes = this.parseNotePayload(activityData.notes, null); // No evidence field anymore
                                 this.levelScores[objectiveId][capabilityLevel].notes[activityId] = parsedNotes.note || '';
-                                this.addEvidenceToLibrary(parsedNotes.evidence, { refresh: false });
                             }
                             
                             this.updateActivityScore(activityId, levelAchieved);
@@ -2060,9 +2032,7 @@ class COBITAssessmentManager {
 
     setupActivityRating() {
         const ratingInputs = document.querySelectorAll('.activity-rating-select');
-        const evidenceTextareas = document.querySelectorAll('.evidence-input');
         const noteTextareas = document.querySelectorAll('.note-input');
-        const evidenceSelects = this.getEvidenceSelectElements();
         
         ratingInputs.forEach(select => {
             select.addEventListener('change', () => {
@@ -2083,17 +2053,6 @@ class COBITAssessmentManager {
             });
         });
 
-        evidenceTextareas.forEach(textarea => {
-            textarea.addEventListener('input', () => {
-                const activityId = textarea.getAttribute('data-activity-id');
-                const objectiveId = textarea.getAttribute('data-objective-id');
-                const level = parseInt(textarea.getAttribute('data-level'));
-                const evidence = textarea.value;
-                
-                this.setActivityEvidence(objectiveId, level, activityId, evidence);
-            });
-        });
-
         noteTextareas.forEach(textarea => {
             textarea.addEventListener('input', () => {
                 const activityId = textarea.getAttribute('data-activity-id');
@@ -2105,12 +2064,28 @@ class COBITAssessmentManager {
             });
         });
 
+        // Evidence Inputs (Hidden but updated by modal)
+        const evidenceTextareas = document.querySelectorAll('.evidence-input');
+        evidenceTextareas.forEach(textarea => {
+            textarea.addEventListener('input', () => {
+                const activityId = textarea.getAttribute('data-activity-id');
+                const objectiveId = textarea.getAttribute('data-objective-id');
+                const level = parseInt(textarea.getAttribute('data-level'));
+                const evidence = textarea.value;
+                
+                this.setActivityEvidence(objectiveId, level, activityId, evidence);
+            });
+        });
+
+        // Evidence Dropdowns (History) - Click triggers modal
+        const evidenceSelects = document.querySelectorAll('.evidence-history-select');
         evidenceSelects.forEach(select => {
             select.addEventListener('click', (e) => {
                 e.preventDefault();
                 const activityId = select.getAttribute('data-activity-id');
                 this.openEvidenceModal(activityId);
             });
+            // Prevent actual selection change, act as button
             select.addEventListener('change', (e) => {
                 e.preventDefault();
                 select.value = '';

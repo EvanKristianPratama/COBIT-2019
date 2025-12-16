@@ -27,71 +27,71 @@ class AssessmentEvalController extends Controller
     /**
      * Display the list of assessments for the current user
      */
+    /**
+     * Display the list of assessments for the current user
+     */
     public function listAssessments()
     {
         try {
             $user = Auth::user();
             $org = $user->organisasi ?? null;
 
+            // 1. My Assessments Query
+            $myQuery = MstEval::with(['user', 'maturityScore'])
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc');
+
+            // 2. Other Assessments Query
+            $otherQuery = null;
             if ($org) {
-                // load all evaluations created by users in the same organization
-                // NOTE: do NOT eager-load full activityEvaluations for other users — expose only aggregated counts
-                $evaluations = MstEval::with(['user', 'maturityScore'])
+                $otherQuery = MstEval::with(['user', 'maturityScore'])
+                    ->where('user_id', '!=', $user->id)
                     ->whereHas('user', function ($q) use ($org) {
                         $q->where('organisasi', $org);
-                    })->get();
-
-                // attach aggregated achievement counts per evaluation (F/L/P) without loading full rows
-                $evalIds = $evaluations->pluck('eval_id')->filter()->unique()->values()->all();
-                if (!empty($evalIds)) {
-                    $rows = \App\Models\TrsActivityeval::whereIn('eval_id', $evalIds)
-                        ->select('eval_id', 'level_achieved', DB::raw('count(*) as cnt'))
-                        ->groupBy('eval_id', 'level_achieved')
-                        ->get();
-
-                    $countsMap = [];
-                    foreach ($rows as $r) {
-                        $eid = $r->eval_id;
-                        $lvl = $r->level_achieved;
-                        $countsMap[$eid][$lvl] = (int) $r->cnt;
-                    }
-
-                    foreach ($evaluations as $ev) {
-                        $ev->achievement_counts = $countsMap[$ev->eval_id] ?? [];
-                    }
-                }
-            } else {
-                // Load ONLY own assessments for non-superadmin users
-                // Eager load maturityScore for cleaner list display
-                $evaluations = MstEval::with([
-                        'user', 
-                        'activityEvaluations', 
-                        'evidences',
-                        'maturityScore'
-                    ])
-                    ->where('user_id', $user->id)
-                    ->get();
+                    })
+                    ->orderBy('created_at', 'desc');
             }
 
-            $evalIds = $evaluations->pluck('eval_id')->filter()->unique()->values()->all();
-            $selectedDomainsMap = [];
-            $lastActivityDates = [];
-            if (!empty($evalIds)) {
+            // Paginate independently
+            $myAssessments = $myQuery->paginate(10, ['*'], 'my_page');
+            $otherAssessments = $otherQuery 
+                ? $otherQuery->paginate(10, ['*'], 'other_page') 
+                : new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
+
+            // Collect all items from current pages to fetch metadata efficiently
+            $allEvals = collect($myAssessments->items());
+            if ($otherQuery) {
+                $allEvals = $allEvals->merge($otherAssessments->items());
+            }
+
+            if ($allEvals->isNotEmpty()) {
+                $evalIds = $allEvals->pluck('eval_id')->unique()->values()->all();
+
+                // Fetch Achievement Counts
+                $achRows = \App\Models\TrsActivityeval::whereIn('eval_id', $evalIds)
+                    ->select('eval_id', 'level_achieved', DB::raw('count(*) as cnt'))
+                    ->groupBy('eval_id', 'level_achieved')
+                    ->get();
+                
+                $countsMap = [];
+                foreach ($achRows as $r) {
+                    $countsMap[$r->eval_id][$r->level_achieved] = (int) $r->cnt;
+                }
+
+                // Fetch Selected Domains
                 $rows = TrsEvalDetail::whereIn('eval_id', $evalIds)->get();
+                $selectedDomainsMap = [];
                 foreach ($rows as $row) {
                     $selectedDomainsMap[$row->eval_id][] = $row->domain_id;
                 }
 
-                // Fetch last activity update time
+                // Fetch Last Activity Dates
                 $lastActivityDates = \App\Models\TrsActivityeval::whereIn('eval_id', $evalIds)
                     ->select('eval_id', DB::raw('MAX(updated_at) as last_activity_at'))
                     ->groupBy('eval_id')
                     ->pluck('last_activity_at', 'eval_id');
-            }
 
-            // Calculate filled GAMO counts (distinct objectives with at least one rated activity)
-            $filledGamoCounts = [];
-            if (!empty($evalIds)) {
+                // Calculate filled GAMO counts
                 $filledGamoCounts = DB::table('trs_activityeval')
                     ->join('mst_activities', 'trs_activityeval.activity_id', '=', 'mst_activities.activity_id')
                     ->join('mst_practice', 'mst_activities.practice_id', '=', 'mst_practice.practice_id')
@@ -100,40 +100,64 @@ class AssessmentEvalController extends Controller
                     ->groupBy('trs_activityeval.eval_id')
                     ->pluck('filled_count', 'eval_id')
                     ->toArray();
+
+                // Calculate activity counts per domain (System Constants)
+                $domainActivityCounts = DB::table('mst_activities')
+                    ->join('mst_practice', 'mst_activities.practice_id', '=', 'mst_practice.practice_id')
+                    ->select('mst_practice.objective_id', DB::raw('count(*) as cnt'))
+                    ->groupBy('mst_practice.objective_id')
+                    ->pluck('cnt', 'objective_id')
+                    ->toArray();
+                
+                $totalSystemActivities = array_sum($domainActivityCounts);
+
+                // Transform/Hydrate items
+                foreach ($allEvals as $evaluation) {
+                    // Achievement counts
+                    $evaluation->achievement_counts = $countsMap[$evaluation->eval_id] ?? [];
+
+                    // Selected Domains details
+                    $selectedDomains = $selectedDomainsMap[$evaluation->eval_id] ?? [];
+                    $evaluation->selected_gamo_count = count($selectedDomains) > 0 ? count($selectedDomains) : 40;
+                    $evaluation->filled_gamo_count = $filledGamoCounts[$evaluation->eval_id] ?? 0;
+                    
+                    $totalRatable = 0;
+                    if (empty($selectedDomains)) {
+                        $totalRatable = $totalSystemActivities;
+                    } else {
+                        foreach ($selectedDomains as $domain) {
+                            $totalRatable += $domainActivityCounts[$domain] ?? 0;
+                        }
+                    }
+                    $evaluation->total_ratable_activities = $totalRatable > 0 ? $totalRatable : 1;
+
+                    // Last Updated
+                    $evaluation->last_saved_at = $lastActivityDates[$evaluation->eval_id] ?? $evaluation->created_at;
+                }
             }
 
-            // Calculate activity counts per domain to determine denominator for progress
-            $domainActivityCounts = DB::table('mst_activities')
-                ->join('mst_practice', 'mst_activities.practice_id', '=', 'mst_practice.practice_id')
-                ->select('mst_practice.objective_id', DB::raw('count(*) as cnt'))
-                ->groupBy('mst_practice.objective_id')
-                ->pluck('cnt', 'objective_id')
-                ->toArray();
-            
-            $totalSystemActivities = array_sum($domainActivityCounts);
+            // Calculate total for hero card (Totals available in Paginators)
+            $totalAssessments = $myAssessments->total();
+            if ($otherQuery) {
+                $totalAssessments += $otherAssessments->total();
+            }
 
-            $evaluations->transform(function ($evaluation) use ($selectedDomainsMap, $domainActivityCounts, $totalSystemActivities, $lastActivityDates, $filledGamoCounts) {
-                $selectedDomains = $selectedDomainsMap[$evaluation->eval_id] ?? [];
-                $evaluation->selected_gamo_count = count($selectedDomains) > 0 ? count($selectedDomains) : 40;
-                $evaluation->filled_gamo_count = $filledGamoCounts[$evaluation->eval_id] ?? 0;
-                
-                $totalRatable = 0;
-                if (empty($selectedDomains)) {
-                    $totalRatable = $totalSystemActivities;
-                } else {
-                    foreach ($selectedDomains as $domain) {
-                        $totalRatable += $domainActivityCounts[$domain] ?? 0;
-                    }
-                }
-                $evaluation->total_ratable_activities = $totalRatable > 0 ? $totalRatable : 1; // avoid division by zero
+            // Calculate Global Stats for Hero Card (Finished vs Draft)
+            // We need to replicate the scope logic to get accurate counts
+            $statsQuery = MstEval::query();
+            if ($org) {
+                 $statsQuery->whereHas('user', function ($q) use ($org) {
+                     $q->where('organisasi', $org);
+                 });
+            } else {
+                 $statsQuery->where('user_id', $user->id);
+            }
+            // Clone query for finished count
+            $finishedAssessments = (clone $statsQuery)->where('status', 'finished')->count();
+            $draftAssessments = $totalAssessments - $finishedAssessments;
+            if ($draftAssessments < 0) $draftAssessments = 0;
 
-                // Use activity date if available, otherwise fallback to created_at
-                $evaluation->last_saved_at = $lastActivityDates[$evaluation->eval_id] ?? $evaluation->created_at;
-
-                return $evaluation;
-            });
-
-            return view('assessment-eval.list', compact('evaluations'));
+            return view('assessment-eval.list', compact('myAssessments', 'otherAssessments', 'totalAssessments', 'finishedAssessments', 'draftAssessments'));
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to load assessments: ' . $e->getMessage()]);
         }

@@ -3,26 +3,8 @@
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @php
-    $evaluationsCollection = $evaluations ?? collect();
-    $totalAssessments = $evaluationsCollection->count();
-    
-    // Separate assessments by ownership
-    $myAssessments = $evaluationsCollection->filter(function($evaluation) {
-        return (string)($evaluation->user_id ?? '') === (string)Auth::id();
-    });
-    $otherAssessments = $evaluationsCollection->filter(function($evaluation) {
-        return (string)($evaluation->user_id ?? '') !== (string)Auth::id();
-    });
-    
+    // Fallback for older logic if needed, though controller provides specific counts now
     $totalRatableActivities = \App\Models\MstActivities::count();
-    $totalRatedActivities = $evaluationsCollection->sum(function($evaluation) {
-        $counts = $evaluation->achievement_counts ?? [];
-        return ($counts['F'] ?? 0) + ($counts['L'] ?? 0) + ($counts['P'] ?? 0);
-    });
-    $finishedAssessments = $evaluationsCollection->filter(function($evaluation) {
-        return strtolower($evaluation->status ?? '') === 'finished';
-    })->count();
-    $draftAssessments = max(0, $totalAssessments - $finishedAssessments);
 @endphp
 <div class="container mx-auto p-6" id="page-top">
     {{-- Main Hero Card --}}
@@ -73,119 +55,95 @@
                     </h4>
                     <div class="section-subtitle text-muted">Assessment yang Anda buat</div>
                 </div>
-                <div class="row g-4 assessment-grid" id="my-assessments-grid">
-                    @foreach($myAssessments as $evaluation)
-                        @php
-                            $achievementCounts = $evaluation->achievement_counts ?? [];
-                            $ratedCounts = [
-                                'F' => $achievementCounts['F'] ?? 0,
-                                'L' => $achievementCounts['L'] ?? 0,
-                                'P' => $achievementCounts['P'] ?? 0,
-                            ];
-                            $totalRated = array_sum($ratedCounts);
-                            
-                            // Use the calculated total ratable activities for this specific evaluation
-                            $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
-                            
-                            $noneCount = max(0, $currentTotalRatable - $totalRated);
-                            $percentages = $currentTotalRatable > 0
-                                ? [
-                                    'F' => round(($ratedCounts['F'] / $currentTotalRatable) * 100, 1),
-                                    'L' => round(($ratedCounts['L'] / $currentTotalRatable) * 100, 1),
-                                    'P' => round(($ratedCounts['P'] / $currentTotalRatable) * 100, 1),
-                                    'N' => round(($noneCount / $currentTotalRatable) * 100, 1),
-                                ]
-                                : ['F' => 0, 'L' => 0, 'P' => 0, 'N' => 0];
-                            $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
-                            
-                            if (($evaluation->status ?? '') === 'finished') {
-                                $statusLabel = 'Selesai';
-                                $statusClass = 'chip-success';
-                            } elseif ($completion >= 90) {
-                                $statusLabel = 'Siap Review';
-                                $statusClass = 'chip-success';
-                            } elseif ($completion >= 60) {
-                                $statusLabel = 'On Track';
-                                $statusClass = 'chip-info';
-                            } elseif ($completion > 0) {
-                                $statusLabel = 'Sedang Dikerjakan';
-                                $statusClass = 'chip-warning';
-                            } else {
-                                $statusLabel = 'Belum Mulai';
-                                $statusClass = 'chip-muted';
-                            }
-                        @endphp
-                        <div class="col-12 col-md-6 col-xl-4">
-                            <div class="card h-100 assessment-card shadow-sm border-0">
-                                <div class="card-header assessment-card-header">
-                                    <div>
-                                        <div class="assessment-code" style="font-size: 1.1rem;">Assessment Tahun {{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</div>
-                                        <div class="assessment-meta">
-                                            ID: {{ $evaluation->eval_id ?? '—' }}
-                                            <div class="text-muted small mt-1">{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</div>
-                                        </div>
-                                    </div>
-                                    <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
-                                </div>
-                                <div class="card-body assessment-card-body">
-                                    <div class="assessment-progress-block">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <div>
-                                                <small class="text-muted">GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong></small>
-                                            </div>
-                                            <span class="progress-value" style="font-size: 0.9rem;">
-                                                {{ $evaluation->filled_gamo_count ?? 0 }} / {{ $evaluation->selected_gamo_count ?? 40 }} Terisi
-                                            </span>
-                                        </div>
-                                        <div class="progress assessment-progress" style="height: 6px;">
-                                            @php
-                                                $gamoProgress = ($evaluation->selected_gamo_count > 0) 
-                                                    ? min(100, round(($evaluation->filled_gamo_count / $evaluation->selected_gamo_count) * 100)) 
-                                                    : 0;
-                                            @endphp
-                                            <div class="progress-bar bg-primary" style="width: {{ $gamoProgress }}%"></div>
-                                        </div>
-                                    </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle shadow-sm bg-white">
+                        <thead class="table-secondary text-center align-middle">
+                            <tr style="border-bottom: 2px solid #dee2e6;">
+                                <th style="width: 50px;">No</th>
+                                <th style="width: 60px;">Id</th>
+                                <th>Tahun Assesment</th>
+                                <th>Organisasi</th>
+                                <th class="text-center">Jumlah GAMO</th>
+                                <th class="text-center">Progres</th>
+                                <th class="text-center">Status</th>
+                                <th>Last Update at</th>
+                                <th class="text-center">I&T Maturity Score</th>
+                                <th class="text-center" style="width: 150px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($myAssessments as $evaluation)
+                                @php
+                                    $achievementCounts = $evaluation->achievement_counts ?? [];
+                                    $ratedCounts = [
+                                        'F' => $achievementCounts['F'] ?? 0,
+                                        'L' => $achievementCounts['L'] ?? 0,
+                                        'P' => $achievementCounts['P'] ?? 0,
+                                    ];
+                                    $totalRated = array_sum($ratedCounts);
                                     
-                                    {{-- Maturity Score Block --}}
-                                    <div class="maturity-score-block mt-3 p-3 bg-light rounded-3 text-center position-relative">
-                                        <div class="small text-muted text-uppercase fw-bold mb-1">IT Maturity Score</div>
-                                        @php
-                                            $score = $evaluation->maturityScore->score ?? 0;
-                                            $scoreClass = 'text-warning';
-                                            if($score >= 4) $scoreClass = 'text-success';
-                                            elseif($score >= 3) $scoreClass = 'text-info';
-                                            elseif($score >= 2) $scoreClass = 'text-primary';
-                                        @endphp
-                                        <div class="maturity-score-value display-6 fw-bold {{ $scoreClass }}">
-                                            {{ number_format($score, 2) }}
-                                        </div>
-                                    </div>
+                                    // Use the calculated total ratable activities for this specific evaluation
+                                    $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
+                                    $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
+                                    
+                                    if (($evaluation->status ?? '') === 'finished') {
+                                        $statusLabel = 'Selesai';
+                                        $statusBadge = 'bg-success';
+                                    } elseif ($completion >= 90) {
+                                        $statusLabel = 'Siap Review';
+                                        $statusBadge = 'bg-success';
+                                    } elseif ($completion >= 60) {
+                                        $statusLabel = 'On Track';
+                                        $statusBadge = 'bg-info';
+                                    } elseif ($completion > 0) {
+                                        $statusLabel = 'Sedang Dikerjakan';
+                                        $statusBadge = 'bg-warning';
+                                    } else {
+                                        $statusLabel = 'Belum Mulai';
+                                        $statusBadge = 'bg-secondary';
+                                    }
 
-                                    <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
-                                        <li>
-                                            <i class="fas fa-clock me-2 text-muted"></i>
-                                            Terakhir diperbarui {{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="card-footer assessment-card-footer">
-                                    <div class="d-flex gap-2">
-                                        <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
-                                           class="btn btn-outline-primary w-100" 
-                                           title="Lihat Assessment #{{ $evaluation->eval_id }}">
-                                            <i class="fas fa-eye me-1"></i>Detail
-                                        </a>
-                                        <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" 
-                                           class="btn btn-primary w-100" 
-                                           title="Lihat Laporan">
-                                            <i class="fas fa-chart-bar me-1"></i>Report
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
+                                    $score = $evaluation->maturityScore->score ?? 0;
+                                    
+                                    $scoreColorClass = 'text-danger'; // Default < 2
+                                    if ($score >= 4) {
+                                        $scoreColorClass = 'text-primary';
+                                    } elseif ($score >= 3) {
+                                        $scoreColorClass = 'text-success';
+                                    } elseif ($score >= 2) {
+                                        $scoreColorClass = 'text-warning';
+                                    }
+                                @endphp
+                                <tr>
+                                    <td class="text-center">{{ $loop->iteration + ($myAssessments->currentPage() - 1) * $myAssessments->perPage() }}</td>
+                                    <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
+                                    <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
+                                    <td>{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</td>
+                                    <td class="text-center">{{ $evaluation->selected_gamo_count ?? '-' }}</td>
+                                    <td class="text-center">{{ $evaluation->filled_gamo_count ?? 0 }}/{{ $evaluation->selected_gamo_count ?? 0 }}</td>
+                                    <td class="text-center">
+                                        <span class="badge {{ $statusBadge }} rounded-pill">{{ $statusLabel }}</span>
+                                    </td>
+                                    <td class="small text-muted">{{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}</td>
+                                    <td class="text-center fw-bold fs-5 {{ $scoreColorClass }}">{{ number_format($score, 2) }}</td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
+                                                <i class="fas fa-eye"></i> Detail
+                                            </a>
+                                            <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
+                                                <i class="fas fa-file-alt"></i> Report
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination for My Assessments -->
+                <div class="d-flex justify-content-end mt-3">
+                    {{ $myAssessments->appends(request()->query())->links('pagination::bootstrap-5') }}
                 </div>
             </div>
         @endif
@@ -207,130 +165,95 @@
                     </h2>
                     <div id="otherAssessmentsCollapse" class="accordion-collapse collapse" aria-labelledby="otherAssessmentsHeading" data-bs-parent="#otherAssessmentsAccordion">
                         <div class="accordion-body pt-4">
-                            <div class="row g-4 assessment-grid" id="other-assessments-grid">
-                                @foreach($otherAssessments as $evaluation)
-                                    @php
-                                        $achievementCounts = $evaluation->achievement_counts ?? [];
-                                        $ratedCounts = [
-                                            'F' => $achievementCounts['F'] ?? 0,
-                                            'L' => $achievementCounts['L'] ?? 0,
-                                            'P' => $achievementCounts['P'] ?? 0,
-                                        ];
-                                        $totalRated = array_sum($ratedCounts);
-                                        
-                                        // Use the calculated total ratable activities for this specific evaluation
-                                        $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
-                                        
-                                        $noneCount = max(0, $currentTotalRatable - $totalRated);
-                                        $percentages = $currentTotalRatable > 0
-                                            ? [
-                                                'F' => round(($ratedCounts['F'] / $currentTotalRatable) * 100, 1),
-                                                'L' => round(($ratedCounts['L'] / $currentTotalRatable) * 100, 1),
-                                                'P' => round(($ratedCounts['P'] / $currentTotalRatable) * 100, 1),
-                                                'N' => round(($noneCount / $currentTotalRatable) * 100, 1),
-                                            ]
-                                            : ['F' => 0, 'L' => 0, 'P' => 0, 'N' => 0];
-                                        $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
-                                        
-                                        if (($evaluation->status ?? '') === 'finished') {
-                                            $statusLabel = 'Selesai';
-                                            $statusClass = 'chip-success';
-                                        } elseif ($completion >= 90) {
-                                            $statusLabel = 'Siap Review';
-                                            $statusClass = 'chip-success';
-                                        } elseif ($completion >= 60) {
-                                            $statusLabel = 'On Track';
-                                            $statusClass = 'chip-info';
-                                        } elseif ($completion > 0) {
-                                            $statusLabel = 'Sedang Dikerjakan';
-                                            $statusClass = 'chip-warning';
-                                        } else {
-                                            $statusLabel = 'Belum Mulai';
-                                            $statusClass = 'chip-muted';
-                                        }
-                                    @endphp
-                                    <div class="col-12 col-md-6 col-xl-4">
-                                        <div class="card h-100 assessment-card shadow-sm border-0">
-                                            <div class="card-header assessment-card-header">
-                                                <div>
-                                                    <div class="assessment-code" style="font-size: 1.1rem;">Tahun {{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</div>
-                                                    <div class="assessment-meta">
-                                                        ID: {{ $evaluation->eval_id ?? '—' }}
-                                                        <div class="text-muted small mt-1">{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</div>
-                                                    </div>
-                                                </div>
-                                                <span class="status-chip {{ $statusClass }}">{{ $statusLabel }}</span>
-                                            </div>
-                                            <div class="card-body assessment-card-body">
-                                                <div class="assessment-progress-block">
-                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <div>
-                                                            <span class="progress-label d-block">Progress Capability</span>
-                                                            <small class="text-muted">GAMO Dipilih: <strong>{{ number_format($evaluation->selected_gamo_count ?? 40) }}</strong></small>
-                                                        </div>
-                                                        <span class="progress-value">{{ number_format($completion, 1) }}%</span>
-                                                    </div>
-                                                    <div class="progress assessment-progress">
-                                                        @if($percentages['F'] > 0)
-                                                            <div class="progress-bar bg-success" style="width: {{ $percentages['F'] }}%" title="Fully"></div>
-                                                        @endif
-                                                        @if($percentages['L'] > 0)
-                                                            <div class="progress-bar bg-info" style="width: {{ $percentages['L'] }}%" title="Largely"></div>
-                                                        @endif
-                                                        @if($percentages['P'] > 0)
-                                                            <div class="progress-bar bg-warning" style="width: {{ $percentages['P'] }}%" title="Partial"></div>
-                                                        @endif
-                                                        @if($percentages['N'] > 0)
-                                                            <div class="progress-bar bg-danger" style="width: {{ $percentages['N'] }}%" title="None"></div>
-                                                        @endif
-                                                    </div>
-                                                    
-                                                    {{-- Maturity Score Block --}}
-                                                    <div class="maturity-score-block mt-3 p-3 bg-light rounded-3 text-center position-relative">
-                                                        <div class="small text-muted text-uppercase fw-bold mb-1">IT Maturity Score</div>
-                                                        @php
-                                                            $score = $evaluation->maturityScore->score ?? 0;
-                                                            $scoreClass = 'text-warning';
-                                                            if($score >= 4) $scoreClass = 'text-success';
-                                                            elseif($score >= 3) $scoreClass = 'text-info';
-                                                            elseif($score >= 2) $scoreClass = 'text-primary';
-                                                        @endphp
-                                                        <div class="maturity-score-value display-6 fw-bold {{ $scoreClass }}">
-                                                            {{ number_format($score, 2) }}
-                                                        </div>
-                                                    </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle shadow-sm bg-white">
+                                    <thead class="table-secondary text-center align-middle">
+                                        <tr style="border-bottom: 2px solid #dee2e6;">
+                                            <th style="width: 50px;">No</th>
+                                            <th style="width: 60px;">Id</th>
+                                            <th>Tahun Assesment</th>
+                                            <th>Organisasi</th>
+                                            <th class="text-center">Jumlah GAMO</th>
+                                            <th class="text-center">Progres</th>
+                                            <th class="text-center">Status</th>
+                                            <th>Last Update at</th>
+                                            <th class="text-center">I&T Maturity Score</th>
+                                            <th class="text-center" style="width: 150px;">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($otherAssessments as $evaluation)
+                                            @php
+                                                $achievementCounts = $evaluation->achievement_counts ?? [];
+                                                $ratedCounts = [
+                                                    'F' => $achievementCounts['F'] ?? 0,
+                                                    'L' => $achievementCounts['L'] ?? 0,
+                                                    'P' => $achievementCounts['P'] ?? 0,
+                                                ];
+                                                $totalRated = array_sum($ratedCounts);
+                                                
+                                                // Use the calculated total ratable activities for this specific evaluation
+                                                $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
+                                                $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
+                                                
+                                                if (($evaluation->status ?? '') === 'finished') {
+                                                    $statusLabel = 'Selesai';
+                                                    $statusBadge = 'bg-success';
+                                                } elseif ($completion >= 90) {
+                                                    $statusLabel = 'Siap Review';
+                                                    $statusBadge = 'bg-success';
+                                                } elseif ($completion >= 60) {
+                                                    $statusLabel = 'On Track';
+                                                    $statusBadge = 'bg-info';
+                                                } elseif ($completion > 0) {
+                                                    $statusLabel = 'Sedang Dikerjakan';
+                                                    $statusBadge = 'bg-warning';
+                                                } else {
+                                                    $statusLabel = 'Belum Mulai';
+                                                    $statusBadge = 'bg-secondary';
+                                                }
 
-                                                    <div class="rating-breakdown mt-3">
-                                                        <span class="rating-pill pill-success">F <strong>{{ $ratedCounts['F'] }}</strong></span>
-                                                        <span class="rating-pill pill-info">L <strong>{{ $ratedCounts['L'] }}</strong></span>
-                                                        <span class="rating-pill pill-warning">P <strong>{{ $ratedCounts['P'] }}</strong></span>
-                                                        <span class="rating-pill pill-danger">N <strong>{{ $noneCount }}</strong></span>
+                                                $score = $evaluation->maturityScore->score ?? 0;
+
+                                                $scoreColorClass = 'text-danger'; // Default < 2
+                                                if ($score >= 4) {
+                                                    $scoreColorClass = 'text-primary';
+                                                } elseif ($score >= 3) {
+                                                    $scoreColorClass = 'text-success';
+                                                } elseif ($score >= 2) {
+                                                    $scoreColorClass = 'text-warning';
+                                                }
+                                            @endphp
+                                            <tr>
+                                                <td class="text-center">{{ $loop->iteration + ($otherAssessments->currentPage() - 1) * $otherAssessments->perPage() }}</td>
+                                                <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
+                                                <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
+                                                <td>{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</td>
+                                                <td class="text-center">{{ $evaluation->selected_gamo_count ?? '-' }}</td>
+                                                <td class="text-center">{{ $evaluation->filled_gamo_count ?? 0 }}/{{ $evaluation->selected_gamo_count ?? 0 }}</td>
+                                                <td class="text-center">
+                                                    <span class="badge {{ $statusBadge }} rounded-pill">{{ $statusLabel }}</span>
+                                                </td>
+                                                <td class="small text-muted">{{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}</td>
+                                                <td class="text-center fw-bold fs-5 {{ $scoreColorClass }}">{{ number_format($score, 2) }}</td>
+                                                <td class="text-center">
+                                                    <div class="d-flex justify-content-center gap-1">
+                                                        <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
+                                                            <i class="fas fa-eye"></i> Detail
+                                                        </a>
+                                                        <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
+                                                            <i class="fas fa-file-alt"></i> Report
+                                                        </a>
                                                     </div>
-                                                </div>
-                                                <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
-                                                    <li>
-                                                        <i class="fas fa-clock me-2 text-muted"></i>
-                                                        Terakhir diperbarui {{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <div class="card-footer assessment-card-footer">
-                                                <div class="d-flex gap-2">
-                                                    <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
-                                                       class="btn btn-outline-primary w-100" 
-                                                       title="Lihat Assessment #{{ $evaluation->eval_id }}">
-                                                        <i class="fas fa-eye me-1"></i>Detail
-                                                    </a>
-                                                    <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" 
-                                                       class="btn btn-primary w-100" 
-                                                       title="Lihat Laporan">
-                                                        <i class="fas fa-chart-bar me-1"></i>Report
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Pagination for Other Assessments -->
+                            <div class="d-flex justify-content-end mt-3">
+                                {{ $otherAssessments->appends(request()->query())->links('pagination::bootstrap-5') }}
                             </div>
                         </div>
                     </div>
