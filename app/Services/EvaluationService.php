@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\MstEval;
 use App\Models\TrsActivityeval;
+use App\Models\TrsObjectiveScore;
+use App\Models\TrsMaturityScore;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -53,6 +55,9 @@ class EvaluationService
                     );
                 }
             }
+
+            // Calculate and save maturity scores to database
+            $this->updateCalculatedScores($evaluation->eval_id);
 
             DB::commit();
             return $evaluation;
@@ -290,5 +295,258 @@ class EvaluationService
                 'F' => $achievementCounts['F'] ?? 0,
             ]
         ];
+    }
+    /**
+     * Calculate the overall IT Maturity Score for an evaluation
+     * Logic exactly matches the AssessmentEvalController::report method
+     */
+    public function calculateMaturityScore($evalId)
+    {
+        $evaluation = MstEval::with([
+            'activityEvaluations.activity.practices.objective'
+        ])->find($evalId);
+
+        if (!$evaluation) {
+            return 0;
+        }
+
+        $formattedData = $this->loadEvaluation($evalId);
+        $activityData = $formattedData['activity_evaluations'] ?? [];
+
+        // Determine selected domains/objectives based on filled activities
+        $relevantActivityIds = array_keys($activityData);
+        if (empty($relevantActivityIds)) {
+            return 0;
+        }
+
+        // Fetch objectives that are relevant to this evaluation (based on activities)
+        // This ensures we don't average in 0s for objectives that weren't selected
+        $objectives = \App\Models\MstObjective::whereHas('practices.activities', function($q) use ($relevantActivityIds) {
+            $q->whereIn('activity_id', $relevantActivityIds);
+        })->with(['practices.activities'])->get();
+
+        if ($objectives->isEmpty()) {
+            return 0;
+        }
+        
+        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+        $calculatedLevels = [];
+
+        foreach ($objectives as $obj) {
+            $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
+            $allLevelsFound = [];
+
+            foreach ($obj->practices as $p) {
+                if ($p->activities) {
+                    foreach ($p->activities as $a) {
+                        $lvl = (int)$a->capability_lvl;
+                        if ($lvl >= 2 && $lvl <= 5) {
+                            $activitiesByLevel[$lvl][] = $a;
+                            $allLevelsFound[] = $lvl;
+                        }
+                    }
+                }
+            }
+
+            if (empty($allLevelsFound)) {
+                $calculatedLevels[] = 0;
+                continue;
+            }
+            
+            $minLevel = min($allLevelsFound);
+
+            $getScore = function($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
+                if ($lvl < $minLevel) return 1.0;
+                
+                $acts = $activitiesByLevel[$lvl] ?? [];
+                if (empty($acts)) return 0.0;
+
+                $vals = 0;
+                foreach ($acts as $a) {
+                    $r = $activityData[$a->activity_id]['level_achieved'] ?? 'N';
+                    $vals += ($ratingMap[$r] ?? 0.0);
+                }
+                return $vals / count($acts);
+            };
+
+            $score2 = $getScore(2);
+            $score3 = $getScore(3);
+            $score4 = $getScore(4);
+            $score5 = $getScore(5);
+
+            $finalLevel = 0;
+            if ($score2 <= 0.15) $finalLevel = 0;
+            elseif ($score2 <= 0.50) $finalLevel = 1;
+            elseif ($score2 <= 0.85) $finalLevel = 2;
+            else {
+                if ($score3 <= 0.50) $finalLevel = 2;
+                elseif ($score3 <= 0.85) $finalLevel = 3;
+                else {
+                    if ($score4 <= 0.50) $finalLevel = 3;
+                    elseif ($score4 <= 0.85) $finalLevel = 4;
+                    else {
+                        if ($score5 <= 0.50) $finalLevel = 4;
+                        else $finalLevel = 5;
+                    }
+                }
+            }
+
+            if ($minLevel > 2) {
+                $startScore = $getScore($minLevel);
+                if ($startScore <= 0.15) $finalLevel = 0;
+            }
+
+            $calculatedLevels[] = $finalLevel;
+        }
+
+        if (empty($calculatedLevels)) {
+            return 0;
+        }
+
+        // Return average of all objective scores
+        return array_sum($calculatedLevels) / count($calculatedLevels);
+    }
+
+    /**
+     * Calculate and update score tables (TrsObjectiveScore & TrsMaturityScore)
+     */
+    public function updateCalculatedScores($evalId)
+    {
+        $evaluation = MstEval::find($evalId);
+        if (!$evaluation) return;
+
+        // 1. Calculate Score (reuse existing logic)
+        // We need to slightly modify calculateMaturityScore or extract the core logic
+        // so we can get both per-objective scores AND the final score.
+        // Let's copy the logic here for clarity or refactor.
+        // For safety and speed now, let's implement the core logic here to save both.
+
+        $activityData = TrsActivityeval::where('eval_id', $evalId)->get()->keyBy('activity_id');
+        $relevantActivityIds = $activityData->keys()->toArray();
+
+        // Clear existing scores for this evaluation to ensure clean state
+        TrsObjectiveScore::where('eval_id', $evalId)->delete();
+        TrsMaturityScore::where('eval_id', $evalId)->delete();
+
+        // Use Scope (Selected Domains) to determine relevant objectives, EXACTLY like the report page
+        // If we only look at "activities with data", we might miss 0-scored objectives that are part of the scope
+        // causing the average to be higher (smaller divisor).
+        
+        $selectedDomains = \App\Models\TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
+
+        if (!empty($selectedDomains)) {
+            $objectives = \App\Models\MstObjective::with(['practices.activities'])
+                ->where(function ($q) use ($selectedDomains) {
+                    foreach ($selectedDomains as $domain) {
+                        $domain = trim((string)$domain);
+                        if ($domain !== '') {
+                            $q->orWhere('objective_id', 'like', $domain . '%');
+                        }
+                    }
+                })->get();
+        } else {
+            // Fallback: If no scope defined, should we verify all? 
+            // Or fallback to activities? Report falls back to ALL.
+            // Let's stick to ALL to match Report logic 1:1.
+            $objectives = \App\Models\MstObjective::with(['practices.activities'])->get();
+        }
+
+        if ($objectives->isEmpty()) {
+            TrsMaturityScore::create(['eval_id' => $evalId, 'score' => 0]);
+            return;
+        }
+
+        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+        $calculatedLevels = [];
+
+        foreach ($objectives as $obj) {
+            $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
+            $allLevelsFound = [];
+
+            foreach ($obj->practices as $p) {
+                if ($p->activities) {
+                    foreach ($p->activities as $a) {
+                        $lvl = (int)$a->capability_lvl;
+                        if ($lvl >= 2 && $lvl <= 5) {
+                            $activitiesByLevel[$lvl][] = $a;
+                            $allLevelsFound[] = $lvl;
+                        }
+                    }
+                }
+            }
+
+            if (empty($allLevelsFound)) {
+                $calculatedLevels[] = 0;
+                // Save objective score 0
+                TrsObjectiveScore::create([
+                    'eval_id' => $evalId,
+                    'objective_id' => $obj->objective_id,
+                    'level' => 0
+                ]);
+                continue;
+            }
+            
+            $minLevel = min($allLevelsFound);
+
+            $getScore = function($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
+                if ($lvl < $minLevel) return 1.0;
+                
+                $acts = $activitiesByLevel[$lvl] ?? [];
+                if (empty($acts)) return 0.0;
+
+                $vals = 0;
+                foreach ($acts as $a) {
+                    // We need to look up in the collection we fetched
+                    $actRecord = $activityData[$a->activity_id] ?? null;
+                    $r = $actRecord ? $actRecord->level_achieved : 'N';
+                    $vals += ($ratingMap[$r] ?? 0.0);
+                }
+                return $vals / count($acts);
+            };
+
+            $score2 = $getScore(2);
+            $score3 = $getScore(3);
+            $score4 = $getScore(4);
+            $score5 = $getScore(5);
+
+            $finalLevel = 0;
+            if ($score2 <= 0.15) $finalLevel = 0;
+            elseif ($score2 <= 0.50) $finalLevel = 1;
+            elseif ($score2 <= 0.85) $finalLevel = 2;
+            else {
+                if ($score3 <= 0.50) $finalLevel = 2;
+                elseif ($score3 <= 0.85) $finalLevel = 3;
+                else {
+                    if ($score4 <= 0.50) $finalLevel = 3;
+                    elseif ($score4 <= 0.85) $finalLevel = 4;
+                    else {
+                        if ($score5 <= 0.50) $finalLevel = 4;
+                        else $finalLevel = 5;
+                    }
+                }
+            }
+
+            if ($minLevel > 2) {
+                $startScore = $getScore($minLevel);
+                if ($startScore <= 0.15) $finalLevel = 0;
+            }
+
+            $calculatedLevels[] = $finalLevel;
+
+            // Save objective score
+            TrsObjectiveScore::create([
+                'eval_id' => $evalId,
+                'objective_id' => $obj->objective_id,
+                'level' => $finalLevel
+            ]);
+        }
+
+        $avgScore = empty($calculatedLevels) ? 0 : (array_sum($calculatedLevels) / count($calculatedLevels));
+
+        // Save overall maturity score
+        TrsMaturityScore::create([
+            'eval_id' => $evalId,
+            'score' => $avgScore
+        ]);
     }
 }

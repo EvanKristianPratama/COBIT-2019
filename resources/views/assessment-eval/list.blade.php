@@ -146,6 +146,22 @@
                                             <div class="progress-bar bg-primary" style="width: {{ $gamoProgress }}%"></div>
                                         </div>
                                     </div>
+                                    
+                                    {{-- Maturity Score Block --}}
+                                    <div class="maturity-score-block mt-3 p-3 bg-light rounded-3 text-center position-relative">
+                                        <div class="small text-muted text-uppercase fw-bold mb-1">IT Maturity Score</div>
+                                        @php
+                                            $score = $evaluation->maturityScore->score ?? 0;
+                                            $scoreClass = 'text-warning';
+                                            if($score >= 4) $scoreClass = 'text-success';
+                                            elseif($score >= 3) $scoreClass = 'text-info';
+                                            elseif($score >= 2) $scoreClass = 'text-primary';
+                                        @endphp
+                                        <div class="maturity-score-value display-6 fw-bold {{ $scoreClass }}">
+                                            {{ number_format($score, 2) }}
+                                        </div>
+                                    </div>
+
                                     <ul class="assessment-timestamps list-unstyled mt-3 mb-0">
                                         <li>
                                             <i class="fas fa-clock me-2 text-muted"></i>
@@ -154,11 +170,18 @@
                                     </ul>
                                 </div>
                                 <div class="card-footer assessment-card-footer">
-                                    <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
-                                       class="btn btn-primary w-100" 
-                                       title="Lihat Assessment #{{ $evaluation->eval_id }}">
-                                        <i class="fas fa-eye me-1"></i>Lihat Detail
-                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
+                                           class="btn btn-outline-primary w-100" 
+                                           title="Lihat Assessment #{{ $evaluation->eval_id }}">
+                                            <i class="fas fa-eye me-1"></i>Detail
+                                        </a>
+                                        <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" 
+                                           class="btn btn-primary w-100" 
+                                           title="Lihat Laporan">
+                                            <i class="fas fa-chart-bar me-1"></i>Report
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -261,7 +284,23 @@
                                                             <div class="progress-bar bg-danger" style="width: {{ $percentages['N'] }}%" title="None"></div>
                                                         @endif
                                                     </div>
-                                                    <div class="rating-breakdown">
+                                                    
+                                                    {{-- Maturity Score Block --}}
+                                                    <div class="maturity-score-block mt-3 p-3 bg-light rounded-3 text-center position-relative">
+                                                        <div class="small text-muted text-uppercase fw-bold mb-1">IT Maturity Score</div>
+                                                        @php
+                                                            $score = $evaluation->maturityScore->score ?? 0;
+                                                            $scoreClass = 'text-warning';
+                                                            if($score >= 4) $scoreClass = 'text-success';
+                                                            elseif($score >= 3) $scoreClass = 'text-info';
+                                                            elseif($score >= 2) $scoreClass = 'text-primary';
+                                                        @endphp
+                                                        <div class="maturity-score-value display-6 fw-bold {{ $scoreClass }}">
+                                                            {{ number_format($score, 2) }}
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="rating-breakdown mt-3">
                                                         <span class="rating-pill pill-success">F <strong>{{ $ratedCounts['F'] }}</strong></span>
                                                         <span class="rating-pill pill-info">L <strong>{{ $ratedCounts['L'] }}</strong></span>
                                                         <span class="rating-pill pill-warning">P <strong>{{ $ratedCounts['P'] }}</strong></span>
@@ -276,11 +315,18 @@
                                                 </ul>
                                             </div>
                                             <div class="card-footer assessment-card-footer">
-                                                <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
-                                                   class="btn btn-primary w-100" 
-                                                   title="Lihat Assessment #{{ $evaluation->eval_id }}">
-                                                    <i class="fas fa-eye me-1"></i>Lihat Detail
-                                                </a>
+                                                <div class="d-flex gap-2">
+                                                    <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" 
+                                                       class="btn btn-outline-primary w-100" 
+                                                       title="Lihat Assessment #{{ $evaluation->eval_id }}">
+                                                        <i class="fas fa-eye me-1"></i>Detail
+                                                    </a>
+                                                    <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" 
+                                                       class="btn btn-primary w-100" 
+                                                       title="Lihat Laporan">
+                                                        <i class="fas fa-chart-bar me-1"></i>Report
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -482,6 +528,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+let targetUrl = '';
+let currentAction = '';
+
 <script>
 let targetUrl = '';
 let currentAction = '';

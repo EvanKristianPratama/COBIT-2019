@@ -976,9 +976,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Render
     applyPagination();
 });
-</script>
 
-<script>
     window.CURRENT_EVIDENCE_KEYS = @json($evidences->map(fn($e) => strtolower(trim(($e->judul_dokumen ?? '')."|".($e->no_dokumen ?? '')))));
 </script>
 

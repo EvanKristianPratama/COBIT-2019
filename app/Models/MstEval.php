@@ -51,4 +51,20 @@ class MstEval extends Model
     {
         return $query->where('user_id', $userId);
     }
+
+    /**
+     * Get the maturity score associated with the evaluation.
+     */
+    public function maturityScore()
+    {
+        return $this->hasOne(TrsMaturityScore::class, 'eval_id', 'eval_id');
+    }
+
+    /**
+     * Get the objective scores associated with the evaluation.
+     */
+    public function objectiveScores()
+    {
+        return $this->hasMany(TrsObjectiveScore::class, 'eval_id', 'eval_id');
+    }
 }

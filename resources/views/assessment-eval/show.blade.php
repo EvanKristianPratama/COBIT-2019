@@ -1,9 +1,22 @@
 @extends('layouts.app')
 
+{{-- 
+    PERFORMANCE OPTIMIZATION NOTE:
+    Calculations related to grouping activities by capability level have been 
+    moved to PHP blocks outside loops to reduce rendering time (complexity reduction).
+    CSS property 'content-visibility: auto' is used on cards to improve scrolling performance.
+--}}
+
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 {{-- Loading Overlay with Progress --}}
+<style>
+    .objective-card {
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 600px; /* Estimate height to prevent scrollbar jumping */
+    }
+</style>
 <div id="loading-overlay" class="loading-overlay">
     <div class="loading-content">
         <div class="loading-spinner"></div>
@@ -392,8 +405,47 @@
         @foreach($sortedObjectives as $objective)
             @php
                 $domain = preg_replace('/\d+/', '', $objective->objective_id);
+                
+                // PERFORMANCE OPTIMIZATION: Pre-calculate groupings to avoid N+1 filters in loops
+                $practicesByLevel = [];
+                $allLevels = [];
+
+                foreach($objective->practices as $practice) {
+                    if($practice->activities) {
+                        foreach($practice->activities as $activity) {
+                            $lvl = $activity->capability_lvl;
+                            $allLevels[] = $lvl;
+                            
+                            if(!isset($practicesByLevel[$lvl])) {
+                                $practicesByLevel[$lvl] = [];
+                            }
+                            
+                            $pId = $practice->practice_id;
+                            if(!isset($practicesByLevel[$lvl][$pId])) {
+                                $practicesByLevel[$lvl][$pId] = [
+                                    'practice' => $practice,
+                                    'activities' => []
+                                ];
+                            }
+                            $practicesByLevel[$lvl][$pId]['activities'][] = $activity;
+                        }
+                    }
+                }
+                
+                $uniqueLevels = array_unique($allLevels);
+                sort($uniqueLevels);
+                $minLevel = !empty($uniqueLevels) ? $uniqueLevels[0] : 2;
+                $maxLevel = min(5, !empty($uniqueLevels) ? end($uniqueLevels) : 2); // Cap at 5
+
+                // Calculate total Level 2 activities for the header stat
+                $totalLevel2Activities = 0;
+                if(isset($practicesByLevel[2])) {
+                    foreach($practicesByLevel[2] as $pData) {
+                        $totalLevel2Activities += count($pData['activities']);
+                    }
+                }
             @endphp
-            <div class="col-12 mb-4 objective-card" data-domain="{{ $domain }}" data-objective-id="{{ $objective->objective_id }}" data-objective-name="{{ $objective->objective }}">
+            <div class="col-12 mb-4 objective-card" id="objective-{{ $objective->objective_id }}" data-domain="{{ $domain }}" data-objective-id="{{ $objective->objective_id }}" data-objective-name="{{ $objective->objective }}">
                 <div class="card shadow-sm h-100">
                     {{-- Card Header --}}
                     <div class="card-header objective-header py-3">
@@ -406,9 +458,6 @@
                                 'MEA' => 'Monitor, Evaluate, and Assess'
                             ];
                             $fullDomainName = $domainFullNames[$domain] ?? $domain;
-                            $totalLevel2Activities = $objective->practices->sum(function($practice) {
-                                return $practice->activities ? $practice->activities->where('capability_lvl', 2)->count() : 0;
-                            });
                         @endphp
                         <div class="objective-hero d-flex justify-content-between align-items-start">
                             <div>
@@ -448,28 +497,12 @@
 
                     {{-- Card Footer with Multi-Level Assessment --}}
                     <div class="card-footer bg-light">
-                        @php
-                            $availableLevels = [];
-                            foreach($objective->practices as $practice) {
-                                if($practice->activities) {
-                                    foreach($practice->activities as $activity) {
-                                        if(!in_array($activity->capability_lvl, $availableLevels)) {
-                                            $availableLevels[] = $activity->capability_lvl;
-                                        }
-                                    }
-                                }
-                            }
-                            sort($availableLevels);
-                            $minLevel = min($availableLevels ?? [2]);
-                            $maxLevel = min(5, max($availableLevels ?? [2]));
-                        @endphp
-                        
                         @for($level = $minLevel; $level <= $maxLevel; $level++)
                             @php
                                 $levelActivities = 0;
-                                foreach($objective->practices as $practice) {
-                                    if($practice->activities) {
-                                        $levelActivities += $practice->activities->where('capability_lvl', $level)->count();
+                                if(isset($practicesByLevel[$level])) {
+                                    foreach($practicesByLevel[$level] as $pData) {
+                                        $levelActivities += count($pData['activities']);
                                     }
                                 }
                             @endphp
@@ -518,12 +551,14 @@
                                                         @php 
                                                             $activityCounter = 1;
                                                             $levelCellRendered = false;
+                                                            $practicesForThisLevel = $practicesByLevel[$level] ?? [];
                                                         @endphp
-                                                        @foreach($objective->practices as $practice)
+                                                        @foreach($practicesForThisLevel as $pData)
                                                             @php
-                                                                $levelSpecificActivities = $practice->activities ? $practice->activities->where('capability_lvl', $level) : collect();
+                                                                $practice = $pData['practice'];
+                                                                $activities = $pData['activities'];
                                                             @endphp
-                                                            @foreach($levelSpecificActivities as $activity)
+                                                            @foreach($activities as $activity)
                                                                 <tr class="activity-row">
                                                                     <td class="text-center fw-semibold">{{ $activityCounter }}</td>
                                                                     <td class="practice-code-cell text-center">

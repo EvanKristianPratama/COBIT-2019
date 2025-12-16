@@ -300,3 +300,7 @@ Route::put('/assessment-eval/evidence/{evidenceId}', [AssessmentEvalController::
 Route::get('/assessment-eval/{evalId}/report', [AssessmentEvalController::class, 'report'])
      ->name('assessment-eval.report')
      ->middleware('auth');
+
+Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
+     ->name('assessment-eval.score')
+     ->middleware('auth');

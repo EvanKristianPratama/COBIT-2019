@@ -13,6 +13,9 @@
                     <div class="hero-eval-id" style="font-size:1.05rem;font-weight:600;margin-top:0.25rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);">
                         Assessment Id: {{ $evalId }}
                     </div>
+                    <div class="hero-eval-year text-uppercase" style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:0.06em;">
+                        Assessment Year: {{ $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->tahun ?? 'N/A' }}
+                    </div>
                 </div>
                 <div>
                     <a href="{{ route('assessment-eval.show', $evalId) }}" class="btn btn-light btn-sm rounded-pill px-3">
@@ -23,405 +26,200 @@
         </div>
     </div>
 
-    {{-- Filter Section (diubah menjadi tabel) --}}
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="mb-0 fw-bold text-primary">Pilih Objectives (GAMO)</h5>
-                <p class="text-muted small mb-0">Centang objective yang ingin dimasukkan ke laporan maturity.</p>
-            </div>
-            <div class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="btn-deselect-all">Deselect All</button>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-select-all">Select All</button>
-            </div>
-        </div>
-
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover table-sm" id="gamo-table">
-                    <thead class="bg-light align-middle">
-                        <tr>
-                            <th style="width:40px;" class="text-center">
-                                <input type="checkbox" id="check-all" title="Select all">
-                            </th>
-                            <th style="width:90px;">Domain</th>
-                            <th style="width:140px;">Objective</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php
-                            $domains = ['EDM','APO','BAI','DSS','MEA'];
-                            // group by first 3 chars (domain)
-                            $grouped = $objectives->groupBy(function($item) {
-                                return substr($item->objective_id, 0, 3);
-                            });
-                        @endphp
-
-                        @foreach($domains as $domain)
-                            @if(isset($grouped[$domain]))
-                                @foreach($grouped[$domain] as $obj)
-                                    <tr>
-                                        <td class="text-center align-middle">
-                                            <input class="form-check-input gamo-checkbox" type="checkbox"
-                                                   value="{{ $obj->objective_id }}"
-                                                   id="check-{{ $obj->objective_id }}" checked>
-                                        </td>
-                                        <td class="align-middle fw-bold">{{ $domain }}</td>
-                                        <td class="align-middle font-monospace fw-bold">{{ $obj->objective_id }}</td>
-                                        <td class="align-middle small text-muted">{{ Str::limit($obj->description, 200) }}</td>
-                                    </tr>
-                                @endforeach
-                            @endif
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-3 d-flex justify-content-between align-items-center">
-                <div class="small text-muted" id="selected-count">0 selected</div>
-                <div>
-                    <button type="button" class="btn btn-primary px-4" id="btn-generate-report">
-                        <i class="fas fa-table me-2"></i>Generate Report
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     {{-- Report Result Section --}}
-    <div class="card shadow-sm border-0 mb-4 d-none" id="report-result-card">
+    <div class="card shadow-sm border-0 mb-4" id="report-result-card">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold text-primary">Maturity Level Report</h5>
-            <button class="btn btn-sm btn-outline-success" onclick="window.print()">
-                <i class="fas fa-print me-2"></i>Print
-            </button>
+            <h5 class="mb-0 fw-bold text-primary">Assessment Recapitulation Report</h5>
         </div>
-        <div class="card-body p-0">
+        <div class="card-body p-0" id="report-container">
             <div class="table-responsive">
-                <table class="table table-bordered mb-0 report-table">
+                <table class="table table-sm table-bordered recap-table align-middle mb-0" id="recap-table">
                     <thead>
                         <tr>
-                            <th class="text-center" style="width: 50px;">No</th>
-                            <th class="text-center" style="width:80px;">Gap</th>
+                            <th style="width:50px;" class="text-center">No</th>
+                            <th style="width:80px;">Domain</th>
+                            <th style="width:90px;">Gamo</th>
                             <th>Process Name</th>
-                            <th class="text-center" style="width: 130px;">Level</th>
-                            <th class="text-center" style="width: 90px;">Rating</th>
-                            <th class="text-center" style="width: 90px;">Target</th>
-                            <th class="text-center" style="width: 90px;">Gap</th>
-                            <th class="text-center" style="width: 80px;">Checklist</th>
+                            <th style="width:80px;" class="text-center">Score</th>
+                            <th style="width:80px;" class="text-center">Rating</th>
+                            <th style="width:80px;" class="text-center">Target</th>
+                            <th style="width:80px;" class="text-center">Gap</th>
+                            <th style="width:80px;" class="text-center">Max Level</th>
                         </tr>
-                            <td></td>
-                            <td class="text-center" id="avg-target">-</td>
-                            <td></td>
+                    </thead>
+                    <tbody id="recap-table-body">
+                        {{-- JS will populate this --}}
+                    </tbody>
+                    <tfoot id="recap-table-footer">
+                        {{-- JS will populate this --}}
+                    </tfoot>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    .report-table {
-        border-collapse: collapse;
-        font-size: 0.9rem;
-    }
-    .report-table th, .report-table td {
-        padding: 0.35rem 0.5rem;
-        border: 1px solid #dee2e6;
-    }
-    .report-table thead th {
-        background: #f6f8ff;
-        color: #42507a;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-    .report-table tbody tr:nth-child(odd) {
-        background: #fbfcff;
-    }
-    .report-table tbody tr:hover {
-        background: #f0f4ff;
-    }
-    .report-table input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-    }
-</style>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Server data injections
-    window.OBJECTIVES = @json($objectives);
-    window.EVAL_ID = "{{ $evalId }}";
-    window.TARGET_CAPABILITY_MAP = @json($targetCapabilityMap ?? []);
+/**
+ * Assessment Report Module
+ * Optimized for performance (O(1) lookups) and maintainability (Centralized Config).
+ * Uses IIFE to prevent global namespace pollution.
+ */
+(function() {
+    'use strict';
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const dom = {
-            table: document.getElementById('gamo-table'),
-            btnSelectAll: document.getElementById('btn-select-all'),
-            btnDeselectAll: document.getElementById('btn-deselect-all'),
-            btnGenerate: document.getElementById('btn-generate-report'),
-            reportCard: document.getElementById('report-result-card'),
-            tableBody: document.getElementById('report-table-body'),
-            selectedCount: document.getElementById('selected-count'),
-            checkAll: document.getElementById('check-all')
-        };
+    // 1. Configuration & Static Data
+    const Config = {
+        // Assessment Form Base URL
+        assessmentUrl: "{{ route('assessment-eval.show', $evalId) }}",
+        
+        // COBIT 2019 Max Capability Levels (Direct Map for O(1) Access)
+        maxLevels: {
+            'EDM01': 4, 'EDM02': 5, 'EDM03': 4, 'EDM04': 4, 'EDM05': 4,
+            'APO01': 5, 'APO02': 4, 'APO03': 5, 'APO04': 4, 'APO05': 5, 'APO06': 5, 'APO07': 4, 'APO08': 5, 'APO09': 4, 'APO10': 5, 'APO11': 5, 'APO12': 5, 'APO13': 5, 'APO14': 5,
+            'BAI01': 5, 'BAI02': 4, 'BAI03': 4, 'BAI04': 5, 'BAI05': 5, 'BAI06': 4, 'BAI07': 5, 'BAI08': 5, 'BAI09': 5, 'BAI10': 4, 'BAI11': 5,
+            'DSS01': 5, 'DSS02': 5, 'DSS03': 5, 'DSS04': 4, 'DSS05': 5, 'DSS06': 5,
+            'MEA01': 5, 'MEA02': 5, 'MEA03': 5, 'MEA04': 4
+        },
+        defaultMax: 5,
+        // Styling Configuration
+        colors: {
+            bg:   ['#ffebee', '#fff3e0', '#fff8e1', '#e8f5e9', '#e3f2fd', '#f3e5f5'],
+            text: ['#c62828', '#ef6c00', '#f57f17', '#2e7d32', '#1565c0', '#6a1b9a']
+        }
+    };
 
-        let assessmentData = null; // Will hold loaded assessment data
+    // 2. Data Provider (Single Source of Truth from Server)
+    const AppData = {
+        objectives: @json($objectives),
+        targetMap: @json($targetCapabilityMap ?? []),
+        calculatedLevels: @json($calculatedLevels ?? []) // Generated server-side
+    };
 
-        // get live NodeList of checkboxes
-        const getCheckboxes = () => Array.from(document.querySelectorAll('.gamo-checkbox'));
+    // 3. Utilities (Pure Functions)
+    const Utils = {
+        escape: s => (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])),
+        parseNum: v => {
+            const n = Number(v);
+            return (v === null || v === undefined || v === '' || isNaN(n)) ? null : n;
+        },
+        fmt: n => (n || 0).toFixed(2),
+        getRating: lvl => (lvl > 0 ? `${lvl} F` : '0 N'),
+        getLink: id => `${Config.assessmentUrl}#objective-${id}`
+    };
 
-        // --- Helpers ---
-        const renderTable = (metaList) => {
-            const body = tableBody();
-            body.innerHTML = '';
-
-            const baseLevels = [];
-            const targetVals = [];
-
-            metaList.forEach((meta, idx) => {
-                const data = objectiveLevels[meta.id] || { level: 0, rating: '-' };
-                const level = data.level ?? 0;
-                const rating = data.rating ?? '-';
-                baseLevels.push(level);
-
-                const target = TARGET_MAP[meta.id] ?? null;
-                if (target !== null && target !== undefined) targetVals.push(target);
-                const gap = (target === null || target === undefined) ? null : (target - level);
-
-                const tr = document.createElement('tr');
-                tr.classList.add(`domain-${meta.domain}`);
-                tr.innerHTML = `
-                    <td class="text-center sticky-col">${idx + 1}</td>
-                    <td class="text-center fw-bold domain-chip">${meta.domain}</td>
-                    <td class="text-center fw-bold font-monospace">${meta.id}</td>
-                    <td>
-                        <div class="fw-bold">${meta.name}</div>
-                        <div class="text-muted small">${meta.description}</div>
-                    </td>
-                    <td class="text-center fw-bold" style="color:${levelColor(level)};">${level}</td>
-                    <td class="text-center">${rating}</td>
-                    <td class="text-center">${target ?? '-'}</td>
-                    <td class="text-center ${gapClass(gap)}">${gap === null ? '-' : gap}</td>
-                `;
-
-                dynamicColumns.forEach(col => {
-                    const cell = document.createElement('td');
-                    const included = col.objectives.has(meta.id);
-                    cell.className = 'text-center';
-                    cell.textContent = included ? level : '';
-                    tr.appendChild(cell);
-                });
-
-                body.appendChild(tr);
-            });
-
-            document.getElementById('avg-base').textContent = avg(baseLevels);
-            document.getElementById('avg-target').textContent = targetVals.length ? avg(targetVals) : '-';
-
-            refreshFooter(metaList);
-        };
-                dom.checkAll.indeterminate = false;
-            } else {
-                const all = checkboxes.every(cb => cb.checked);
-                const none = checkboxes.every(cb => !cb.checked);
-                dom.checkAll.checked = all;
-                dom.checkAll.indeterminate = !(all || none);
-            }
-        };
-
-        const toggleAll = (checked) => {
-            getCheckboxes().forEach(cb => cb.checked = checked);
-            updateCount();
-        };
-
-        // master header checkbox toggle
-        dom.checkAll.addEventListener('change', (e) => {
-            toggleAll(e.target.checked);
-        });
-
-        dom.btnSelectAll.addEventListener('click', () => toggleAll(true));
-        dom.btnDeselectAll.addEventListener('click', () => toggleAll(false));
-
-        // delegate per-row checkbox change to update count (checkboxes already exist)
-        getCheckboxes().forEach(cb => cb.addEventListener('change', updateCount));
-
-        // --- Logic: Calculate Maturity Level (sama seperti sebelumnya) ---
-        const calculateMaturityLevel = (objectiveId) => {
-            const objMeta = window.OBJECTIVES.find(o => o.objective_id === objectiveId);
-            if (!objMeta || !objMeta.practices) return 0;
-
-            const objActivities = [];
-            objMeta.practices.forEach(p => {
-                if (p.activities) {
-                    p.activities.forEach(a => {
-                        objActivities.push(a);
-                    });
-                }
-            });
-
-            if (!objActivities.length) return 0;
-            if (!assessmentData || !assessmentData.activityData) return 0;
-
-            const levels = [2, 3, 4, 5];
-            let maxLevel = 0;
-            
-            // Level 1 detection
-            const anyRated = objActivities.some(a => {
-                const val = assessmentData.activityData?.[a.activity_id]?.value;
-                return val === 'P' || val === 'L' || val === 'F'; 
-            });
-            if (anyRated) maxLevel = 1;
-
-            for (let lvl of levels) {
-                const actsAtLvl = objActivities.filter(a => parseInt(a.capability_level) === lvl);
-                if (actsAtLvl.length === 0) continue;
-                const allAchieved = actsAtLvl.every(a => {
-                    const rating = (assessmentData.activityData?.[a.activity_id]?.value || 'N'); 
-                    return rating === 'L' || rating === 'F';
-                });
-                if (allAchieved) {
-                    maxLevel = lvl;
-                } else {
-                    break; 
-                }
-            }
-
-            return maxLevel;
-        };
-
-        // --- Load Data ---
-        const loadAssessmentData = async () => {
-            try {
-                const resp = await fetch(`/assessment-eval/${window.EVAL_ID}/load`);
-                const json = await resp.json();
-                if (json.success) {
-                    assessmentData = json.data;
-                } else {
-                    throw new Error(json.message || 'Unknown');
-                }
-            } catch (err) {
-                console.error(err);
-                Swal.fire('Error', 'Failed to load assessment data', 'error');
-            }
-        };
-
-        // --- Generate Report ---
-            const generateReport = async () => {
+    // 4. Core Application Logic
+    const ReportApp = {
+        init() {
+            document.addEventListener('DOMContentLoaded', () => {
                 try {
-                    if (!assessmentData) {
-                        await loadAssessmentData();
-                        if (!assessmentData) throw new Error('Data assessment tidak tersedia');
-                    }
+                    const data = this.processData();
+                    this.render(data);
+                } catch (e) {
+                    console.error('Report App Error:', e);
+                    const tbody = document.getElementById('recap-table-body');
+                    if(tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-3">Failed to load report: ${Utils.escape(e.message)}</td></tr>`;
+                }
+            });
+        },
 
-                const selectedIds = getCheckboxes()
-                    .filter(cb => cb.checked)
-                    .map(cb => cb.value);
+        processData() {
+            if (!AppData.objectives || !AppData.objectives.length) return [];
 
-                if (!selectedIds.length) {
-                    Swal.fire('Info', 'Please select at least one objective', 'info');
-                    return;
+            return AppData.objectives.map((obj, i) => {
+                const id = obj.objective_id;
+                const level = AppData.calculatedLevels[id] || 0;
+                const target = Utils.parseNum(AppData.targetMap[id]);
+                const max = Config.maxLevels[id] || Config.defaultMax;
+                const gap = target !== null ? (level - target) : null;
+
+                // Pre-calculate styling to keep render logic clean
+                let gapClass = 'text-muted';
+                if (gap !== null) {
+                    gapClass = gap < 0 ? 'text-danger fw-bold' : (gap > 0 ? 'text-success fw-bold' : 'text-dark fw-bold');
                 }
 
-                // Generate rows
-                let rowsHtml = '';
-                let totalLevel = 0;
-                
-                selectedIds.forEach((objId, idx) => {
-                    const level = calculateMaturityLevel(objId);
-                    totalLevel += level;
-                    
-                    // Find objective details
-                    const objMeta = window.OBJECTIVES.find(o => o.objective_id === objId);
-                    const desc = objMeta ? objMeta.description : '-';
-                    const domain = objId.substring(0, 3);
-                    const objectiveName = objMeta ? (objMeta.objective || desc || '-') : '-';
-
-                    // Pull target & rating (same as summary result logic)
-                    const targetVal = window.TARGET_CAPABILITY_MAP ? window.TARGET_CAPABILITY_MAP[objId] : null;
-                    const gapVal = (targetVal === null || targetVal === undefined) ? null : (targetVal - level);
-
-                    const gapClasses = ['fw-bold'];
-                    if (gapVal === null) {
-                        gapClasses.push('text-muted');
-                    } else if (gapVal < 0) {
-                        gapClasses.push('text-danger');
-                    } else if (gapVal > 0) {
-                        gapClasses.push('text-success');
-                    } else {
-                        gapClasses.push('text-dark');
+                return {
+                    index: i + 1,
+                    domain: id.substring(0, 3),
+                    id: id,
+                    name: obj.objective || obj.description,
+                    level: level,
+                    rating: Utils.getRating(level),
+                    target: target,
+                    max: max,
+                    gap: gap,
+                    style: {
+                        bg: Config.colors.bg[level] || '#f8f9fa',
+                        color: Config.colors.text[level] || '#6c757d',
+                        gapClass: gapClass
                     }
+                };
+            });
+        },
 
-                    // Rating letter: take highest rated level letter if available
-                    let ratingLetter = '-';
-                    const ratingLookup = thisLevelRating(objId, level);
-                    if (level > 0 && ratingLookup) {
-                        ratingLetter = ratingLookup;
-                    }
+        render(rows) {
+            this.renderBody(rows);
+            this.renderFooter(rows);
+        },
 
-                    rowsHtml += `
-                        <tr>
-                            <td class="text-center align-middle">${idx + 1}</td>
-                            <td class="text-center align-middle fw-bold">${domain}</td>
-                            <td class="text-center align-middle fw-bold font-monospace">${objId}</td>
-                            <td class="align-middle">${objectiveName}</td>
-                            <td class="text-center align-middle fw-bold" style="background:${levelBg(level)}; color:${levelColor(level)};">${level}</td>
-                            <td class="text-center align-middle">${ratingLetter}</td>
-                            <td class="text-center align-middle">${targetVal === null || targetVal === undefined ? '-' : targetVal}</td>
-                            <td class="text-center align-middle ${gapClasses.join(' ')}">${gapVal === null ? '-' : gapVal}</td>
-                            <td class="text-center align-middle"><input type="checkbox" class="form-check-input" /></td>
-                        </tr>
-                    `;
-                });
-                
-                // Average Calculation
-                const average = selectedIds.length > 0 ? (totalLevel / selectedIds.length).toFixed(2) : "0.00";
+        renderBody(rows) {
+            const tbody = document.getElementById('recap-table-body');
+            if (!tbody) return;
 
-                // Add Footer Row for Average
-                rowsHtml += `
-                    <tr class="table-primary fw-bold" style="border-top: 2px solid #0d6efd;">
-                        <td colspan="4" class="text-end">Rata-Rata Maturity Level (Average)</td>
-                        <td class="text-center fs-5">${average}</td>
-                        <td colspan="4"></td>
-                    </tr>
-                `;
-
-                dom.tableBody.innerHTML = rowsHtml;
-                dom.reportCard.classList.remove('d-none');
-                dom.reportCard.scrollIntoView({ behavior: 'smooth' });
-            } catch (err) {
-                console.error('Generate report failed', err);
-                Swal.fire('Error', err.message || 'Gagal membuat report', 'error');
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Tidak ada data objective tersedia.</td></tr>';
+                return;
             }
-        };
 
+            // Using array join for faster DOM insertion
+            tbody.innerHTML = rows.map(r => `
+                <tr>
+                    <td class="text-center fw-semibold">${r.index}</td>
+                    <td class="fw-bold text-secondary">${Utils.escape(r.domain)}</td>
+                    <td>
+                        <a href="${Utils.getLink(r.id)}" class="text-decoration-none fw-bold text-primary report-link">
+                            ${Utils.escape(r.id)}
+                        </a>
+                    </td>
+                    <td><span class="small text-muted">${Utils.escape(r.name)}</span></td>
+                    <td class="text-center fw-bold" style="background-color: ${r.style.bg}; color: ${r.style.color};">${r.level}</td>
+                    <td class="text-center fw-bold text-dark">${r.rating}</td>
+                    <td class="text-center text-muted">${r.target !== null ? r.target : '-'}</td>
+                    <td class="text-center"><div class="gap-box ${r.style.gapClass}">${r.gap !== null ? r.gap : '-'}</div></td>
+                    <td class="text-center fw-bold text-secondary">${r.max}</td>
+                </tr>
+            `).join('');
+        },
 
-        // --- Events ---
-        dom.btnGenerate.addEventListener('click', () => {
-            const btn = dom.btnGenerate;
-            if (btn) {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-                btn.disabled = true;
-                setTimeout(async () => {
-                    await generateReport();
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }, 150);
-            } else {
-                generateReport();
-            }
-        });
+        renderFooter(rows) {
+            const tfoot = document.getElementById('recap-table-footer');
+            if (!tfoot || !rows.length) return;
 
-        // Initialize selected count
-        updateCount();
+            const total = rows.length;
+            const avgScore = rows.reduce((s, r) => s + r.level, 0) / total;
+            const avgMax = rows.reduce((s, r) => s + r.max, 0) / total;
 
-        // Auto-generate report on load without requiring button click
-        generateReport();
-    });
+            const validTargets = rows.filter(r => r.target !== null);
+            const avgTarget = validTargets.length ? (validTargets.reduce((s, r) => s + r.target, 0) / validTargets.length) : null;
+
+            tfoot.innerHTML = `
+                <tr class="table-light fw-bold border-top-2">
+                    <td colspan="4" class="text-end pe-3">Average Maturity Score</td>
+                    <td class="text-center bg-primary text-white">${Utils.fmt(avgScore)}</td>
+                    <td class="bg-light"></td>
+                    <td class="text-center bg-info text-white">${avgTarget !== null ? Utils.fmt(avgTarget) : '-'}</td>
+                    <td class="bg-light"></td>
+                    <td class="text-center bg-secondary text-white">${Utils.fmt(avgMax)}</td>
+                </tr>
+            `;
+        }
+    };
+
+    // Run App
+    ReportApp.init();
+
+})();
 </script>
 @endsection

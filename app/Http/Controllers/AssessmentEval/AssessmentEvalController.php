@@ -36,7 +36,7 @@ class AssessmentEvalController extends Controller
             if ($org) {
                 // load all evaluations created by users in the same organization
                 // NOTE: do NOT eager-load full activityEvaluations for other users — expose only aggregated counts
-                $evaluations = MstEval::with(['user'])
+                $evaluations = MstEval::with(['user', 'maturityScore'])
                     ->whereHas('user', function ($q) use ($org) {
                         $q->where('organisasi', $org);
                     })->get();
@@ -61,8 +61,16 @@ class AssessmentEvalController extends Controller
                     }
                 }
             } else {
-                // fallback to current user's evaluations
-                $evaluations = $this->evaluationService->getUserEvaluations();
+                // Load ONLY own assessments for non-superadmin users
+                // Eager load maturityScore for cleaner list display
+                $evaluations = MstEval::with([
+                        'user', 
+                        'activityEvaluations', 
+                        'evidences',
+                        'maturityScore'
+                    ])
+                    ->where('user_id', $user->id)
+                    ->get();
             }
 
             $evalIds = $evaluations->pluck('eval_id')->filter()->unique()->values()->all();
@@ -711,6 +719,18 @@ class AssessmentEvalController extends Controller
                 $objectives = MstObjective::with(['practices.activities'])->get();
             }
 
+            // Sort objectives by EDM, APO, BAI, DSS, MEA
+            $domainOrder = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+            $objectives = $objectives->sortBy(function($obj) use ($domainOrder) {
+                // Determine domain prefix from objective_id (e.g. EDM01 -> EDM)
+                $prefix = preg_replace('/[0-9]+/', '', $obj->objective_id);
+                // Fallback if empty
+                if (empty($prefix)) $prefix = substr($obj->objective_id, 0, 3);
+                
+                $rank = $domainOrder[$prefix] ?? 99;
+                return sprintf('%02d_%s', $rank, $obj->objective_id);
+            })->values();
+
             // Fetch Target Capability for matching assessment year (if available)
             $targetCapabilityMap = [];
             $assessmentYear = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? null;
@@ -734,10 +754,133 @@ class AssessmentEvalController extends Controller
                 }
             }
 
-            return view('assessment-eval.report', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'targetCapabilityMap'));
+            // Fetch Assessment Data and Calculate Maturity Levels Server-Side
+            $loadedData = $this->evaluationService->loadEvaluation($evalId);
+            $activityData = $loadedData['activity_evaluations'] ?? [];
+
+            $calculatedLevels = [];
+            // Map letter ratings to numeric scores
+            $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+
+            foreach ($objectives as $obj) {
+                // 1. Group activities by level for this objective
+                //    And find the minimum level (start level)
+                $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
+                $allLevelsFound = [];
+
+                foreach ($obj->practices as $p) {
+                    if ($p->activities) {
+                        foreach ($p->activities as $a) {
+                            $lvl = (int)$a->capability_lvl;
+                            if ($lvl >= 2 && $lvl <= 5) {
+                                $activitiesByLevel[$lvl][] = $a;
+                                $allLevelsFound[] = $lvl;
+                            }
+                        }
+                    }
+                }
+
+                if (empty($allLevelsFound)) {
+                    $calculatedLevels[$obj->objective_id] = 0;
+                    continue;
+                }
+                
+                $minLevel = min($allLevelsFound);
+
+                // Helper to calculate average score for a level
+                // Logic mirrors JS: getScore(lvl)
+                $getScore = function($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
+                    // If level is below the objective's start level, consider it "fully achieved" (score 1.0)
+                    if ($lvl < $minLevel) {
+                        return 1.0;
+                    }
+                    
+                    $acts = $activitiesByLevel[$lvl] ?? [];
+                    if (empty($acts)) {
+                        return 0.0;
+                    }
+
+                    $vals = 0;
+                    foreach ($acts as $a) {
+                        $r = $activityData[$a->activity_id]['level_achieved'] ?? 'N';
+                        $vals += ($ratingMap[$r] ?? 0.0);
+                    }
+                    return $vals / count($acts);
+                };
+
+                // Calculate scores for all relevant levels
+                $score2 = $getScore(2);
+                $score3 = $getScore(3);
+                $score4 = $getScore(4);
+                $score5 = $getScore(5);
+
+                // Apply threshold logic (mirrors JS logic in show.blade.php)
+                // =IF(S2<=0.15,0, IF(S2<=0.5,1,IF(S2<=0.85,2, IF(S3<=0.5,2,IF(S3<=0.85,3, IF(S4<=0.5,3,IF(S4<=0.85,4, IF(S5<=0.5,4,5))))))))
+                $finalLevel = 0;
+                
+                if ($score2 <= 0.15) {
+                    $finalLevel = 0;
+                } elseif ($score2 <= 0.50) {
+                    $finalLevel = 1;
+                } elseif ($score2 <= 0.85) {
+                    $finalLevel = 2;
+                } else {
+                    // Score2 > 0.85 -> Check Level 3
+                    if ($score3 <= 0.50) {
+                        $finalLevel = 2;
+                    } elseif ($score3 <= 0.85) {
+                        $finalLevel = 3;
+                    } else {
+                        // Score3 > 0.85 -> Check Level 4
+                        if ($score4 <= 0.50) {
+                            $finalLevel = 3;
+                        } elseif ($score4 <= 0.85) {
+                            $finalLevel = 4;
+                        } else {
+                            // Score4 > 0.85 -> Check Level 5
+                            if ($score5 <= 0.50) {
+                                $finalLevel = 4;
+                            } else {
+                                $finalLevel = 5;
+                            }
+                        }
+                    }
+                }
+
+                // Special handling for objectives starting at higher levels (e.g. MEA02 starts at 3)
+                // If the starting level score itself is very low, it should fail to 0.
+                if ($minLevel > 2) {
+                    $startScore = $getScore($minLevel);
+                    if ($startScore <= 0.15) {
+                        $finalLevel = 0;
+                    }
+                }
+
+                $calculatedLevels[$obj->objective_id] = $finalLevel;
+            }
+
+            return view('assessment-eval.report', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'targetCapabilityMap', 'activityData', 'calculatedLevels'));
+
+            return view('assessment-eval.report', compact('objectives', 'evalId', 'evaluation', 'isOwner', 'targetCapabilityMap', 'activityData', 'calculatedLevels'));
 
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to load report: ' . $e->getMessage()]);
+        }
+    }
+
+    public function getMaturityScore($evalId)
+    {
+        try {
+            $score = $this->evaluationService->calculateMaturityScore($evalId);
+            return response()->json([
+                'success' => true,
+                'score' => round($score, 2)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -773,6 +916,10 @@ class AssessmentEvalController extends Controller
                 })
                 ->orWhere('id', $owner->id)
                 ->pluck('id');
+
+            if ($evalIds->isEmpty()) {
+                return response()->json(['success' => true, 'data' => []]);
+            }
 
             $evalIds = MstEval::whereIn('user_id', $userIds)
                 ->where('eval_id', '!=', $evalId)
