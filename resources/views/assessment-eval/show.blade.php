@@ -542,7 +542,7 @@
                                                             <th style="width: 340px;">Activity</th>
                                                             <th style="width: 160px;">Answer</th>
                                                             <th style="width: 220px;">Evidence</th>
-                                                            <th style="width: 220px;">Old Evidence</th>
+
                                                             <th style="width: 220px;">Notes</th>
                                                             <th class="text-center" style="width: 70px;">Level</th>
                                                         </tr>
@@ -618,11 +618,7 @@
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td class="evidence-text-cell align-top">
-                                                                        <div class="evidence-text-display" data-activity-id="{{ $activity->activity_id }}">
-                                                                            <span class="text-muted small">No evidence added</span>
-                                                                        </div>
-                                                                    </td>
+
                                                                     <td class="notes-cell">
                                                                         <textarea 
                                                                             class="form-control form-control-sm assessment-textarea note-input" 
@@ -2153,38 +2149,12 @@ class COBITAssessmentManager {
         displayElement.appendChild(list);
     }
 
-    renderEvidenceText(displayElement, values) {
-        if (!displayElement) return;
-        displayElement.innerHTML = '';
-        const cleanValues = (values || []).map(v => v.trim()).filter(Boolean);
-        if (!cleanValues.length) {
-            displayElement.innerHTML = '<span class="text-muted small">No evidence added</span>';
-            return;
-        }
-        if (cleanValues.length > 1) {
-            const list = document.createElement('ul');
-            list.className = 'mb-0 ps-3 small';
-            cleanValues.forEach(val => {
-                const li = document.createElement('li');
-                li.textContent = val;
-                list.appendChild(li);
-            });
-            displayElement.appendChild(list);
-        } else {
-            const pre = document.createElement('pre');
-            pre.className = 'mb-0 small text-body';
-            pre.style.whiteSpace = 'pre-wrap';
-            pre.textContent = cleanValues[0];
-            displayElement.appendChild(pre);
-        }
-    }
+
 
     updateEvidenceDisplay(activityId, value) {
         const values = typeof value === 'string' ? value.split('\n') : [];
         const display = document.querySelector(`.evidence-display[data-activity-id="${activityId}"]`);
-        const textDisplay = document.querySelector(`.evidence-text-display[data-activity-id="${activityId}"]`);
         this.renderEvidenceDisplay(display, values);
-        this.renderEvidenceText(textDisplay, values);
     }
 
     setActivityRating(objectiveId, level, activityId, rating) {
@@ -3288,12 +3258,7 @@ class COBITAssessmentManager {
             }
         });
 
-        document.querySelectorAll('.evidence-text-cell pre').forEach(el => {
-            el.classList.add('bg-light');
-        });
-        document.querySelectorAll('.evidence-text-cell ul').forEach(el => {
-            el.classList.add('bg-light');
-        });
+
     }
 
     unlockInterface() {
@@ -3312,12 +3277,7 @@ class COBITAssessmentManager {
             }
         });
 
-        document.querySelectorAll('.evidence-text-cell pre').forEach(el => {
-            el.classList.remove('bg-light');
-        });
-        document.querySelectorAll('.evidence-text-cell ul').forEach(el => {
-            el.classList.remove('bg-light');
-        });
+
     }
 
     openRecapInNewTab() {
