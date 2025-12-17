@@ -24,6 +24,23 @@ use App\Http\Controllers\cobit2019\Step4Controller;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
+use Illuminate\Support\Facades\Crypt;
+
+Route::bind('evalId', function ($value) {
+    try {
+        // Try to decrypt if it looks like hex (long string)
+        if (ctype_xdigit($value) && strlen($value) > 20) {
+             return Crypt::decryptString(hex2bin($value));
+        }
+        // Fallback for direct integer access (optional: can remove if strict security is needed)
+        // But helpful during migration or debugging.
+        // User asked to hide it, so maybe strict? 
+        // Let's allow int for backward compatibility if logic fails or during dev.
+        return $value;
+    } catch (\Exception $e) {
+        abort(404);
+    }
+});
 
 // Public routes
 

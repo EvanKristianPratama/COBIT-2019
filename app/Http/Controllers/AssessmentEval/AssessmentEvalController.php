@@ -270,7 +270,7 @@ class AssessmentEvalController extends Controller
                 ]);
             }
 
-            return redirect()->route('assessment-eval.show', ['evalId' => $evaluation->eval_id]);
+            return redirect()->route('assessment-eval.show', ['evalId' => $evaluation->encrypted_id]);
         } catch (\Exception $e) {
             Log::error("Failed to create assessment", [
                 'user_id' => Auth::id(),
@@ -609,31 +609,16 @@ class AssessmentEvalController extends Controller
     public function delete($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = MstEval::where('eval_id', $evalId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
             
-            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
-                Log::warning('Delete access denied', [
-                    'auth_id' => Auth::id(),
-                    'eval_id' => $evalId,
-                    'evaluation_user_id' => $evaluation ? $evaluation->user_id : null
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Assessment not found or access denied'
-                ], 404);
-            }
+            // Soft delete (handled by Trait)
+            $evaluation->delete();
             
-            $this->evaluationService->deleteEvaluation($evalId);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Assessment deleted successfully'
-            ]);
+            return redirect()->route('assessment-eval.list')->with('success', 'Assessment berhasil dihapus (soft delete).');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete assessment: ' . $e->getMessage()
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Gagal menghapus assessment: ' . $e->getMessage()]);
         }
     }
 
@@ -1149,4 +1134,6 @@ class AssessmentEvalController extends Controller
             ], 500);
         }
     }
+
+
 }

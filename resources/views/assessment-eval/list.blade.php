@@ -2,6 +2,7 @@
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @php
     // Fallback for older logic if needed, though controller provides specific counts now
     $totalRatableActivities = \App\Models\MstActivities::count();
@@ -56,7 +57,7 @@
                     <div class="section-subtitle text-muted">Assessment yang Anda buat</div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle shadow-sm bg-white">
+                    <table class="table table-bordered table-hover align-middle shadow-sm bg-white" style="min-width: 1400px;">
                         <thead class="table-secondary text-center align-middle">
                             <tr style="border-bottom: 2px solid #dee2e6;">
                                 <th style="width: 50px;">No</th>
@@ -69,7 +70,7 @@
                                 <th>Last Update at</th>
                                 <th class="text-center">I&T Maturity Score</th>
                                 <th class="text-center">Target Capability</th>
-                                <th class="text-center" style="width: 150px;">Aksi</th>
+                                <th class="text-center" style="width: 250px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -125,12 +126,21 @@
                                     <td class="text-center fw-bold">{{ number_format($evaluation->avg_target_capability ?? 0, 2) }}</td>
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-1">
-                                            <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
-                                                <i class="fas fa-eye"></i> Detail
+                                            <a href="{{ route('assessment-eval.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
+                                                <i class="fas fa-eye me-1"></i> Detail
                                             </a>
-                                            <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
-                                                <i class="fas fa-file-alt"></i> Report
+                                            <a href="{{ route('assessment-eval.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
+                                                <i class="fas fa-file-alt me-1"></i> Report
                                             </a>
+                                            @if(($evaluation->status ?? '') !== 'finished')
+                                                <form action="{{ route('assessment-eval.delete', $evaluation->encrypted_id) }}" method="POST" class="d-inline delete-form" data-id="{{ $evaluation->encrypted_id }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" title="Hapus">
+                                                        <i class="fas fa-trash me-1"></i> Hapus
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -342,9 +352,7 @@
 let targetUrl = '';
 let currentAction = '';
 
-<script>
-let targetUrl = '';
-let currentAction = '';
+
 
 document.addEventListener('DOMContentLoaded', function() {
     // Capture click on buttons that open the modal to get the URL and Action
@@ -527,6 +535,63 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                
+                Swal.fire({
+                    title: 'Soft Delete Assessment?',
+                    html: "Data ini hanya akan diubah statusnya menjadi <b>Soft Delete</b> (arsip).<br>Untuk melanjutkan, ketik <b>Saya Yakin</b> di bawah ini:",
+                    input: 'text',
+                    inputAttributes: {
+                        autocapitalize: 'off',
+                        placeholder: 'Saya Yakin'
+                    },
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Hapus Assessment',
+                    cancelButtonText: 'Batal',
+                    preConfirm: (value) => {
+                        if (value !== 'Saya Yakin') {
+                            Swal.showValidationMessage('Mohon ketik "Saya Yakin" dengan benar (case-sensitive).')
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+        
+        // Success alert for flash message
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: "{{ session('success') }}",
+                timer: 3000,
+                showConfirmButton: false
+            });
+        @endif
+        
+        // Error alert for flash message
+        @if($errors->any())
+             Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "{{ $errors->first() }}",
+            });
+        @endif
+    });
+</script>
 <style>
 .hero-card {
     border: none;

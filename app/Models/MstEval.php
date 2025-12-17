@@ -4,10 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Crypt;
 
 class MstEval extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+    
+    protected $appends = ['encrypted_id'];
 
     protected $table = 'mst_eval';
     protected $primaryKey = 'eval_id';
@@ -66,5 +70,13 @@ class MstEval extends Model
     public function objectiveScores()
     {
         return $this->hasMany(TrsObjectiveScore::class, 'eval_id', 'eval_id');
+    }
+
+    /**
+     * Get the encrypted ID.
+     */
+    public function getEncryptedIdAttribute()
+    {
+        return bin2hex(Crypt::encryptString($this->eval_id));
     }
 }
