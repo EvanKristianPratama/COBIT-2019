@@ -111,6 +111,42 @@ class AssessmentEvalController extends Controller
                 
                 $totalSystemActivities = array_sum($domainActivityCounts);
 
+                // Fetch Target Capabilities for relevant years
+                $years = $allEvals->pluck('tahun')->filter()->unique()->values()->all();
+                $targetAverages = [];
+                if (!empty($years)) {
+                    $targetCaps = \App\Models\TargetCapability::whereIn('tahun', $years)
+                        ->when($org, function($q) use ($org) {
+                            $q->where('organisasi', $org);
+                        }, function($q) use ($user) {
+                            $q->where('user_id', $user->id);
+                        })
+                        ->get();
+
+                    $domainCols = [
+                        'EDM01','EDM02','EDM03','EDM04','EDM05',
+                        'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
+                        'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
+                        'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
+                        'MEA01','MEA02','MEA03','MEA04',
+                    ];
+
+                    foreach ($targetCaps as $tc) {
+                        $sum = 0;
+                        $count = 0;
+                        foreach ($domainCols as $col) {
+                            $val = $tc->$col;
+                            // Consider average of all set targets (assuming 0 is valid but usually targets are 1-5, null/0 might be unset)
+                            // If user sets 0 as target, it might drag down average. Assuming valid inputs are > 0 for now based on context.
+                            if (!is_null($val) && is_numeric($val)) {
+                                $sum += $val;
+                                $count++;
+                            }
+                        }
+                        $targetAverages[$tc->tahun] = $count > 0 ? round($sum / $count, 2) : 0;
+                    }
+                }
+
                 // Transform/Hydrate items
                 foreach ($allEvals as $evaluation) {
                     // Achievement counts
@@ -133,6 +169,9 @@ class AssessmentEvalController extends Controller
 
                     // Last Updated
                     $evaluation->last_saved_at = $lastActivityDates[$evaluation->eval_id] ?? $evaluation->created_at;
+
+                    // Average Target Capability
+                    $evaluation->avg_target_capability = $targetAverages[$evaluation->tahun ?? ''] ?? 0;
                 }
             }
 
