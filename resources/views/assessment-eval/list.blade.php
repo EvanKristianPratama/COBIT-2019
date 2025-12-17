@@ -86,15 +86,10 @@
                                     $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
                                     $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
                                     
+                                    // Status Logic Simplified
                                     if (($evaluation->status ?? '') === 'finished') {
-                                        $statusLabel = 'Selesai';
+                                        $statusLabel = 'Finish';
                                         $statusBadge = 'bg-success';
-                                    } elseif ($completion >= 90) {
-                                        $statusLabel = 'Siap Review';
-                                        $statusBadge = 'bg-success';
-                                    } elseif ($completion >= 60) {
-                                        $statusLabel = 'On Track';
-                                        $statusBadge = 'bg-info';
                                     } elseif ($completion > 0) {
                                         $statusLabel = 'Sedang Dikerjakan';
                                         $statusBadge = 'bg-warning';
@@ -149,117 +144,7 @@
         @endif
 
         {{-- Other Users' Assessments Section --}}
-        @if($otherAssessments->count() > 0)
-            <div class="accordion mb-5" id="otherAssessmentsAccordion">
-                <div class="accordion-item border-0 shadow-sm">
-                    <h2 class="accordion-header" id="otherAssessmentsHeading">
-                        <button class="accordion-button collapsed section-header-btn" type="button" data-bs-toggle="collapse" data-bs-target="#otherAssessmentsCollapse" aria-expanded="false" aria-controls="otherAssessmentsCollapse">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-users me-2 text-secondary"></i>
-                                <div>
-                                    <div class="section-title mb-0">Assessment Lain ({{ $otherAssessments->count() }})</div>
-                                    <div class="section-subtitle mb-0">Assessment yang dibuat oleh user lain</div>
-                                </div>
-                            </div>
-                        </button>
-                    </h2>
-                    <div id="otherAssessmentsCollapse" class="accordion-collapse collapse" aria-labelledby="otherAssessmentsHeading" data-bs-parent="#otherAssessmentsAccordion">
-                        <div class="accordion-body pt-4">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover align-middle shadow-sm bg-white">
-                                    <thead class="table-secondary text-center align-middle">
-                                        <tr style="border-bottom: 2px solid #dee2e6;">
-                                            <th style="width: 50px;">No</th>
-                                            <th style="width: 60px;">Id</th>
-                                            <th>Tahun Assesment</th>
-                                            <th>Organisasi</th>
-                                            <th class="text-center">Jumlah GAMO</th>
-                                            <th class="text-center">Progres</th>
-                                            <th class="text-center">Status</th>
-                                            <th>Last Update at</th>
-                                            <th class="text-center">I&T Maturity Score</th>
-                                            <th class="text-center" style="width: 150px;">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($otherAssessments as $evaluation)
-                                            @php
-                                                $achievementCounts = $evaluation->achievement_counts ?? [];
-                                                $ratedCounts = [
-                                                    'F' => $achievementCounts['F'] ?? 0,
-                                                    'L' => $achievementCounts['L'] ?? 0,
-                                                    'P' => $achievementCounts['P'] ?? 0,
-                                                ];
-                                                $totalRated = array_sum($ratedCounts);
-                                                
-                                                // Use the calculated total ratable activities for this specific evaluation
-                                                $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
-                                                $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
-                                                
-                                                if (($evaluation->status ?? '') === 'finished') {
-                                                    $statusLabel = 'Selesai';
-                                                    $statusBadge = 'bg-success';
-                                                } elseif ($completion >= 90) {
-                                                    $statusLabel = 'Siap Review';
-                                                    $statusBadge = 'bg-success';
-                                                } elseif ($completion >= 60) {
-                                                    $statusLabel = 'On Track';
-                                                    $statusBadge = 'bg-info';
-                                                } elseif ($completion > 0) {
-                                                    $statusLabel = 'Sedang Dikerjakan';
-                                                    $statusBadge = 'bg-warning';
-                                                } else {
-                                                    $statusLabel = 'Belum Mulai';
-                                                    $statusBadge = 'bg-secondary';
-                                                }
 
-                                                $score = $evaluation->maturityScore->score ?? 0;
-
-                                                $scoreColorClass = 'text-danger'; // Default < 2
-                                                if ($score >= 4) {
-                                                    $scoreColorClass = 'text-primary';
-                                                } elseif ($score >= 3) {
-                                                    $scoreColorClass = 'text-success';
-                                                } elseif ($score >= 2) {
-                                                    $scoreColorClass = 'text-warning';
-                                                }
-                                            @endphp
-                                            <tr>
-                                                <td class="text-center">{{ $loop->iteration + ($otherAssessments->currentPage() - 1) * $otherAssessments->perPage() }}</td>
-                                                <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
-                                                <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
-                                                <td>{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</td>
-                                                <td class="text-center">{{ $evaluation->selected_gamo_count ?? '-' }}</td>
-                                                <td class="text-center">{{ $evaluation->filled_gamo_count ?? 0 }}/{{ $evaluation->selected_gamo_count ?? 0 }}</td>
-                                                <td class="text-center">
-                                                    <span class="badge {{ $statusBadge }} rounded-pill">{{ $statusLabel }}</span>
-                                                </td>
-                                                <td class="small text-muted">{{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}</td>
-                                                <td class="text-center fw-bold fs-5 {{ $scoreColorClass }}">{{ number_format($score, 2) }}</td>
-                                                <td class="text-center">
-                                                    <div class="d-flex justify-content-center gap-1">
-                                                        <a href="{{ route('assessment-eval.show', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
-                                                            <i class="fas fa-eye"></i> Detail
-                                                        </a>
-                                                        <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
-                                                            <i class="fas fa-file-alt"></i> Report
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <!-- Pagination for Other Assessments -->
-                            <div class="d-flex justify-content-end mt-3">
-                                {{ $otherAssessments->appends(request()->query())->links('pagination::bootstrap-5') }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
     @else
         {{-- Empty State --}}
         <div class="text-center py-5">
