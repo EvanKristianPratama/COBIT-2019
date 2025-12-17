@@ -20,7 +20,6 @@
                 <div class="hero-stat-card mb-0 flex-fill">
                     <span class="stat-label">Total Assessment</span>
                     <span class="stat-value">{{ number_format($totalAssessments) }}</span>
-                    <span class="stat-subtext">Portofolio aktif</span>
                 </div>
                 <div class="hero-status-summary flex-fill d-flex flex-wrap gap-3">
                     <div class="hero-status-card status-finished">
@@ -63,11 +62,12 @@
                                 <th style="width: 50px;">No</th>
                                 <th style="width: 60px;">Id</th>
                                 <th>Tahun Assesment</th>
-                                <th>Organisasi</th>
+
+
                                 <th class="text-center">Jumlah GAMO</th>
                                 <th class="text-center">Progres</th>
                                 <th class="text-center">Status</th>
-                                <th>Last Update at</th>
+                                <th>Last Update</th>
                                 <th class="text-center">I&T Maturity Score</th>
                                 <th class="text-center">Target Capability</th>
                                 <th class="text-center" style="width: 250px;">Aksi</th>
@@ -115,7 +115,8 @@
                                     <td class="text-center">{{ $loop->iteration + ($myAssessments->currentPage() - 1) * $myAssessments->perPage() }}</td>
                                     <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
                                     <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
-                                    <td>{{ $evaluation->user->organisasi ?? 'Organisasi Tidak Diketahui' }}</td>
+
+
                                     <td class="text-center">{{ $evaluation->selected_gamo_count ?? '-' }}</td>
                                     <td class="text-center">{{ $evaluation->filled_gamo_count ?? 0 }}/{{ $evaluation->selected_gamo_count ?? 0 }}</td>
                                     <td class="text-center">
@@ -201,6 +202,13 @@
                         <label for="assessment_year" class="form-label fw-semibold small text-uppercase text-muted">Tahun Assessment</label>
                         <input type="number" class="form-control" id="assessment_year" name="assessment_year" placeholder="YYYY" min="2000" max="2099" value="{{ date('Y') }}">
                     </div>
+
+
+
+                    <div class="mb-3">
+                        <label for="nama_scope" class="form-label fw-semibold small text-uppercase text-muted">Nama Scope / Keterangan (Opsional)</label>
+                        <input type="text" class="form-control" id="nama_scope" name="nama_scope" placeholder="Contoh: Audit Internal Q1">
+                    </div> 
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold small text-uppercase text-muted d-flex justify-content-between align-items-center">
@@ -412,7 +420,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 hidden.value = selectedGamos.join(',');
                 form.appendChild(hidden);
 
-                // Add assessment year
                 const yearInput = document.getElementById('assessment_year');
                 if (yearInput) {
                     const hiddenYear = document.createElement('input');
@@ -420,6 +427,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     hiddenYear.name = 'tahun';
                     hiddenYear.value = yearInput.value;
                     form.appendChild(hiddenYear);
+                }
+
+                // Add scope name
+                // Add scope name
+                const scopeInput = document.getElementById('nama_scope');
+                if (scopeInput) {
+                    const hiddenScope = document.createElement('input');
+                    hiddenScope.type = 'hidden';
+                    hiddenScope.name = 'nama_scope';
+                    hiddenScope.value = scopeInput.value;
+                    form.appendChild(hiddenScope);
                 }
 
                 // Submit the form to create the assessment; controller will read selected_gamos

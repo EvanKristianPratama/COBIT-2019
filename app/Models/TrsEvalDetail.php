@@ -17,7 +17,8 @@ class TrsEvalDetail extends Model
 
     protected $fillable = [
         'eval_id',
-        'domain_id',
+        'scoping_id',
+        'domain_id'
     ];
 
     /**
@@ -26,6 +27,14 @@ class TrsEvalDetail extends Model
     public function evaluation()
     {
         return $this->belongsTo(MstEval::class, 'eval_id', 'eval_id');
+    }
+
+    /**
+     * Belongs to scoping (trs_scoping)
+     */
+    public function scoping()
+    {
+        return $this->belongsTo(TrsScoping::class, 'scoping_id', 'id');
     }
 
     /**

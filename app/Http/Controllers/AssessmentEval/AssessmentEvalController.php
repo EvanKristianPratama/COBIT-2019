@@ -213,6 +213,7 @@ class AssessmentEvalController extends Controller
             
             // 2. Update Tahun Assessment (Tambahan Baru)
             // Ambil dari request, jika kosong default ke tahun sekarang
+            // Ambil dari request, jika kosong default ke tahun sekarang
             $tahun = $request->input('tahun', date('Y'));
             $evaluation->tahun = $tahun;
             $evaluation->save();
@@ -238,10 +239,20 @@ class AssessmentEvalController extends Controller
                     $selected = array_map('trim', explode(',', (string)$selected));
                 }
 
+                $scopeName = $request->input('nama_scope') ?: 'Default';
+
                 if (!empty($selected)) {
-                    DB::transaction(function () use ($evaluation, $selected) {
-                        // remove any existing mappings for this evaluation to avoid duplicates
-                        TrsEvalDetail::where('eval_id', $evaluation->eval_id)->delete();
+                    DB::transaction(function () use ($evaluation, $selected, $scopeName) {
+                        // Create or get the scoping record (parent)
+                        $scoping = \App\Models\TrsScoping::firstOrCreate(
+                            [
+                                'eval_id' => $evaluation->eval_id,
+                                'nama_scope' => $scopeName
+                            ]
+                        );
+
+                        // Remove existing details for this scoping to avoid duplicates
+                        TrsEvalDetail::where('scoping_id', $scoping->id)->delete();
 
                         $inserts = [];
                         foreach ($selected as $domainId) {
@@ -249,6 +260,7 @@ class AssessmentEvalController extends Controller
                             if ($domainId !== '') {
                                 $inserts[] = [
                                     'eval_id' => $evaluation->eval_id,
+                                    'scoping_id' => $scoping->id,
                                     'domain_id' => $domainId,
                                     'created_at' => now(),
                                     'updated_at' => now()
@@ -330,7 +342,26 @@ class AssessmentEvalController extends Controller
                 // Provide a friendly error to the UI; logs contain the debug info.
                 return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Assessment not found or access denied']);
             }
-            $selectedDomains = TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
+            // Fetch all scopes for this evaluation
+            $allScopes = \App\Models\TrsScoping::where('eval_id', $evalId)->get();
+            
+            // Determine active scope (from request or default to first)
+            $activeScopeId = request()->input('scope_id');
+            if ($activeScopeId) {
+                $activeScope = $allScopes->firstWhere('id', $activeScopeId);
+            } else {
+                $activeScope = $allScopes->first();
+            }
+
+            // Fetch selected domains based on active scope
+            if ($activeScope) {
+                $selectedDomains = TrsEvalDetail::where('scoping_id', $activeScope->id)
+                    ->pluck('domain_id')->unique()->toArray();
+            } else {
+                // Fallback: fetch all domains for this eval (backward compatibility)
+                $selectedDomains = TrsEvalDetail::where('eval_id', $evalId)
+                    ->pluck('domain_id')->unique()->toArray();
+            }
 
             if (!empty($selectedDomains)) {
                 $objectives = MstObjective::with(['practices.activities'])
@@ -376,8 +407,29 @@ class AssessmentEvalController extends Controller
             // Pass all objectives for scope editing modal
             $allObjectives = MstObjective::all();
 
-            // Pass isOwner to the view. Non-owners may view the full content in read-only mode.
-            return view('assessment-eval.show', compact('objectives', 'allObjectives', 'evalId', 'evaluation', 'isOwner', 'evidences', 'targetCapabilityMap'));
+            // Build scope details map for displaying in table
+            $scopeDetails = [];
+            foreach ($allScopes as $scope) {
+                $scopeDetails[$scope->id] = [
+                    'name' => $scope->nama_scope,
+                    'domains' => TrsEvalDetail::where('scoping_id', $scope->id)
+                        ->pluck('domain_id')->toArray()
+                ];
+            }
+
+            // Pass isOwner and scope data to the view
+            return view('assessment-eval.show', compact(
+                'objectives', 
+                'allObjectives', 
+                'evalId', 
+                'evaluation', 
+                'isOwner', 
+                'evidences', 
+                'targetCapabilityMap',
+                'allScopes',
+                'activeScope',
+                'scopeDetails'
+            ));
         } catch (\Exception $e) {
             Log::error("Failed to load assessment", [
                 'eval_id' => $evalId,
@@ -406,27 +458,62 @@ class AssessmentEvalController extends Controller
             }
 
             $selectedScopes = $request->input('scopes', []); // Expecting array of objective IDs like ['EDM01', 'APO02']
+            $isNewScope = $request->input('is_new', false);
+            $scopeName = $request->input('nama_scope');
 
-            DB::transaction(function () use ($evalId, $selectedScopes) {
-                // Remove existing scope
-                TrsEvalDetail::where('eval_id', $evalId)->delete();
+            DB::transaction(function () use ($evalId, $selectedScopes, $isNewScope, $scopeName) {
+                if ($isNewScope && $scopeName) {
+                    // Create new scope
+                    $scoping = \App\Models\TrsScoping::create([
+                        'eval_id' => $evalId,
+                        'nama_scope' => $scopeName
+                    ]);
 
-                // Insert new scope
-                $inserts = [];
-                foreach ($selectedScopes as $scope) {
-                    $scope = trim((string)$scope);
-                    if ($scope !== '') {
-                        $inserts[] = [
-                            'eval_id' => $evalId,
-                            'domain_id' => $scope,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ];
+                    // Add domains to new scope
+                    $inserts = [];
+                    foreach ($selectedScopes as $scope) {
+                        $scope = trim((string)$scope);
+                        if ($scope !== '') {
+                            $inserts[] = [
+                                'eval_id' => $evalId,
+                                'scoping_id' => $scoping->id,
+                                'domain_id' => $scope,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ];
+                        }
                     }
-                }
 
-                if (!empty($inserts)) {
-                    TrsEvalDetail::insert($inserts);
+                    if (!empty($inserts)) {
+                        TrsEvalDetail::insert($inserts);
+                    }
+                } else {
+                    // Update existing scope (backward compatibility - update first scope or all)
+                    $firstScope = \App\Models\TrsScoping::where('eval_id', $evalId)->first();
+                    
+                    if ($firstScope) {
+                        // Remove existing details for this scope
+                        TrsEvalDetail::where('scoping_id', $firstScope->id)->delete();
+
+                        // Insert new domains
+                        $inserts = [];
+                        foreach ($selectedScopes as $scope) {
+                            $scope = trim((string)$scope);
+                            if ($scope !== '') {
+                                $inserts[] = [
+                                    'eval_id' => $evalId,
+                                    'scoping_id' => $firstScope->id,
+                                    'domain_id' => $scope,
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ];
+                            }
+                        }
+
+                        if (!empty($inserts)) {
+                            TrsEvalDetail::insert($inserts);
+                        }
+                    }
                 }
             });
             
