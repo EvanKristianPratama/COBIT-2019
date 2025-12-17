@@ -62,19 +62,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 /**
- * Assessment Report Module
- * Optimized for performance (O(1) lookups) and maintainability (Centralized Config).
- * Uses IIFE to prevent global namespace pollution.
+ * Multi-Scope Assessment Report
+ * Shows all 40 GAMOs with maturity data for each scope
  */
 (function() {
     'use strict';
 
-    // 1. Configuration & Static Data
+    // Configuration
     const Config = {
-        // Assessment Form Base URL
         assessmentUrl: "{{ route('assessment-eval.show', $evalId) }}",
-        
-        // COBIT 2019 Max Capability Levels (Direct Map for O(1) Access)
         maxLevels: {
             'EDM01': 4, 'EDM02': 5, 'EDM03': 4, 'EDM04': 4, 'EDM05': 4,
             'APO01': 5, 'APO02': 4, 'APO03': 5, 'APO04': 4, 'APO05': 5, 'APO06': 5, 'APO07': 4, 'APO08': 5, 'APO09': 4, 'APO10': 5, 'APO11': 5, 'APO12': 5, 'APO13': 5, 'APO14': 5,
@@ -83,21 +79,21 @@
             'MEA01': 5, 'MEA02': 5, 'MEA03': 5, 'MEA04': 4
         },
         defaultMax: 5,
-        // Styling Configuration
         colors: {
             bg:   ['#ffebee', '#fff3e0', '#fff8e1', '#e8f5e9', '#e3f2fd', '#f3e5f5'],
             text: ['#c62828', '#ef6c00', '#f57f17', '#2e7d32', '#1565c0', '#6a1b9a']
         }
     };
 
-    // 2. Data Provider (Single Source of Truth from Server)
+    // Data from server
     const AppData = {
         objectives: @json($objectives),
         targetMap: @json($targetCapabilityMap ?? []),
-        calculatedLevels: @json($calculatedLevels ?? []) // Generated server-side
+        allScopes: @json($allScopes ?? []),
+        scopeMaturityData: @json($scopeMaturityData ?? [])
     };
 
-    // 3. Utilities (Pure Functions)
+    // Utilities
     const Utils = {
         escape: s => (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])),
         parseNum: v => {
@@ -105,119 +101,145 @@
             return (v === null || v === undefined || v === '' || isNaN(n)) ? null : n;
         },
         fmt: n => (n || 0).toFixed(2),
-        getRating: lvl => (lvl > 0 ? `${lvl} F` : '0 N'),
         getLink: id => `${Config.assessmentUrl}#objective-${id}`
     };
 
-    // 4. Core Application Logic
     const ReportApp = {
         init() {
             document.addEventListener('DOMContentLoaded', () => {
                 try {
-                    const data = this.processData();
-                    this.render(data);
+                    this.render();
                 } catch (e) {
-                    console.error('Report App Error:', e);
+                    console.error('Report Error:', e);
                     const tbody = document.getElementById('recap-table-body');
-                    if(tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-3">Failed to load report: ${Utils.escape(e.message)}</td></tr>`;
+                    if(tbody) tbody.innerHTML = `<tr><td colspan="20" class="text-center text-danger py-3">Failed to load report: ${Utils.escape(e.message)}</td></tr>`;
                 }
             });
         },
 
-        processData() {
-            if (!AppData.objectives || !AppData.objectives.length) return [];
+        render() {
+            this.renderHeaders();
+            this.renderBody();
+            this.renderFooter();
+        },
 
-            return AppData.objectives.map((obj, i) => {
-                const id = obj.objective_id;
-                const level = AppData.calculatedLevels[id] || 0;
-                const target = Utils.parseNum(AppData.targetMap[id]);
-                const max = Config.maxLevels[id] || Config.defaultMax;
-                const gap = target !== null ? (level - target) : null;
+        renderHeaders() {
+            const thead = document.querySelector('#recap-table thead');
+            if (!thead) return;
 
-                // Pre-calculate styling to keep render logic clean
-                let gapClass = 'text-muted';
-                if (gap !== null) {
-                    gapClass = gap < 0 ? 'text-danger fw-bold' : (gap > 0 ? 'text-success fw-bold' : 'text-dark fw-bold');
-                }
-
-                return {
-                    index: i + 1,
-                    domain: id.substring(0, 3),
-                    id: id,
-                    name: obj.objective || obj.description,
-                    level: level,
-                    rating: Utils.getRating(level),
-                    target: target,
-                    max: max,
-                    gap: gap,
-                    style: {
-                        bg: Config.colors.bg[level] || '#f8f9fa',
-                        color: Config.colors.text[level] || '#6c757d',
-                        gapClass: gapClass
-                    }
-                };
+            let html = `
+                <tr>
+                    <th style="width:50px;" class="text-center">No</th>
+                    <th style="width:80px;">Domain</th>
+                    <th style="width:90px;">GAMO</th>
+                    <th>Process Name</th>
+                    <th style="width:80px;" class="text-center">Target</th>`;
+            
+            // Dynamic scope columns
+            AppData.allScopes.forEach(scope => {
+                html += `
+                    <th style="width:100px;" class="text-center">${Utils.escape(scope.nama_scope)}</th>
+                    <th style="width:80px;" class="text-center">Gap</th>`;
             });
+            
+            html += `
+                    <th style="width:80px;" class="text-center">Max Level</th>
+                </tr>`;
+            
+            thead.innerHTML = html;
         },
 
-        render(rows) {
-            this.renderBody(rows);
-            this.renderFooter(rows);
-        },
-
-        renderBody(rows) {
+        renderBody() {
             const tbody = document.getElementById('recap-table-body');
             if (!tbody) return;
 
-            if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Tidak ada data objective tersedia.</td></tr>';
+            if (!AppData.objectives || !AppData.objectives.length) {
+                tbody.innerHTML = `<tr><td colspan="20" class="text-center py-4 text-muted">No data available.</td></tr>`;
                 return;
             }
 
-            // Using array join for faster DOM insertion
-            tbody.innerHTML = rows.map(r => `
-                <tr>
-                    <td class="text-center fw-semibold">${r.index}</td>
-                    <td class="fw-bold text-secondary">${Utils.escape(r.domain)}</td>
-                    <td>
-                        <a href="${Utils.getLink(r.id)}" class="text-decoration-none fw-bold text-primary report-link">
-                            ${Utils.escape(r.id)}
-                        </a>
-                    </td>
-                    <td><span class="small text-muted">${Utils.escape(r.name)}</span></td>
-                    <td class="text-center fw-bold" style="background-color: ${r.style.bg}; color: ${r.style.color};">${r.level}</td>
-                    <td class="text-center fw-bold text-dark">${r.rating}</td>
-                    <td class="text-center text-muted">${r.target !== null ? r.target : '-'}</td>
-                    <td class="text-center"><div class="gap-box ${r.style.gapClass}">${r.gap !== null ? r.gap : '-'}</div></td>
-                    <td class="text-center fw-bold text-secondary">${r.max}</td>
-                </tr>
-            `).join('');
+            let html = '';
+            AppData.objectives.forEach((obj, index) => {
+                const id = obj.objective_id;
+                const domain = id.substring(0, 3);
+                const target = Utils.parseNum(AppData.targetMap[id]);
+                const max = Config.maxLevels[id] || Config.defaultMax;
+
+                html += `
+                    <tr>
+                        <td class="text-center fw-semibold">${index + 1}</td>
+                        <td class="fw-bold text-secondary">${Utils.escape(domain)}</td>
+                        <td>
+                            <a href="${Utils.getLink(id)}" class="text-decoration-none fw-bold text-primary">
+                                ${Utils.escape(id)}
+                            </a>
+                        </td>
+                        <td><span class="small text-muted">${Utils.escape(obj.objective || '')}</span></td>
+                        <td class="text-center text-muted">${target !== null ? target : '-'}</td>`;
+                
+                // Dynamic scope columns
+                AppData.allScopes.forEach(scope => {
+                    const maturity = AppData.scopeMaturityData[scope.id]?.[id];
+                    
+                    if (maturity === null || maturity === undefined) {
+                        // Not in scope
+                        html += `
+                            <td class="text-center text-muted">-</td>
+                            <td class="text-center text-muted">-</td>`;
+                    } else {
+                        const gap = target !== null ? (maturity - target) : null;
+                        const gapClass = gap === null ? 'text-muted' : (gap < 0 ? 'text-danger fw-bold' : (gap > 0 ? 'text-success fw-bold' : 'text-dark fw-bold'));
+                        const maturityBg = Config.colors.bg[maturity] || '#f8f9fa';
+                        const maturityColor = Config.colors.text[maturity] || '#6c757d';
+                        
+                        html += `
+                            <td class="text-center fw-bold" style="background-color: ${maturityBg}; color: ${maturityColor};">${maturity}</td>
+                            <td class="text-center ${gapClass}">${gap !== null ? gap : '-'}</td>`;
+                    }
+                });
+                
+                html += `
+                        <td class="text-center fw-bold text-secondary">${max}</td>
+                    </tr>`;
+            });
+            
+            tbody.innerHTML = html;
         },
 
-        renderFooter(rows) {
+        renderFooter() {
             const tfoot = document.getElementById('recap-table-footer');
-            if (!tfoot || !rows.length) return;
+            if (!tfoot || !AppData.objectives.length) return;
 
-            const total = rows.length;
-            const avgScore = rows.reduce((s, r) => s + r.level, 0) / total;
-            const avgMax = rows.reduce((s, r) => s + r.max, 0) / total;
+            const total = AppData.objectives.length;
+            const avgMax = AppData.objectives.reduce((s, o) => s + (Config.maxLevels[o.objective_id] || Config.defaultMax), 0) / total;
 
-            const validTargets = rows.filter(r => r.target !== null);
-            const avgTarget = validTargets.length ? (validTargets.reduce((s, r) => s + r.target, 0) / validTargets.length) : null;
+            const validTargets = AppData.objectives.filter(o => AppData.targetMap[o.objective_id] !== null && AppData.targetMap[o.objective_id] !== undefined);
+            const avgTarget = validTargets.length ? (validTargets.reduce((s, o) => s + AppData.targetMap[o.objective_id], 0) / validTargets.length) : null;
 
-            tfoot.innerHTML = `
+            let html = `
                 <tr class="table-light fw-bold border-top-2">
                     <td colspan="4" class="text-end pe-3">Average Maturity Score</td>
+                    <td class="text-center bg-info text-white">${avgTarget !== null ? Utils.fmt(avgTarget) : '-'}</td>`;
+            
+            // Average for each scope
+            AppData.allScopes.forEach(scope => {
+                const scopeData = AppData.scopeMaturityData[scope.id] || {};
+                const scopeValues = Object.values(scopeData).filter(v => v !== null && v !== undefined);
+                const avgScore = scopeValues.length ? (scopeValues.reduce((s, v) => s + v, 0) / scopeValues.length) : 0;
+                
+                html += `
                     <td class="text-center bg-primary text-white">${Utils.fmt(avgScore)}</td>
-                    <td class="bg-light"></td>
-                    <td class="text-center bg-info text-white">${avgTarget !== null ? Utils.fmt(avgTarget) : '-'}</td>
-                    <td class="bg-light"></td>
+                    <td class="bg-light"></td>`;
+            });
+            
+            html += `
                     <td class="text-center bg-secondary text-white">${Utils.fmt(avgMax)}</td>
-                </tr>
-            `;
+                </tr>`;
+            
+            tfoot.innerHTML = html;
         }
     };
 
-    // Run App
     ReportApp.init();
 
 })();
