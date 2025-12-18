@@ -46,34 +46,26 @@
     {{-- Main Card --}}
     <div class="card shadow-sm mb-4 hero-card" style="border:none;box-shadow:0 22px 45px rgba(14,33,70,0.15);">
         <div class="card-header hero-header py-4" style="background:linear-gradient(135deg,#081a3d,#0f2b5c);color:#fff;border:none;">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-start">
+                {{-- Left Side: Title and Info --}}
                 <div>
                     <div class="hero-title" style="font-size:1.5rem;font-weight:700;letter-spacing:0.04em;">COBIT 2019 : I&T Assessment Capability and Maturity</div>
-                    <div class="hero-eval-id" style="font-size:1.05rem;font-weight:600;margin-top:0.25rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);">
-                        Assessment Id: {{ $evalId }}
+                    <div class="d-flex flex-wrap gap-4 mt-3" style="font-size:0.95rem;">
+                        <div>
+                            <span style="color:rgba(255,255,255,0.6);">Assessment Id:</span>
+                            <span class="fw-bold ms-1">{{ $evalId }}</span>
+                        </div>
+                        <div>
+                            <span style="color:rgba(255,255,255,0.6);">Assessment Year:</span>
+                            <span class="fw-bold ms-1">{{ $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->tahun ?? 'N/A' }}</span>
+                        </div>
+                        <div>
+                            <span style="color:rgba(255,255,255,0.6);">Assessment Scope:</span>
+                            <span class="fw-bold ms-1">{{ $activeScope->nama_scope ?? 'No Scope Selected' }}</span>
+                        </div>
                     </div>
-                    <div class="hero-eval-year text-uppercase" style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:0.06em;">
-                        Assessment Year: {{ $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->tahun ?? 'N/A' }}
-                    </div>
-                    @if($isOwner && $evaluation->status !== 'finished')
-                    <div class="mt-2">
-                        <select id="scope-selector" class="form-select form-select-sm" style="max-width: 300px; background-color: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3);">
-                            @forelse($allScopes as $scope)
-                                <option value="{{ $scope->id }}" {{ $activeScope && $activeScope->id == $scope->id ? 'selected' : '' }}>
-                                    {{ $scope->nama_scope }}
-                                </option>
-                            @empty
-                                <option value="">No scopes available</option>
-                            @endforelse
-                            <option value="ADD_NEW">+ Add New Scope</option>
-                        </select>
-                    </div>
-                    @else
-                    <div class="hero-eval-year text-uppercase mt-2" style="font-size:0.85rem;font-weight:500;color:rgba(255,255,255,0.6);letter-spacing:0.06em;">
-                        Viewing: {{ $activeScope->nama_scope ?? 'All Domains' }}
-                    </div>
-                    @endif
                 </div>
+                {{-- Right Side: Status Badge --}}
                 <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                     <span id="status-badge" class="assessment-status-chip status-draft">
                         <span class="status-dot"></span>
@@ -101,8 +93,8 @@
                         <i class="fas fa-plus me-2"></i>Evidence
                     </a>
                     @if($isOwner && $evaluation->status !== 'finished')
-                    <button type="button" class="d-flex align-items-center px-3 py-2 me-1 border-0 fw-bold" data-bs-toggle="modal" data-bs-target="#editScopeModal" style="background-color: #0f2b5c; color: #ffffffff; border-radius: 10px; font-size: 0.9rem;">
-                        <span class="me-2">SCOPE</span> <i class="fas fa-pen small"></i> 
+                    <button type="button" class="d-flex align-items-center px-3 py-2 me-1 border-0 fw-bold" data-bs-toggle="modal" data-bs-target="#editScopeModal" style="background-color: #0f2b5c; color: #fff; border-radius: 10px; font-size: 0.9rem;">
+                        <i class="fas fa-layer-group me-2"></i>SCOPE
                     </button>
                     @endif
                     <button type="button" class="domain-tab active " data-domain="all">All</button>
@@ -205,9 +197,27 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body bg-light">
+                    {{-- Scope Selector --}}
+                    <div class="mb-3">
+                        <label for="modalScopeSelector" class="form-label fw-bold">Pilih Scope</label>
+                        <div class="input-group">
+                            <select id="modalScopeSelector" class="form-select">
+                                @forelse($allScopes as $scope)
+                                    <option value="{{ $scope->id }}" {{ $activeScope && $activeScope->id == $scope->id ? 'selected' : '' }}>
+                                        {{ $scope->nama_scope }}
+                                    </option>
+                                @empty
+                                @endforelse
+                                <option value="ADD_NEW">+ Tambah Scope Baru</option>
+                            </select>
+                            <button class="btn btn-outline-primary" type="button" id="btnSwitchScope" title="Pindah ke scope ini">
+                                <i class="fas fa-external-link-alt me-2"></i>Buka Scope
+                            </button>
+                        </div>
+                    </div>
                     <div id="scopeNameSection" class="mb-3" style="display:none;">
-                        <label for="newScopeName" class="form-label fw-bold">Scope Name</label>
-                        <input type="text" class="form-control" id="newScopeName" placeholder="e.g., Audit Q1, Critical Systems">
+                        <label for="newScopeName" class="form-label fw-bold">Nama Scope</label>
+                        <input type="text" class="form-control" id="newScopeName" placeholder="Contoh: Audit Q1, Sistem Kritis">
                     </div>
                     <div id="scopeContainer" class="d-flex flex-column gap-4">
                         <!-- Content generated by JS -->
@@ -216,13 +226,13 @@
                 <div class="modal-footer bg-white border-top-0 pt-0 mt-3">
                     <div class="d-flex justify-content-between w-100 align-items-center mt-3">
                         <div class="fw-bold text-primary">
-                            <span id="selectedCount" class="fs-5">0</span> objectives selected
+                            <span id="selectedCount" class="fs-5">0</span> objektif dipilih
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
                             <button type="button" class="btn btn-primary px-4" id="btnSaveScope">
                                 <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
-                                Save Changes
+                                Simpan Perubahan
                             </button>
                         </div>
                     </div>
@@ -233,28 +243,85 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Scope Selector Handler
-        const scopeSelector = document.getElementById('scope-selector');
-        if (scopeSelector) {
-            scopeSelector.addEventListener('change', function() {
-                const selectedValue = this.value;
+        // Track which scope is being edited
+        window.editingScopeId = null;
+
+        // Modal Scope Selector Handler
+        const modalScopeSelector = document.getElementById('modalScopeSelector');
+        if (modalScopeSelector) {
+            // Function to update UI based on selected scope
+            function updateScopeUI() {
+                const selectedValue = modalScopeSelector.value;
+                
                 if (selectedValue === 'ADD_NEW') {
-                    // Open modal for creating new scope
-                    document.getElementById('scopeModalTitle').textContent = 'Add New Scope';
-                    document.getElementById('scopeModalDesc').textContent = 'Enter a name for the new scope and select the domains.';
+                    // Creating new scope
+                    window.editingScopeId = null;
+                    document.getElementById('scopeModalTitle').textContent = 'Tambah Scope Baru';
+                    document.getElementById('scopeModalDesc').textContent = 'Masukkan nama untuk scope baru dan pilih domain.';
                     document.getElementById('scopeNameSection').style.display = 'block';
                     document.getElementById('newScopeName').value = '';
-                    // Uncheck all checkboxes for new scope
-                    document.querySelectorAll('.scope-checkbox').forEach(cb => cb.checked = false);
-                    // Show modal
-                    new bootstrap.Modal(document.getElementById('editScopeModal')).show();
-                    // Reset selector
-                    this.selectedIndex = this.options.length - 2; // Select the last actual scope
+                    document.getElementById('btnSwitchScope').style.display = 'none'; // Hide switch button
+                    // Uncheck all checkboxes
+                    document.querySelectorAll('.scope-checkbox').forEach(cb => {
+                        cb.checked = false;
+                    });
                 } else if (selectedValue) {
-                    // Reload page with selected scope
-                    window.location.href = '{{ route("assessment-eval.show", $evalId) }}?scope_id=' + selectedValue;
+                    // Editing existing scope - load data without redirect
+                    window.editingScopeId = selectedValue;
+                    document.getElementById('btnSwitchScope').style.display = 'inline-block'; // Show switch button
+                    const scopeName = modalScopeSelector.options[modalScopeSelector.selectedIndex].text;
+                    
+                    document.getElementById('scopeModalTitle').textContent = 'Edit Scope';
+                    document.getElementById('scopeModalDesc').textContent = 'Ubah nama dan pilihan domain untuk scope ini.';
+                    // Show name input for renaming
+                    document.getElementById('scopeNameSection').style.display = 'block';
+                    document.getElementById('newScopeName').value = scopeName.trim();
+                    
+                    // Load this scope's selected domains
+                    const scopeData = window.SCOPE_DETAILS && window.SCOPE_DETAILS[selectedValue];
+                    document.querySelectorAll('.scope-checkbox').forEach(cb => {
+                        cb.checked = scopeData && scopeData.domains && scopeData.domains.includes(cb.value);
+                    });
                 }
-            });
+                
+                // Update count
+                const countEl = document.getElementById('selectedCount');
+                if (countEl) {
+                    countEl.textContent = document.querySelectorAll('.scope-checkbox:checked').length;
+                }
+            }
+
+            // Switch Scope Button Handler
+            const btnSwitchScope = document.getElementById('btnSwitchScope');
+            if (btnSwitchScope) {
+                btnSwitchScope.addEventListener('click', function() {
+                    const selectedValue = modalScopeSelector.value;
+                    const scopeName = modalScopeSelector.options[modalScopeSelector.selectedIndex].text;
+                    
+                    if (selectedValue && selectedValue !== 'ADD_NEW') {
+                        // Switch confirmation
+                        Swal.fire({
+                            title: 'Pindah Scope?',
+                            text: `Pindah tampilan aktif ke "${scopeName}"?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#0f2b5c',
+                            confirmButtonText: 'Ya, Pindah!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '{{ route("assessment-eval.show", $evalId) }}?scope_id=' + selectedValue;
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Listen to change
+            modalScopeSelector.addEventListener('change', updateScopeUI);
+            
+            // Initialize on modal show
+            document.getElementById('editScopeModal').addEventListener('shown.bs.modal', updateScopeUI);
         }
 
         if (!window.ALL_OBJECTIVES_GROUPED) return;
@@ -356,21 +423,38 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'Belum Ada Objektif Dipilih',
-                    text: 'Mohon pilih setidaknya satu objektif untuk melanjutkan.',
-                    confirmButtonColor: '#0f2b5c',
-                    confirmButtonText: 'Oke'
+                    text: 'Mohon pilih setidaknya satu objektif.',
+                    confirmButtonColor: '#0f2b5c'
+                });
+                return;
+            }
+
+            const isNewScope = window.editingScopeId === null;
+            const scopeNameInput = document.getElementById('newScopeName');
+            const scopeName = scopeNameInput.value.trim();
+            const actionText = isNewScope ? 'Buat Scope Baru' : 'Perbarui Scope';
+            const confirmText = isNewScope 
+                ? `Buat scope "${scopeName}" dengan ${selected.length} objektif?`
+                : `Simpan perubahan pada scope "${scopeName}"?`;
+
+            if (!scopeName) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Nama Diperlukan',
+                    text: 'Mohon masukkan nama scope.',
+                    confirmButtonColor: '#0f2b5c'
                 });
                 return;
             }
 
             Swal.fire({
-                title: 'Perbarui Scope?',
-                text: "Objektif yang tidak dicentang akan disembunyikan dari halaman asesmen. Data nilai yang sudah ada TIDAK akan dihapus, hanya disembunyikan.",
+                title: actionText,
+                text: confirmText,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#0f2b5c',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Perbarui',
+                confirmButtonText: 'Ya, Simpan',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -383,26 +467,14 @@
             saveBtn.disabled = true;
             saveBtn.querySelector('.spinner-border').classList.remove('d-none');
 
-            // Check if we're creating a new scope
+            // Get scope name
             const scopeNameInput = document.getElementById('newScopeName');
-            const isNewScope = scopeNameInput && scopeNameInput.offsetParent !== null && window.getComputedStyle(scopeNameInput.parentElement).display !== 'none';
-            const scopeName = isNewScope ? scopeNameInput.value.trim() : null;
-
-            if (isNewScope && !scopeName) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Scope Name Required',
-                    text: 'Please enter a name for the new scope.',
-                    confirmButtonColor: '#0f2b5c'
-                });
-                saveBtn.disabled = false;
-                saveBtn.querySelector('.spinner-border').classList.add('d-none');
-                return;
-            }
+            const isNewScope = window.editingScopeId === null;
+            const scopeName = scopeNameInput.value.trim();
 
             const payload = isNewScope 
                 ? { scopes: selected, nama_scope: scopeName, is_new: true }
-                : { scopes: selected };
+                : { scopes: selected, scope_id: window.editingScopeId, nama_scope: scopeName };
 
             fetch(window.UPDATE_SCOPE_URL, {
                 method: 'POST',
@@ -412,36 +484,29 @@
                 },
                 body: JSON.stringify(payload)
             })
-            .then(res => res.json())
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Berhasil!',
-                        text: 'Scope asesmen telah berhasil diperbarui.',
-                        timer: 1500,
-                        showConfirmButton: false
+                        text: 'Scope berhasil diperbarui.',
+                        confirmButtonColor: '#0f2b5c',
+                        timer: 1500
                     }).then(() => {
-                        location.reload();
+                        window.location.reload();
                     });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal',
-                        text: data.message || 'Terjadi kesalahan saat menyimpan.',
-                        confirmButtonText: 'Tutup'
-                    });
-                    saveBtn.disabled = false;
-                    saveBtn.querySelector('.spinner-border').classList.add('d-none');
+                    throw new Error(data.message || 'Terjadi kesalahan');
                 }
             })
-            .catch(err => {
-                console.error(err);
+            .catch(error => {
+                console.error('Error:', error);
                 Swal.fire({
                     icon: 'error',
-                    title: 'Kesalahan Server',
-                    text: 'Terjadi gangguan koneksi ke server. Silakan coba lagi nanti.',
-                    confirmButtonText: 'Tutup'
+                    title: 'Gagal',
+                    text: 'Gagal memperbarui scope: ' + error.message,
+                    confirmButtonColor: '#0f2b5c'
                 });
                 saveBtn.disabled = false;
                 saveBtn.querySelector('.spinner-border').classList.add('d-none');

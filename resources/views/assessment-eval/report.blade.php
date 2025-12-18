@@ -226,9 +226,13 @@
                 const scopeData = AppData.scopeMaturityData[scope.id] || {};
                 const scopeValues = Object.values(scopeData).filter(v => v !== null && v !== undefined);
                 const avgScore = scopeValues.length ? (scopeValues.reduce((s, v) => s + v, 0) / scopeValues.length) : 0;
+                const gamoCount = scopeValues.length;
                 
                 html += `
-                    <td class="text-center bg-primary text-white">${Utils.fmt(avgScore)}</td>
+                    <td class="text-center bg-primary text-white">
+                        <div class="small fw-normal" style="font-size: 0.7rem; opacity: 0.8;">${gamoCount} GAMOs</div>
+                        <div>${Utils.fmt(avgScore)}</div>
+                    </td>
                     <td class="bg-light"></td>`;
             });
             

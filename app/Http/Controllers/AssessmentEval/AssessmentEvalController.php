@@ -461,7 +461,7 @@ class AssessmentEvalController extends Controller
             $isNewScope = $request->input('is_new', false);
             $scopeName = $request->input('nama_scope');
 
-            DB::transaction(function () use ($evalId, $selectedScopes, $isNewScope, $scopeName) {
+            DB::transaction(function () use ($evalId, $selectedScopes, $isNewScope, $scopeName, $request) {
                 if ($isNewScope && $scopeName) {
                     // Create new scope
                     $scoping = \App\Models\TrsScoping::create([
@@ -488,12 +488,27 @@ class AssessmentEvalController extends Controller
                         TrsEvalDetail::insert($inserts);
                     }
                 } else {
-                    // Update existing scope (backward compatibility - update first scope or all)
-                    $firstScope = \App\Models\TrsScoping::where('eval_id', $evalId)->first();
+                    // Editing existing scope - check if scope_id provided
+                    $scopeId = $request->input('scope_id');
                     
-                    if ($firstScope) {
+                    if ($scopeId) {
+                        // Update specific scope
+                        $scopeToUpdate = \App\Models\TrsScoping::where('id', $scopeId)
+                            ->where('eval_id', $evalId)
+                            ->first();
+
+                        // Update scope name if provided
+                        if ($scopeToUpdate && $scopeName) {
+                            $scopeToUpdate->update(['nama_scope' => $scopeName]);
+                        }
+                    } else {
+                        // Fallback: update first scope (backward compatibility)
+                        $scopeToUpdate = \App\Models\TrsScoping::where('eval_id', $evalId)->first();
+                    }
+                    
+                    if ($scopeToUpdate) {
                         // Remove existing details for this scope
-                        TrsEvalDetail::where('scoping_id', $firstScope->id)->delete();
+                        TrsEvalDetail::where('scoping_id', $scopeToUpdate->id)->delete();
 
                         // Insert new domains
                         $inserts = [];
@@ -502,7 +517,7 @@ class AssessmentEvalController extends Controller
                             if ($scope !== '') {
                                 $inserts[] = [
                                     'eval_id' => $evalId,
-                                    'scoping_id' => $firstScope->id,
+                                    'scoping_id' => $scopeToUpdate->id,
                                     'domain_id' => $scope,
                                     'created_at' => now(),
                                     'updated_at' => now()
