@@ -79,6 +79,7 @@
                         }));
                         window.CURRENT_SCOPE = @json($objectives->pluck('objective_id'));
                         window.UPDATE_SCOPE_URL = "{{ route('assessment-eval.update-scope', $evalId) }}";
+                        window.DELETE_SCOPE_URL = "{{ route('assessment-eval.delete-scope') }}";
                         window.SCOPE_DETAILS = @json($scopeDetails ?? []);
                         window.ALL_SCOPES = @json($allScopes ?? []);
                     </script>
@@ -229,6 +230,9 @@
                             <span id="selectedCount" class="fs-5">0</span> objektif dipilih
                         </div>
                         <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-danger me-2" id="btnDeleteScope" style="display:none;">
+                                <i class="fas fa-trash-alt me-1"></i>Hapus
+                            </button>
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
                             <button type="button" class="btn btn-primary px-4" id="btnSaveScope">
                                 <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
@@ -261,6 +265,10 @@
                     document.getElementById('scopeNameSection').style.display = 'block';
                     document.getElementById('newScopeName').value = '';
                     document.getElementById('btnSwitchScope').style.display = 'none'; // Hide switch button
+                    // Hide delete button
+                    const btnDel = document.getElementById('btnDeleteScope');
+                    if(btnDel) btnDel.style.display = 'none';
+
                     // Uncheck all checkboxes
                     document.querySelectorAll('.scope-checkbox').forEach(cb => {
                         cb.checked = false;
@@ -269,6 +277,11 @@
                     // Editing existing scope - load data without redirect
                     window.editingScopeId = selectedValue;
                     document.getElementById('btnSwitchScope').style.display = 'inline-block'; // Show switch button
+                    
+                    // Show delete button
+                    const btnDel = document.getElementById('btnDeleteScope');
+                    if(btnDel) btnDel.style.display = 'inline-block';
+
                     const scopeName = modalScopeSelector.options[modalScopeSelector.selectedIndex].text;
                     
                     document.getElementById('scopeModalTitle').textContent = 'Edit Scope';
@@ -311,6 +324,58 @@
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 window.location.href = '{{ route("assessment-eval.show", $evalId) }}?scope_id=' + selectedValue;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Delete Scope Button Handler
+            const btnDeleteScope = document.getElementById('btnDeleteScope');
+            if (btnDeleteScope) {
+                btnDeleteScope.addEventListener('click', function() {
+                    const selectedValue = modalScopeSelector.value;
+                    const scopeName = modalScopeSelector.options[modalScopeSelector.selectedIndex].text;
+                    
+                    if (selectedValue && selectedValue !== 'ADD_NEW') {
+                         Swal.fire({
+                            title: 'Hapus Scope?',
+                            text: `Apakah Anda yakin ingin menghapus scope "${scopeName}"?`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Ya, Hapus!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // AJAX Delete
+                                fetch(window.DELETE_SCOPE_URL, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    },
+                                    body: JSON.stringify({ scope_id: selectedValue })
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire(
+                                            'Terhapus!',
+                                            'Scope berhasil dihapus.',
+                                            'success'
+                                        ).then(() => {
+                                            window.location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire('Gagal', data.message || 'Gagal menghapus.', 'error');
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    Swal.fire('Error', 'Terjadi kesalahan.', 'error');
+                                });
                             }
                         });
                     }

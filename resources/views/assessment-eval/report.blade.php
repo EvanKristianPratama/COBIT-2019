@@ -37,13 +37,8 @@
                     <thead>
                         <tr>
                             <th style="width:50px;" class="text-center">No</th>
-                            <th style="width:80px;">Domain</th>
                             <th style="width:90px;">Gamo</th>
                             <th>Process Name</th>
-                            <th style="width:80px;" class="text-center">Score</th>
-                            <th style="width:80px;" class="text-center">Rating</th>
-                            <th style="width:80px;" class="text-center">Target</th>
-                            <th style="width:80px;" class="text-center">Gap</th>
                             <th style="width:80px;" class="text-center">Max Level</th>
                         </tr>
                     </thead>
@@ -130,16 +125,13 @@
             let html = `
                 <tr>
                     <th style="width:50px;" class="text-center">No</th>
-                    <th style="width:80px;">Domain</th>
                     <th style="width:90px;">GAMO</th>
-                    <th>Process Name</th>
-                    <th style="width:80px;" class="text-center">Target</th>`;
+                    <th>Process Name</th>`;
             
             // Dynamic scope columns
             AppData.allScopes.forEach(scope => {
                 html += `
-                    <th style="width:100px;" class="text-center">${Utils.escape(scope.nama_scope)}</th>
-                    <th style="width:80px;" class="text-center">Gap</th>`;
+                    <th style="width:100px;" class="text-center">${Utils.escape(scope.nama_scope)}</th>`;
             });
             
             html += `
@@ -161,21 +153,17 @@
             let html = '';
             AppData.objectives.forEach((obj, index) => {
                 const id = obj.objective_id;
-                const domain = id.substring(0, 3);
-                const target = Utils.parseNum(AppData.targetMap[id]);
                 const max = Config.maxLevels[id] || Config.defaultMax;
 
                 html += `
                     <tr>
                         <td class="text-center fw-semibold">${index + 1}</td>
-                        <td class="fw-bold text-secondary">${Utils.escape(domain)}</td>
                         <td>
                             <a href="${Utils.getLink(id)}" class="text-decoration-none fw-bold text-primary">
                                 ${Utils.escape(id)}
                             </a>
                         </td>
-                        <td><span class="small text-muted">${Utils.escape(obj.objective || '')}</span></td>
-                        <td class="text-center text-muted">${target !== null ? target : '-'}</td>`;
+                        <td><span class="small text-muted">${Utils.escape(obj.objective || '')}</span></td>`;
                 
                 // Dynamic scope columns
                 AppData.allScopes.forEach(scope => {
@@ -184,17 +172,13 @@
                     if (maturity === null || maturity === undefined) {
                         // Not in scope
                         html += `
-                            <td class="text-center text-muted">-</td>
                             <td class="text-center text-muted">-</td>`;
                     } else {
-                        const gap = target !== null ? (maturity - target) : null;
-                        const gapClass = gap === null ? 'text-muted' : (gap < 0 ? 'text-danger fw-bold' : (gap > 0 ? 'text-success fw-bold' : 'text-dark fw-bold'));
                         const maturityBg = Config.colors.bg[maturity] || '#f8f9fa';
                         const maturityColor = Config.colors.text[maturity] || '#6c757d';
                         
                         html += `
-                            <td class="text-center fw-bold" style="background-color: ${maturityBg}; color: ${maturityColor};">${maturity}</td>
-                            <td class="text-center ${gapClass}">${gap !== null ? gap : '-'}</td>`;
+                            <td class="text-center fw-bold" style="background-color: ${maturityBg}; color: ${maturityColor};">${maturity}</td>`;
                     }
                 });
                 
@@ -213,13 +197,9 @@
             const total = AppData.objectives.length;
             const avgMax = AppData.objectives.reduce((s, o) => s + (Config.maxLevels[o.objective_id] || Config.defaultMax), 0) / total;
 
-            const validTargets = AppData.objectives.filter(o => AppData.targetMap[o.objective_id] !== null && AppData.targetMap[o.objective_id] !== undefined);
-            const avgTarget = validTargets.length ? (validTargets.reduce((s, o) => s + AppData.targetMap[o.objective_id], 0) / validTargets.length) : null;
-
             let html = `
                 <tr class="table-light fw-bold border-top-2">
-                    <td colspan="4" class="text-end pe-3">Average Maturity Score</td>
-                    <td class="text-center bg-info text-white">${avgTarget !== null ? Utils.fmt(avgTarget) : '-'}</td>`;
+                    <td colspan="3" class="text-end pe-3">Average Maturity Score</td>`;
             
             // Average for each scope
             AppData.allScopes.forEach(scope => {
@@ -232,8 +212,7 @@
                     <td class="text-center bg-primary text-white">
                         <div class="small fw-normal" style="font-size: 0.7rem; opacity: 0.8;">${gamoCount} GAMOs</div>
                         <div>${Utils.fmt(avgScore)}</div>
-                    </td>
-                    <td class="bg-light"></td>`;
+                    </td>`;
             });
             
             html += `

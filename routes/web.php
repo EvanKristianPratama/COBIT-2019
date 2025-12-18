@@ -278,6 +278,10 @@ Route::post('/assessment-eval/{evalId}/update-scope', [AssessmentEvalController:
      ->name('assessment-eval.update-scope')
      ->middleware('auth');
 
+Route::delete('/assessment-eval/delete-scope', [AssessmentEvalController::class, 'deleteScope'])
+     ->name('assessment-eval.delete-scope')
+     ->middleware('auth');
+
 Route::post('/assessment-eval/{evalId}/save', [AssessmentEvalController::class, 'save'])
      ->name('assessment-eval.save')
      ->middleware('auth');

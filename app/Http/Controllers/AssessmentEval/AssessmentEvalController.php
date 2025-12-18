@@ -549,6 +549,24 @@ class AssessmentEvalController extends Controller
         }
     }
 
+    public function deleteScope(Request $request)
+    {
+        try {
+            $scopeId = $request->input('scope_id');
+            $scope = \App\Models\TrsScoping::find($scopeId);
+
+            if ($scope) {
+                $scope->delete(); // Soft delete
+                return response()->json(['success' => true]);
+            }
+            
+            return response()->json(['success' => false, 'message' => 'Scope not found']);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
     /**
      * Get all objectives for the modal (optional helper if needed via AJAX, but passing to view is easier)
      */
