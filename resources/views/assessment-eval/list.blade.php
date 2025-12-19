@@ -14,6 +14,11 @@
             <div>
                 <div class="hero-title">COBIT 2019 : I&T Assessment Capability and Maturity</div>
             </div>
+            <div>
+                <a href="{{ route('assessment-eval.report.all') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm" style="color: #0f2b5c;">
+                    <i class="fas fa-chart-line me-2"></i> All Reports
+                </a>
+            </div>
         </div>
         <div class="card-body hero-body">
             <div class="hero-quick d-flex flex-column flex-lg-row align-items-stretch justify-content-between gap-3">

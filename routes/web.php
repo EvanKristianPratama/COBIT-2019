@@ -24,6 +24,7 @@ use App\Http\Controllers\cobit2019\Step4Controller;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
+use App\Http\Controllers\AssessmentEval\AssessmentReportController;
 use Illuminate\Support\Facades\Crypt;
 
 Route::bind('evalId', function ($value) {
@@ -264,6 +265,10 @@ Route::get('/assessment-eval', [AssessmentEvalController::class, 'index'])
 
 Route::get('/assessment-eval/list', [AssessmentEvalController::class, 'listAssessments'])
      ->name('assessment-eval.list')
+     ->middleware('auth');
+
+Route::get('/assessment-eval/report-all', [AssessmentReportController::class, 'index'])
+     ->name('assessment-eval.report.all')
      ->middleware('auth');
 
 Route::post('/assessment-eval/create', [AssessmentEvalController::class, 'createAssessment'])

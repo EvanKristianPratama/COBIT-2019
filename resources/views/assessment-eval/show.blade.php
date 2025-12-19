@@ -413,7 +413,9 @@
                 <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 0.9rem;">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 60px; text-align: center;">Check</th>
+                            <th style="width: 60px; text-align: center;">
+                                <input class="form-check-input" type="checkbox" id="selectAllGamos" style="width: 1.25em; height: 1.25em;" title="Pilih Semua">
+                            </th>
                             <th style="width: 100px;">GAMO</th>
                             <th>GAMO Name</th>`;
         
@@ -478,7 +480,34 @@
         });
         updateUI();
 
-        // Handle Check/Uncheck All removed - not needed in table view
+        // Handle Check/Uncheck All
+        const selectAllCheckbox = document.getElementById('selectAllGamos');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                checkboxes.forEach(cb => {
+                    cb.checked = isChecked;
+                });
+                updateUI();
+            });
+            
+            // Optional: uncheck "Select All" if any individual box is unchecked
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (!this.checked) {
+                        selectAllCheckbox.checked = false;
+                    } else {
+                        // Check if all are checked
+                        const allChecked = Array.from(checkboxes).every(c => c.checked);
+                        selectAllCheckbox.checked = allChecked;
+                    }
+                });
+            });
+            
+            // Initial check state
+            const allChecked = Array.from(checkboxes).length > 0 && Array.from(checkboxes).every(c => c.checked);
+            selectAllCheckbox.checked = allChecked;
+        }
 
         // Save
         saveBtn.addEventListener('click', function() {

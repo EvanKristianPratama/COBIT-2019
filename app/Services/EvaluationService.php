@@ -549,4 +549,138 @@ class EvaluationService
             'score' => $avgScore
         ]);
     }
+
+
+    /**
+     * Helper: Get and sort objectives
+     */
+    public function getSortedObjectives()
+    {
+        $objectives = \App\Models\MstObjective::with(['practices.activities'])->get();
+        $domainOrder = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+        
+        return $objectives->sortBy(function($obj) use ($domainOrder) {
+            $prefix = preg_replace('/[0-9]+/', '', $obj->objective_id);
+            if (empty($prefix)) $prefix = substr($obj->objective_id, 0, 3);
+            $rank = $domainOrder[$prefix] ?? 99;
+            return sprintf('%02d_%s', $rank, $obj->objective_id);
+        })->values();
+    }
+
+    /**
+     * Helper: Fetch Target Capabilities as map
+     */
+    public function fetchTargetCapabilities($evaluation)
+    {
+        $targetCapabilityMap = [];
+        $assessmentYear = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? null;
+        
+        if ($assessmentYear) {
+            $targetCapability = \App\Models\TargetCapability::where('user_id', $evaluation->user_id)
+                ->where('tahun', (int) $assessmentYear)
+                ->latest('updated_at')
+                ->first();
+
+            if ($targetCapability) {
+                // List of all 40 GAMOs
+                $fields = [
+                    'EDM01','EDM02','EDM03','EDM04','EDM05',
+                    'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
+                    'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
+                    'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
+                    'MEA01','MEA02','MEA03','MEA04',
+                ];
+                foreach ($fields as $field) {
+                    $targetCapabilityMap[$field] = $targetCapability->$field !== null ? (int) $targetCapability->$field : null;
+                }
+            }
+        }
+        return $targetCapabilityMap;
+    }
+
+    /**
+     * Helper: Calculate maturity for a single objective
+     */
+    public function calculateObjectiveMaturity($obj, $activityData)
+    {
+        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+        $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
+        $allLevelsFound = [];
+
+        foreach ($obj->practices as $p) {
+            if ($p->activities) {
+                foreach ($p->activities as $a) {
+                    $lvl = (int)$a->capability_lvl;
+                    if ($lvl >= 2 && $lvl <= 5) {
+                        $activitiesByLevel[$lvl][] = $a;
+                        $allLevelsFound[] = $lvl;
+                    }
+                }
+            }
+        }
+
+        if (empty($allLevelsFound)) return 0;
+        
+        $minLevel = min($allLevelsFound);
+
+        $getScore = function($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
+            if ($lvl < $minLevel) return 1.0;
+            $acts = $activitiesByLevel[$lvl] ?? [];
+            if (empty($acts)) return 0.0;
+            $vals = 0;
+            foreach ($acts as $a) {
+                // Check if activityData is array or object/model
+                if (is_array($activityData)) {
+                    // Check if it's nested structure [activity_id => [level_achieved => ...]]
+                    if (isset($activityData[$a->activity_id]['level_achieved'])) {
+                        $r = $activityData[$a->activity_id]['level_achieved'];
+                    } else {
+                        // Or maybe direct key access if flat? Assuming nested based on common usage
+                        $r = 'N'; 
+                    }
+                } else {
+                    // Assuming collection or object
+                     $r = isset($activityData[$a->activity_id]) ? $activityData[$a->activity_id]['level_achieved'] : 'N';
+                }
+                
+                $vals += ($ratingMap[$r] ?? 0.0);
+            }
+            return $vals / count($acts);
+        };
+
+        $score2 = $getScore(2);
+        $score3 = $getScore(3);
+        $score4 = $getScore(4);
+        $score5 = $getScore(5);
+
+        $finalLevel = 0;
+        if ($score2 <= 0.15) {
+            $finalLevel = 0;
+        } elseif ($score2 <= 0.50) {
+            $finalLevel = 1;
+        } elseif ($score2 <= 0.85) {
+            $finalLevel = 2;
+        } else {
+            if ($score3 <= 0.50) {
+                $finalLevel = 2;
+            } elseif ($score3 <= 0.85) {
+                $finalLevel = 3;
+            } else {
+                if ($score4 <= 0.50) {
+                    $finalLevel = 3;
+                } elseif ($score4 <= 0.85) {
+                    $finalLevel = 4;
+                } else {
+                    $finalLevel = ($score5 <= 0.50) ? 4 : 5;
+                }
+            }
+        }
+
+        if ($minLevel > 2) {
+            $startScore = $getScore($minLevel);
+            if ($startScore <= 0.15) $finalLevel = 0;
+        }
+
+        return $finalLevel;
+    }
 }

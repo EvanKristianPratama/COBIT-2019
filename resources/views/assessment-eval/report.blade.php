@@ -197,21 +197,36 @@
             const total = AppData.objectives.length;
             const avgMax = AppData.objectives.reduce((s, o) => s + (Config.maxLevels[o.objective_id] || Config.defaultMax), 0) / total;
 
+            // Row 1: Total GAMO Selected
             let html = `
                 <tr class="table-light fw-bold border-top-2">
+                    <td colspan="3" class="text-end pe-3">Total GAMO Selected</td>`;
+            
+            AppData.allScopes.forEach(scope => {
+                const scopeData = AppData.scopeMaturityData[scope.id] || {};
+                const gamoCount = Object.values(scopeData).filter(v => v !== null && v !== undefined).length;
+                
+                html += `
+                    <td class="text-center bg-light text-dark">
+                        ${gamoCount}
+                    </td>`;
+            });
+            
+            html += `<td class="text-center bg-light text-dark">-</td></tr>`; // Max column
+
+            // Row 2: Average Maturity Score
+            html += `
+                <tr class="table-light fw-bold">
                     <td colspan="3" class="text-end pe-3">Average Maturity Score</td>`;
             
-            // Average for each scope
             AppData.allScopes.forEach(scope => {
                 const scopeData = AppData.scopeMaturityData[scope.id] || {};
                 const scopeValues = Object.values(scopeData).filter(v => v !== null && v !== undefined);
                 const avgScore = scopeValues.length ? (scopeValues.reduce((s, v) => s + v, 0) / scopeValues.length) : 0;
-                const gamoCount = scopeValues.length;
                 
                 html += `
                     <td class="text-center bg-primary text-white">
-                        <div class="small fw-normal" style="font-size: 0.7rem; opacity: 0.8;">${gamoCount} GAMOs</div>
-                        <div>${Utils.fmt(avgScore)}</div>
+                        ${Utils.fmt(avgScore)}
                     </td>`;
             });
             
