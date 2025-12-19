@@ -1,777 +1,1002 @@
 @extends('layouts.app')
 
 @section('content')
-  <style>
-    /* ====== COBIT Objectives Page Styles ====== */
+    <style>
+        /* ====== COBIT Objectives Page Styles ====== */
 
-    :root { --app-primary: #0f2b5c; }
+        :root {
+            --app-primary: #0f2b5c;
+        }
 
-    /* Navbar & Tabs */
-    .navbar .nav-link,
-    .navbar .navbar-brand {
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-weight: 700;
-      color: rgba(255,255,255,0.95) !important;
-      text-shadow: 0 1px 2px rgba(15,43,92,0.18);
-    }
-    .nav-pills .nav-link,
-    .nav-tabs .nav-link,
-    #componentGamoTabs .nav-link,
-    #componentGamoObjTabs .nav-link {
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      font-weight: 700;
-      color: rgba(15,43,92,0.9) !important;
-    }
-    .nav-pills .nav-link.active,
-    .nav-tabs .nav-link.active,
-    #componentGamoTabs .nav-link.active,
-    #componentGamoObjTabs .nav-link.active {
-      background-color: var(--app-primary) !important;
-      border-color: var(--app-primary) !important;
-      color: #fff !important;
-      box-shadow: none !important;
-    }
-    .nav-pills .nav-link:hover,
-    .nav-tabs .nav-link:hover {
-      color: var(--app-primary) !important;
-      background: rgba(15,43,92,0.04) !important;
-    }
+        /* Navbar & Tabs */
+        .navbar .nav-link,
+        .navbar .navbar-brand {
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95) !important;
+            text-shadow: 0 1px 2px rgba(15, 43, 92, 0.18);
+        }
 
-    /* Buttons */
-    .btn-primary {
-      background-color: var(--app-primary) !important;
-      border-color: var(--app-primary) !important;
-      color: #fff !important;
-      box-shadow: 0 8px 20px rgba(15,43,92,0.08);
-      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
-    }
-    .btn-primary:hover, .btn-primary:focus {
-      background-color: #0d254a !important;
-      border-color: #0d254a !important;
-      box-shadow: 0 14px 30px rgba(15,43,92,0.12);
-      transform: translateY(-2px);
-    }
-    .btn-outline-primary {
-      color: var(--app-primary) !important;
-      border-color: rgba(15,43,92,0.12) !important;
-    }
-    .btn-outline-primary:hover, .btn-outline-primary:focus {
-      background-color: rgba(15,43,92,0.06) !important;
-      border-color: var(--app-primary) !important;
-      color: var(--app-primary) !important;
-    }
+        .nav-pills .nav-link,
+        .nav-tabs .nav-link,
+        #componentGamoTabs .nav-link,
+        #componentGamoObjTabs .nav-link {
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 700;
+            color: rgba(15, 43, 92, 0.9) !important;
+        }
 
-    /* Cards & Headers */
-    .bg-primary, .card-header.bg-primary, .table-primary {
-      background-color: var(--app-primary) !important;
-      color: #fff !important;
-      border-color: rgba(15,43,92,0.08) !important;
-    }
-    .objectives-page {
-      background: #f6f8ff;
-      padding: 20px;
-      border-radius: 12px;
-    }
-    .objectives-page .card {
-      background: #fff;
-      border-radius: 10px;
-    }
+        .nav-pills .nav-link.active,
+        .nav-tabs .nav-link.active,
+        #componentGamoTabs .nav-link.active,
+        #componentGamoObjTabs .nav-link.active {
+            background-color: var(--app-primary) !important;
+            border-color: var(--app-primary) !important;
+            color: #fff !important;
+            box-shadow: none !important;
+        }
 
-    /* Hero & Assessment Cards */
-    .hero-card {
-      border: none;
-      border-radius: 1rem;
-      box-shadow: 0 25px 60px rgba(9, 18, 56, 0.18);
-      overflow: hidden;
-    }
-    .hero-header {
-      background: linear-gradient(135deg, #081a3d, #0f2b5c);
-      color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      border: none;
-    }
-    .hero-title { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.03em; }
-    .hero-subtitle { color: rgba(255,255,255,0.8); letter-spacing: 0.02em; }
-    .hero-pill {
-      border-radius: 999px; padding: 0.4rem 1.3rem; background: rgba(255,255,255,0.15);
-      font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
-    }
-    .hero-body { padding: 1.75rem; background: #fff; }
-    .hero-stat-card { background: #f6f8ff; border-radius: 0.9rem; padding: 1rem 1.2rem; border: 1px solid #e3e8ff; height: 100%; }
-    .hero-status-summary { background: #ffffff; border: 1px solid #e3e8ff; border-radius: 0.9rem; padding: 0.75rem 1rem; min-width: 260px; }
-    .hero-status-card { flex: 1 1 120px; background: #f9fbff; border-radius: 0.85rem; padding: 0.9rem 1rem; border: 1px dashed #dbe2ff; }
-    .hero-status-card .status-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6f7491; }
-    .hero-status-card .status-value { display: block; font-size: 1.35rem; font-weight: 700; }
-    .hero-status-card.status-finished { background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.4); color: #0f5132; }
-    .hero-status-card.status-draft { background: rgba(253, 224, 71, 0.12); border-color: rgba(250, 204, 21, 0.45); color: #7a5d07; }
-    .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7392; }
-    .stat-value { display: block; font-size: 1.6rem; font-weight: 700; color: #0f2b5c; margin: 0.15rem 0; }
-    .stat-subtext { font-size: 0.9rem; color: #7b84a5; }
-    .hero-action-btn { border-radius: 999px; padding: 0.55rem 1.5rem; font-weight: 600; box-shadow: 0 12px 30px rgba(15,106,217,0.2); }
+        .nav-pills .nav-link:hover,
+        .nav-tabs .nav-link:hover {
+            color: var(--app-primary) !important;
+            background: rgba(15, 43, 92, 0.04) !important;
+        }
 
-    /* Assessment Cards */
-    .assessment-card { border-radius: 0.9rem; transition: transform 0.22s cubic-bezier(.2,.9,.2,1), box-shadow 0.22s cubic-bezier(.2,.9,.2,1); box-shadow: 0 8px 20px rgba(15,43,92,0.06); will-change: transform; }
-    .assessment-card:hover, .assessment-card:focus-within { transform: translateY(-6px); box-shadow: 0 28px 60px rgba(15,43,92,0.14); }
-    .assessment-card-header { background: #f8f9ff; border-bottom: 1px solid rgba(15,43,92,0.08); display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
-    .assessment-code { font-weight: 700; color: #0f2b5c; }
-    .assessment-meta { font-size: 0.85rem; color: #7a809b; }
-    .status-chip { border-radius: 999px; padding: 0.35rem 1rem; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.03em; }
-    .chip-success { background: #d1f2e2; color: #0f5132; }
-    .chip-info { background: #cff4fc; color: #055160; }
-    .chip-warning { background: #fff3cd; color: #7a5d07; }
-    .chip-muted { background: #f1f3f9; color: #5f6783; }
-    .assessment-progress-block { border: 1px solid #e4e8fb; border-radius: 0.9rem; padding: 1rem 1.25rem; background: #fff; }
-    .assessment-progress { height: 8px; border-radius: 6px; overflow: hidden; }
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--app-primary) !important;
+            border-color: var(--app-primary) !important;
+            color: #fff !important;
+            box-shadow: 0 8px 20px rgba(15, 43, 92, 0.08);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+        }
 
-    /* Pills */
-    .rating-pill { display:inline-block; margin-right:6px; padding:4px 8px; border-radius:12px; font-weight:700; }
-    .pill-success { background: rgba(16,185,129,0.08); color:#0f5132; }
-    .pill-info { background: rgba(207,244,252,0.15); color:#055160; }
-    .pill-warning { background: rgba(255,243,205,0.15); color:#7a5d07; }
-    .pill-danger { background: rgba(255,205,210,0.12); color:#7f1d1d; }
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: #0d254a !important;
+            border-color: #0d254a !important;
+            box-shadow: 0 14px 30px rgba(15, 43, 92, 0.12);
+            transform: translateY(-2px);
+        }
 
-    /* Sticky Action Group */
-    .sticky-action-group { position: fixed; right: 20px; bottom: 20px; display:flex; gap:8px; z-index:1050; }
-    .sticky-action-btn { border-radius: 10px; padding: 10px 14px; }
+        .btn-outline-primary {
+            color: var(--app-primary) !important;
+            border-color: rgba(15, 43, 92, 0.12) !important;
+        }
 
-    /* Vertical Text for Organizational Table */
-    .vertical-text {
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      white-space: nowrap;
-      min-height: 150px;
-      padding: 5px 0;
-    }
-    table th {
-      padding: 0 !important;
-      vertical-align: middle !important;
-    }
-  </style>
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus {
+            background-color: rgba(15, 43, 92, 0.06) !important;
+            border-color: var(--app-primary) !important;
+            color: var(--app-primary) !important;
+        }
 
-<div class="container py-4 objectives-page">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Kamus Component</h1>
-  </div>
+        /* Cards & Headers */
+        .bg-primary,
+        .card-header.bg-primary,
+        .table-primary {
+            background-color: var(--app-primary) !important;
+            color: #fff !important;
+            border-color: rgba(15, 43, 92, 0.08) !important;
+        }
 
-  <!-- Mode Selector -->
-  <div class="mb-3">
-    <div class="btn-group w-100" role="group" aria-label="View mode">
-      <button id="modeGamoBtn" type="button" class="btn btn-outline-primary flex-fill">View by GAMO</button>
-      <button id="modeComponentBtn" type="button" class="btn btn-primary flex-fill">View by Component</button>
-      <button id="masterToggleBtn" type="button" class="btn btn-outline-primary flex-fill">Master</button>
-    </div>
-  </div>
+        .objectives-page {
+            background: #f6f8ff;
+            padding: 20px;
+            border-radius: 12px;
+        }
 
-  <!-- Component Selector -->
-  <div class="mb-3 row g-2 align-items-center">
-    <div class="col-auto">
-      <label for="componentSelect" class="form-label mb-0">Component</label>
-    </div>
-    <div class="col">
-      <select id="componentSelect" class="form-select">
-        <option value="">-- Lihat per Component (semua objective) --</option>
-        @foreach([
-            'overview'=>'Overview',
-            'practices'=>'A.Component: Process',
-            'organizational'=>'B.Component: Organizational Structures',
-            'infoflows'=>'C.Component: Information Flows and Items',
-            'skills'=>'D.Component: People, Skills and Competencies',
-            'policies'=>'E.Component: Policies and Procedures',
-            'culture'=>'F.Component: Culture, Ethics and Behavior',
-            'services'=>'G.Component: Services, Infrastructure and Applications'
-          ] as $k=>$lbl)
-          <option value="{{ $k }}" {{ $k === $component ? 'selected' : '' }}>{{ $lbl }}</option>
-        @endforeach
-      </select>
-    </div>
-  </div>
+        .objectives-page .card {
+            background: #fff;
+            border-radius: 10px;
+        }
 
-  <!-- Component Results -->
-  <div id="componentResults" class="mb-4"></div>
+        /* Hero & Assessment Cards */
+        .hero-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 25px 60px rgba(9, 18, 56, 0.18);
+            overflow: hidden;
+        }
 
-  <!-- Master Panel -->
-  <div id="masterPanel" class="mb-4" style="display:none">
-    <div class="card shadow-sm">
-      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <div>
-          <strong>Data Master</strong>
+        .hero-header {
+            background: linear-gradient(135deg, #081a3d, #0f2b5c);
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            border: none;
+        }
+
+        .hero-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .hero-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.02em;
+        }
+
+        .hero-pill {
+            border-radius: 999px;
+            padding: 0.4rem 1.3rem;
+            background: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .hero-body {
+            padding: 1.75rem;
+            background: #fff;
+        }
+
+        .hero-stat-card {
+            background: #f6f8ff;
+            border-radius: 0.9rem;
+            padding: 1rem 1.2rem;
+            border: 1px solid #e3e8ff;
+            height: 100%;
+        }
+
+        .hero-status-summary {
+            background: #ffffff;
+            border: 1px solid #e3e8ff;
+            border-radius: 0.9rem;
+            padding: 0.75rem 1rem;
+            min-width: 260px;
+        }
+
+        .hero-status-card {
+            flex: 1 1 120px;
+            background: #f9fbff;
+            border-radius: 0.85rem;
+            padding: 0.9rem 1rem;
+            border: 1px dashed #dbe2ff;
+        }
+
+        .hero-status-card .status-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6f7491;
+        }
+
+        .hero-status-card .status-value {
+            display: block;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .hero-status-card.status-finished {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #0f5132;
+        }
+
+        .hero-status-card.status-draft {
+            background: rgba(253, 224, 71, 0.12);
+            border-color: rgba(250, 204, 21, 0.45);
+            color: #7a5d07;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7392;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0f2b5c;
+            margin: 0.15rem 0;
+        }
+
+        .stat-subtext {
+            font-size: 0.9rem;
+            color: #7b84a5;
+        }
+
+        .hero-action-btn {
+            border-radius: 999px;
+            padding: 0.55rem 1.5rem;
+            font-weight: 600;
+            box-shadow: 0 12px 30px rgba(15, 106, 217, 0.2);
+        }
+
+        /* Assessment Cards */
+        .assessment-card {
+            border-radius: 0.9rem;
+            transition: transform 0.22s cubic-bezier(.2, .9, .2, 1), box-shadow 0.22s cubic-bezier(.2, .9, .2, 1);
+            box-shadow: 0 8px 20px rgba(15, 43, 92, 0.06);
+            will-change: transform;
+        }
+
+        .assessment-card:hover,
+        .assessment-card:focus-within {
+            transform: translateY(-6px);
+            box-shadow: 0 28px 60px rgba(15, 43, 92, 0.14);
+        }
+
+        .assessment-card-header {
+            background: #f8f9ff;
+            border-bottom: 1px solid rgba(15, 43, 92, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .assessment-code {
+            font-weight: 700;
+            color: #0f2b5c;
+        }
+
+        .assessment-meta {
+            font-size: 0.85rem;
+            color: #7a809b;
+        }
+
+        .status-chip {
+            border-radius: 999px;
+            padding: 0.35rem 1rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.03em;
+        }
+
+        .chip-success {
+            background: #d1f2e2;
+            color: #0f5132;
+        }
+
+        .chip-info {
+            background: #cff4fc;
+            color: #055160;
+        }
+
+        .chip-warning {
+            background: #fff3cd;
+            color: #7a5d07;
+        }
+
+        .chip-muted {
+            background: #f1f3f9;
+            color: #5f6783;
+        }
+
+        .assessment-progress-block {
+            border: 1px solid #e4e8fb;
+            border-radius: 0.9rem;
+            padding: 1rem 1.25rem;
+            background: #fff;
+        }
+
+        .assessment-progress {
+            height: 8px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        /* Pills */
+        .rating-pill {
+            display: inline-block;
+            margin-right: 6px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .pill-success {
+            background: rgba(16, 185, 129, 0.08);
+            color: #0f5132;
+        }
+
+        .pill-info {
+            background: rgba(207, 244, 252, 0.15);
+            color: #055160;
+        }
+
+        .pill-warning {
+            background: rgba(255, 243, 205, 0.15);
+            color: #7a5d07;
+        }
+
+        .pill-danger {
+            background: rgba(255, 205, 210, 0.12);
+            color: #7f1d1d;
+        }
+
+        /* Sticky Action Group */
+        .sticky-action-group {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 1050;
+        }
+
+        .sticky-action-btn {
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        /* Vertical Text for Organizational Table */
+        .vertical-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            min-height: 150px;
+            padding: 5px 0;
+        }
+
+        table th {
+            padding: 0 !important;
+            vertical-align: middle !important;
+        }
+    </style>
+
+    <div class="container py-4 objectives-page">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h4 mb-0">Kamus Component</h1>
         </div>
-        <!-- BADGES REMOVED per request -->
-      </div>
 
-      <div class="card-body">
-        <ul class="nav nav-tabs mb-3" id="masterTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="eg-tab" data-bs-toggle="tab" data-bs-target="#eg-pane" type="button" role="tab">Enterprise Goals</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="ag-tab" data-bs-toggle="tab" data-bs-target="#ag-pane" type="button" role="tab">Alignment Goals</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="roles-tab" data-bs-toggle="tab" data-bs-target="#roles-pane" type="button" role="tab">Roles</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="cap-tab" data-bs-toggle="tab" data-bs-target="#cap-pane" type="button" role="tab">Capability & Maturity Level</button>
-          </li>
-        </ul>
-
-        <div class="tab-content" id="masterTabContent">
-          <div class="tab-pane fade show active" id="eg-pane" role="tabpanel">
-            <div class="table-responsive">
-              <table id="masterEgTable" class="table table-sm table-bordered table-striped mb-0">
-                <thead class="table-primary text-white">
-                  <tr>
-                    <th style="width:120px">Enterprise Goal</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+        <!-- Mode Selector -->
+        <div class="mb-3">
+            <div class="btn-group w-100" role="group" aria-label="View mode">
+                <button id="modeGamoBtn" type="button" class="btn btn-outline-primary flex-fill">View by GAMO</button>
+                <button id="modeComponentBtn" type="button" class="btn btn-primary flex-fill">View by Component</button>
+                <button id="masterToggleBtn" type="button" class="btn btn-outline-primary flex-fill">Master</button>
             </div>
-          </div>
+        </div>
 
-          <div class="tab-pane fade" id="ag-pane" role="tabpanel">
-            <div class="table-responsive">
-              <table id="masterAgTable" class="table table-sm table-bordered table-striped mb-0">
-                <thead class="table-primary text-white">
-                  <tr>
-                    <th style="width:120px">Alignment Goal</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+        <!-- Component Selector -->
+        <div class="mb-3 row g-2 align-items-center">
+            <div class="col-auto">
+                <label for="componentSelect" class="form-label mb-0">Component</label>
             </div>
-          </div>
-
-          <div class="tab-pane fade" id="roles-pane" role="tabpanel">
-            <div class="table-responsive">
-              <table id="masterRolesTable" class="table table-sm table-bordered table-hover table-striped mb-0">
-                <thead class="table-primary text-white">
-                  <tr>
-                    <th style="width:120px">Role ID</th>
-                    <th>Role</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="col">
+                <select id="componentSelect" class="form-select">
+                    <option value="">-- Lihat per Component (semua objective) --</option>
+                    @foreach ([
+            'overview' => 'Overview',
+            'practices' => 'A.Component: Process',
+            'organizational' => 'B.Component: Organizational Structures',
+            'infoflows' => 'C.Component: Information Flows and Items',
+            'skills' => 'D.Component: People, Skills and Competencies',
+            'policies' => 'E.Component: Policies and Procedures',
+            'culture' => 'F.Component: Culture, Ethics and Behavior',
+            'services' => 'G.Component: Services, Infrastructure and Applications',
+        ] as $k => $lbl)
+                        <option value="{{ $k }}" {{ $k === $component ? 'selected' : '' }}>{{ $lbl }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
-          </div>
+        </div>
 
-          <!-- Capability Level pane with mini-prefix tabs -->
-          <div class="tab-pane fade" id="cap-pane" role="tabpanel">
+        <!-- Component Results -->
+        <div id="componentResults" class="mb-4"></div>
+
+        <!-- Master Panel -->
+        <div id="masterPanel" class="mb-4" style="display:none">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Data Master</strong>
+                    </div>
+                    <!-- BADGES REMOVED per request -->
+                </div>
+
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-3" id="masterTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="eg-tab" data-bs-toggle="tab" data-bs-target="#eg-pane"
+                                type="button" role="tab">Enterprise Goals</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ag-tab" data-bs-toggle="tab" data-bs-target="#ag-pane"
+                                type="button" role="tab">Alignment Goals</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="roles-tab" data-bs-toggle="tab" data-bs-target="#roles-pane"
+                                type="button" role="tab">Roles</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="cap-tab" data-bs-toggle="tab" data-bs-target="#cap-pane"
+                                type="button" role="tab">Capability & Maturity Level</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="masterTabContent">
+                        <div class="tab-pane fade show active" id="eg-pane" role="tabpanel">
+                            <div class="table-responsive">
+                                <table id="masterEgTable" class="table table-sm table-bordered table-striped mb-0">
+                                    <thead class="table-primary text-white">
+                                        <tr>
+                                            <th style="width:120px">Enterprise Goal</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="ag-pane" role="tabpanel">
+                            <div class="table-responsive">
+                                <table id="masterAgTable" class="table table-sm table-bordered table-striped mb-0">
+                                    <thead class="table-primary text-white">
+                                        <tr>
+                                            <th style="width:120px">Alignment Goal</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="roles-pane" role="tabpanel">
+                            <div class="table-responsive">
+                                <table id="masterRolesTable"
+                                    class="table table-sm table-bordered table-hover table-striped mb-0">
+                                    <thead class="table-primary text-white">
+                                        <tr>
+                                            <th style="width:120px">Role ID</th>
+                                            <th>Role</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Capability Level pane with mini-prefix tabs -->
+                        <div class="tab-pane fade" id="cap-pane" role="tabpanel">
+                            <div class="mb-2">
+                                <!-- mini tabs for GAMO prefixes (EDM first) -->
+                                <div id="capPrefixTabs" class="btn-group w-100 mb-2" role="group"
+                                    aria-label="Capability prefixes"></div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table id="masterCapTable" class="table table-sm table-bordered table-striped mb-0">
+                                    <thead class="table-primary text-white">
+                                        <tr>
+                                            <th style="width:100px">GAMO</th>
+                                            <th style="width:260px">Practice</th>
+                                            <th>Activity</th>
+                                            <th style="width:120px" class="text-center">Capability Level</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAMO Pane -->
+        <div id="gamoPane" style="display:none">
             <div class="mb-2">
-              <!-- mini tabs for GAMO prefixes (EDM first) -->
-              <div id="capPrefixTabs" class="btn-group w-100 mb-2" role="group" aria-label="Capability prefixes"></div>
+                <div id="gamoPrefixTabs" class="btn-group w-100 mb-2" role="group" aria-label="GAMO prefixes"></div>
+                <div id="gamoBreadcrumbs" class="mb-3"></div>
             </div>
-
-            <div class="table-responsive">
-              <table id="masterCapTable" class="table table-sm table-bordered table-striped mb-0">
-                <thead class="table-primary text-white">
-                  <tr>
-                    <th style="width:100px">GAMO</th>
-                    <th style="width:260px">Practice</th>
-                    <th>Activity</th>
-                    <th style="width:120px" class="text-center">Capability Level</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </div>
+            <div id="gamoResults" class="mb-4"></div>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- GAMO Pane -->
-  <div id="gamoPane" style="display:none">
-    <div class="mb-2">
-      <div id="gamoPrefixTabs" class="btn-group w-100 mb-2" role="group" aria-label="GAMO prefixes"></div>
-      <div id="gamoBreadcrumbs" class="mb-3"></div>
-    </div>
-    <div id="gamoResults" class="mb-4"></div>
-  </div>
-</div>
+    <script>
+        (function() {
+            'use strict';
 
-<script>
-(function () {
-  'use strict';
+            // ===================================================================
+            // CONFIGURATION & STATE
+            // ===================================================================
 
-  // ===================================================================
-  // CONFIGURATION & STATE
-  // ===================================================================
-  
-  const CONFIG = {
-    PREFERRED_ORDER: ['EDM', 'APO', 'BAI', 'DSS', 'MEA'],
-    CAP_PREFIX_TABS: ['Tes','EDM', 'APO', 'BAI', 'DSS'], // mini-tabs for capability
-    COMPONENT_LABELS: {
-      overview: 'Overview',
-      practices: 'Practices',
-      infoflows: 'Information Flows',
-      organizational: 'Organizational',
-      policies: 'Policies',
-      skills: 'Skills',
-      culture: 'Culture & Ethics',
-      services: 'Services'
-    }
-  };
+            const CONFIG = {
+                PREFERRED_ORDER: ['EDM', 'APO', 'BAI', 'DSS', 'MEA'],
+                CAP_PREFIX_TABS: ['Tes', 'EDM', 'APO', 'BAI', 'DSS'], // mini-tabs for capability
+                COMPONENT_LABELS: {
+                    overview: 'Overview',
+                    practices: 'Practices',
+                    infoflows: 'Information Flows',
+                    organizational: 'Organizational',
+                    policies: 'Policies',
+                    skills: 'Skills',
+                    culture: 'Culture & Ethics',
+                    services: 'Services'
+                }
+            };
 
-const STATE = {
-  cacheAll: null,
-  masterRendered: false,
-  searchTerm: '',
-  capAllRows: [], // store all capability rows for filtering
-  objectiveMap: new Map() // safeId -> objective_id mapping untuk tab filter
-};
+            const STATE = {
+                cacheAll: null,
+                masterRendered: false,
+                searchTerm: '',
+                capAllRows: [], // store all capability rows for filtering
+                objectiveMap: new Map() // safeId -> objective_id mapping untuk tab filter
+            };
 
 
-  // Server-injected master lists
-  const MASTER_DATA = {
-    enterGoals: @json($masterEnterGoals ?? []),
-    alignGoals: @json($masterAlignGoals ?? []),
-    roles: @json($masterRoles ?? [])
-  };
+            // Server-injected master lists
+            const MASTER_DATA = {
+                enterGoals: @json($masterEnterGoals ?? []),
+                alignGoals: @json($masterAlignGoals ?? []),
+                roles: @json($masterRoles ?? [])
+            };
 
-  // ===================================================================
-  // DOM REFERENCES
-  // ===================================================================
-  
-  const DOM = {
-    componentSelect: document.getElementById('componentSelect'),
-    componentResults: document.getElementById('componentResults'),
-    masterPanel: document.getElementById('masterPanel'),
-    gamoPane: document.getElementById('gamoPane'),
-    gamoPrefixTabs: document.getElementById('gamoPrefixTabs'),
-    gamoBreadcrumbs: document.getElementById('gamoBreadcrumbs'),
-    gamoResults: document.getElementById('gamoResults'),
-    modeGamoBtn: document.getElementById('modeGamoBtn'),
-    modeComponentBtn: document.getElementById('modeComponentBtn'),
-    masterToggleBtn: document.getElementById('masterToggleBtn'),
-    capPrefixTabs: document.getElementById('capPrefixTabs'),
-    masterCapTableBody: () => document.querySelector('#masterCapTable tbody')
-  };
+            // ===================================================================
+            // DOM REFERENCES
+            // ===================================================================
 
-  // ===================================================================
-  // UTILITY FUNCTIONS
-  // ===================================================================
-  
-  const Utils = {
-    escapeHtml(str) {
-      if (str === null || str === undefined) return '';
-      const cleaned = String(str)
-        .replaceAll('"', '')
-        .replaceAll('&quot;', '')
-        .replaceAll('&#34;', '')
-        .replaceAll('&ldquo;', '')
-        .replaceAll('&rdquo;', '')
-        .replaceAll('&amp;quot;', '');
-      
-      return cleaned
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll("'", '&#039;');
-    },
+            const DOM = {
+                componentSelect: document.getElementById('componentSelect'),
+                componentResults: document.getElementById('componentResults'),
+                masterPanel: document.getElementById('masterPanel'),
+                gamoPane: document.getElementById('gamoPane'),
+                gamoPrefixTabs: document.getElementById('gamoPrefixTabs'),
+                gamoBreadcrumbs: document.getElementById('gamoBreadcrumbs'),
+                gamoResults: document.getElementById('gamoResults'),
+                modeGamoBtn: document.getElementById('modeGamoBtn'),
+                modeComponentBtn: document.getElementById('modeComponentBtn'),
+                masterToggleBtn: document.getElementById('masterToggleBtn'),
+                capPrefixTabs: document.getElementById('capPrefixTabs'),
+                masterCapTableBody: () => document.querySelector('#masterCapTable tbody')
+            };
 
-    idify(str) {
-      return !str 
-        ? Math.random().toString(36).slice(2, 8)
-        : String(str).replace(/[^a-z0-9_-]+/gi, '_');
-    },
+            // ===================================================================
+            // UTILITY FUNCTIONS
+            // ===================================================================
 
-    formatText(raw) {
-      const escaped = this.escapeHtml(raw || '');
-      if (!STATE.searchTerm) return escaped;
-      
-      try {
-        const regex = new RegExp(
-          `(${STATE.searchTerm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`,
-          'gi'
-        );
-        return escaped.replace(regex, '<mark>$1</mark>');
-      } catch (e) {
-        return escaped;
-      }
-    },
+            const Utils = {
+                escapeHtml(str) {
+                    if (str === null || str === undefined) return '';
+                    const cleaned = String(str)
+                        .replaceAll('"', '')
+                        .replaceAll('&quot;', '')
+                        .replaceAll('&#34;', '')
+                        .replaceAll('&ldquo;', '')
+                        .replaceAll('&rdquo;', '')
+                        .replaceAll('&amp;quot;', '');
 
-    sortById(arr) {
-      return arr.slice().sort((a, b) => 
-        String(a.id || '').localeCompare(String(b.id || ''))
-      );
-    },
+                    return cleaned
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;')
+                        .replaceAll("'", '&#039;');
+                },
 
-    // parse capability level to numeric priority for sorting
-    parseLevelForSort(level) {
-      if (level === null || level === undefined) return Number.NEGATIVE_INFINITY;
-      const s = String(level).trim();
-      // try to extract leading number
-      const m = s.match(/-?\d+/);
-      if (m) return parseInt(m[0], 10);
-      // if not numeric, return NaN-like but put after numeric: use -Infinity? we want non-numeric to be last,
-      // so return Number.NEGATIVE_INFINITY - 1 would put before, so instead return Number.NEGATIVE_INFINITY? we will handle separately
-      return NaN;
-    }
-  };
+                idify(str) {
+                    return !str ?
+                        Math.random().toString(36).slice(2, 8) :
+                        String(str).replace(/[^a-z0-9_-]+/gi, '_');
+                },
 
-  // ===================================================================
-  // DATA FETCHING
-  // ===================================================================
-  
-  const DataService = {
-    async fetchAllObjectives() {
-      if (STATE.cacheAll) return STATE.cacheAll;
-      
-      const url = '{{ url('/objectives') }}';
-      const response = await fetch(url, { 
-        headers: { 'Accept': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Fetch error: ${response.status}`);
-      }
-      
-      STATE.cacheAll = await response.json();
-      return STATE.cacheAll;
-    }
-  };
+                formatText(raw) {
+                    const escaped = this.escapeHtml(raw || '');
+                    if (!STATE.searchTerm) return escaped;
 
-  // ===================================================================
-  // MASTER DATA FUNCTIONS
-  // ===================================================================
-  
-  const MasterService = {
-    async collectMasterData() {
-      let egList = this.parseEnterpriseGoals(MASTER_DATA.enterGoals);
-      let agList = this.parseAlignmentGoals(MASTER_DATA.alignGoals);
-      let roles = this.parseRoles(MASTER_DATA.roles);
-      let capRows = [];
+                    try {
+                        const regex = new RegExp(
+                            `(${STATE.searchTerm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`,
+                            'gi'
+                        );
+                        return escaped.replace(regex, '<mark>$1</mark>');
+                    } catch (e) {
+                        return escaped;
+                    }
+                },
 
-      // Fetch objectives (always needed for cap rows)
-      const all = await DataService.fetchAllObjectives();
-      const extracted = this.extractFromObjectives(all);
-      const capExtracted = this.extractCapabilityLevels(all);
+                sortById(arr) {
+                    return arr.slice().sort((a, b) =>
+                        String(a.id || '').localeCompare(String(b.id || ''))
+                    );
+                },
 
-      if (!egList.length) egList = extracted.egList;
-      if (!agList.length) agList = extracted.agList;
-      if (!roles.length) roles = extracted.roles;
+                // parse capability level to numeric priority for sorting
+                parseLevelForSort(level) {
+                    if (level === null || level === undefined) return Number.NEGATIVE_INFINITY;
+                    const s = String(level).trim();
+                    // try to extract leading number
+                    const m = s.match(/-?\d+/);
+                    if (m) return parseInt(m[0], 10);
+                    // if not numeric, return NaN-like but put after numeric: use -Infinity? we want non-numeric to be last,
+                    // so return Number.NEGATIVE_INFINITY - 1 would put before, so instead return Number.NEGATIVE_INFINITY? we will handle separately
+                    return NaN;
+                }
+            };
 
-      capRows = capExtracted;
+            // ===================================================================
+            // DATA FETCHING
+            // ===================================================================
 
-      return {
-        egList: Utils.sortById(egList),
-        agList: Utils.sortById(agList),
-        roles: Utils.sortById(roles),
-        capRows // NEW
-      };
-    },
+            const DataService = {
+                async fetchAllObjectives() {
+                    if (STATE.cacheAll) return STATE.cacheAll;
 
-    parseEnterpriseGoals(data) {
-      return Array.isArray(data) 
-        ? data.map(x => ({
-            id: String(x.entergoals_id || x.id || ''),
-            description: x.description || ''
-          }))
-        : [];
-    },
+                    const url = '{{ url('/objectives') }}';
+                    const response = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
 
-    parseAlignmentGoals(data) {
-      return Array.isArray(data)
-        ? data.map(x => ({
-            id: String(x.aligngoals_id || x.id || ''),
-            description: x.description || ''
-          }))
-        : [];
-    },
+                    if (!response.ok) {
+                        throw new Error(`Fetch error: ${response.status}`);
+                    }
 
-    parseRoles(data) {
-      return Array.isArray(data)
-        ? data.map(r => ({
-            id: r.role_id || r.id || '',
-            role: r.role || '',
-            description: r.description || ''
-          }))
-        : [];
-    },
+                    STATE.cacheAll = await response.json();
+                    return STATE.cacheAll;
+                }
+            };
 
-    extractFromObjectives(objectives) {
-      const egMap = new Map();
-      const agMap = new Map();
-      const roleMap = new Map();
+            // ===================================================================
+            // MASTER DATA FUNCTIONS
+            // ===================================================================
 
-      objectives.forEach(obj => {
-        // Extract Enterprise Goals
-        (obj.entergoals || []).forEach(eg => {
-          const id = String(eg.entergoals_id || '').toUpperCase();
-          if (id && !egMap.has(id)) {
-            egMap.set(id, { id, description: eg.description || '' });
-          }
-        });
+            const MasterService = {
+                async collectMasterData() {
+                    let egList = this.parseEnterpriseGoals(MASTER_DATA.enterGoals);
+                    let agList = this.parseAlignmentGoals(MASTER_DATA.alignGoals);
+                    let roles = this.parseRoles(MASTER_DATA.roles);
+                    let capRows = [];
 
-        // Extract Alignment Goals
-        (obj.aligngoals || []).forEach(ag => {
-          const id = String(ag.aligngoals_id || '').toUpperCase();
-          if (id && !agMap.has(id)) {
-            agMap.set(id, { id, description: ag.description || '' });
-          }
-        });
+                    // Fetch objectives (always needed for cap rows)
+                    const all = await DataService.fetchAllObjectives();
+                    const extracted = this.extractFromObjectives(all);
+                    const capExtracted = this.extractCapabilityLevels(all);
 
-        // Extract Roles
-        (obj.practices || []).forEach(p => {
-          (p.roles || []).forEach(r => {
-            const rid = String(r.role_id || r.id || r.role || '').trim();
-            if (rid && !roleMap.has(rid)) {
-              roleMap.set(rid, {
-                id: rid,
-                role: r.role || rid,
-                description: r.description || ''
-              });
-            }
-          });
-        });
-      });
+                    if (!egList.length) egList = extracted.egList;
+                    if (!agList.length) agList = extracted.agList;
+                    if (!roles.length) roles = extracted.roles;
 
-      return {
-        egList: Array.from(egMap.values()),
-        agList: Array.from(agMap.values()),
-        roles: Array.from(roleMap.values())
-      };
-    },
+                    capRows = capExtracted;
 
-    // ----------------------------------------
-    // EXTRACT CAPABILITY LEVELS (NEW)
-    // ----------------------------------------
-    extractCapabilityLevels(objectives) {
-      // returns array of { gamo, practice_id, practice_name, activity, level }
-      const rows = [];
-      (objectives || []).forEach(obj => {
-        const gamo = String(obj.objective_id || '').toUpperCase();
-        (obj.practices || []).forEach(practice => {
-          const practiceLabel = `${practice.practice_id || ''} ${practice.practice_name || ''}`.trim();
-          (practice.activities || []).forEach(activity => {
-            const level = activity.capability_lvl ?? activity.capability_level ?? activity.level ?? '';
-            rows.push({
-              gamo,
-              practice_id: practice.practice_id || '',
-              practice_name: practice.practice_name || practiceLabel,
-              activity: activity.description || activity.activity || '',
-              level: level === null ? '' : String(level)
-            });
-          });
-        });
-      });
-      return rows;
-    },
+                    return {
+                        egList: Utils.sortById(egList),
+                        agList: Utils.sortById(agList),
+                        roles: Utils.sortById(roles),
+                        capRows // NEW
+                    };
+                },
 
-    // populate cap prefix mini-tabs and attach handlers
-    renderCapPrefixTabs(capRows) {
-      const container = DOM.capPrefixTabs;
-      if (!container) return;
+                parseEnterpriseGoals(data) {
+                    return Array.isArray(data) ?
+                        data.map(x => ({
+                            id: String(x.entergoals_id || x.id || ''),
+                            description: x.description || ''
+                        })) : [];
+                },
 
-      // order: EDM first, then other requested prefixes (use CONFIG.CAP_PREFIX_TABS)
-      const prefixes = CONFIG.CAP_PREFIX_TABS.slice();
-      container.innerHTML = '';
+                parseAlignmentGoals(data) {
+                    return Array.isArray(data) ?
+                        data.map(x => ({
+                            id: String(x.aligngoals_id || x.id || ''),
+                            description: x.description || ''
+                        })) : [];
+                },
 
-      prefixes.forEach((p, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        // default active is EDM (first)
-        btn.className = `btn ${idx === 0 ? 'btn-primary' : 'btn-outline-primary'} flex-fill`;
-        btn.setAttribute('data-prefix', p);
-        btn.textContent = p;
-        btn.addEventListener('click', () => {
-          // toggle active style
-          Array.from(container.children).forEach(c => {
-            c.classList.remove('btn-primary');
-            c.classList.add('btn-outline-primary');
-          });
-          btn.classList.remove('btn-outline-primary');
-          btn.classList.add('btn-primary');
+                parseRoles(data) {
+                    return Array.isArray(data) ?
+                        data.map(r => ({
+                            id: r.role_id || r.id || '',
+                            role: r.role || '',
+                            description: r.description || ''
+                        })) : [];
+                },
 
-          // filter & render cap table
-          const filtered = capRows.filter(r => String(r.gamo || '').toUpperCase().startsWith(p.toUpperCase()));
-          MasterService.populateCapabilityTable(filtered);
-        });
+                extractFromObjectives(objectives) {
+                    const egMap = new Map();
+                    const agMap = new Map();
+                    const roleMap = new Map();
 
-        container.appendChild(btn);
-      });
+                    objectives.forEach(obj => {
+                        // Extract Enterprise Goals
+                        (obj.entergoals || []).forEach(eg => {
+                            const id = String(eg.entergoals_id || '').toUpperCase();
+                            if (id && !egMap.has(id)) {
+                                egMap.set(id, {
+                                    id,
+                                    description: eg.description || ''
+                                });
+                            }
+                        });
 
-      // add "All" button at start
-      const allBtn = document.createElement('button');
-      allBtn.type = 'button';
-      allBtn.className = 'btn btn-outline-secondary';
-      allBtn.textContent = 'All';
-      allBtn.setAttribute('data-prefix', 'ALL');
-      allBtn.addEventListener('click', () => {
-        Array.from(container.children).forEach(c => {
-          c.classList.remove('btn-primary');
-          c.classList.add('btn-outline-primary');
-        });
-        // don't set allBtn as primary; keep visual difference
-        MasterService.populateCapabilityTable(capRows);
-      });
+                        // Extract Alignment Goals
+                        (obj.aligngoals || []).forEach(ag => {
+                            const id = String(ag.aligngoals_id || '').toUpperCase();
+                            if (id && !agMap.has(id)) {
+                                agMap.set(id, {
+                                    id,
+                                    description: ag.description || ''
+                                });
+                            }
+                        });
 
-      container.insertBefore(allBtn, container.firstChild);
+                        // Extract Roles
+                        (obj.practices || []).forEach(p => {
+                            (p.roles || []).forEach(r => {
+                                const rid = String(r.role_id || r.id || r.role || '')
+                                    .trim();
+                                if (rid && !roleMap.has(rid)) {
+                                    roleMap.set(rid, {
+                                        id: rid,
+                                        role: r.role || rid,
+                                        description: r.description || ''
+                                    });
+                                }
+                            });
+                        });
+                    });
 
-      // trigger initial click for EDM (default)
-      const firstPrefBtn = container.querySelector('[data-prefix="EDM"]');
-      if (firstPrefBtn) firstPrefBtn.click();
-      else if (container.children[0]) container.children[0].click();
-    },
+                    return {
+                        egList: Array.from(egMap.values()),
+                        agList: Array.from(agMap.values()),
+                        roles: Array.from(roleMap.values())
+                    };
+                },
 
-    // populate master capability table — sorts by level desc and renders rows
-    populateCapabilityTable(rows) {
-      const tbody = DOM.masterCapTableBody();
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      // Sort rows by level (numeric ascending first), then by GAMO numeric ascending,
-      // then by practice_name and activity. Non-numeric levels are placed after numeric.
-      const withSortKey = (r) => {
-        const parsed = Utils.parseLevelForSort(r.level);
-        const isNum = !Number.isNaN(parsed) && Number.isFinite(parsed);
-        // extract numeric part of GAMO (e.g., EDM2 -> 2), fallback to large number if missing
-        const gamoMatch = String(r.gamo || '').match(/(\d+)/);
-        const gamoNum = gamoMatch ? parseInt(gamoMatch[1], 10) : Number.POSITIVE_INFINITY;
-        return { parsed, isNum, gamoNum };
-      };
+                // ----------------------------------------
+                // EXTRACT CAPABILITY LEVELS (NEW)
+                // ----------------------------------------
+                extractCapabilityLevels(objectives) {
+                    // returns array of { gamo, practice_id, practice_name, activity, level }
+                    const rows = [];
+                    (objectives || []).forEach(obj => {
+                        const gamo = String(obj.objective_id || '').toUpperCase();
+                        (obj.practices || []).forEach(practice => {
+                            const practiceLabel =
+                                `${practice.practice_id || ''} ${practice.practice_name || ''}`
+                                .trim();
+                            (practice.activities || []).forEach(activity => {
+                                const level = activity.capability_lvl ?? activity
+                                    .capability_level ?? activity.level ?? '';
+                                rows.push({
+                                    gamo,
+                                    practice_id: practice.practice_id || '',
+                                    practice_name: practice.practice_name ||
+                                        practiceLabel,
+                                    activity: activity.description || activity
+                                        .activity || '',
+                                    level: level === null ? '' : String(level)
+                                });
+                            });
+                        });
+                    });
+                    return rows;
+                },
 
-      rows.sort((a, b) => {
-        const ka = withSortKey(a);
-        const kb = withSortKey(b);
+                // populate cap prefix mini-tabs and attach handlers
+                renderCapPrefixTabs(capRows) {
+                    const container = DOM.capPrefixTabs;
+                    if (!container) return;
 
-        // both numeric levels -> ascending
-        if (ka.isNum && kb.isNum) {
-          if (ka.parsed !== kb.parsed) return ka.parsed - kb.parsed;
-        } else if (ka.isNum && !kb.isNum) {
-          return -1; // numeric before non-numeric
-        } else if (!ka.isNum && kb.isNum) {
-          return 1;
-        } else {
-          // both non-numeric -> lexical ascending
-          const lvCmp = String(a.level || '').localeCompare(String(b.level || ''));
-          if (lvCmp !== 0) return lvCmp;
-        }
+                    // order: EDM first, then other requested prefixes (use CONFIG.CAP_PREFIX_TABS)
+                    const prefixes = CONFIG.CAP_PREFIX_TABS.slice();
+                    container.innerHTML = '';
 
-        // same level -> compare GAMO numeric (ascending)
-        if (ka.gamoNum !== kb.gamoNum) return (ka.gamoNum || 0) - (kb.gamoNum || 0);
+                    prefixes.forEach((p, idx) => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        // default active is EDM (first)
+                        btn.className =
+                            `btn ${idx === 0 ? 'btn-primary' : 'btn-outline-primary'} flex-fill`;
+                        btn.setAttribute('data-prefix', p);
+                        btn.textContent = p;
+                        btn.addEventListener('click', () => {
+                            // toggle active style
+                            Array.from(container.children).forEach(c => {
+                                c.classList.remove('btn-primary');
+                                c.classList.add('btn-outline-primary');
+                            });
+                            btn.classList.remove('btn-outline-primary');
+                            btn.classList.add('btn-primary');
 
-        // fallback: compare GAMO string
-        const gCmp = String(a.gamo || '').localeCompare(String(b.gamo || ''));
-        if (gCmp !== 0) return gCmp;
+                            // filter & render cap table
+                            const filtered = capRows.filter(r => String(r.gamo || '').toUpperCase()
+                                .startsWith(p.toUpperCase()));
+                            MasterService.populateCapabilityTable(filtered);
+                        });
 
-        // then practice_name, then activity
-        const pCmp = String(a.practice_name || '').localeCompare(String(b.practice_name || ''));
-        if (pCmp !== 0) return pCmp;
-        return String(a.activity || '').localeCompare(String(b.activity || ''));
-      });
+                        container.appendChild(btn);
+                    });
 
-      // Build HTML with merged level cells for consecutive identical levels
-      if (!rows.length) return;
+                    // add "All" button at start
+                    const allBtn = document.createElement('button');
+                    allBtn.type = 'button';
+                    allBtn.className = 'btn btn-outline-secondary';
+                    allBtn.textContent = 'All';
+                    allBtn.setAttribute('data-prefix', 'ALL');
+                    allBtn.addEventListener('click', () => {
+                        Array.from(container.children).forEach(c => {
+                            c.classList.remove('btn-primary');
+                            c.classList.add('btn-outline-primary');
+                        });
+                        // don't set allBtn as primary; keep visual difference
+                        MasterService.populateCapabilityTable(capRows);
+                    });
 
-      // Determine runs of identical level values (string compare)
-      const rowsHtml = [];
-      for (let i = 0; i < rows.length; ) {
-        const lvl = rows[i].level || '';
-        let j = i + 1;
-        while (j < rows.length && String(rows[j].level || '') === String(lvl)) j++;
-        const span = j - i;
+                    container.insertBefore(allBtn, container.firstChild);
 
-        for (let k = i; k < j; k++) {
-          const r = rows[k];
-          const gamoCell = `<td class="fw-semibold">${Utils.formatText(r.gamo || '')}</td>`;
-          const practiceCell = `<td>${Utils.formatText((r.practice_id ? (r.practice_id + ' — ') : '') + (r.practice_name || ''))}</td>`;
-          const activityCell = `<td>${Utils.formatText(r.activity || '')}</td>`;
+                    // trigger initial click for EDM (default)
+                    const firstPrefBtn = container.querySelector('[data-prefix="EDM"]');
+                    if (firstPrefBtn) firstPrefBtn.click();
+                    else if (container.children[0]) container.children[0].click();
+                },
 
-          let levelCell = '';
-          if (k === i) {
-            // first row in run: emit level cell with rowspan if >1
-            const displayLevel = (r.level || '') ? Utils.formatText(String(r.level)) : '-';
-            levelCell = span > 1
-              ? `<td class="text-center" rowspan="${span}" style="width:120px">${displayLevel}</td>`
-              : `<td class="text-center" style="width:120px">${displayLevel}</td>`;
-          }
+                // populate master capability table — sorts by level desc and renders rows
+                populateCapabilityTable(rows) {
+                    const tbody = DOM.masterCapTableBody();
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+                    // Sort rows by level (numeric ascending first), then by GAMO numeric ascending,
+                    // then by practice_name and activity. Non-numeric levels are placed after numeric.
+                    const withSortKey = (r) => {
+                        const parsed = Utils.parseLevelForSort(r.level);
+                        const isNum = !Number.isNaN(parsed) && Number.isFinite(parsed);
+                        // extract numeric part of GAMO (e.g., EDM2 -> 2), fallback to large number if missing
+                        const gamoMatch = String(r.gamo || '').match(/(\d+)/);
+                        const gamoNum = gamoMatch ? parseInt(gamoMatch[1], 10) : Number.POSITIVE_INFINITY;
+                        return {
+                            parsed,
+                            isNum,
+                            gamoNum
+                        };
+                    };
 
-          rowsHtml.push(`<tr>${gamoCell}${practiceCell}${activityCell}${levelCell}</tr>`);
-        }
+                    rows.sort((a, b) => {
+                        const ka = withSortKey(a);
+                        const kb = withSortKey(b);
 
-        i = j;
-      }
+                        // both numeric levels -> ascending
+                        if (ka.isNum && kb.isNum) {
+                            if (ka.parsed !== kb.parsed) return ka.parsed - kb.parsed;
+                        } else if (ka.isNum && !kb.isNum) {
+                            return -1; // numeric before non-numeric
+                        } else if (!ka.isNum && kb.isNum) {
+                            return 1;
+                        } else {
+                            // both non-numeric -> lexical ascending
+                            const lvCmp = String(a.level || '').localeCompare(String(b.level || ''));
+                            if (lvCmp !== 0) return lvCmp;
+                        }
 
-      tbody.innerHTML = rowsHtml.join('');
-    },
+                        // same level -> compare GAMO numeric (ascending)
+                        if (ka.gamoNum !== kb.gamoNum) return (ka.gamoNum || 0) - (kb.gamoNum || 0);
 
-    async renderMaster() {
-      try {
-        const { egList, agList, roles, capRows } = await this.collectMasterData();
+                        // fallback: compare GAMO string
+                        const gCmp = String(a.gamo || '').localeCompare(String(b.gamo || ''));
+                        if (gCmp !== 0) return gCmp;
 
-        this.populateMasterTable('masterEgTable', egList, ['id', 'description']);
-        this.populateMasterTable('masterAgTable', agList, ['id', 'description']);
-        this.populateMasterTable('masterRolesTable', roles, ['id', 'role', 'description']);
+                        // then practice_name, then activity
+                        const pCmp = String(a.practice_name || '').localeCompare(String(b.practice_name ||
+                            ''));
+                        if (pCmp !== 0) return pCmp;
+                        return String(a.activity || '').localeCompare(String(b.activity || ''));
+                    });
 
-        // store all cap rows for future filtering
-        STATE.capAllRows = (capRows || []).map(r => ({
-          gamo: r.gamo,
-          practice_id: r.practice_id,
-          practice_name: r.practice_name,
-          activity: r.activity,
-          level: r.level
-        }));
+                    // Build HTML with merged level cells for consecutive identical levels
+                    if (!rows.length) return;
 
-        // render prefix mini-tabs and initially populate table (EDM default)
-        this.renderCapPrefixTabs(STATE.capAllRows);
+                    // Determine runs of identical level values (string compare)
+                    const rowsHtml = [];
+                    for (let i = 0; i < rows.length;) {
+                        const lvl = rows[i].level || '';
+                        let j = i + 1;
+                        while (j < rows.length && String(rows[j].level || '') === String(lvl)) j++;
+                        const span = j - i;
 
-        STATE.masterRendered = true;
-      } catch (err) {
-        console.error('renderMaster error:', err);
-        const footer = document.getElementById('masterFooter');
-        if (footer) {
-          footer.innerHTML = `<div class="text-danger">Gagal memuat master: ${Utils.escapeHtml(err.message)}</div>`;
-        }
-      }
-    },
+                        for (let k = i; k < j; k++) {
+                            const r = rows[k];
+                            const gamoCell = `<td class="fw-semibold">${Utils.formatText(r.gamo || '')}</td>`;
+                            const practiceCell =
+                                `<td>${Utils.formatText((r.practice_id ? (r.practice_id + ' — ') : '') + (r.practice_name || ''))}</td>`;
+                            const activityCell = `<td>${Utils.formatText(r.activity || '')}</td>`;
 
-    populateMasterTable(tableId, data, columns) {
-      const tbody = document.querySelector(`#${tableId} tbody`);
-      if (!tbody) return;
-      
-      tbody.innerHTML = '';
+                            let levelCell = '';
+                            if (k === i) {
+                                // first row in run: emit level cell with rowspan if >1
+                                const displayLevel = (r.level || '') ? Utils.formatText(String(r.level)) : '-';
+                                levelCell = span > 1 ?
+                                    `<td class="text-center" rowspan="${span}" style="width:120px">${displayLevel}</td>` :
+                                    `<td class="text-center" style="width:120px">${displayLevel}</td>`;
+                            }
 
-      data.forEach(item => {
-        const tr = document.createElement('tr');
-        
-        columns.forEach((col, idx) => {
-          const td = document.createElement('td');
-          if (idx === 0) td.className = 'fw-semibold';
-          td.innerHTML = Utils.formatText(item[col] || '');
-          tr.appendChild(td);
-        });
-        
-        tbody.appendChild(tr);
-      });
-    }
-  };
+                            rowsHtml.push(`<tr>${gamoCell}${practiceCell}${activityCell}${levelCell}</tr>`);
+                        }
 
-  // ===================================================================
-  // RENDERERS (COMPONENT DISPLAY)
-  // ===================================================================
-  
-  const Renderers = {
-    renderCardWrapper(opts) {
-      const title = opts.title || '';
-      const subtitle = opts.subtitle ? `<div class="small text-white-50">${opts.subtitle}</div>` : '';
-      const smallNote = opts.smallNote ? `<div class="small text-white-50">${opts.smallNote}</div>` : '';
-      const tabsHtml = opts.tabsHtml || '';
-      const bodyHtml = opts.bodyHtml || '';
-      const bodyId = opts.bodyId || Utils.idify(title);
+                        i = j;
+                    }
 
-      return `
+                    tbody.innerHTML = rowsHtml.join('');
+                },
+
+                async renderMaster() {
+                    try {
+                        const {
+                            egList,
+                            agList,
+                            roles,
+                            capRows
+                        } = await this.collectMasterData();
+
+                        this.populateMasterTable('masterEgTable', egList, ['id', 'description']);
+                        this.populateMasterTable('masterAgTable', agList, ['id', 'description']);
+                        this.populateMasterTable('masterRolesTable', roles, ['id', 'role', 'description']);
+
+                        // store all cap rows for future filtering
+                        STATE.capAllRows = (capRows || []).map(r => ({
+                            gamo: r.gamo,
+                            practice_id: r.practice_id,
+                            practice_name: r.practice_name,
+                            activity: r.activity,
+                            level: r.level
+                        }));
+
+                        // render prefix mini-tabs and initially populate table (EDM default)
+                        this.renderCapPrefixTabs(STATE.capAllRows);
+
+                        STATE.masterRendered = true;
+                    } catch (err) {
+                        console.error('renderMaster error:', err);
+                        const footer = document.getElementById('masterFooter');
+                        if (footer) {
+                            footer.innerHTML =
+                                `<div class="text-danger">Gagal memuat master: ${Utils.escapeHtml(err.message)}</div>`;
+                        }
+                    }
+                },
+
+                populateMasterTable(tableId, data, columns) {
+                    const tbody = document.querySelector(`#${tableId} tbody`);
+                    if (!tbody) return;
+
+                    tbody.innerHTML = '';
+
+                    data.forEach(item => {
+                        const tr = document.createElement('tr');
+
+                        columns.forEach((col, idx) => {
+                            const td = document.createElement('td');
+                            if (idx === 0) td.className = 'fw-semibold';
+                            td.innerHTML = Utils.formatText(item[col] || '');
+                            tr.appendChild(td);
+                        });
+
+                        tbody.appendChild(tr);
+                    });
+                }
+            };
+
+            // ===================================================================
+            // RENDERERS (COMPONENT DISPLAY)
+            // ===================================================================
+
+            const Renderers = {
+                renderCardWrapper(opts) {
+                    const title = opts.title || '';
+                    const subtitle = opts.subtitle ? `<div class="small text-white-50">${opts.subtitle}</div>` : '';
+                    const smallNote = opts.smallNote ? `<div class="small text-white-50">${opts.smallNote}</div>` :
+                        '';
+                    const tabsHtml = opts.tabsHtml || '';
+                    const bodyHtml = opts.bodyHtml || '';
+                    const bodyId = opts.bodyId || Utils.idify(title);
+
+                    return `
         <div class="card mb-3 shadow-sm">
           <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <div>
@@ -786,77 +1011,84 @@ const STATE = {
           </div>
         </div>
       `;
-    },
+                },
 
-    renderOverview(objectives) {
-      if (!Array.isArray(objectives) || !objectives.length) {
-        return '<div class="text-muted">No objectives found.</div>';
-      }
+                renderOverview(objectives) {
+                    if (!Array.isArray(objectives) || !objectives.length) {
+                        return '<div class="text-muted">No objectives found.</div>';
+                    }
 
-      const buckets = this.categorizeObjectives(objectives);
-      const flattened = this.flattenBuckets(buckets);
+                    const buckets = this.categorizeObjectives(objectives);
+                    const flattened = this.flattenBuckets(buckets);
 
-      return flattened.map(obj => this.renderSingleObjectiveCard(obj)).join('');
-    },
+                    return flattened.map(obj => this.renderSingleObjectiveCard(obj)).join('');
+                },
 
-    categorizeObjectives(objectives) {
-      const buckets = {
-        EDM: [], APO: [], BAI: [], DSS: [], MEA: [], others: []
-      };
+                categorizeObjectives(objectives) {
+                    const buckets = {
+                        EDM: [],
+                        APO: [],
+                        BAI: [],
+                        DSS: [],
+                        MEA: [],
+                        others: []
+                    };
 
-      objectives.forEach(obj => {
-        const prefix = (String(obj.objective_id || '').match(/^[A-Za-z]+/) || [''])[0].toUpperCase();
-        if (CONFIG.PREFERRED_ORDER.includes(prefix)) {
-          buckets[prefix].push(obj);
-        } else {
-          buckets.others.push(obj);
-        }
-      });
+                    objectives.forEach(obj => {
+                        const prefix = (String(obj.objective_id || '').match(/^[A-Za-z]+/) || [''])[0]
+                            .toUpperCase();
+                        if (CONFIG.PREFERRED_ORDER.includes(prefix)) {
+                            buckets[prefix].push(obj);
+                        } else {
+                            buckets.others.push(obj);
+                        }
+                    });
 
-      return buckets;
-    },
+                    return buckets;
+                },
 
-    flattenBuckets(buckets) {
-      const flattened = [];
-      
-      CONFIG.PREFERRED_ORDER.forEach(key => {
-        buckets[key].forEach(obj => flattened.push(obj));
-      });
-      
-      buckets.others
-        .sort((a, b) => (a.objective_id || '').localeCompare(b.objective_id || ''))
-        .forEach(obj => flattened.push(obj));
+                flattenBuckets(buckets) {
+                    const flattened = [];
 
-      return flattened;
-    },
+                    CONFIG.PREFERRED_ORDER.forEach(key => {
+                        buckets[key].forEach(obj => flattened.push(obj));
+                    });
 
-    renderSingleObjectiveCard(obj) {
-      const domainLabel = Utils.escapeHtml(
-        obj.domain_display ||
-        (obj.domains?.[0]?.area || obj.domains?.[0]?.name) ||
-        ''
-      );
+                    buckets.others
+                        .sort((a, b) => (a.objective_id || '').localeCompare(b.objective_id || ''))
+                        .forEach(obj => flattened.push(obj));
 
-      const domainMap = {
-        'EDM': 'Evaluate, Direct and Monitor',
-        'APO': 'Align, Plan and Organize',
-        'BAI': 'Build, Acquire and Implement',
-        'DSS': 'Deliver, Service and Support',
-        'MEA': 'Monitor, Evaluate and Assess'
-      };
+                    return flattened;
+                },
 
-      const code = obj.objective_id?.substring(0, 3) || '';
-      const name = Utils.escapeHtml(domainMap[code] || 'Unknown Domain');
+                renderSingleObjectiveCard(obj) {
+                    const domainLabel = Utils.escapeHtml(
+                        obj.domain_display ||
+                        (obj.domains?.[0]?.area || obj.domains?.[0]?.name) ||
+                        ''
+                    );
 
-      const mgmtTitle = `${Utils.escapeHtml(obj.objective_id || '')} — ${Utils.formatText(obj.objective || '')}`;
-      const focus = Utils.formatText(obj.focus_area || 'COBIT Core Model');
+                    const domainMap = {
+                        'EDM': 'Evaluate, Direct and Monitor',
+                        'APO': 'Align, Plan and Organize',
+                        'BAI': 'Build, Acquire and Implement',
+                        'DSS': 'Deliver, Service and Support',
+                        'MEA': 'Monitor, Evaluate and Assess'
+                    };
 
-      const egListHtml = this.renderGoalsList(obj.entergoals, 'entergoals_id');
-      const agListHtml = this.renderGoalsList(obj.aligngoals, 'aligngoals_id');
-      const egMetricsHtml = this.renderMetrics(obj.entergoals, 'entergoals_id', 'entergoalsmetr');
-      const agMetricsHtml = this.renderMetrics(obj.aligngoals, 'aligngoals_id', 'aligngoalsmetr');
+                    const code = obj.objective_id?.substring(0, 3) || '';
+                    const name = Utils.escapeHtml(domainMap[code] || 'Unknown Domain');
 
-      return `
+                    const mgmtTitle =
+                        `${Utils.escapeHtml(obj.objective_id || '')} — ${Utils.formatText(obj.objective || '')}`;
+                    const focus = Utils.formatText(obj.focus_area || 'COBIT Core Model');
+
+                    const egListHtml = this.renderGoalsList(obj.entergoals, 'entergoals_id');
+                    const agListHtml = this.renderGoalsList(obj.aligngoals, 'aligngoals_id');
+                    const egMetricsHtml = this.renderMetrics(obj.entergoals, 'entergoals_id', 'entergoalsmetr');
+                    const agMetricsHtml = this.renderMetrics(obj.aligngoals, 'aligngoals_id', 'aligngoalsmetr');
+
+                    return `
     <div style="border:1px solid #bdbdbd;border-radius:4px;overflow:hidden;font-family:Helvetica,Arial,sans-serif;background:#fff;margin-bottom:1.25rem;">
       <!-- header -->
       <div style="display:flex;align-items:stretch;border-bottom:1px solid #e6e6e6;height:64px;">
@@ -917,35 +1149,35 @@ const STATE = {
       </div>
     </div>
   `;
-    },
+                },
 
-    renderGoalsList(goals, idField) {
-      if (!goals?.length) {
-        return '<div class="text-muted small">(no goals)</div>';
-      }
+                renderGoalsList(goals, idField) {
+                    if (!goals?.length) {
+                        return '<div class="text-muted small">(no goals)</div>';
+                    }
 
-      return goals.map(goal => `
+                    return goals.map(goal => `
         <div class="mb-2">
           <div class="fw-semibold">${Utils.formatText(
             (goal[idField] || '') + (goal.description ? ': ' + goal.description : '')
           )}</div>
         </div>
       `).join('');
-    },
+                },
 
-    renderMetrics(goals, idField, metricsField) {
-      if (!goals?.length) {
-        return '<div class="text-muted small">(no example metrics)</div>';
-      }
+                renderMetrics(goals, idField, metricsField) {
+                    if (!goals?.length) {
+                        return '<div class="text-muted small">(no example metrics)</div>';
+                    }
 
-      const html = goals.map(goal => {
-        const metrics = (goal[metricsField] || [])
-          .map(m => m.description || '')
-          .filter(Boolean);
+                    const html = goals.map(goal => {
+                        const metrics = (goal[metricsField] || [])
+                            .map(m => m.description || '')
+                            .filter(Boolean);
 
-        if (!metrics.length) return '';
+                        if (!metrics.length) return '';
 
-        return `
+                        return `
           <div class="mb-3">
             <div class="fw-semibold mb-1">${Utils.escapeHtml(goal[idField] || '')}</div>
             <ul class="ps-3 mb-0 small text-muted">
@@ -953,60 +1185,74 @@ const STATE = {
             </ul>
           </div>
         `;
-      }).join('');
+                    }).join('');
 
-      return html || '<div class="text-muted small">(no example metrics)</div>';
-    },
+                    return html || '<div class="text-muted small">(no example metrics)</div>';
+                },
 
-    // --- GANTI renderPractices ---
-renderPractices(objectives) {
-  if (!Array.isArray(objectives) || !objectives.length) {
-    return '<div class="text-muted">No practices found.</div>';
-  }
+                // --- GANTI renderPractices ---
+                renderPractices(objectives) {
+                    if (!Array.isArray(objectives) || !objectives.length) {
+                        return '<div class="text-muted">No practices found.</div>';
+                    }
 
-  return objectives.map(obj => {
-    // Build summary per practice for this objective
-    const practiceSummaries = (obj.practices || []).map(practice => {
-      const levelCounts = { '2': 0, '3': 0, '4': 0, '5': 0, other: 0 };
-      (practice.activities || []).forEach(ac => {
-        const raw = ac.capability_lvl ?? ac.capability_level ?? ac.level ?? '';
-        const s = String(raw).trim();
-        const m = s.match(/(\d+)/);
-        if (m) {
-          const num = m[1];
-          if (['2','3','4','5'].includes(num)) {
-            levelCounts[num] = (levelCounts[num] || 0) + 1;
-          } else {
-            levelCounts.other = (levelCounts.other || 0) + 1;
-          }
-        } else {
-          // treat empty / non-numeric as other
-          levelCounts.other = (levelCounts.other || 0) + 1;
-        }
-      });
-      const total = levelCounts['2'] + levelCounts['3'] + levelCounts['4'] + levelCounts['5'] + levelCounts.other;
-      return {
-        practice_id: practice.practice_id || '',
-        practice_name: practice.practice_name || '',
-        counts: levelCounts,
-        total
-      };
-    });
+                    return objectives.map(obj => {
+                        // Build summary per practice for this objective
+                        const practiceSummaries = (obj.practices || []).map(practice => {
+                            const levelCounts = {
+                                '2': 0,
+                                '3': 0,
+                                '4': 0,
+                                '5': 0,
+                                other: 0
+                            };
+                            (practice.activities || []).forEach(ac => {
+                                const raw = ac.capability_lvl ?? ac.capability_level ?? ac
+                                    .level ?? '';
+                                const s = String(raw).trim();
+                                const m = s.match(/(\d+)/);
+                                if (m) {
+                                    const num = m[1];
+                                    if (['2', '3', '4', '5'].includes(num)) {
+                                        levelCounts[num] = (levelCounts[num] || 0) + 1;
+                                    } else {
+                                        levelCounts.other = (levelCounts.other || 0) + 1;
+                                    }
+                                } else {
+                                    // treat empty / non-numeric as other
+                                    levelCounts.other = (levelCounts.other || 0) + 1;
+                                }
+                            });
+                            const total = levelCounts['2'] + levelCounts['3'] + levelCounts['4'] +
+                                levelCounts['5'] + levelCounts.other;
+                            return {
+                                practice_id: practice.practice_id || '',
+                                practice_name: practice.practice_name || '',
+                                counts: levelCounts,
+                                total
+                            };
+                        });
 
-    
-    const safeObjId = Utils.idify(obj.objective_id || obj.objective || 'obj');
-    // compute totals for each level and overall
-    const totals = (practiceSummaries || []).reduce((acc, ps) => {
-      acc['2'] += Number(ps.counts['2'] || 0);
-      acc['3'] += Number(ps.counts['3'] || 0);
-      acc['4'] += Number(ps.counts['4'] || 0);
-      acc['5'] += Number(ps.counts['5'] || 0);
-      acc.total += Number(ps.total || 0);
-      return acc;
-    }, { '2': 0, '3': 0, '4': 0, '5': 0, total: 0 });
 
-    const summaryTableHtml = (practiceSummaries.length)
-      ? `
+                        const safeObjId = Utils.idify(obj.objective_id || obj.objective || 'obj');
+                        // compute totals for each level and overall
+                        const totals = (practiceSummaries || []).reduce((acc, ps) => {
+                            acc['2'] += Number(ps.counts['2'] || 0);
+                            acc['3'] += Number(ps.counts['3'] || 0);
+                            acc['4'] += Number(ps.counts['4'] || 0);
+                            acc['5'] += Number(ps.counts['5'] || 0);
+                            acc.total += Number(ps.total || 0);
+                            return acc;
+                        }, {
+                            '2': 0,
+                            '3': 0,
+                            '4': 0,
+                            '5': 0,
+                            total: 0
+                        });
+
+                        const summaryTableHtml = (practiceSummaries.length) ?
+                            `
         <div class="accordion mb-3" id="practicesSummaryAccordion_${safeObjId}">
           <div class="accordion-item">
             <h2 class="accordion-header" id="practicesSummaryHeading_${safeObjId}">
@@ -1033,15 +1279,15 @@ renderPractices(objectives) {
                     </thead>
                     <tbody>
                       ${practiceSummaries.map(ps => `
-                        <tr>
-                          <td class="small fw-bold">${Utils.escapeHtml(ps.practice_id || '')}${ps.practice_name ? ' — ' + Utils.escapeHtml(ps.practice_name) : ''}</td>
-                          <td class="text-center small">${(ps.counts['2'] || 0) ? Utils.formatText(String(ps.counts['2'])) : '-'}</td>
-                          <td class="text-center small">${(ps.counts['3'] || 0) ? Utils.formatText(String(ps.counts['3'])) : '-'}</td>
-                          <td class="text-center small">${(ps.counts['4'] || 0) ? Utils.formatText(String(ps.counts['4'])) : '-'}</td>
-                          <td class="text-center small">${(ps.counts['5'] || 0) ? Utils.formatText(String(ps.counts['5'])) : '-'}</td>
-                          <td class="text-center small">${(ps.total || 0) ? Utils.formatText(String(ps.total)) : '-'}</td>
-                        </tr>
-                      `).join('')}
+                                <tr>
+                                  <td class="small fw-bold">${Utils.escapeHtml(ps.practice_id || '')}${ps.practice_name ? ' — ' + Utils.escapeHtml(ps.practice_name) : ''}</td>
+                                  <td class="text-center small">${(ps.counts['2'] || 0) ? Utils.formatText(String(ps.counts['2'])) : '-'}</td>
+                                  <td class="text-center small">${(ps.counts['3'] || 0) ? Utils.formatText(String(ps.counts['3'])) : '-'}</td>
+                                  <td class="text-center small">${(ps.counts['4'] || 0) ? Utils.formatText(String(ps.counts['4'])) : '-'}</td>
+                                  <td class="text-center small">${(ps.counts['5'] || 0) ? Utils.formatText(String(ps.counts['5'])) : '-'}</td>
+                                  <td class="text-center small">${(ps.total || 0) ? Utils.formatText(String(ps.total)) : '-'}</td>
+                                </tr>
+                              `).join('')}
                     </tbody>
                     <tfoot>
                       <tr class="table-warning fw-bold">
@@ -1059,79 +1305,89 @@ renderPractices(objectives) {
             </div>
           </div>
         </div>
-      `
-      : '';
+      ` :
+                            '';
 
-    let html = `<h4 class="mb-3">${Utils.escapeHtml(obj.objective_id)} — ${Utils.formatText(obj.objective || '')}</h4>`;
-    html += summaryTableHtml;
+                        let html =
+                            `<h4 class="mb-3">${Utils.escapeHtml(obj.objective_id)} — ${Utils.formatText(obj.objective || '')}</h4>`;
+                        html += summaryTableHtml;
 
-    (obj.practices || []).forEach(practice => {
-      html += this.renderSinglePractice(practice);
-    });
+                        (obj.practices || []).forEach(practice => {
+                            html += this.renderSinglePractice(practice);
+                        });
 
-    return html;
-  }).join('');
-},
+                        return html;
+                    }).join('');
+                },
 
-// --- GANTI renderSinglePractice (hapus ringkasan per-practice di dalamnya) ---
-renderSinglePractice(practice) {
-  const metricsHtml = (practice.practicemetr || [])
-    .map((m, i) => `<li class="mb-1">${String.fromCharCode(97 + i)}. ${Utils.formatText(m.description || '')}</li>`)
-    .join('');
+                // --- GANTI renderSinglePractice (hapus ringkasan per-practice di dalamnya) ---
+                renderSinglePractice(practice) {
+                    const metricsHtml = (practice.practicemetr || [])
+                        .map((m, i) =>
+                            `<li class="mb-1">${String.fromCharCode(97 + i)}. ${Utils.formatText(m.description || '')}</li>`
+                        )
+                        .join('');
 
-  const _acts = (practice.activities || []).map((ac, i) => ({
-    idx: i + 1,
-    desc: ac.description || ac.activity || '',
-    level: (ac.capability_lvl ?? ac.capability_level ?? ac.level ?? '') || '-'
-  }));
+                    const _acts = (practice.activities || []).map((ac, i) => ({
+                        idx: i + 1,
+                        desc: ac.description || ac.activity || '',
+                        level: (ac.capability_lvl ?? ac.capability_level ?? ac.level ?? '') || '-'
+                    }));
 
-  const rowspanMap = {}; // map 0-based index -> rowspan
-  for (let i = 0; i < _acts.length; ) {
-    const lvl = _acts[i].level;
-    let j = i + 1;
-    while (j < _acts.length && _acts[j].level === lvl) j++;
-    const span = j - i;
-    if (span > 1) rowspanMap[i] = span;
-    i = j;
-  }
+                    const rowspanMap = {}; // map 0-based index -> rowspan
+                    for (let i = 0; i < _acts.length;) {
+                        const lvl = _acts[i].level;
+                        let j = i + 1;
+                        while (j < _acts.length && _acts[j].level === lvl) j++;
+                        const span = j - i;
+                        if (span > 1) rowspanMap[i] = span;
+                        i = j;
+                    }
 
-  const activitiesHtml = _acts.map((a, i) => {
-  const noCell = `<td class="text-center" style="width:auto; white-space:nowrap;">${a.idx}</td>`;
-    const activityCell = `<td style="width:95%;">${Utils.formatText(a.desc || '')}</td>`;
-    let levelCell = '';
-    if (rowspanMap[i]) {
-      levelCell = `<td class="text-center fw-semibold" style="width:5%;" rowspan="${rowspanMap[i]}">${Utils.formatText(String(a.level || '-'))}</td>`;
-    } else {
-      let covered = false;
-      for (const startStr of Object.keys(rowspanMap)) {
-        const start = parseInt(startStr, 10);
-        const span = rowspanMap[start];
-        if (i > start && i < start + span) { covered = true; break; }
-      }
-      if (!covered) {
-        levelCell = `<td class="text-center fw-semibold" style="width:5%;">${Utils.formatText(String(a.level || '-'))}</td>`;
-      }
-    }
+                    const activitiesHtml = _acts.map((a, i) => {
+                        const noCell =
+                            `<td class="text-center" style="width:auto; white-space:nowrap;">${a.idx}</td>`;
+                        const activityCell =
+                            `<td style="width:95%;">${Utils.formatText(a.desc || '')}</td>`;
+                        let levelCell = '';
+                        if (rowspanMap[i]) {
+                            levelCell =
+                                `<td class="text-center fw-semibold" style="width:5%;" rowspan="${rowspanMap[i]}">${Utils.formatText(String(a.level || '-'))}</td>`;
+                        } else {
+                            let covered = false;
+                            for (const startStr of Object.keys(rowspanMap)) {
+                                const start = parseInt(startStr, 10);
+                                const span = rowspanMap[start];
+                                if (i > start && i < start + span) {
+                                    covered = true;
+                                    break;
+                                }
+                            }
+                            if (!covered) {
+                                levelCell =
+                                    `<td class="text-center fw-semibold" style="width:5%;">${Utils.formatText(String(a.level || '-'))}</td>`;
+                            }
+                        }
 
-    return `
+                        return `
       <tr>
         ${noCell}
         ${activityCell}
         ${levelCell}
       </tr>
     `;
-  }).join('');
+                    }).join('');
 
-  const guidancesHtml = (practice.guidances || []).length
-    ? (practice.guidances || []).map(gd => `
+                    const guidancesHtml = (practice.guidances || []).length ?
+                        (practice.guidances || []).map(gd => `
         <tr>
           <td style="width:65%;">${Utils.formatText(gd.guidance || '')}</td>
           <td style="width:35%;">${Utils.formatText(gd.reference || '')}</td>
         </tr>
-      `).join('')
-    : '<tr><td colspan="2" class="text-muted text-center py-2">No related guidance for this management practice</td></tr>';
+      `).join('') :
+                        '<tr><td colspan="2" class="text-muted text-center py-2">No related guidance for this management practice</td></tr>';
 
-  return `
+                    return `
     <div class="card mb-4 shadow-sm border-secondary-subtle" style="font-size:14px; line-height:1.4;">
       <div class="card-header text-white fw-bold py-2 px-3" style="background-color:#1a3665;">
         A. Component: Process
@@ -1179,61 +1435,64 @@ renderSinglePractice(practice) {
       </div>
     </div>
   `;
-},
+                },
 
 
-    renderInfoflows(objectives) {
-      const rows = [];
-      
-      objectives.forEach(obj => {
-        (obj.practices || []).forEach(practice => {
-          const inputs = practice.infoflowinput || [];
-          
-          if (!inputs.length) {
-            rows.push({
-              gamo: obj.objective_id || '',
-              practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`.trim(),
-              from: '',
-              input: '(No information flows)',
-              output: '',
-              to: ''
-            });
-            return;
-          }
+                renderInfoflows(objectives) {
+                    const rows = [];
 
-          inputs.forEach(inp => {
-            const outputs = inp.connectedoutputs || [];
-            
-            if (outputs.length) {
-              outputs.forEach(out => {
-                rows.push({
-                  gamo: obj.objective_id || '',
-                  practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`.trim(),
-                  from: inp.from || '',
-                  input: inp.description || '',
-                  output: out.description || '',
-                  to: out.to || ''
-                });
-              });
-            } else {
-              rows.push({
-                gamo: obj.objective_id || '',
-                practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`.trim(),
-                from: inp.from || '',
-                input: inp.description || '',
-                output: '(No Output)',
-                to: ''
-              });
-            }
-          });
-        });
-      });
+                    objectives.forEach(obj => {
+                        (obj.practices || []).forEach(practice => {
+                            const inputs = practice.infoflowinput || [];
 
-      if (!rows.length) {
-        return '<div class="text-muted">No information flows found.</div>';
-      }
+                            if (!inputs.length) {
+                                rows.push({
+                                    gamo: obj.objective_id || '',
+                                    practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
+                                        .trim(),
+                                    from: '',
+                                    input: '(No information flows)',
+                                    output: '',
+                                    to: ''
+                                });
+                                return;
+                            }
 
-      const tbody = rows.map(r => `
+                            inputs.forEach(inp => {
+                                const outputs = inp.connectedoutputs || [];
+
+                                if (outputs.length) {
+                                    outputs.forEach(out => {
+                                        rows.push({
+                                            gamo: obj.objective_id || '',
+                                            practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
+                                                .trim(),
+                                            from: inp.from || '',
+                                            input: inp.description || '',
+                                            output: out.description || '',
+                                            to: out.to || ''
+                                        });
+                                    });
+                                } else {
+                                    rows.push({
+                                        gamo: obj.objective_id || '',
+                                        practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
+                                            .trim(),
+                                        from: inp.from || '',
+                                        input: inp.description || '',
+                                        output: '(No Output)',
+                                        to: ''
+                                    });
+                                }
+                            });
+                        });
+                    });
+
+                    if (!rows.length) {
+                        return '<div class="text-muted">No information flows found.</div>';
+                    }
+
+                    const tbody = rows.map(r => `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.practice)}</td>
@@ -1244,7 +1503,7 @@ renderSinglePractice(practice) {
         </tr>
       `).join('');
 
-      return `
+                    return `
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1261,38 +1520,38 @@ renderSinglePractice(practice) {
           </table>
         </div>
       `;
-    },
+                },
 
-    renderPolicies(objectives) {
-      const rows = [];
-      
-      objectives.forEach(obj => {
-        (obj.policies || []).forEach(policy => {
-          const guidance = (policy.guidances || [])
-            .map(g => g.guidance)
-            .filter(Boolean)
-            .join('<br>');
-          
-          const refs = (policy.guidances || [])
-            .map(g => g.reference)
-            .filter(Boolean)
-            .join('<br>');
+                renderPolicies(objectives) {
+                    const rows = [];
 
-          rows.push({
-            gamo: obj.objective_id || '',
-            policy: policy.policy || policy.name || '',
-            desc: policy.description || '',
-            guidance,
-            refs
-          });
-        });
-      });
+                    objectives.forEach(obj => {
+                        (obj.policies || []).forEach(policy => {
+                            const guidance = (policy.guidances || [])
+                                .map(g => g.guidance)
+                                .filter(Boolean)
+                                .join('<br>');
 
-      if (!rows.length) {
-        return '<div class="text-muted">No policies / procedures found.</div>';
-      }
+                            const refs = (policy.guidances || [])
+                                .map(g => g.reference)
+                                .filter(Boolean)
+                                .join('<br>');
 
-      const tbody = rows.map(r => `
+                            rows.push({
+                                gamo: obj.objective_id || '',
+                                policy: policy.policy || policy.name || '',
+                                desc: policy.description || '',
+                                guidance,
+                                refs
+                            });
+                        });
+                    });
+
+                    if (!rows.length) {
+                        return '<div class="text-muted">No policies / procedures found.</div>';
+                    }
+
+                    const tbody = rows.map(r => `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.policy)}</td>
@@ -1302,7 +1561,7 @@ renderSinglePractice(practice) {
         </tr>
       `).join('');
 
-      return `
+                    return `
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1318,37 +1577,37 @@ renderSinglePractice(practice) {
           </table>
         </div>
       `;
-    },
+                },
 
-    renderSkills(objectives) {
-      const rows = [];
-      
-      objectives.forEach(obj => {
-        (obj.skill || []).forEach(skill => {
-          const guidance = (skill.guidances || [])
-            .map(g => g.guidance)
-            .filter(Boolean)
-            .join('<br>');
-          
-          const refs = (skill.guidances || [])
-            .map(g => g.reference)
-            .filter(Boolean)
-            .join('<br>');
+                renderSkills(objectives) {
+                    const rows = [];
 
-          rows.push({
-            gamo: obj.objective_id || '',
-            skill: skill.skill || '',
-            guidance,
-            refs
-          });
-        });
-      });
+                    objectives.forEach(obj => {
+                        (obj.skill || []).forEach(skill => {
+                            const guidance = (skill.guidances || [])
+                                .map(g => g.guidance)
+                                .filter(Boolean)
+                                .join('<br>');
 
-      if (!rows.length) {
-        return '<div class="text-muted">No skills found.</div>';
-      }
+                            const refs = (skill.guidances || [])
+                                .map(g => g.reference)
+                                .filter(Boolean)
+                                .join('<br>');
 
-      const tbody = rows.map(r => `
+                            rows.push({
+                                gamo: obj.objective_id || '',
+                                skill: skill.skill || '',
+                                guidance,
+                                refs
+                            });
+                        });
+                    });
+
+                    if (!rows.length) {
+                        return '<div class="text-muted">No skills found.</div>';
+                    }
+
+                    const tbody = rows.map(r => `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.skill)}</td>
@@ -1357,7 +1616,7 @@ renderSinglePractice(practice) {
         </tr>
       `).join('');
 
-      return `
+                    return `
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1372,37 +1631,37 @@ renderSinglePractice(practice) {
           </table>
         </div>
       `;
-    },
+                },
 
-    renderCulture(objectives) {
-      const rows = [];
-      
-      objectives.forEach(obj => {
-        (obj.keyculture || []).forEach(culture => {
-          const guidance = (culture.guidances || [])
-            .map(g => g.guidance)
-            .filter(Boolean)
-            .join('<br>');
-          
-          const refs = (culture.guidances || [])
-            .map(g => g.reference)
-            .filter(Boolean)
-            .join('<br>');
+                renderCulture(objectives) {
+                    const rows = [];
 
-          rows.push({
-            gamo: obj.objective_id || '',
-            element: culture.element || '',
-            guidance,
-            refs
-          });
-        });
-      });
+                    objectives.forEach(obj => {
+                        (obj.keyculture || []).forEach(culture => {
+                            const guidance = (culture.guidances || [])
+                                .map(g => g.guidance)
+                                .filter(Boolean)
+                                .join('<br>');
 
-      if (!rows.length) {
-        return '<div class="text-muted">No culture elements found.</div>';
-      }
+                            const refs = (culture.guidances || [])
+                                .map(g => g.reference)
+                                .filter(Boolean)
+                                .join('<br>');
 
-      const tbody = rows.map(r => `
+                            rows.push({
+                                gamo: obj.objective_id || '',
+                                element: culture.element || '',
+                                guidance,
+                                refs
+                            });
+                        });
+                    });
+
+                    if (!rows.length) {
+                        return '<div class="text-muted">No culture elements found.</div>';
+                    }
+
+                    const tbody = rows.map(r => `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.element)}</td>
@@ -1411,7 +1670,7 @@ renderSinglePractice(practice) {
         </tr>
       `).join('');
 
-      return `
+                    return `
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1426,32 +1685,32 @@ renderSinglePractice(practice) {
           </table>
         </div>
       `;
-    },
+                },
 
-    renderServices(objectives) {
-      const rows = [];
-      
-      objectives.forEach(obj => {
-        (obj.s_i_a || []).forEach(service => {
-          rows.push({
-            gamo: obj.objective_id || '',
-            desc: service.description || ''
-          });
-        });
-      });
+                renderServices(objectives) {
+                    const rows = [];
 
-      if (!rows.length) {
-        return '<div class="text-muted">No services / SIA found.</div>';
-      }
+                    objectives.forEach(obj => {
+                        (obj.s_i_a || []).forEach(service => {
+                            rows.push({
+                                gamo: obj.objective_id || '',
+                                desc: service.description || ''
+                            });
+                        });
+                    });
 
-      const tbody = rows.map(r => `
+                    if (!rows.length) {
+                        return '<div class="text-muted">No services / SIA found.</div>';
+                    }
+
+                    const tbody = rows.map(r => `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.desc)}</td>
         </tr>
       `).join('');
 
-      return `
+                    return `
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1464,24 +1723,24 @@ renderSinglePractice(practice) {
           </table>
         </div>
       `;
-    },
+                },
 
-    renderOrganizational(objectives) {
-      if (!Array.isArray(objectives) || !objectives.length) {
-        return '<div class="text-muted">No organizational data.</div>';
-      }
+                renderOrganizational(objectives) {
+                    if (!Array.isArray(objectives) || !objectives.length) {
+                        return '<div class="text-muted">No organizational data.</div>';
+                    }
 
-      return objectives.map(obj => {
-        const rolesSet = new Set();
-        (obj.practices || []).forEach(practice => {
-          (practice.roles || []).forEach(role => {
-            rolesSet.add(role.role);
-          });
-        });
-        
-        const roleNames = Array.from(rolesSet);
+                    return objectives.map(obj => {
+                        const rolesSet = new Set();
+                        (obj.practices || []).forEach(practice => {
+                            (practice.roles || []).forEach(role => {
+                                rolesSet.add(role.role);
+                            });
+                        });
 
-        let html = `
+                        const roleNames = Array.from(rolesSet);
+
+                        let html = `
           <div class="mb-0 fw-bold bg-secondary text-white p-2">
             B. Component: Organizational Structures for ${Utils.escapeHtml(obj.objective_id)} — ${Utils.formatText(obj.objective)}
           </div>
@@ -1491,17 +1750,17 @@ renderSinglePractice(practice) {
                 <tr>
                   <th style="min-width:300px; max-width:500px;">Key Management Practice</th>
                   ${roleNames.map(r => `
-                    <th class="text-center small" style="width:30px;">
-                      <div class="vertical-text">${Utils.escapeHtml(r)}</div>
-                    </th>
-                  `).join('')}
+                            <th class="text-center small" style="width:30px;">
+                              <div class="vertical-text">${Utils.escapeHtml(r)}</div>
+                            </th>
+                          `).join('')}
                 </tr>
               </thead>
               <tbody>
         `;
 
-        // Tambahkan CSS untuk vertical text
-        html = `
+                        // Tambahkan CSS untuk vertical text
+                        html = `
           <style>
             .vertical-text {
               writing-mode: vertical-rl;
@@ -1518,25 +1777,26 @@ renderSinglePractice(practice) {
           </style>
         ` + html;
 
-        (obj.practices || []).forEach(practice => {
-          const mapRole = {};
-          (practice.roles || []).forEach(role => {
-            mapRole[role.role] = role.pivot ? (role.pivot.r_a ?? '') : '';
-          });
+                        (obj.practices || []).forEach(practice => {
+                            const mapRole = {};
+                            (practice.roles || []).forEach(role => {
+                                mapRole[role.role] = role.pivot ? (role.pivot.r_a ?? '') :
+                                    '';
+                            });
 
-          html += `
+                            html += `
             <tr>
               <td class="small fw-semibold text-truncate" style="max-width:500px;" title="${Utils.escapeHtml(practice.practice_id || '')}${practice.practice_name ? ' ' + Utils.escapeHtml(practice.practice_name) : ''}">
                 ${Utils.escapeHtml(practice.practice_id || '')}${practice.practice_name ? ' ' + Utils.escapeHtml(practice.practice_name) : ''}
               </td>
               ${roleNames.map(rn => `
-                <td class="text-center small fw-bold" style="width:40px;">${Utils.escapeHtml(mapRole[rn] || '')}</td>
-              `).join('')}
+                        <td class="text-center small fw-bold" style="width:40px;">${Utils.escapeHtml(mapRole[rn] || '')}</td>
+                      `).join('')}
             </tr>
           `;
-        });
+                        });
 
-        html += `
+                        html += `
                 <tr>
                   <td colspan="${roleNames.length + 1}" class="pt-3 pb-3 p-0 border-0">
                     <table class="table table-sm table-bordered mb-0">
@@ -1557,719 +1817,762 @@ renderSinglePractice(practice) {
           </div>
         `;
 
-        return html;
-      }).join('');
-    }
-  };
+                        return html;
+                    }).join('');
+                }
+            };
 
-  // ===================================================================
-  // COMPONENT VIEW CONTROLLER
-  // ===================================================================
-  
-  const ComponentViewController = {
-    async renderComponent(componentType) {
-      if (!componentType) {
-        DOM.componentResults.style.display = 'none';
-        DOM.componentResults.innerHTML = '';
-        return;
-      }
+            // ===================================================================
+            // COMPONENT VIEW CONTROLLER
+            // ===================================================================
 
-      DOM.componentResults.style.display = 'block';
-      DOM.componentResults.innerHTML = `<div class="text-muted small">Loading ${Utils.escapeHtml(componentType)} from all objectives…</div>`;
+            const ComponentViewController = {
+                async renderComponent(componentType) {
+                    if (!componentType) {
+                        DOM.componentResults.style.display = 'none';
+                        DOM.componentResults.innerHTML = '';
+                        return;
+                    }
 
-      try {
-        const objectives = await DataService.fetchAllObjectives();
-        
-        const tabsHtml = this.createGamoTabs();
-        const initialInner = this.renderComponentContent(componentType, objectives);
+                    DOM.componentResults.style.display = 'block';
+                    DOM.componentResults.innerHTML =
+                        `<div class="text-muted small">Loading ${Utils.escapeHtml(componentType)} from all objectives…</div>`;
 
-        const cardHtml = Renderers.renderCardWrapper({
-          title: `Menampilkan ${Utils.escapeHtml(componentType)} dari semua objective`,
-          subtitle: '',
-          tabsHtml,
-          bodyHtml: `
+                    try {
+                        const objectives = await DataService.fetchAllObjectives();
+
+                        const tabsHtml = this.createGamoTabs();
+                        const initialInner = this.renderComponentContent(componentType, objectives);
+
+                        const cardHtml = Renderers.renderCardWrapper({
+                            title: `Menampilkan ${Utils.escapeHtml(componentType)} dari semua objective`,
+                            subtitle: '',
+                            tabsHtml,
+                            bodyHtml: `
             <div id="componentFilterTabs" class="mb-3"></div>
             <div id="componentInnerContent">${initialInner}</div>
           `,
-          bodyId: 'componentInnerContent'
-        });
+                            bodyId: 'componentInnerContent'
+                        });
 
-        DOM.componentResults.innerHTML = cardHtml;
+                        DOM.componentResults.innerHTML = cardHtml;
 
-        this.initializeComponentFilters(objectives, componentType);
-        this.initializeGamoTabs(objectives, componentType);
-        this.selectDefaultTab(objectives);
+                        this.initializeComponentFilters(objectives, componentType);
+                        this.initializeGamoTabs(objectives, componentType);
+                        this.selectDefaultTab(objectives);
 
-        DOM.componentResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch (err) {
-        console.error(err);
-        DOM.componentResults.innerHTML = `
+                        DOM.componentResults.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    } catch (err) {
+                        console.error(err);
+                        DOM.componentResults.innerHTML = `
           <div class="alert alert-danger">
             Gagal memuat data: ${Utils.escapeHtml(err.message)}
           </div>
         `;
-      }
-    },
+                    }
+                },
 
-    createGamoTabs() {
-      let html = `<div>`;
-      html += `<ul class="nav nav-pills" id="componentGamoTabs">`;
-      html += `<li class="nav-item"><button class="nav-link active" data-prefix="ALL" type="button">All</button></li>`;
-      
-      CONFIG.PREFERRED_ORDER.forEach(prefix => {
-        html += `<li class="nav-item"><button class="nav-link" data-prefix="${prefix}" type="button">${prefix}</button></li>`;
-      });
-      
-      html += `</ul>`;
-      html += `<div id="componentGamoObjTabs" class="mt-2" aria-live="polite"></div>`;
-      html += `</div>`;
-      return html;
-    },
+                createGamoTabs() {
+                    let html = `<div>`;
+                    html += `<ul class="nav nav-pills" id="componentGamoTabs">`;
+                    html +=
+                        `<li class="nav-item"><button class="nav-link active" data-prefix="ALL" type="button">All</button></li>`;
 
-    renderComponentContent(componentType, objectives) {
-      const rendererMap = {
-        overview: () => Renderers.renderOverview(objectives),
-        practices: () => Renderers.renderPractices(objectives),
-        infoflows: () => Renderers.renderInfoflows(objectives),
-        organizational: () => Renderers.renderOrganizational(objectives),
-        policies: () => Renderers.renderPolicies(objectives),
-        skills: () => Renderers.renderSkills(objectives),
-        culture: () => Renderers.renderCulture(objectives),
-        services: () => Renderers.renderServices(objectives)
-      };
+                    CONFIG.PREFERRED_ORDER.forEach(prefix => {
+                        html +=
+                            `<li class="nav-item"><button class="nav-link" data-prefix="${prefix}" type="button">${prefix}</button></li>`;
+                    });
 
-      const renderer = rendererMap[componentType];
-      return renderer 
-        ? renderer() 
-        : `<pre class="small">${Utils.escapeHtml(JSON.stringify(objectives, null, 2))}</pre>`;
-    },
+                    html += `</ul>`;
+                    html += `<div id="componentGamoObjTabs" class="mt-2" aria-live="polite"></div>`;
+                    html += `</div>`;
+                    return html;
+                },
 
-    initializeComponentFilters(objectives, componentType) {
-  const container = document.getElementById('componentFilterTabs');
-  if (!container || !objectives.length) {
-    if (container) {
-      container.innerHTML = '<div class="small text-muted">No objectives available.</div>';
-    }
-    return;
-  }
+                renderComponentContent(componentType, objectives) {
+                    const rendererMap = {
+                        overview: () => Renderers.renderOverview(objectives),
+                        practices: () => Renderers.renderPractices(objectives),
+                        infoflows: () => Renderers.renderInfoflows(objectives),
+                        organizational: () => Renderers.renderOrganizational(objectives),
+                        policies: () => Renderers.renderPolicies(objectives),
+                        skills: () => Renderers.renderSkills(objectives),
+                        culture: () => Renderers.renderCulture(objectives),
+                        services: () => Renderers.renderServices(objectives)
+                    };
 
-  // reset mapping
-  STATE.objectiveMap.clear();
+                    const renderer = rendererMap[componentType];
+                    return renderer ?
+                        renderer() :
+                        `<pre class="small">${Utils.escapeHtml(JSON.stringify(objectives, null, 2))}</pre>`;
+                },
 
-  let tabsHtml = `<ul class="nav nav-tabs mb-2" role="tablist" style="overflow:auto; white-space:nowrap;">`;
-  tabsHtml += `<li class="nav-item" role="presentation"><a href="#" class="nav-link active" data-filter="ALL">All</a></li>`;
+                initializeComponentFilters(objectives, componentType) {
+                    const container = document.getElementById('componentFilterTabs');
+                    if (!container || !objectives.length) {
+                        if (container) {
+                            container.innerHTML = '<div class="small text-muted">No objectives available.</div>';
+                        }
+                        return;
+                    }
 
-  objectives.forEach(obj => {
-    const rawId = String(obj.objective_id || '');
-    const safeId = Utils.idify(rawId);
-    // store mapping
-    STATE.objectiveMap.set(safeId, rawId);
+                    // reset mapping
+                    STATE.objectiveMap.clear();
 
-    tabsHtml += `
+                    let tabsHtml =
+                        `<ul class="nav nav-tabs mb-2" role="tablist" style="overflow:auto; white-space:nowrap;">`;
+                    tabsHtml +=
+                        `<li class="nav-item" role="presentation"><a href="#" class="nav-link active" data-filter="ALL">All</a></li>`;
+
+                    objectives.forEach(obj => {
+                        const rawId = String(obj.objective_id || '');
+                        const safeId = Utils.idify(rawId);
+                        // store mapping
+                        STATE.objectiveMap.set(safeId, rawId);
+
+                        tabsHtml += `
       <li class="nav-item" role="presentation">
         <a href="#" class="nav-link" data-filter="${safeId}" id="comp_tab_${safeId}">
           ${Utils.escapeHtml(rawId)}
         </a>
       </li>
     `;
-  });
+                    });
 
-  tabsHtml += `</ul>`;
-  container.innerHTML = tabsHtml;
+                    tabsHtml += `</ul>`;
+                    container.innerHTML = tabsHtml;
 
-  container.querySelectorAll('a[data-filter]').forEach(anchor => {
-    anchor.addEventListener('click', (e) => {
-      e.preventDefault();
-      this.handleFilterClick(anchor, objectives, componentType);
-    });
-  });
+                    container.querySelectorAll('a[data-filter]').forEach(anchor => {
+                        anchor.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.handleFilterClick(anchor, objectives, componentType);
+                        });
+                    });
 
-  const firstAnchor = container.querySelector('a[data-filter="ALL"]');
-  if (firstAnchor) firstAnchor.click();
-},
+                    const firstAnchor = container.querySelector('a[data-filter="ALL"]');
+                    if (firstAnchor) firstAnchor.click();
+                },
 
 
-   handleFilterClick(btn, objectives, componentType) {
-  const parentNav = btn.closest('.nav') || document.getElementById('componentFilterTabs');
-  if (parentNav) {
-    parentNav.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-  } else {
-    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-  }
-  btn.classList.add('active');
+                handleFilterClick(btn, objectives, componentType) {
+                    const parentNav = btn.closest('.nav') || document.getElementById('componentFilterTabs');
+                    if (parentNav) {
+                        parentNav.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                    } else {
+                        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                    }
+                    btn.classList.add('active');
 
-  const rawFilter = btn.getAttribute('data-filter') || '';
-  const inner = document.getElementById('componentInnerContent');
-  if (!inner) return;
+                    const rawFilter = btn.getAttribute('data-filter') || '';
+                    const inner = document.getElementById('componentInnerContent');
+                    if (!inner) return;
 
-  if (rawFilter === 'ALL' || rawFilter === '') {
-    inner.innerHTML = this.renderComponentContent(componentType, objectives);
-    inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
-  }
+                    if (rawFilter === 'ALL' || rawFilter === '') {
+                        inner.innerHTML = this.renderComponentContent(componentType, objectives);
+                        inner.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        return;
+                    }
 
-  const mappedObjectiveId = STATE.objectiveMap.get(rawFilter);
-  if (mappedObjectiveId) {
-    const obj = objectives.find(x => String(x.objective_id) === String(mappedObjectiveId));
-    if (obj) {
-      inner.innerHTML = this.renderSingleObjectiveComponent(componentType, obj);
-      inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
-  }
+                    const mappedObjectiveId = STATE.objectiveMap.get(rawFilter);
+                    if (mappedObjectiveId) {
+                        const obj = objectives.find(x => String(x.objective_id) === String(mappedObjectiveId));
+                        if (obj) {
+                            inner.innerHTML = this.renderSingleObjectiveComponent(componentType, obj);
+                            inner.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+                            return;
+                        }
+                    }
 
-  const decodeHtmlEntity = (s) => {
-    if (!s) return '';
-    const txt = document.createElement('textarea');
-    txt.innerHTML = s;
-    return txt.value;
-  };
-  const normalize = (s) => String(decodeHtmlEntity(s || '')).trim().replace(/\s+/g, ' ').toUpperCase();
+                    const decodeHtmlEntity = (s) => {
+                        if (!s) return '';
+                        const txt = document.createElement('textarea');
+                        txt.innerHTML = s;
+                        return txt.value;
+                    };
+                    const normalize = (s) => String(decodeHtmlEntity(s || '')).trim().replace(/\s+/g, ' ')
+                        .toUpperCase();
 
-  const normalizedFilter = normalize(rawFilter);
-  // try exact match on normalized objective_id
-  let obj = objectives.find(x => normalize(x.objective_id) === normalizedFilter);
-  if (obj) {
-    inner.innerHTML = this.renderSingleObjectiveComponent(componentType, obj);
-    inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
-  }
+                    const normalizedFilter = normalize(rawFilter);
+                    // try exact match on normalized objective_id
+                    let obj = objectives.find(x => normalize(x.objective_id) === normalizedFilter);
+                    if (obj) {
+                        inner.innerHTML = this.renderSingleObjectiveComponent(componentType, obj);
+                        inner.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        return;
+                    }
 
-  // try prefix match (e.g., user clicked EDM and expects many)
-  const byPrefix = objectives.filter(x => normalize(x.objective_id).startsWith(normalizedFilter));
-  if (byPrefix.length) {
-    inner.innerHTML = this.renderComponentContent(componentType, byPrefix);
-    inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
-  }
+                    // try prefix match (e.g., user clicked EDM and expects many)
+                    const byPrefix = objectives.filter(x => normalize(x.objective_id).startsWith(normalizedFilter));
+                    if (byPrefix.length) {
+                        inner.innerHTML = this.renderComponentContent(componentType, byPrefix);
+                        inner.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        return;
+                    }
 
-  // not found
-  console.warn('[handleFilterClick] objective not found for filter:', rawFilter, ' (normalized:', normalizedFilter, ')');
-  inner.innerHTML = `<div class="text-muted small">Objective ${Utils.escapeHtml(rawFilter)} not found.</div>`;
-  inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-},
+                    // not found
+                    console.warn('[handleFilterClick] objective not found for filter:', rawFilter, ' (normalized:',
+                        normalizedFilter, ')');
+                    inner.innerHTML =
+                        `<div class="text-muted small">Objective ${Utils.escapeHtml(rawFilter)} not found.</div>`;
+                    inner.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                },
 
-    renderSingleObjectiveComponent(componentType, obj) {
-      const rendererMap = {
-        overview: () => Renderers.renderOverview([obj]),
-        practices: () => Renderers.renderPractices([obj]),
-        infoflows: () => Renderers.renderInfoflows([obj]),
-        organizational: () => Renderers.renderOrganizational([obj]),
-        policies: () => Renderers.renderPolicies([obj]),
-        skills: () => Renderers.renderSkills([obj]),
-        culture: () => Renderers.renderCulture([obj]),
-        services: () => Renderers.renderServices([obj])
-      };
+                renderSingleObjectiveComponent(componentType, obj) {
+                    const rendererMap = {
+                        overview: () => Renderers.renderOverview([obj]),
+                        practices: () => Renderers.renderPractices([obj]),
+                        infoflows: () => Renderers.renderInfoflows([obj]),
+                        organizational: () => Renderers.renderOrganizational([obj]),
+                        policies: () => Renderers.renderPolicies([obj]),
+                        skills: () => Renderers.renderSkills([obj]),
+                        culture: () => Renderers.renderCulture([obj]),
+                        services: () => Renderers.renderServices([obj])
+                    };
 
-      const renderer = rendererMap[componentType];
-      return renderer 
-        ? renderer() 
-        : `<pre class="small">${Utils.escapeHtml(JSON.stringify(obj, null, 2))}</pre>`;
-    },
+                    const renderer = rendererMap[componentType];
+                    return renderer ?
+                        renderer() :
+                        `<pre class="small">${Utils.escapeHtml(JSON.stringify(obj, null, 2))}</pre>`;
+                },
 
-    initializeGamoTabs(objectives, componentType) {
-      document.querySelectorAll('#componentGamoTabs .nav-link').forEach(btn => {
-        btn.addEventListener('click', () => {
-          this.handleGamoTabClick(btn, objectives, componentType);
-        });
-      });
+                initializeGamoTabs(objectives, componentType) {
+                    document.querySelectorAll('#componentGamoTabs .nav-link').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            this.handleGamoTabClick(btn, objectives, componentType);
+                        });
+                    });
 
-      const firstPrefixBtn = document.querySelector('#componentGamoTabs .nav-link.active') || document.querySelector('#componentGamoTabs .nav-link[data-prefix="ALL"]');
-      if (firstPrefixBtn) {
-        this.handleGamoTabClick(firstPrefixBtn, objectives, componentType);
-      }
-    },
+                    const firstPrefixBtn = document.querySelector('#componentGamoTabs .nav-link.active') || document
+                        .querySelector('#componentGamoTabs .nav-link[data-prefix="ALL"]');
+                    if (firstPrefixBtn) {
+                        this.handleGamoTabClick(firstPrefixBtn, objectives, componentType);
+                    }
+                },
 
-    handleGamoTabClick(btn, objectives, componentType) {
-      document.querySelectorAll('#componentGamoTabs .nav-link').forEach(b => {
-        b.classList.remove('active');
-      });
-      btn.classList.add('active');
+                handleGamoTabClick(btn, objectives, componentType) {
+                    document.querySelectorAll('#componentGamoTabs .nav-link').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    btn.classList.add('active');
 
-      const prefix = btn.getAttribute('data-prefix') || 'ALL';
-      const filtered = prefix === 'ALL' 
-        ? objectives 
-        : objectives.filter(obj => 
-            String(obj.objective_id || '').toUpperCase().startsWith(prefix.toUpperCase())
-          );
+                    const prefix = btn.getAttribute('data-prefix') || 'ALL';
+                    const filtered = prefix === 'ALL' ?
+                        objectives :
+                        objectives.filter(obj =>
+                            String(obj.objective_id || '').toUpperCase().startsWith(prefix.toUpperCase())
+                        );
 
-      const content = this.renderComponentContent(componentType, filtered);
-      const inner = document.getElementById('componentInnerContent');
-      
-      if (inner) {
-        inner.innerHTML = content;
-        inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+                    const content = this.renderComponentContent(componentType, filtered);
+                    const inner = document.getElementById('componentInnerContent');
 
-      const objTabsContainer = document.getElementById('componentGamoObjTabs');
-      if (!objTabsContainer) return;
+                    if (inner) {
+                        inner.innerHTML = content;
+                        inner.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
 
-      if (!filtered.length) {
-        objTabsContainer.innerHTML = `<div class="small text-muted">No objectives for ${Utils.escapeHtml(prefix)}</div>`;
-        return;
-      }
+                    const objTabsContainer = document.getElementById('componentGamoObjTabs');
+                    if (!objTabsContainer) return;
 
-let tabsHtml = `<ul class="nav nav-tabs mb-2" role="tablist" style="overflow:auto; white-space:nowrap;">`;
-tabsHtml += `<li class="nav-item" role="presentation"><a href="#" class="nav-link active" data-filter="ALL">All</a></li>`;
+                    if (!filtered.length) {
+                        objTabsContainer.innerHTML =
+                            `<div class="small text-muted">No objectives for ${Utils.escapeHtml(prefix)}</div>`;
+                        return;
+                    }
 
-(filtered).forEach(obj => {
-  const rawId = String(obj.objective_id || '');
-  const safeId = Utils.idify(rawId);
-  // update mapping so either component filters or GAMO tabs can use it
-  STATE.objectiveMap.set(safeId, rawId);
+                    let tabsHtml =
+                        `<ul class="nav nav-tabs mb-2" role="tablist" style="overflow:auto; white-space:nowrap;">`;
+                    tabsHtml +=
+                        `<li class="nav-item" role="presentation"><a href="#" class="nav-link active" data-filter="ALL">All</a></li>`;
 
-  tabsHtml += `
+                    (filtered).forEach(obj => {
+                        const rawId = String(obj.objective_id || '');
+                        const safeId = Utils.idify(rawId);
+                        // update mapping so either component filters or GAMO tabs can use it
+                        STATE.objectiveMap.set(safeId, rawId);
+
+                        tabsHtml += `
     <li class="nav-item" role="presentation">
       <a href="#" class="nav-link" data-filter="${safeId}" id="comp_obj_tab_${safeId}">
         ${Utils.escapeHtml(rawId)}
       </a>
     </li>
   `;
-});
+                    });
 
-tabsHtml += `</ul>`;
-objTabsContainer.innerHTML = tabsHtml;
+                    tabsHtml += `</ul>`;
+                    objTabsContainer.innerHTML = tabsHtml;
 
 
-      objTabsContainer.querySelectorAll('[data-filter]').forEach(anchor => {
-        anchor.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.handleFilterClick(anchor, filtered, componentType);
-        });
-      });
+                    objTabsContainer.querySelectorAll('[data-filter]').forEach(anchor => {
+                        anchor.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.handleFilterClick(anchor, filtered, componentType);
+                        });
+                    });
 
-      const firstAnchor = objTabsContainer.querySelector('[data-filter="ALL"]');
-      if (firstAnchor) firstAnchor.click();
-    },
+                    const firstAnchor = objTabsContainer.querySelector('[data-filter="ALL"]');
+                    if (firstAnchor) firstAnchor.click();
+                },
 
-    selectDefaultTab(objectives) {
-      for (let prefix of CONFIG.PREFERRED_ORDER) {
-        const found = objectives.find(obj => 
-          String(obj.objective_id || '').toUpperCase().startsWith(prefix)
-        );
-        
-        if (found) {
-          const btn = document.querySelector(`#componentGamoTabs .nav-link[data-prefix="${prefix}"]`);
-          if (btn) {
-            btn.click();
-            return;
-          }
-        }
-      }
-    }
-  };
+                selectDefaultTab(objectives) {
+                    for (let prefix of CONFIG.PREFERRED_ORDER) {
+                        const found = objectives.find(obj =>
+                            String(obj.objective_id || '').toUpperCase().startsWith(prefix)
+                        );
 
-  // ===================================================================
-  // GAMO VIEW CONTROLLER
-  // ===================================================================
-  
-  const GamoViewController = {
-    async ensurePopulateGamo() {
-      try {
-        const objectives = await DataService.fetchAllObjectives();
-        const prefixMap = this.groupByPrefix(objectives);
-        const prefixes = this.sortPrefixes(prefixMap);
+                        if (found) {
+                            const btn = document.querySelector(
+                                `#componentGamoTabs .nav-link[data-prefix="${prefix}"]`);
+                            if (btn) {
+                                btn.click();
+                                return;
+                            }
+                        }
+                    }
+                }
+            };
 
-        this.renderPrefixTabs(prefixes, prefixMap, objectives);
+            // ===================================================================
+            // GAMO VIEW CONTROLLER
+            // ===================================================================
 
-        if (prefixes.length) {
-          const firstBtn = DOM.gamoPrefixTabs.querySelector(`[data-prefix="${prefixes[0]}"]`);
-          if (firstBtn) {
-            firstBtn.click();
-          } else {
-            this.renderObjectiveList(prefixes[0], prefixMap.get(prefixes[0]) || [], objectives);
-          }
-        } else {
-          DOM.gamoPrefixTabs.innerHTML = '<div class="text-muted small">No GAMO prefixes found.</div>';
-          DOM.gamoBreadcrumbs.innerHTML = '';
-        }
-      } catch (err) {
-        console.error('populate gamo failed:', err);
-      }
-    },
+            const GamoViewController = {
+                async ensurePopulateGamo() {
+                    try {
+                        const objectives = await DataService.fetchAllObjectives();
+                        const prefixMap = this.groupByPrefix(objectives);
+                        const prefixes = this.sortPrefixes(prefixMap);
 
-    groupByPrefix(objectives) {
-      const prefixMap = new Map();
-      
-      objectives.forEach(obj => {
-        const prefix = (String(obj.objective_id || '').match(/^[A-Za-z]+/) || [''])[0].toUpperCase() || '__OTHER';
-        if (!prefixMap.has(prefix)) {
-          prefixMap.set(prefix, []);
-        }
-        prefixMap.get(prefix).push(obj);
-      });
+                        this.renderPrefixTabs(prefixes, prefixMap, objectives);
 
-      return prefixMap;
-    },
+                        if (prefixes.length) {
+                            const firstBtn = DOM.gamoPrefixTabs.querySelector(`[data-prefix="${prefixes[0]}"]`);
+                            if (firstBtn) {
+                                firstBtn.click();
+                            } else {
+                                this.renderObjectiveList(prefixes[0], prefixMap.get(prefixes[0]) || [],
+                                    objectives);
+                            }
+                        } else {
+                            DOM.gamoPrefixTabs.innerHTML =
+                                '<div class="text-muted small">No GAMO prefixes found.</div>';
+                            DOM.gamoBreadcrumbs.innerHTML = '';
+                        }
+                    } catch (err) {
+                        console.error('populate gamo failed:', err);
+                    }
+                },
 
-    sortPrefixes(prefixMap) {
-      const prefixes = [];
-      
-      CONFIG.PREFERRED_ORDER.forEach(prefix => {
-        if (prefixMap.has(prefix)) {
-          prefixes.push(prefix);
-        }
-      });
+                groupByPrefix(objectives) {
+                    const prefixMap = new Map();
 
-      Array.from(prefixMap.keys())
-        .sort()
-        .forEach(prefix => {
-          if (!prefixes.includes(prefix)) {
-            prefixes.push(prefix);
-          }
-        });
+                    objectives.forEach(obj => {
+                        const prefix = (String(obj.objective_id || '').match(/^[A-Za-z]+/) || [''])[0]
+                            .toUpperCase() || '__OTHER';
+                        if (!prefixMap.has(prefix)) {
+                            prefixMap.set(prefix, []);
+                        }
+                        prefixMap.get(prefix).push(obj);
+                    });
 
-      return prefixes;
-    },
+                    return prefixMap;
+                },
 
-    renderPrefixTabs(prefixes, prefixMap, objectives) {
-      DOM.gamoPrefixTabs.innerHTML = '';
+                sortPrefixes(prefixMap) {
+                    const prefixes = [];
 
-      prefixes.forEach((prefix, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `btn ${idx === 0 ? 'btn-primary' : 'btn-outline-primary'} flex-fill`;
-        btn.setAttribute('data-prefix', prefix);
-        btn.textContent = prefix === '__OTHER' ? 'OTHER' : prefix;
+                    CONFIG.PREFERRED_ORDER.forEach(prefix => {
+                        if (prefixMap.has(prefix)) {
+                            prefixes.push(prefix);
+                        }
+                    });
 
-        btn.addEventListener('click', () => {
-          this.handlePrefixClick(btn, prefix, prefixMap, objectives);
-        });
+                    Array.from(prefixMap.keys())
+                        .sort()
+                        .forEach(prefix => {
+                            if (!prefixes.includes(prefix)) {
+                                prefixes.push(prefix);
+                            }
+                        });
 
-        DOM.gamoPrefixTabs.appendChild(btn);
-      });
-    },
+                    return prefixes;
+                },
 
-    handlePrefixClick(btn, prefix, prefixMap, objectives) {
-      Array.from(DOM.gamoPrefixTabs.children).forEach(child => {
-        child.classList.remove('btn-primary');
-        child.classList.add('btn-outline-primary');
-      });
+                renderPrefixTabs(prefixes, prefixMap, objectives) {
+                    DOM.gamoPrefixTabs.innerHTML = '';
 
-      btn.classList.remove('btn-outline-primary');
-      btn.classList.add('btn-primary');
+                    prefixes.forEach((prefix, idx) => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className =
+                            `btn ${idx === 0 ? 'btn-primary' : 'btn-outline-primary'} flex-fill`;
+                        btn.setAttribute('data-prefix', prefix);
+                        btn.textContent = prefix === '__OTHER' ? 'OTHER' : prefix;
 
-      this.renderObjectiveList(prefix, prefixMap.get(prefix) || [], objectives);
-    },
+                        btn.addEventListener('click', () => {
+                            this.handlePrefixClick(btn, prefix, prefixMap, objectives);
+                        });
 
-    renderObjectiveList(prefix, objectiveList, allObjectives) {
-      if (!objectiveList.length) {
-        DOM.gamoBreadcrumbs.innerHTML = '<div class="text-muted small">No objectives for this prefix.</div>';
-        return;
-      }
+                        DOM.gamoPrefixTabs.appendChild(btn);
+                    });
+                },
 
-      let tabsHtml = `<ul class="nav nav-tabs mb-2" role="tablist" style="overflow:auto; white-space:nowrap;">`;
-      
-      objectiveList.forEach((obj, idx) => {
-        const active = idx === 0 ? 'active' : '';
-        const safeId = Utils.idify(obj.objective_id);
-        const objId = Utils.escapeHtml(obj.objective_id || '');
-        
-        tabsHtml += `
+                handlePrefixClick(btn, prefix, prefixMap, objectives) {
+                    Array.from(DOM.gamoPrefixTabs.children).forEach(child => {
+                        child.classList.remove('btn-primary');
+                        child.classList.add('btn-outline-primary');
+                    });
+
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+
+                    this.renderObjectiveList(prefix, prefixMap.get(prefix) || [], objectives);
+                },
+
+                renderObjectiveList(prefix, objectiveList, allObjectives) {
+                    if (!objectiveList.length) {
+                        DOM.gamoBreadcrumbs.innerHTML =
+                            '<div class="text-muted small">No objectives for this prefix.</div>';
+                        return;
+                    }
+
+                    let tabsHtml =
+                        `<ul class="nav nav-tabs mb-2" role="tablist" style="overflow:auto; white-space:nowrap;">`;
+
+                    objectiveList.forEach((obj, idx) => {
+                        const active = idx === 0 ? 'active' : '';
+                        const safeId = Utils.idify(obj.objective_id);
+                        const objId = Utils.escapeHtml(obj.objective_id || '');
+
+                        tabsHtml += `
           <li class="nav-item" role="presentation">
             <a href="#" class="nav-link ${active}" data-obj="${objId}" id="gamo_tab_${safeId}">
               ${objId}
             </a>
           </li>
         `;
-      });
-      
-      tabsHtml += `</ul>`;
+                    });
 
-    
-      DOM.gamoBreadcrumbs.innerHTML = tabsHtml;
+                    tabsHtml += `</ul>`;
 
-      DOM.gamoBreadcrumbs.querySelectorAll('a[data-obj]').forEach(anchor => {
-        anchor.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.handleObjectiveTabClick(anchor);
-        });
-      });
 
-      const firstAnchor = DOM.gamoBreadcrumbs.querySelector('a[data-obj]');
-      if (firstAnchor) firstAnchor.click();
-    },
+                    DOM.gamoBreadcrumbs.innerHTML = tabsHtml;
 
-    handleObjectiveTabClick(anchor) {
-      DOM.gamoBreadcrumbs.querySelectorAll('a[data-obj]').forEach(a => {
-        a.classList.remove('active');
-      });
-      anchor.classList.add('active');
+                    DOM.gamoBreadcrumbs.querySelectorAll('a[data-obj]').forEach(anchor => {
+                        anchor.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.handleObjectiveTabClick(anchor);
+                        });
+                    });
 
-      const objId = anchor.getAttribute('data-obj');
-      this.selectObjective(objId);
-    },
+                    const firstAnchor = DOM.gamoBreadcrumbs.querySelector('a[data-obj]');
+                    if (firstAnchor) firstAnchor.click();
+                },
 
-    async selectObjective(id) {
-      if (!id) {
-        DOM.gamoResults.innerHTML = '';
-        return;
-      }
+                handleObjectiveTabClick(anchor) {
+                    DOM.gamoBreadcrumbs.querySelectorAll('a[data-obj]').forEach(a => {
+                        a.classList.remove('active');
+                    });
+                    anchor.classList.add('active');
 
-      try {
-        const objectives = await DataService.fetchAllObjectives();
-        const obj = objectives.find(x => String(x.objective_id) === String(id));
-        
-        if (!obj) {
-          DOM.gamoResults.innerHTML = '<div class="text-muted">Objective not found</div>';
-          return;
-        }
+                    const objId = anchor.getAttribute('data-obj');
+                    this.selectObjective(objId);
+                },
 
-        // NOTE: per request, do NOT display breadcrumb details / objective title / domain here.
-        // Keep the details pane but do not inject the extra strings previously present.
-        this.renderObjectiveDetails(obj);
-      } catch (err) {
-        console.error(err);
-        DOM.gamoResults.innerHTML = `
+                async selectObjective(id) {
+                    if (!id) {
+                        DOM.gamoResults.innerHTML = '';
+                        return;
+                    }
+
+                    try {
+                        const objectives = await DataService.fetchAllObjectives();
+                        const obj = objectives.find(x => String(x.objective_id) === String(id));
+
+                        if (!obj) {
+                            DOM.gamoResults.innerHTML = '<div class="text-muted">Objective not found</div>';
+                            return;
+                        }
+
+                        // NOTE: per request, do NOT display breadcrumb details / objective title / domain here.
+                        // Keep the details pane but do not inject the extra strings previously present.
+                        this.renderObjectiveDetails(obj);
+                    } catch (err) {
+                        console.error(err);
+                        DOM.gamoResults.innerHTML = `
           <div class="text-muted">
             Gagal memuat objective: ${Utils.escapeHtml(err.message)}
           </div>
         `;
-      }
-    },
+                    }
+                },
 
-    updateBreadcrumbs(obj) {
-      const infoEl = document.getElementById('gamoObjSelectedInfo');
-      if (infoEl) {
-        infoEl.innerHTML = `<div class="small text-muted">Objective selected: ${Utils.escapeHtml(obj.objective_id || '')}</div>`;
-      }
-    },
+                updateBreadcrumbs(obj) {
+                    const infoEl = document.getElementById('gamoObjSelectedInfo');
+                    if (infoEl) {
+                        infoEl.innerHTML =
+                            `<div class="small text-muted">Objective selected: ${Utils.escapeHtml(obj.objective_id || '')}</div>`;
+                    }
+                },
 
-    renderObjectiveDetails(obj) {
-      const components = ['overview', 'practices', 'infoflows', 'organizational', 'policies', 'skills', 'culture', 'services'];
-      
-      let tabsHtml = `<ul class="nav nav-pills nav-fill" id="gamoTabs">`;
-      components.forEach((comp, idx) => {
-        const label = CONFIG.COMPONENT_LABELS[comp] || comp;
-        const active = idx === 0 ? 'active' : '';
-        tabsHtml += `
+                renderObjectiveDetails(obj) {
+                    const components = ['overview', 'practices', 'infoflows', 'organizational', 'policies',
+                        'skills', 'culture', 'services'
+                    ];
+
+                    let tabsHtml = `<ul class="nav nav-pills nav-fill" id="gamoTabs">`;
+                    components.forEach((comp, idx) => {
+                        const label = CONFIG.COMPONENT_LABELS[comp] || comp;
+                        const active = idx === 0 ? 'active' : '';
+                        tabsHtml += `
           <li class="nav-item">
             <button class="nav-link ${active}" data-comp="${comp}">${label}</button>
           </li>
         `;
-      });
-      tabsHtml += `</ul>`;
+                    });
+                    tabsHtml += `</ul>`;
 
-      const initialBody = Renderers.renderOverview([obj]);
+                    const initialBody = Renderers.renderOverview([obj]);
 
-      const cardHtml = Renderers.renderCardWrapper({
-        title: `${Utils.escapeHtml(obj.objective_id)} — ${Utils.escapeHtml(obj.objective || '')}`,
-        subtitle: '',
-        smallNote: '', // removed "(GAMO)" and other small note text per request
-        tabsHtml,
-        bodyHtml: initialBody,
-        bodyId: 'gamoContent'
-      });
+                    const cardHtml = Renderers.renderCardWrapper({
+                        title: `${Utils.escapeHtml(obj.objective_id)} — ${Utils.escapeHtml(obj.objective || '')}`,
+                        subtitle: '',
+                        smallNote: '', // removed "(GAMO)" and other small note text per request
+                        tabsHtml,
+                        bodyHtml: initialBody,
+                        bodyId: 'gamoContent'
+                    });
 
-      DOM.gamoResults.innerHTML = cardHtml;
+                    DOM.gamoResults.innerHTML = cardHtml;
 
-      DOM.gamoResults.querySelectorAll('#gamoTabs .nav-link').forEach(btn => {
-        btn.addEventListener('click', () => {
-          this.handleComponentTabClick(btn, obj);
-        });
-      });
-    },
+                    DOM.gamoResults.querySelectorAll('#gamoTabs .nav-link').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            this.handleComponentTabClick(btn, obj);
+                        });
+                    });
+                },
 
-    handleComponentTabClick(btn, obj) {
-      DOM.gamoResults.querySelectorAll('#gamoTabs .nav-link').forEach(b => {
-        b.classList.remove('active');
-      });
-      btn.classList.add('active');
+                handleComponentTabClick(btn, obj) {
+                    DOM.gamoResults.querySelectorAll('#gamoTabs .nav-link').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    btn.classList.add('active');
 
-      const comp = btn.getAttribute('data-comp');
-      const content = this.renderObjectiveComponent(comp, obj);
-      
-      const contentEl = DOM.gamoResults.querySelector('#gamoContent');
-      if (contentEl) {
-        contentEl.innerHTML = content;
-      }
-    },
+                    const comp = btn.getAttribute('data-comp');
+                    const content = this.renderObjectiveComponent(comp, obj);
 
-    renderObjectiveComponent(componentType, obj) {
-      const rendererMap = {
-        overview: () => Renderers.renderOverview([obj]),
-        practices: () => Renderers.renderPractices([obj]),
-        infoflows: () => Renderers.renderInfoflows([obj]),
-        organizational: () => Renderers.renderOrganizational([obj]),
-        policies: () => Renderers.renderPolicies([obj]),
-        skills: () => Renderers.renderSkills([obj]),
-        culture: () => Renderers.renderCulture([obj]),
-        services: () => Renderers.renderServices([obj])
-      };
+                    const contentEl = DOM.gamoResults.querySelector('#gamoContent');
+                    if (contentEl) {
+                        contentEl.innerHTML = content;
+                    }
+                },
 
-      const renderer = rendererMap[componentType];
-      return renderer ? renderer() : '';
-    }
-  };
+                renderObjectiveComponent(componentType, obj) {
+                    const rendererMap = {
+                        overview: () => Renderers.renderOverview([obj]),
+                        practices: () => Renderers.renderPractices([obj]),
+                        infoflows: () => Renderers.renderInfoflows([obj]),
+                        organizational: () => Renderers.renderOrganizational([obj]),
+                        policies: () => Renderers.renderPolicies([obj]),
+                        skills: () => Renderers.renderSkills([obj]),
+                        culture: () => Renderers.renderCulture([obj]),
+                        services: () => Renderers.renderServices([obj])
+                    };
 
-  // ===================================================================
-  // MODE CONTROLLER (refactored)
-  // - centralizes button state handling
-  // - ensures only one primary (filled) button at a time
-  // - keeps DOM display logic isolated
-  // ===================================================================
+                    const renderer = rendererMap[componentType];
+                    return renderer ? renderer() : '';
+                }
+            };
 
-  const ModeController = {
-    // Public API: setMode, activateGamoMode, activateComponentMode, toggleMaster
+            // ===================================================================
+            // MODE CONTROLLER (refactored)
+            // - centralizes button state handling
+            // - ensures only one primary (filled) button at a time
+            // - keeps DOM display logic isolated
+            // ===================================================================
 
-    setMode(mode) {
-      // hide master panel whenever switching mode
-      DOM.masterPanel.style.display = 'none';
+            const ModeController = {
+                // Public API: setMode, activateGamoMode, activateComponentMode, toggleMaster
 
-      // normalize buttons first (ensure none are accidentally left as primary)
-      this._setInactive(DOM.modeGamoBtn);
-      this._setInactive(DOM.modeComponentBtn);
-      this._setInactive(DOM.masterToggleBtn);
+                setMode(mode) {
+                    // hide master panel whenever switching mode
+                    DOM.masterPanel.style.display = 'none';
 
-      if (mode === 'gamo') {
-        this.activateGamoMode();
-      } else {
-        this.activateComponentMode();
-      }
-    },
+                    // normalize buttons first (ensure none are accidentally left as primary)
+                    this._setInactive(DOM.modeGamoBtn);
+                    this._setInactive(DOM.modeComponentBtn);
+                    this._setInactive(DOM.masterToggleBtn);
 
-    activateGamoMode() {
-      this._setActive(DOM.modeGamoBtn);
-      this._setInactive(DOM.modeComponentBtn);
-      this._setInactive(DOM.masterToggleBtn);
+                    if (mode === 'gamo') {
+                        this.activateGamoMode();
+                    } else {
+                        this.activateComponentMode();
+                    }
+                },
 
-      DOM.gamoPane.style.display = 'block';
-      DOM.componentResults.style.display = 'none';
-      if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
-        DOM.componentSelect.closest('.row').style.display = 'none';
-      }
+                activateGamoMode() {
+                    this._setActive(DOM.modeGamoBtn);
+                    this._setInactive(DOM.modeComponentBtn);
+                    this._setInactive(DOM.masterToggleBtn);
 
-      GamoViewController.ensurePopulateGamo().catch(err => {
-        console.error('Failed to populate GAMO:', err);
-      });
-    },
+                    DOM.gamoPane.style.display = 'block';
+                    DOM.componentResults.style.display = 'none';
+                    if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
+                        DOM.componentSelect.closest('.row').style.display = 'none';
+                    }
 
-    activateComponentMode() {
-      this._setActive(DOM.modeComponentBtn);
-      this._setInactive(DOM.modeGamoBtn);
-      this._setInactive(DOM.masterToggleBtn);
+                    GamoViewController.ensurePopulateGamo().catch(err => {
+                        console.error('Failed to populate GAMO:', err);
+                    });
+                },
 
-      DOM.gamoPane.style.display = 'none';
-      DOM.componentResults.style.display = 'block';
-      if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
-        DOM.componentSelect.closest('.row').style.display = '';
-      }
-    },
+                activateComponentMode() {
+                    this._setActive(DOM.modeComponentBtn);
+                    this._setInactive(DOM.modeGamoBtn);
+                    this._setInactive(DOM.masterToggleBtn);
 
-    async toggleMaster() {
-      const isVisible = DOM.masterPanel.style.display !== 'block';
+                    DOM.gamoPane.style.display = 'none';
+                    DOM.componentResults.style.display = 'block';
+                    if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
+                        DOM.componentSelect.closest('.row').style.display = '';
+                    }
+                },
 
-      if (isVisible) {
-        // show master panel and mark Master button active
-        DOM.masterPanel.style.display = 'block';
-        this._setActive(DOM.masterToggleBtn);
+                async toggleMaster() {
+                    const isVisible = DOM.masterPanel.style.display !== 'block';
 
-        // ensure other mode buttons appear inactive
-        this._setInactive(DOM.modeGamoBtn);
-        this._setInactive(DOM.modeComponentBtn);
+                    if (isVisible) {
+                        // show master panel and mark Master button active
+                        DOM.masterPanel.style.display = 'block';
+                        this._setActive(DOM.masterToggleBtn);
 
-        DOM.gamoPane.style.display = 'none';
-        DOM.componentResults.style.display = 'none';
-        if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
-          DOM.componentSelect.closest('.row').style.display = 'none';
-        }
+                        // ensure other mode buttons appear inactive
+                        this._setInactive(DOM.modeGamoBtn);
+                        this._setInactive(DOM.modeComponentBtn);
 
-        if (!STATE.masterRendered) {
-          await MasterService.renderMaster();
-        }
-      } else {
-        // hide master and restore component mode visuals
-        DOM.masterPanel.style.display = 'none';
-        this._setInactive(DOM.masterToggleBtn);
-        this.setMode('component');
-      }
-    },
+                        DOM.gamoPane.style.display = 'none';
+                        DOM.componentResults.style.display = 'none';
+                        if (DOM.componentSelect && DOM.componentSelect.closest('.row')) {
+                            DOM.componentSelect.closest('.row').style.display = 'none';
+                        }
 
-    // Helper: mark button visually active (filled)
-    _setActive(btn) {
-      if (!btn) return;
-      // prefer removing any outline class and add primary
-      btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
-      if (!btn.classList.contains('btn-primary')) btn.classList.add('btn-primary');
-    },
+                        if (!STATE.masterRendered) {
+                            await MasterService.renderMaster();
+                        }
+                    } else {
+                        // hide master and restore component mode visuals
+                        DOM.masterPanel.style.display = 'none';
+                        this._setInactive(DOM.masterToggleBtn);
+                        this.setMode('component');
+                    }
+                },
 
-    // Helper: mark button visually inactive (outline)
-    _setInactive(btn) {
-      if (!btn) return;
-      if (btn.classList.contains('btn-primary')) {
-        btn.classList.replace('btn-primary', 'btn-outline-primary');
-      }
-      // ensure at least one outline class exists
-      if (!btn.classList.contains('btn-outline-primary') && !btn.classList.contains('btn-outline-secondary')) {
-        btn.classList.add('btn-outline-primary');
-      }
-    }
-  };
+                // Helper: mark button visually active (filled)
+                _setActive(btn) {
+                    if (!btn) return;
+                    // prefer removing any outline class and add primary
+                    btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
+                    if (!btn.classList.contains('btn-primary')) btn.classList.add('btn-primary');
+                },
 
-  // ===================================================================
-  // EVENT LISTENERS
-  // ===================================================================
-  
-  const EventListeners = {
-    init() {
-      this.setupComponentSelect();
-      this.setupModeButtons();
-      this.setupMasterToggle();
-      this.initializeComponent();
-    },
+                // Helper: mark button visually inactive (outline)
+                _setInactive(btn) {
+                    if (!btn) return;
+                    if (btn.classList.contains('btn-primary')) {
+                        btn.classList.replace('btn-primary', 'btn-outline-primary');
+                    }
+                    // ensure at least one outline class exists
+                    if (!btn.classList.contains('btn-outline-primary') && !btn.classList.contains(
+                            'btn-outline-secondary')) {
+                        btn.classList.add('btn-outline-primary');
+                    }
+                }
+            };
 
-    setupComponentSelect() {
-      DOM.componentSelect.addEventListener('change', function() {
-        ComponentViewController.renderComponent(this.value);
-      });
-    },
+            // ===================================================================
+            // EVENT LISTENERS
+            // ===================================================================
 
-    setupModeButtons() {
-      DOM.modeGamoBtn.addEventListener('click', () => {
-        ModeController.setMode('gamo');
-      });
+            const EventListeners = {
+                init() {
+                    this.setupComponentSelect();
+                    this.setupModeButtons();
+                    this.setupMasterToggle();
+                    this.initializeComponent();
+                },
 
-      DOM.modeComponentBtn.addEventListener('click', () => {
-        ModeController.setMode('component');
-      });
-    },
+                setupComponentSelect() {
+                    DOM.componentSelect.addEventListener('change', function() {
+                        ComponentViewController.renderComponent(this.value);
+                    });
+                },
 
-    setupMasterToggle() {
-      DOM.masterToggleBtn.addEventListener('click', () => {
-        ModeController.toggleMaster();
-      });
-    },
+                setupModeButtons() {
+                    DOM.modeGamoBtn.addEventListener('click', () => {
+                        ModeController.setMode('gamo');
+                    });
 
-    initializeComponent() {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        let compParam = params.get('component') || '{{ $component }}' || '';
-        
-        if (!compParam) {
-          compParam = 'overview';
-        }
+                    DOM.modeComponentBtn.addEventListener('click', () => {
+                        ModeController.setMode('component');
+                    });
+                },
 
-        DOM.componentSelect.value = compParam;
-        DOM.componentSelect.dispatchEvent(new Event('change'));
-      } catch (err) {
-        console.warn('Failed to initialize component select:', err);
-      }
-    }
-  };
+                setupMasterToggle() {
+                    DOM.masterToggleBtn.addEventListener('click', () => {
+                        ModeController.toggleMaster();
+                    });
+                },
 
-  // ===================================================================
-  // INITIALIZATION
-  // ===================================================================
-  
-  function init() {
-    ModeController.setMode('component');
-    EventListeners.init();
-  }
+                initializeComponent() {
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        let compParam = params.get('component') || '{{ $component }}' || '';
 
-  // Start the application
-  init();
+                        if (!compParam) {
+                            compParam = 'overview';
+                        }
 
-})();
-</script>
+                        DOM.componentSelect.value = compParam;
+                        DOM.componentSelect.dispatchEvent(new Event('change'));
+                    } catch (err) {
+                        console.warn('Failed to initialize component select:', err);
+                    }
+                }
+            };
 
+            // ===================================================================
+            // INITIALIZATION
+            // ===================================================================
+
+            function init() {
+                ModeController.setMode('component');
+                EventListeners.init();
+            }
+
+            // Start the application
+            init();
+
+        })();
+    </script>
 @endsection

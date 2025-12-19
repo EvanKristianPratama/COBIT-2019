@@ -585,7 +585,7 @@
                                                     data-min-level="{{ $minLevel }}"
                                                     data-required-previous="{{ $level > $minLevel ? 'true' : 'false' }}">
                                                 <i class="fas me-1 fa-chevron-down toggle-icon"></i>
-                                                <span class="toggle-text">Start Assessment</span>
+                                                <span class="toggle-text">Show Assesment</span>
                                             </button>
                                         </div>
                                     </div>
@@ -2086,7 +2086,7 @@ class COBITAssessmentManager {
                     assessmentSection.style.display = 'none';
                     icon.classList.remove('fa-chevron-up');
                     icon.classList.add('fa-chevron-down');
-                    text.textContent = 'Start Assessment';
+                    text.textContent = 'Show Assesment';
                 }
             });
         });
@@ -2415,7 +2415,7 @@ class COBITAssessmentManager {
                     notes: existingNotes         // Preserve notes
                 };
             } else {
-                button.querySelector('.toggle-text').textContent = 'Start Assessment';
+                button.querySelector('.toggle-text').textContent = 'Show Assesment';
                 button.disabled = false;
                 button.classList.remove('level-toggle-btn-disabled');
             }
