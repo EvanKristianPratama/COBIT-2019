@@ -225,9 +225,9 @@
             
             selectedScopes.forEach(s => {
                 headerHtml += `
-                    <th style="width:100px;" class="text-center">
-                        <div>${Utils.escape(s.year)}</div>
-                        <div class="small fw-normal text-muted">${Utils.escape(s.scope_name)}</div>
+                    <th style="width:100px;" class="text-center align-middle">
+                        <div class="fw-bold fs-6 mb-1 border-bottom pb-1">${Utils.escape(s.year)}</div>
+                        <div class="small fw-normal text-dark text-wrap lh-sm">${Utils.escape(s.scope_name)}</div>
                     </th>`;
             });
             theadRow.innerHTML = headerHtml;
