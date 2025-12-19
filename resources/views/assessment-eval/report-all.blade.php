@@ -54,7 +54,7 @@
                     </div>
                 </div>
                 <div class="card-body p-0" id="report-container">
-                    <div class="table-responsive">
+                    <div class="table-responsive table-wrapper-scroll-y my-custom-scrollbar">
                         <table class="table table-sm table-bordered recap-table align-middle mb-0" id="recap-table">
                             <thead>
                                 <tr id="table-header-row">
@@ -79,18 +79,60 @@
 </div>
 
 <style>
+    /* Scrollable Table Container */
+    .table-wrapper-scroll-y {
+        max-height: 80vh;
+        overflow-y: auto;
+        overflow-x: auto;
+        position: relative; /* Context for sticky */
+    }
+
     /* Sticky first 3 columns for horizontal scroll */
     .sticky-col {
         position: sticky;
         left: 0;
         background-color: #fff !important;
-        z-index: 2;
+        /* Default z-index for body sticky cols */
+        z-index: 10; 
     }
-    th.sticky-col:nth-child(1), td.sticky-col:nth-child(1) { left: 0px; z-index: 3; width: 50px;}
-    th.sticky-col:nth-child(2), td.sticky-col:nth-child(2) { left: 50px; z-index: 3; width: 90px;}
-    th.sticky-col:nth-child(3), td.sticky-col:nth-child(3) { left: 140px; z-index: 3; }
     
-    thead th { position: sticky; top: 0; z-index: 5; background-color: #f8f9fa; }
+    /* Specific offsets for the 3 columns */
+    th.sticky-col:nth-child(1), td.sticky-col:nth-child(1) { left: 0px; width: 50px; }
+    th.sticky-col:nth-child(2), td.sticky-col:nth-child(2) { left: 50px; width: 90px; }
+    th.sticky-col:nth-child(3), td.sticky-col:nth-child(3) { left: 140px; }
+    
+    /* Sticky Header */
+    thead th { 
+        position: sticky; 
+        top: 0; 
+        z-index: 20; /* Higher than body sticky cols */
+        background-color: #f8f9fa !important; 
+        box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); /* Subtle shadow for header */
+    }
+
+    /* Top Left Intersection (Header + Sticky Col) needs highest Z */
+    thead th.sticky-col {
+        z-index: 30 !important;
+        background-color: #f8f9fa !important;
+    }
+    
+    /* Footer Sticky Columns (optional, keeps left cols visible in footer) */
+    tfoot td.sticky-col {
+        z-index: 10;
+        background-color: #f8f9fa !important;
+    }
+    
+    tfoot td {
+        position: sticky;
+        bottom: 0;
+        z-index: 20;
+        background-color: #f8f9fa !important;
+        border-top: 2px solid #dee2e6;
+    }
+    
+    tfoot td.sticky-col {   
+        z-index: 30 !important; /* Intersection footer + sticky col */
+    }
 </style>
 
 <script>
