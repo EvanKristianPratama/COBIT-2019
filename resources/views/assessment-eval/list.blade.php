@@ -76,7 +76,8 @@
                                 <th class="text-center">Status</th>
                                 <th>Last Update</th>
                                 <th class="text-center">I&T Maturity Score</th>
-                                <th class="text-center">Target Capability</th>
+                                <th class="text-center">Average Target Capability</th>
+                                <th class="text-center">I&T Target Maturity</th>
                                 <th class="text-center" style="width: 250px;">Aksi</th>
                             </tr>
                         </thead>
@@ -116,6 +117,7 @@
                                     <td class="small text-muted">{{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}</td>
                                     <td class="text-center fw-bold fs-5 {{ $scoreColorClass }}">{{ number_format($score, 2) }}</td>
                                     <td class="text-center fw-bold">{{ number_format($evaluation->avg_target_capability ?? 0, 2) }}</td>
+                                    <td class="text-center fw-bold text-info">{{ $evaluation->target_maturity ? number_format($evaluation->target_maturity, 2) : '-' }}</td>
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-1">
                                             <a href="{{ route('assessment-eval.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">

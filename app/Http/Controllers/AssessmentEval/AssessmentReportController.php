@@ -62,10 +62,24 @@ class AssessmentReportController extends Controller
                 }
             }
 
+            // Fetch I&T Target Maturity for this evaluation's year
+            $year = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? null;
+            $targetMaturity = null;
+            if ($year) {
+                $org = $currentUser->organisasi ?? null;
+                $tmQuery = \App\Models\TargetMaturity::where('tahun', $year);
+                if ($org) {
+                    $tmQuery->where('organisasi', $org);
+                } else {
+                    $tmQuery->where('user_id', $currentUser->id);
+                }
+                $targetMaturity = $tmQuery->value('target_maturity');
+            }
+
             return view('assessment-eval.report', compact(
                 'objectives', 'evalId', 'evaluation', 
                 'isOwner', 'targetCapabilityMap', 
-                'allScopes', 'scopeMaturityData'
+                'allScopes', 'scopeMaturityData', 'targetMaturity'
             ));
 
         } catch (\Exception $e) {
@@ -77,75 +91,121 @@ class AssessmentReportController extends Controller
     public function index()
     {
         try {
-            $user = Auth::user();
-            $org = $user->organisasi ?? null;
-
-            $query = MstEval::with(['user', 'maturityScore'])->orderBy('created_at', 'desc');
-
-            if ($org) {
-                $query->where(function($q) use ($user, $org) {
-                    $q->where('user_id', $user->id)
-                      ->orWhereHas('user', function ($subQ) use ($org) {
-                          $subQ->where('organisasi', $org);
-                      });
-                });
-            } else {
-                $query->where('user_id', $user->id);
-            }
-
-            $assessments = $query->get();
-
-            if ($assessments->isEmpty()) {
-                return view('assessment-eval.report-all', [
+            $data = $this->getReportData();
+            if (isset($data['error'])) {
+                 return view('assessment-eval.report-all', [
                     'objectives' => [], 'assessments' => [],
-                    'scopeMaturityData' => [], 'error' => 'No assessments found.'
+                    'scopeMaturityData' => [], 'error' => $data['error']
                 ]);
             }
-
-            $objectives = $this->evaluationService->getSortedObjectives();
-            $processedData = [];
-
-            foreach ($assessments as $eval) {
-                $scopes = TrsScoping::where('eval_id', $eval->eval_id)->get();
-                if ($scopes->isEmpty()) continue;
-
-                $loadedData = $this->evaluationService->loadEvaluation($eval->eval_id);
-                $activityData = $loadedData['activity_evaluations'] ?? [];
-                
-                $year = $eval->tahun ?? $eval->year ?? $eval->assessment_year ?? $eval->created_at->format('Y');
-
-                foreach ($scopes as $scope) {
-                    $scopeDomains = TrsEvalDetail::where('scoping_id', $scope->id)->pluck('domain_id')->toArray();
-                    
-                    $maturityScores = [];
-                    foreach ($objectives as $obj) {
-                        $maturityScores[$obj->objective_id] = in_array($obj->objective_id, $scopeDomains)
-                            ? $this->evaluationService->calculateObjectiveMaturity($obj, $activityData)
-                            : null;
-                    }
-
-                    $processedData[] = [
-                        'assessment_id' => $eval->eval_id,
-                        'year' => $year,
-                        'scope_id' => $scope->id,
-                        'scope_name' => $scope->nama_scope,
-                        'user_name' => $eval->user->name ?? 'Unknown',
-                        'maturity_scores' => $maturityScores
-                    ];
-                }
-            }
-            
-            usort($processedData, function($a, $b) {
-                return ($a['year'] == $b['year']) 
-                    ? strcmp($a['scope_name'], $b['scope_name']) 
-                    : ($a['year'] <=> $b['year']);
-            });
-
-            return view('assessment-eval.report-all', compact('objectives', 'processedData'));
+            return view('assessment-eval.report-all', $data);
 
         } catch (\Exception $e) {
             Log::error("Failed to load all-years report", ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Failed to load report: ' . $e->getMessage()]);
         }
+    }
+
+    public function spiderweb()
+    {
+        try {
+            $data = $this->getReportData();
+            if (isset($data['error'])) {
+                 return view('assessment-eval.report-spiderweb', [
+                    'objectives' => [], 'assessments' => [],
+                    'scopeMaturityData' => [], 'error' => $data['error']
+                ]);
+            }
+            return view('assessment-eval.report-spiderweb', $data);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to load spiderweb report", ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
+            return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Failed to load report: ' . $e->getMessage()]);
+        }
+    }
+
+    private function getReportData()
+    {
+        $user = Auth::user();
+        $org = $user->organisasi ?? null;
+
+        $query = MstEval::with(['user', 'maturityScore'])->orderBy('created_at', 'desc');
+
+        if ($org) {
+            $query->where(function($q) use ($user, $org) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('user', function ($subQ) use ($org) {
+                      $subQ->where('organisasi', $org);
+                  });
+            });
+        } else {
+            $query->where('user_id', $user->id);
+        }
+
+        $assessments = $query->get();
+
+        if ($assessments->isEmpty()) {
+            return ['error' => 'No assessments found.'];
+        }
+
+        $objectives = $this->evaluationService->getSortedObjectives();
+        $processedData = [];
+        
+        // Collect all years for fetching target maturities
+        $allYears = $assessments->pluck('tahun')->filter()->unique()->values()->all();
+        $targetMaturityMap = [];
+        
+        if (!empty($allYears)) {
+            $targetMaturities = \App\Models\TargetMaturity::whereIn('tahun', $allYears)
+                ->when($org, function($q) use ($org) {
+                    $q->where('organisasi', $org);
+                }, function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                ->get();
+            
+            foreach ($targetMaturities as $tm) {
+                $targetMaturityMap[$tm->tahun] = $tm->target_maturity;
+            }
+        }
+
+        foreach ($assessments as $eval) {
+            $scopes = TrsScoping::where('eval_id', $eval->eval_id)->get();
+            if ($scopes->isEmpty()) continue;
+
+            $loadedData = $this->evaluationService->loadEvaluation($eval->eval_id);
+            $activityData = $loadedData['activity_evaluations'] ?? [];
+            
+            $year = $eval->tahun ?? $eval->year ?? $eval->assessment_year ?? $eval->created_at->format('Y');
+
+            foreach ($scopes as $scope) {
+                $scopeDomains = TrsEvalDetail::where('scoping_id', $scope->id)->pluck('domain_id')->toArray();
+                
+                $maturityScores = [];
+                foreach ($objectives as $obj) {
+                    $maturityScores[$obj->objective_id] = in_array($obj->objective_id, $scopeDomains)
+                        ? $this->evaluationService->calculateObjectiveMaturity($obj, $activityData)
+                        : null;
+                }
+
+                $processedData[] = [
+                    'assessment_id' => $eval->eval_id,
+                    'year' => $year,
+                    'scope_id' => $scope->id,
+                    'scope_name' => $scope->nama_scope,
+                    'user_name' => $eval->user->name ?? 'Unknown',
+                    'maturity_scores' => $maturityScores,
+                    'target_maturity' => $targetMaturityMap[$year] ?? null
+                ];
+            }
+        }
+        
+        usort($processedData, function($a, $b) {
+            return ($a['year'] == $b['year']) 
+                ? strcmp($a['scope_name'], $b['scope_name']) 
+                : ($b['year'] <=> $a['year']); // Sort DESC by year
+        });
+
+        return compact('objectives', 'processedData');
     }
 }

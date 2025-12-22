@@ -55,7 +55,10 @@ class AssessmentListController extends Controller
 
                 $years = $allEvals->pluck('tahun')->filter()->unique()->values()->all();
                 $targetAverages = [];
+                $targetMaturityMap = [];
+                
                 if (!empty($years)) {
+                    // Fetch Target Capability (existing logic)
                     $targetCaps = \App\Models\TargetCapability::whereIn('tahun', $years)
                         ->when($org, function($q) use ($org) {
                             $q->where('organisasi', $org);
@@ -84,12 +87,26 @@ class AssessmentListController extends Controller
                         }
                         $targetAverages[$tc->tahun] = $count > 0 ? round($sum / $count, 2) : 0;
                     }
+                    
+                    // Fetch Target Maturity per year (NEW)
+                    $targetMaturities = \App\Models\TargetMaturity::whereIn('tahun', $years)
+                        ->when($org, function($q) use ($org) {
+                            $q->where('organisasi', $org);
+                        }, function($q) use ($user) {
+                            $q->where('user_id', $user->id);
+                        })
+                        ->get();
+                    
+                    foreach ($targetMaturities as $tm) {
+                        $targetMaturityMap[$tm->tahun] = $tm->target_maturity;
+                    }
                 }
 
                 foreach ($allEvals as $evaluation) {
                     $evaluation->scope_count = $scopeCounts[$evaluation->eval_id] ?? 0;
                     $evaluation->last_saved_at = $lastActivityDates[$evaluation->eval_id] ?? $evaluation->created_at;
                     $evaluation->avg_target_capability = $targetAverages[$evaluation->tahun ?? ''] ?? 0;
+                    $evaluation->target_maturity = $targetMaturityMap[$evaluation->tahun ?? ''] ?? null;
                 }
             }
 

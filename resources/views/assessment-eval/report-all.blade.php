@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
+
+
 <div class="container-fluid p-4">
     {{-- Header --}}
     <div class="card shadow-sm mb-4 hero-card" style="border:none;box-shadow:0 22px 45px rgba(14,33,70,0.15);">
@@ -13,6 +15,11 @@
                     </div>
                 </div>
                 <div>
+                     <div class="btn-group me-2" role="group">
+                    <a href="{{ route('assessment-eval.report.spiderweb') }}" class="btn btn-outline-light btn-sm px-3 me-2">
+                         <i class="fas fa-spider me-2"></i>Spiderweb View
+                    </a>
+
                     <a href="{{ route('assessment-eval.list') }}" class="btn btn-light btn-sm rounded-pill px-3">
                         <i class="fas fa-list me-2"></i>Back to List
                     </a>
@@ -44,9 +51,10 @@
             </div>
         </div>
 
-        {{-- Report Table --}}
+        {{-- Report Content --}}
         <div class="col-md-9 mb-4">
-            <div class="card shadow-sm border-0" id="report-result-card">
+            {{-- VIEW: TABLE --}}
+            <div class="card shadow-sm border-0 view-section" id="report-result-card">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold text-primary">All Maturity Report</h5>
                     <div>
@@ -74,6 +82,10 @@
                     </div>
                 </div>
             </div>
+                </div>
+            </div>
+
+
         </div>
     </div>
 </div>
@@ -159,13 +171,23 @@
 
     // State
     const State = {
-        selectedScopeIds: new Set()
+        selectedScopeIds: new Set(),
+        currentView: 'table'
     };
 
     // Utilities
     const Utils = {
         escape: s => (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])),
-        fmt: n => (n || 0).toFixed(2),
+        fmt: n => (Number(n) || 0).toFixed(2),
+        // Helper to generate a vibrant color from string
+        stringToColor: function(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+            return '#' + '00000'.substring(0, 6 - c.length) + c;
+        }
     };
 
     const ReportApp = {
@@ -181,6 +203,8 @@
         },
 
         bindEvents() {
+
+
             // Search Filter
             document.getElementById('scope-search').addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
@@ -207,15 +231,19 @@
                     const id = parseInt(e.target.value);
                     if (e.target.checked) State.selectedScopeIds.add(id);
                     else State.selectedScopeIds.delete(id);
-                    this.renderTable();
-                    this.updateBadge(); // Only update badge and table, not re-render filter
+                    
+                    this.updateUI(); // Re-render current view content
+                    this.updateBadge(); // Update badge
                 }
             });
         },
 
         updateUI() {
-            this.renderFilter(); // Re-render checkboxes to match state
+            // Render filter checkboxes strictly? No, they handle themselves visually via 'checked' attribute we don't need to re-render the whole list every time unless we want to sort/filter it.
+            // But 'renderFilter' rebuilds the list. Let's not rebuild the list if just checking a box, but we DO need to update the main content.
+            
             this.renderTable();
+
         },
         
         updateBadge() {
@@ -345,6 +373,21 @@
                         </td>`;
                 });
                 footerHtml += `</tr>`;
+                
+                // Row 3: I&T Target Maturity
+                footerHtml += `
+                    <tr class="table-info fw-bold">
+                         <td colspan="3" class="text-end pe-3 sticky-col">I&T Target Maturity</td>`;
+                
+                selectedScopes.forEach(s => {
+                    const tm = s.target_maturity;
+                    footerHtml += `
+                        <td class="text-center bg-info text-white border-start">
+                            ${tm ? Utils.fmt(tm) : '-'}
+                        </td>`;
+                });
+                footerHtml += `</tr>`;
+                
                 tfoot.innerHTML = footerHtml;
             }
         }

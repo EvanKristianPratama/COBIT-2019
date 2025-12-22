@@ -85,7 +85,8 @@
         objectives: @json($objectives),
         targetMap: @json($targetCapabilityMap ?? []),
         allScopes: @json($allScopes ?? []),
-        scopeMaturityData: @json($scopeMaturityData ?? [])
+        scopeMaturityData: @json($scopeMaturityData ?? []),
+        targetMaturity: @json($targetMaturity ?? null)
     };
 
     // Utilities
@@ -95,7 +96,7 @@
             const n = Number(v);
             return (v === null || v === undefined || v === '' || isNaN(n)) ? null : n;
         },
-        fmt: n => (n || 0).toFixed(2),
+        fmt: n => (Number(n) || 0).toFixed(2),
         getLink: id => `${Config.assessmentUrl}#objective-${id}`
     };
 
@@ -233,6 +234,22 @@
             html += `
                     <td class="text-center bg-secondary text-white">${Utils.fmt(avgMax)}</td>
                 </tr>`;
+            
+            // Row 3: I&T Target Maturity (if available)
+            if (AppData.targetMaturity !== null) {
+                html += `
+                    <tr class="table-info fw-bold">
+                        <td colspan="3" class="text-end pe-3">I&T Target Maturity</td>`;
+                
+                AppData.allScopes.forEach(scope => {
+                    html += `
+                        <td class="text-center bg-info text-white">
+                            ${Utils.fmt(AppData.targetMaturity)}
+                        </td>`;
+                });
+                
+                html += `<td class="text-center bg-info text-white">-</td></tr>`;
+            }
             
             tfoot.innerHTML = html;
         }

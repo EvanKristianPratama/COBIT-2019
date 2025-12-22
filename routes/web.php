@@ -275,6 +275,10 @@ Route::get('/assessment-eval/report-all', [AssessmentReportController::class, 'i
      ->name('assessment-eval.report.all')
      ->middleware('auth');
 
+Route::get('/assessment-eval/report-spiderweb', [AssessmentReportController::class, 'spiderweb'])
+     ->name('assessment-eval.report.spiderweb')
+     ->middleware('auth');
+
 Route::resource('assessment-eval/target-maturity', TargetMaturityController::class)
      ->only(['index', 'store', 'destroy'])
      ->middleware('auth');
