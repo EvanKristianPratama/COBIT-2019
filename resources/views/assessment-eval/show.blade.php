@@ -2562,17 +2562,23 @@ class COBITAssessmentManager {
                 scoreElement.className = 'capability-score level-score-chip score-chip-muted';
                 
                 // Preserve existing evidence and notes when locking
-                const existingEvidence = this.levelScores[objectiveId]?.[level]?.evidence || {};
-                const existingNotes = this.levelScores[objectiveId]?.[level]?.notes || {};
-                
-                // Lock the level data but preserve evidence and notes
-                this.levelScores[objectiveId][level] = {
-                    letter: 'N',
-                    score: 0.00,
-                    activities: {},
-                    evidence: existingEvidence,  // Preserve evidence
-                    notes: existingNotes         // Preserve notes
-                };
+                // Lock the level data but preserve evidence and notes by mutating in place
+                const levelData = this.levelScores[objectiveId][level];
+                if (levelData) {
+                    levelData.letter = 'N';
+                    levelData.score = 0.00;
+                    levelData.activities = {};
+                    // evidence and notes are untouched and preserved
+                } else {
+                     // Should not start as locked if it doesn't exist, but if initialized:
+                    this.levelScores[objectiveId][level] = {
+                        letter: 'N',
+                        score: 0.00,
+                        activities: {},
+                        evidence: {},
+                        notes: {}
+                    };
+                }
             } else {
                 button.querySelector('.toggle-text').textContent = 'Show Assesment';
                 button.disabled = false;

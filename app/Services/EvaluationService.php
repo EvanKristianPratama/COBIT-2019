@@ -109,6 +109,7 @@ class EvaluationService
     public function convertAssessmentData($assessmentData)
     {
         $activityEvaluations = [];
+        $processedActivityIds = [];
 
         if (isset($assessmentData['assessmentData'])) {
             $levelScores = $assessmentData['assessmentData'];
@@ -121,16 +122,28 @@ class EvaluationService
                         foreach ($levelData['activities'] as $activityId => $score) {
                             $levelAchieved = $this->scoreToLetter($score);
                             
-                            // Include all activities, even those rated as 'N'
-                            // This preserves evidence and notes when levels are changed
                             $activityEvaluations[] = [
                                 'activity_id' => $activityId,
                                 'level_achieved' => $levelAchieved,
                                 'evidence' => $evidence[$activityId] ?? null,
                                 'notes' => $notes[$activityId] ?? null
                             ];
+                            $processedActivityIds[$activityId] = true;
                         }
                     }
+                }
+            }
+
+            // check for activities with notes/evidence but no rating
+            $otherIds = array_unique(array_merge(array_keys($notes), array_keys($evidence)));
+            foreach ($otherIds as $actId) {
+                if (!isset($processedActivityIds[$actId])) {
+                    $activityEvaluations[] = [
+                        'activity_id' => $actId,
+                        'level_achieved' => null, // Allow null for unrated activities
+                        'evidence' => $evidence[$actId] ?? null,
+                        'notes' => $notes[$actId] ?? null
+                    ];
                 }
             }
         } else {
