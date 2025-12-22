@@ -1,50 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
-@php
-    // Local map of COBIT objectives
-    $domains = collect($domains ?? [
-        'EDM' => ['EDM01','EDM02','EDM03','EDM04','EDM05'],
-        'APO' => ['APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14'],
-        'BAI' => ['BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11'],
-        'DSS' => ['DSS01','DSS02','DSS03','DSS04','DSS05','DSS06'],
-        'MEA' => ['MEA01','MEA02','MEA03','MEA04'],
-    ]);
-
-    $flatCodes = collect($domains)->flatten()->values()->all();
-    $totalFields = $totalFields ?? (count($flatCodes) ?: 40);
-    $allTargets = collect($allTargets ?? []);
-    $title = 'Target Capability & Maturity';
-    $target = $target ?? null;
-
-    // Max capability map
-    $maxMap = $maxMap ?? array_reduce($flatCodes, function ($carry, $c) {
-        $carry[$c] = 5; return $carry;
-    }, []);
-@endphp
-
-<div class="container py-4">
-    <div class="card shadow-sm border-0 cobit-card">
-        {{-- Header --}}
-        <div class="card-header cobit-hero text-white py-3">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h4 class="mb-1 fw-bold">{{ $title }}</h4>
-                    <small class="text-white-50">Set target kapabilitas per tujuan COBIT 2019</small>
-                </div>
-
-                <div class="d-flex align-items-center gap-2">
-                    <a href="{{ url()->previous() }}" class="btn btn-light btn-sm d-flex align-items-center" aria-label="Kembali">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        <span class="fw-semibold">Kembali</span>
-                    </a>
-                </div>
-            </div>
+<div class="container mx-auto p-6">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-primary">{{ $title }}</h5>
+            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
         </div>
+        <div class="card-body">
+            
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
 
-        {{-- Body --}}
-        <div class="card-body p-4">
-            <form method="POST" action="{{ route('target-capability.save') }}" class="cobit-form">
+            <form method="POST" action="{{ route('target-capability.save') }}" class="mb-5">
                 @csrf
                 @if($target)
                     <input type="hidden" name="target_id" value="{{ $target->target_id }}">
@@ -52,41 +26,23 @@
 
                 {{-- Meta Information --}}
                 <div class="row g-3 mb-4 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-secondary">
-                            <i class="fas fa-building me-1"></i> Organisasi
-                        </label>
-                        <input type="text" name="organisasi" class="form-control"
+                  <div class="col-md-4">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Organisasi</label>
+                        <input type="text" name="organisasi" class="form-control bg-light" 
                                value="{{ old('organisasi', $target->organisasi ?? Auth::user()->organisasi ?? '') }}" readonly>
                     </div>
-
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold text-secondary">
-                            <i class="fas fa-calendar me-1"></i> Tahun Target
-                        </label>
+                        <label class="form-label fw-bold small text-uppercase text-muted">Tahun Target</label>
                         <input type="number" name="tahun" class="form-control" min="2000" max="2099"
                                value="{{ old('tahun', $target->tahun ?? now()->year) }}" required>
                     </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold text-secondary">
-                            <i class="fas fa-user me-1"></i> User ID
-                        </label>
-                        <input type="number" name="user_id" class="form-control"
-                               value="{{ old('user_id', $target->user_id ?? Auth::id()) }}" readonly required>
-                    </div>
-
                     <div class="col-md-2">
-                        {{-- Add Year Button --}}
                         <button type="button" id="addYearBtn" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-calendar-plus me-1"></i>
-                            <span class="d-none d-lg-inline">Tahun Baru</span>
-                            <span class="d-inline d-lg-none">Baru</span>
+                            <i class="fas fa-calendar-plus me-1"></i>Tahun Baru
                         </button>
                     </div>
                 </div>
-
-                {{-- Average Display Card --}}
+                {{-- Average Display --}}
                 <div class="alert alert-info border-0 mb-4 d-flex justify-content-between align-items-center">
                     <div>
                         <i class="fas fa-chart-line me-2"></i>
@@ -99,15 +55,14 @@
 
                 {{-- Target Capability Table --}}
                 <div class="table-responsive mb-4">
-                    <table class="table table-bordered table-hover align-middle cobit-table">
+                    <table class="table table-bordered table-hover align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 35%" class="fw-bold">GAMO</th>
-                                <th class="text-center fw-bold">Target Level</th>
-                                <th class="text-center fw-bold" style="width: 20%">Max Level</th>
+                                <th style="width: 35%">GAMO</th>
+                                <th class="text-center">Target Level</th>
+                                <th class="text-center" style="width: 20%">Max Level</th>
                             </tr>
                         </thead>
-
                         <tbody>
                             @php $lastDomain = null; @endphp
                             @foreach($flatCodes as $code)
@@ -130,8 +85,8 @@
                                 <tr>
                                     <td class="fw-semibold text-primary">{{ $code }}</td>
                                     <td class="text-center">
-                                        <select class="form-select form-select-sm capability-input text-center"
-                                                id="{{ $code }}" name="{{ $code }}">
+                                        <select class="form-select form-select-sm capability-input" 
+                                                id="{{ $code }}" name="{{ $code }}" style="max-width: 120px; margin: 0 auto;">
                                             <option value="">-</option>
                                             @for($i = 0; $i <= $maxValue; $i++)
                                                 <option value="{{ $i }}" {{ $value == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -147,16 +102,15 @@
                     </table>
                 </div>
 
-                {{-- Hidden input untuk total target --}}
                 <input type="hidden" name="total_target" id="total_target_input" value="{{ old('total_target', $target->total_target ?? '') }}">
 
                 {{-- Action Buttons --}}
                 <div class="d-flex justify-content-end gap-2 border-top pt-3">
                     <button type="reset" class="btn btn-outline-secondary">
-                        <i class="fas fa-undo me-1"></i> Reset
+                        <i class="fas fa-undo me-1"></i>Reset
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i> Simpan Target
+                        <i class="fas fa-save me-1"></i>Simpan Target
                     </button>
                 </div>
             </form>
@@ -181,21 +135,18 @@
                 @endphp
 
                 <div class="mt-5">
-                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                        <h5 class="mb-0 fw-bold">
-                            <i class="fas fa-history me-2 text-primary"></i>
-                            Riwayat Target per Tahun
-                        </h5>
-                        <small class="text-muted">Nilai kosong ditampilkan sebagai '-'</small>
-                    </div>
+                    <h6 class="fw-bold text-muted mb-3 text-uppercase small border-bottom pb-2">
+                        <i class="fas fa-history me-2 text-primary"></i>
+                        Riwayat Target per Tahun
+                    </h6>
                     
                     <div class="table-responsive">
-                        <table class="table table-bordered table-sm align-middle cobit-table">
+                        <table class="table table-bordered table-sm align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 15%" class="fw-bold">GAMO</th>
+                                    <th style="width: 15%">GAMO</th>
                                     @foreach($years as $yr)
-                                        <th class="text-center fw-bold" style="min-width: 90px;">{{ $yr }}</th>
+                                        <th class="text-center" style="min-width: 90px;">{{ $yr }}</th>
                                     @endforeach
                                 </tr>
                                 <tr class="table-active">
@@ -277,57 +228,12 @@
     <input type="hidden" name="tahun" value="{{ old('tahun', $target->tahun ?? now()->year) }}">
 </form>
 
-{{-- Styles --}}
-<style>
-    .cobit-card {
-        border: 1px solid #e1e6f5;
-        box-shadow: 0 18px 35px rgba(14, 33, 70, 0.08);
-        border-radius: 0.75rem;
-    }
-    
-    .cobit-hero {
-        background: linear-gradient(135deg, #081a3d, #0f2b5c);
-        border: none;
-        border-radius: 0.75rem 0.75rem 0 0;
-    }
-    
-    .cobit-form {
-        background: #f9fbff;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-    }
-    
-    .cobit-table td,
-    .cobit-table th {
-        vertical-align: middle;
-    }
-    
-    .capability-input {
-        max-width: 120px;
-        margin: 0 auto;
-        font-weight: 600;
-        text-align: center;
-        text-align-last: center; /* For select dropdown */
-    }
-    
-    .capability-input:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-</style>
-
-{{-- Script --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const selects = Array.from(document.querySelectorAll('.capability-input'));
     const totalBadge = document.getElementById('totalTargetBadge');
     const totalInput = document.getElementById('total_target_input');
 
-    // Calculate sum and count
     function calculateTotal() {
         return selects.reduce((acc, el) => {
             const value = el.value === '' ? null : Number(el.value);
@@ -339,7 +245,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, { sum: 0, count: 0 });
     }
 
-    // Update display
     function updateTotal() {
         const { sum, count } = calculateTotal();
         const average = count > 0 ? (sum / count) : 0;
@@ -349,12 +254,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (totalInput) totalInput.value = displayValue;
     }
 
-    // Listen to changes
     selects.forEach(select => {
         select.addEventListener('change', updateTotal);
     });
 
-    // Initialize total
     updateTotal();
 
     // Add Year Button Handler

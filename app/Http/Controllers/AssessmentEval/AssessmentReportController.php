@@ -10,6 +10,9 @@ use App\Models\TrsEvalDetail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+use App\Models\User;
+use Illuminate\Http\Request;
+
 class AssessmentReportController extends Controller
 {
     protected $evaluationService;
@@ -19,19 +22,65 @@ class AssessmentReportController extends Controller
         $this->evaluationService = $evaluationService;
     }
 
-    /**
-     * Display the assessment report for all years/assessments.
-     */
+    public function show($evalId)
+    {
+        try {
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            
+            if (!$evaluation) {
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Assessment not found']);
+            }
+
+            $owner = User::find($evaluation->user_id);
+            $currentUser = Auth::user();
+
+            $isOwner = (string)$evaluation->user_id === (string)$currentUser->id;
+            $sameOrg = !empty($owner->organisasi) && !empty($currentUser->organisasi) && 
+                       strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0;
+
+            if (!$isOwner && !$sameOrg) {
+                return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
+            }
+
+            $allScopes = TrsScoping::where('eval_id', $evalId)->get();
+            $objectives = $this->evaluationService->getSortedObjectives();
+            $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
+            
+            $loadedData = $this->evaluationService->loadEvaluation($evalId);
+            $activityData = $loadedData['activity_evaluations'] ?? [];
+
+            $scopeMaturityData = [];
+            foreach ($allScopes as $scope) {
+                $scopeDomains = TrsEvalDetail::where('scoping_id', $scope->id)->pluck('domain_id')->toArray();
+                
+                $scopeMaturityData[$scope->id] = [];
+                foreach ($objectives as $obj) {
+                    $isInScope = in_array($obj->objective_id, $scopeDomains);
+                    $scopeMaturityData[$scope->id][$obj->objective_id] = $isInScope 
+                        ? $this->evaluationService->calculateObjectiveMaturity($obj, $activityData) 
+                        : null;
+                }
+            }
+
+            return view('assessment-eval.report', compact(
+                'objectives', 'evalId', 'evaluation', 
+                'isOwner', 'targetCapabilityMap', 
+                'allScopes', 'scopeMaturityData'
+            ));
+
+        } catch (\Exception $e) {
+            Log::error("Failed to load report", ['eval_id' => $evalId, 'error' => $e->getMessage()]);
+            return redirect()->back()->withErrors(['error' => 'Failed to load report: ' . $e->getMessage()]);
+        }
+    }
+
     public function index()
     {
         try {
             $user = Auth::user();
             $org = $user->organisasi ?? null;
 
-            // 1. Fetch relevant assessments (My Assessments + Org Assessments)
-            // Reusing logic similar to listAssessments to ensure consistency in access
-            $query = MstEval::with(['user', 'maturityScore'])
-                ->orderBy('created_at', 'desc');
+            $query = MstEval::with(['user', 'maturityScore'])->orderBy('created_at', 'desc');
 
             if ($org) {
                 $query->where(function($q) use ($user, $org) {
@@ -48,48 +97,31 @@ class AssessmentReportController extends Controller
 
             if ($assessments->isEmpty()) {
                 return view('assessment-eval.report-all', [
-                    'objectives' => [],
-                    'assessments' => [],
-                    'scopeMaturityData' => [],
-                    'error' => 'No assessments found.'
+                    'objectives' => [], 'assessments' => [],
+                    'scopeMaturityData' => [], 'error' => 'No assessments found.'
                 ]);
             }
 
-            // 2. Fetch Helper Data
             $objectives = $this->evaluationService->getSortedObjectives();
-            
-            // 3. Process each assessment
-            $processedData = []; // flattened list of scopes with maturity data
+            $processedData = [];
 
             foreach ($assessments as $eval) {
-                // Fetch scopes for this specific assessment
                 $scopes = TrsScoping::where('eval_id', $eval->eval_id)->get();
-                
-                if ($scopes->isEmpty()) {
-                    continue; // Skip assessments without scopes (or maybe show default "Unscoped"?)
-                }
+                if ($scopes->isEmpty()) continue;
 
-                // Load assessment activity data for calculation
                 $loadedData = $this->evaluationService->loadEvaluation($eval->eval_id);
                 $activityData = $loadedData['activity_evaluations'] ?? [];
                 
-                // Determine year (legacy support)
                 $year = $eval->tahun ?? $eval->year ?? $eval->assessment_year ?? $eval->created_at->format('Y');
 
                 foreach ($scopes as $scope) {
-                    // Get domains/objectives in this scope
-                    $scopeDomains = TrsEvalDetail::where('scoping_id', $scope->id)
-                        ->pluck('domain_id')
-                        ->toArray();
+                    $scopeDomains = TrsEvalDetail::where('scoping_id', $scope->id)->pluck('domain_id')->toArray();
                     
-                    // Calculate maturity for each objective
                     $maturityScores = [];
                     foreach ($objectives as $obj) {
-                        if (in_array($obj->objective_id, $scopeDomains)) {
-                            $maturityScores[$obj->objective_id] = $this->evaluationService->calculateObjectiveMaturity($obj, $activityData);
-                        } else {
-                            $maturityScores[$obj->objective_id] = null; // Not in scope
-                        }
+                        $maturityScores[$obj->objective_id] = in_array($obj->objective_id, $scopeDomains)
+                            ? $this->evaluationService->calculateObjectiveMaturity($obj, $activityData)
+                            : null;
                     }
 
                     $processedData[] = [
@@ -103,22 +135,16 @@ class AssessmentReportController extends Controller
                 }
             }
             
-            // Sort processed data by Year (desc), then Scope Name
             usort($processedData, function($a, $b) {
-                if ($a['year'] == $b['year']) {
-                    return strcmp($a['scope_name'], $b['scope_name']);
-                }
-                return $a['year'] <=> $b['year'];
+                return ($a['year'] == $b['year']) 
+                    ? strcmp($a['scope_name'], $b['scope_name']) 
+                    : ($a['year'] <=> $b['year']);
             });
 
             return view('assessment-eval.report-all', compact('objectives', 'processedData'));
 
         } catch (\Exception $e) {
-            Log::error("Failed to load all-years report", [
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error("Failed to load all-years report", ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Failed to load report: ' . $e->getMessage()]);
         }
     }

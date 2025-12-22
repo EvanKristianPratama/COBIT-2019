@@ -30,6 +30,18 @@ class TargetCapabilityController extends Controller
             ? TargetCapability::find($id)
             : TargetCapability::where('user_id', Auth::id())->latest('updated_at')->first();
 
+        // Domain mapping
+        $domains = [
+            'EDM' => ['EDM01','EDM02','EDM03','EDM04','EDM05'],
+            'APO' => ['APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14'],
+            'BAI' => ['BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11'],
+            'DSS' => ['DSS01','DSS02','DSS03','DSS04','DSS05','DSS06'],
+            'MEA' => ['MEA01','MEA02','MEA03','MEA04'],
+        ];
+
+        // Flatten codes
+        $flatCodes = collect($domains)->flatten()->values()->all();
+
         // buat map code => max untuk view
         $maxMap = array_combine(self::FIELDS, self::DATA_MAXIMUM);
         $totalFields = count(self::FIELDS);
@@ -39,7 +51,17 @@ class TargetCapabilityController extends Controller
             ->orderBy('tahun', 'desc')
             ->get();
 
-        return view('cobit2019.targetCapability', compact('target', 'maxMap', 'totalFields', 'allTargets'));
+        $title = 'Target Capability & Maturity';
+
+        return view('cobit2019.targetCapability', compact(
+            'target', 
+            'maxMap', 
+            'totalFields', 
+            'allTargets',
+            'domains',
+            'flatCodes',
+            'title'
+        ));
     }
 
     public function save(Request $request)

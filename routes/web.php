@@ -25,6 +25,10 @@ use App\Http\Controllers\cobit2019\TargetCapabilityController;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
 use App\Http\Controllers\AssessmentEval\AssessmentReportController;
+use App\Http\Controllers\AssessmentEval\AssessmentListController;
+use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
+use App\Http\Controllers\AssessmentEval\EvidenceController;
+use App\Http\Controllers\AssessmentEval\TargetMaturityController;
 use Illuminate\Support\Facades\Crypt;
 
 Route::bind('evalId', function ($value) {
@@ -263,12 +267,16 @@ Route::get('/assessment-eval', [AssessmentEvalController::class, 'index'])
      ->name('assessment-eval.index')
      ->middleware('auth');
 
-Route::get('/assessment-eval/list', [AssessmentEvalController::class, 'listAssessments'])
+Route::get('/assessment-eval/list', [AssessmentListController::class, 'index'])
      ->name('assessment-eval.list')
      ->middleware('auth');
 
 Route::get('/assessment-eval/report-all', [AssessmentReportController::class, 'index'])
      ->name('assessment-eval.report.all')
+     ->middleware('auth');
+
+Route::resource('assessment-eval/target-maturity', TargetMaturityController::class)
+     ->only(['index', 'store', 'destroy'])
      ->middleware('auth');
 
 Route::post('/assessment-eval/create', [AssessmentEvalController::class, 'createAssessment'])
@@ -279,11 +287,11 @@ Route::get('/assessment-eval/{evalId}', [AssessmentEvalController::class, 'showA
      ->name('assessment-eval.show')
      ->middleware('auth');
 
-Route::post('/assessment-eval/{evalId}/update-scope', [AssessmentEvalController::class, 'updateScope'])
+Route::post('/assessment-eval/{evalId}/update-scope', [AssessmentScopeController::class, 'update'])
      ->name('assessment-eval.update-scope')
      ->middleware('auth');
 
-Route::delete('/assessment-eval/delete-scope', [AssessmentEvalController::class, 'deleteScope'])
+Route::delete('/assessment-eval/delete-scope', [AssessmentScopeController::class, 'destroy'])
      ->name('assessment-eval.delete-scope')
      ->middleware('auth');
 
@@ -307,23 +315,23 @@ Route::post('/assessment-eval/{evalId}/unlock', [AssessmentEvalController::class
      ->name('assessment-eval.unlock')
      ->middleware('auth');
 
-Route::post('/assessment-eval/{evalId}/evidence', [AssessmentEvalController::class, 'storeEvidence'])
+Route::post('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 'store'])
      ->name('assessment-eval.evidence.store')
      ->middleware('auth');
 
-Route::get('/assessment-eval/{evalId}/evidence', [AssessmentEvalController::class, 'evidenceIndex'])
+Route::get('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 'index'])
      ->name('assessment-eval.evidence.index')
      ->middleware('auth');
 
-Route::get('/assessment-eval/{evalId}/evidence/previous', [AssessmentEvalController::class, 'previousEvidences'])
+Route::get('/assessment-eval/{evalId}/evidence/previous', [EvidenceController::class, 'previous'])
     ->name('assessment-eval.evidence.previous')
     ->middleware('auth');
 
-Route::put('/assessment-eval/evidence/{evidenceId}', [AssessmentEvalController::class, 'updateEvidence'])
+Route::put('/assessment-eval/evidence/{evidenceId}', [EvidenceController::class, 'update'])
      ->name('assessment-eval.evidence.update')
      ->middleware('auth');
 
-Route::get('/assessment-eval/{evalId}/report', [AssessmentEvalController::class, 'report'])
+Route::get('/assessment-eval/{evalId}/report', [AssessmentReportController::class, 'show'])
      ->name('assessment-eval.report')
      ->middleware('auth');
 

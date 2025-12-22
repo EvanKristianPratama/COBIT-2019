@@ -281,9 +281,25 @@
                     </table>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="btn-use-imported" disabled style="display:none;">Tambahkan</button>
+            <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <input type="text" class="form-control form-control-sm" id="import-search" placeholder="Cari dokumen..." style="width: 200px;">
+                    <span class="text-muted small" id="import-page-info">Page 0/0 (0 items)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <nav aria-label="Import pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" id="import-prev-item">
+                                <button class="page-link" id="import-prev" type="button"><i class="fas fa-chevron-left"></i></button>
+                            </li>
+                            <li class="page-item" id="import-next-item">
+                                <button class="page-link" id="import-next" type="button"><i class="fas fa-chevron-right"></i></button>
+                            </li>
+                        </ul>
+                    </nav>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-use-imported" disabled>Tambahkan Terpilih</button>
+                </div>
             </div>
         </div>
     </div>
@@ -313,6 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
             totalItems: 0,
             filteredItems: []
         },
+        // Import pagination state
+        importPagination: {
+            currentPage: 1,
+            perPage: 20,
+            total: 0,
+            lastPage: 1,
+            search: ''
+        },
         // Store full evidence list in memory
         evidenceList: window.SERVER_EVIDENCES_FULL || []
     };
@@ -338,7 +362,14 @@ document.addEventListener('DOMContentLoaded', () => {
         prevBtn: document.getElementById('evidence-prev'),
         nextBtn: document.getElementById('evidence-next'),
         prevItem: document.getElementById('evidence-prev-item'),
-        nextItem: document.getElementById('evidence-next-item')
+        nextItem: document.getElementById('evidence-next-item'),
+        // Import pagination DOM
+        importSearch: document.getElementById('import-search'),
+        importPageInfo: document.getElementById('import-page-info'),
+        importPrevBtn: document.getElementById('import-prev'),
+        importNextBtn: document.getElementById('import-next'),
+        importPrevItem: document.getElementById('import-prev-item'),
+        importNextItem: document.getElementById('import-next-item')
     };
 
     const flags = {
@@ -683,36 +714,38 @@ document.addEventListener('DOMContentLoaded', () => {
     /* --------------------
      * Import helpers
      * -------------------- */
-    const getFilteredImportList = () => {
-        const entries = Object.entries(state.importFilters || {});
-        if (!entries.length) return state.importList;
-        return state.importList.filter((item) => {
-            return entries.every(([field, value]) => {
-                if (!value) return true;
-                const hay = (item[field] ?? '').toString().toLowerCase();
-                return hay.includes(value.toLowerCase());
-            });
-        });
-    };
+    /* --------------------
+     * Import helpers
+     * -------------------- */
+    // Filter helper removed as filtering is now server-side
+    const getFilteredImportList = () => state.importList;
 
     const renderImportTable = () => {
         if (!dom.importTableBody) return;
         dom.importTableBody.innerHTML = '';
 
-        const filtered = getFilteredImportList();
+        const list = state.importList;
 
-        filtered.forEach((item, idx) => {
+        if (!list.length) {
+            toggleEmptyState(true);
+            return;
+        } else {
+            toggleEmptyState(false);
+        }
+
+        list.forEach((item) => {
             const key = evidenceKey(item);
             const isDuplicate = state.existingEvidenceKeys.has(key);
-            const originalIndex = typeof item.__idx === 'number' ? item.__idx : idx;
+            
+            // Use item.id as unique identifier for selection
+            const itemId = item.id;
 
             const row = document.createElement('tr');
-            row.dataset.index = originalIndex;
             row.innerHTML = `
                 <td class="text-center">
-                    <input type="checkbox" name="importEvidence" value="${originalIndex}" ${isDuplicate ? 'disabled' : ''} />
+                    <input type="checkbox" name="importEvidence" value="${itemId}" ${isDuplicate ? 'disabled' : ''} />
                 </td>
-                <td class="text-center">${idx + 1}</td>
+                <td class="text-center">${item.__no}</td>
                 <td>${item.judul_dokumen || '-'}</td>
                 <td>${item.no_dokumen || '-'}</td>
                 <td class="text-center">${item.grup || '-'}</td>
@@ -726,16 +759,25 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             const checkbox = row.querySelector('input[type="checkbox"]');
+            
             if (!isDuplicate) {
-                checkbox.checked = state.selectedImportIndices.has(originalIndex);
+                // Restore selection state
+                checkbox.checked = state.selectedImportIndices.has(itemId);
+                
                 checkbox.addEventListener('change', (e) => {
                     if (e.target.checked) {
-                        state.selectedImportIndices.add(originalIndex);
+                        state.selectedImportIndices.add(itemId);
+                        // Store partial item data for saving later
+                        state.selectedImportItemsMap = state.selectedImportItemsMap || new Map();
+                        state.selectedImportItemsMap.set(itemId, item);
                     } else {
-                        state.selectedImportIndices.delete(originalIndex);
+                        state.selectedImportIndices.delete(itemId);
+                        if (state.selectedImportItemsMap) {
+                            state.selectedImportItemsMap.delete(itemId);
+                        }
                     }
                     updateImportButtonState();
-                    updateImportCheckAllState();
+                    // Optional: Check all box state update (simplified for now)
                 });
             } else {
                 checkbox.title = 'Already added';
@@ -744,50 +786,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
             dom.importTableBody.appendChild(row);
         });
+    };
 
-        updateImportCheckAllState();
+    const updateImportPaginationUI = () => {
+        const { currentPage, lastPage, total, perPage } = state.importPagination;
+        
+        if (dom.importPageInfo) {
+            const start = total === 0 ? 0 : (currentPage - 1) * perPage + 1;
+            const end = Math.min(currentPage * perPage, total);
+            dom.importPageInfo.textContent = `Page ${currentPage}/${lastPage} (${start}-${end} of ${total})`;
+        }
+
+        if (dom.importPrevItem) {
+            dom.importPrevItem.classList.toggle('disabled', currentPage <= 1);
+        }
+        if (dom.importNextItem) {
+            dom.importNextItem.classList.toggle('disabled', currentPage >= lastPage);
+        }
     };
 
     const loadPreviousEvidences = async () => {
-        resetImportState();
         setImportLoading(true);
+        dom.importTableBody.innerHTML = '';
+        toggleEmptyState(false);
+        showImportError(''); // Clear errors
+
+        const { currentPage, perPage, search } = state.importPagination;
 
         try {
-            const url = `/assessment-eval/{{ $evalId }}/evidence/previous`;
+            const params = new URLSearchParams({
+                page: currentPage,
+                per_page: perPage,
+                search: search
+            });
+
+            const url = `/assessment-eval/{{ $evalId }}/evidence/previous?${params.toString()}`;
             const response = await fetch(url, {
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
                 }
             });
 
             if (!response.ok) throw new Error('Failed to load previous evidences');
 
             const result = await response.json();
-            const list = Array.isArray(result.data) ? result.data : [];
+            
+            if (result.success) {
+                const data = result.data || [];
+                const meta = result.pagination || {};
 
-            // Filter out evidences already present in current assessment and remove duplicates within the list
-            const seenKeys = new Set(state.existingEvidenceKeys);
-            const filtered = list
-                .map((item) => ({ ...item, created_at: item.created_at || null }))
-                .sort((a, b) => {
-                    const da = a.created_at ? new Date(a.created_at).getTime() : 0;
-                    const db = b.created_at ? new Date(b.created_at).getTime() : 0;
-                    return db - da; // newest first
-                })
-                .filter((item) => {
-                    const key = evidenceKey(item);
-                    if (seenKeys.has(key)) return false;
-                    seenKeys.add(key);
-                    return true;
-                });
+                // Update pagination state
+                state.importPagination.total = meta.total || 0;
+                state.importPagination.lastPage = meta.last_page || 1;
+                
+                // Process list
+                state.importList = data.map((item, idx) => ({
+                    ...item,
+                    __no: (meta.current_page - 1) * meta.per_page + idx + 1
+                }));
 
-            if (!filtered.length) {
-                toggleEmptyState(true);
-                return;
+                renderImportTable();
+                updateImportPaginationUI();
+            } else {
+                throw new Error(result.message || 'Unknown error');
             }
 
-            state.importList = filtered.map((item, idx) => ({ ...item, __idx: idx }));
-            renderImportTable();
         } catch (err) {
             console.error('Load previous evidences error:', err);
             showImportError(err.message || 'Unable to fetch previous evidences.');
@@ -796,97 +860,162 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const addFromPrevious = async (item, checkboxEl, rowEl) => {
-        const key = evidenceKey(item);
-        if (state.existingEvidenceKeys.has(key)) {
-            checkboxEl.checked = false;
-            return false;
-        }
-
-        checkboxEl.disabled = true;
-        rowEl.classList.add('table-warning');
-
-        try {
-            const response = await fetch(`{{ route('assessment-eval.evidence.store', $evalId) }}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    judul_dokumen: item.judul_dokumen || '',
-                    no_dokumen: item.no_dokumen || '',
-                    grup: item.grup || '',
-                    tipe: item.tipe || '',
-                    tahun_terbit: item.tahun_terbit || null,
-                    tahun_kadaluarsa: item.tahun_kadaluarsa || null,
-                    pemilik_dokumen: item.pemilik_dokumen || '',
-                    pengesahan: item.pengesahan || '',
-                    klasifikasi: item.klasifikasi || '',
-                    summary: item.summary || '',
-                    notes: item.notes || ''
-                })
-            });
-
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || 'Failed to import evidence');
-
-            const newEvidence = result.data || item;
-            state.existingEvidenceKeys.add(key);
-            rowEl.classList.remove('table-warning');
-            rowEl.classList.add('table-success');
-            checkboxEl.checked = true;
-            checkboxEl.disabled = true;
-            state.selectedImportIndices.delete(rowEl.dataset.index ? parseInt(rowEl.dataset.index, 10) : null);
-            updateImportButtonState();
-            appendEvidenceRow(newEvidence);
-            return true;
-        } catch (err) {
-            console.error('Import error:', err);
-            checkboxEl.checked = false;
-            checkboxEl.disabled = false;
-            rowEl.classList.remove('table-warning');
-            Swal.fire({
-                icon: 'error',
-                title: 'Failed',
-                text: err.message || 'Failed to import evidence'
-            });
-            return false;
-        }
+    // Debounce helper
+    const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     };
 
-    const importSelected = async () => {
-        if (!dom.btnUseImported || !state.importList.length) return;
-
-        const confirmation = await Swal.fire({
-            icon: 'question',
-            title: 'Tambahkan evidence terpilih?',
-            text: 'Semua evidence yang dicentang akan disalin ke assessment ini.',
-            showCancelButton: true,
-            confirmButtonText: 'Ya, tambahkan',
-            cancelButtonText: 'Batal'
+    // Attach Import Pagination Events
+    if (dom.importPrevBtn) {
+        dom.importPrevBtn.addEventListener('click', () => {
+             if (state.importPagination.currentPage > 1) {
+                 state.importPagination.currentPage--;
+                 loadPreviousEvidences();
+             }
         });
+    }
 
-        if (!confirmation.isConfirmed) return;
+    if (dom.importNextBtn) {
+        dom.importNextBtn.addEventListener('click', () => {
+             if (state.importPagination.currentPage < state.importPagination.lastPage) {
+                 state.importPagination.currentPage++;
+                 loadPreviousEvidences();
+             }
+        });
+    }
 
-        dom.btnUseImported.disabled = true;
-        dom.btnUseImported.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menambahkan...';
+    if (dom.importSearch) {
+        dom.importSearch.addEventListener('input', debounce((e) => {
+            state.importPagination.search = e.target.value.trim();
+            state.importPagination.currentPage = 1; // Reset to page 1 on search
+            loadPreviousEvidences();
+        }, 500));
+    }
 
-        try {
-            const indices = Array.from(state.selectedImportIndices);
-            for (const idx of indices) {
-                const item = state.importList.find((entry) => entry.__idx === idx) || state.importList[idx];
-                const row = dom.importTableBody.querySelector(`tr[data-index="${idx}"]`);
-                const checkbox = row ? row.querySelector('input[type="checkbox"]') : null;
-                if (!item || !row || !checkbox) continue;
-                await addFromPrevious(item, checkbox, row);
-            }
-        } finally {
-            dom.btnUseImported.innerHTML = 'Tambahkan';
+    // Reset import modal when opened
+    if (dom.importModalEl) {
+        dom.importModalEl.addEventListener('show.bs.modal', () => {
+             // Optional: reset selection on new open
+             if (!state.selectedImportItemsMap) state.selectedImportItemsMap = new Map();
+             state.selectedImportIndices.clear();
+             state.selectedImportItemsMap.clear();
+
+            state.importPagination.currentPage = 1;
+            state.importPagination.search = '';
+            if(dom.importSearch) dom.importSearch.value = '';
             updateImportButtonState();
-        }
-    };
+            loadPreviousEvidences();
+        });
+    }
 
+    // Simplified helpers to keep it clean
+    
+    // Add logic to handle adding selected items
+    if (dom.btnUseImported) {
+        dom.btnUseImported.addEventListener('click', async () => {
+             // Retrieve selected items from Map
+             const selectedItems = Array.from(state.selectedImportItemsMap ? state.selectedImportItemsMap.values() : []);
+             if (selectedItems.length === 0) return;
+
+             const confirmation = await Swal.fire({
+                icon: 'question',
+                title: 'Tambahkan evidence terpilih?',
+                text: `${selectedItems.length} dokumen akan disalin ke assessment ini.`,
+                showCancelButton: true,
+                confirmButtonText: 'Ya, tambahkan',
+                cancelButtonText: 'Batal'
+             });
+
+             if (!confirmation.isConfirmed) return;
+
+             dom.btnUseImported.disabled = true;
+             dom.btnUseImported.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menambahkan...';
+
+             let successCount = 0;
+             let errorCount = 0;
+             let errors = [];
+
+             // Iterate and store each
+             for (const item of selectedItems) {
+                 try {
+                    const response = await fetch(`{{ route('assessment-eval.evidence.store', $evalId) }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            judul_dokumen: item.judul_dokumen || '',
+                            no_dokumen: item.no_dokumen || '',
+                            grup: item.grup || '',
+                            tipe: item.tipe || '',
+                            tahun_terbit: item.tahun_terbit || null,
+                            tahun_kadaluarsa: item.tahun_kadaluarsa || null,
+                            pemilik_dokumen: item.pemilik_dokumen || '',
+                            pengesahan: item.pengesahan || '',
+                            klasifikasi: item.klasifikasi || '',
+                            summary: item.summary || '',
+                            notes: item.notes || ''
+                        })
+                    });
+
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        const newEvidence = result.data;
+                        const key = evidenceKey(item);
+                        state.existingEvidenceKeys.add(key);
+                        successCount++;
+                        appendEvidenceRow(newEvidence);
+                        
+                        // Remove from selection map
+                        state.selectedImportItemsMap.delete(item.id);
+                        state.selectedImportIndices.delete(item.id);
+                    } else {
+                        throw new Error(result.message || 'Unknown error');
+                    }
+                 } catch (err) {
+                     errorCount++;
+                     errors.push(`${item.judul_dokumen}: ${err.message}`);
+                 }
+             }
+
+             // Refresh UI
+             renderImportTable();
+             updateImportButtonState();
+
+             dom.btnUseImported.innerHTML = 'Tambahkan Terpilih';
+             
+             if (errorCount === 0) {
+                 Swal.fire({
+                     icon: 'success',
+                     title: 'Berhasil',
+                     text: `${successCount} dokumen berhasil ditambahkan.`,
+                     timer: 2000,
+                     showConfirmButton: false
+                 });
+                 // Close modal if all successful
+                 if (dom.importModalEl) {
+                     const modal = bootstrap.Modal.getInstance(dom.importModalEl);
+                     if (modal) modal.hide();
+                 }
+                 window.location.reload(); // Reload to ensure consistency
+             } else {
+                 Swal.fire({
+                     icon: 'warning',
+                     title: 'Selesai dengan error',
+                     html: `Berhasil: ${successCount}<br>Gagal: ${errorCount}<br><ul class="text-start mt-2 small text-danger">${errors.map(e => `<li>${e}</li>`).slice(0, 5).join('')}</ul>`
+                 });
+             }
+        });
+    }
     const updateImportCheckAllState = () => {
         if (!dom.importCheckAll || !dom.importTableBody) return;
         const visibleRows = Array.from(dom.importTableBody.querySelectorAll('tr'));
@@ -908,16 +1037,31 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.importCheckAll.addEventListener('change', (e) => {
             const checked = e.target.checked;
             const rows = Array.from(dom.importTableBody.querySelectorAll('tr'));
+            
+            // Ensure map exists
+            if (!state.selectedImportItemsMap) state.selectedImportItemsMap = new Map();
+
             rows.forEach((row) => {
                 const cb = row.querySelector('input[type="checkbox"]');
                 if (!cb || cb.disabled) return;
+                
+                // Update UI
                 cb.checked = checked;
-                const idx = parseInt(row.dataset.index, 10);
-                if (Number.isNaN(idx)) return;
-                if (checked) {
-                    state.selectedImportIndices.add(idx);
-                } else {
-                    state.selectedImportIndices.delete(idx);
+                
+                const itemId = cb.value; // value is item.id (string/int)
+                
+                // Find item in current list
+                // We know importList matches the table rows order usually, but finding by ID is safer
+                const item = state.importList.find(i => String(i.id) === String(itemId));
+                
+                if (item) {
+                     if (checked) {
+                        state.selectedImportIndices.add(item.id);
+                        state.selectedImportItemsMap.set(item.id, item);
+                    } else {
+                        state.selectedImportIndices.delete(item.id);
+                        state.selectedImportItemsMap.delete(item.id);
+                    }
                 }
             });
             updateImportButtonState();
@@ -927,11 +1071,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const resetImportState = () => {
         state.importList = [];
-        state.selectedImportIndices.clear();
+        // do not clear selection map here if we want to persist across close/open? 
+        // Logic says we clear on open (show.bs.modal listener), so here we can just clear list.
         if (dom.importTableBody) dom.importTableBody.innerHTML = '';
         toggleEmptyState(false);
-        if (dom.importError) dom.importError.classList.add('d-none');
-        updateImportButtonState();
+        setImportLoading(false);
+        if (dom.importCheckAll) {
+            dom.importCheckAll.checked = false;
+            dom.importCheckAll.indeterminate = false;
+        }
     };
 
     /* --------------------

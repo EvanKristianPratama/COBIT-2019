@@ -126,6 +126,10 @@
                 <i class="fas fa-bullseye me-1"></i> Target Capability
               </a>
 
+              <a href="{{ route('target-maturity.index') }}" class="btn btn-warning btn-sm text-white">
+                <i class="fas fa-chart-line me-1"></i> Target Maturity
+              </a>
+
             </div>
 
             <div class="collapse mt-2" id="quickJoinBox">

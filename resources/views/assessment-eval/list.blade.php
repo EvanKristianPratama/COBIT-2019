@@ -72,8 +72,7 @@
                                 <th>Tahun Assesment</th>
 
 
-                                <th class="text-center">Jumlah GAMO</th>
-                                <th class="text-center">Progres</th>
+                                <th class="text-center">Jumlah Scope</th>
                                 <th class="text-center">Status</th>
                                 <th>Last Update</th>
                                 <th class="text-center">I&T Maturity Score</th>
@@ -84,27 +83,12 @@
                         <tbody>
                             @foreach($myAssessments as $evaluation)
                                 @php
-                                    $achievementCounts = $evaluation->achievement_counts ?? [];
-                                    $ratedCounts = [
-                                        'F' => $achievementCounts['F'] ?? 0,
-                                        'L' => $achievementCounts['L'] ?? 0,
-                                        'P' => $achievementCounts['P'] ?? 0,
-                                    ];
-                                    $totalRated = array_sum($ratedCounts);
-                                    
-                                    // Use the calculated total ratable activities for this specific evaluation
-                                    $currentTotalRatable = $evaluation->total_ratable_activities ?? $totalRatableActivities;
-                                    $completion = $currentTotalRatable > 0 ? round(($totalRated / $currentTotalRatable) * 100, 1) : 0;
-                                    
-                                    // Status Logic Simplified
+                                    // Status Logic
                                     if (($evaluation->status ?? '') === 'finished') {
                                         $statusLabel = 'Finish';
                                         $statusBadge = 'bg-success';
-                                    } elseif ($completion > 0) {
-                                        $statusLabel = 'Sedang Dikerjakan';
-                                        $statusBadge = 'bg-warning';
                                     } else {
-                                        $statusLabel = 'Belum Mulai';
+                                        $statusLabel = 'Draft';
                                         $statusBadge = 'bg-secondary';
                                     }
 
@@ -125,8 +109,7 @@
                                     <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
 
 
-                                    <td class="text-center">{{ $evaluation->selected_gamo_count ?? '-' }}</td>
-                                    <td class="text-center">{{ $evaluation->filled_gamo_count ?? 0 }}/{{ $evaluation->selected_gamo_count ?? 0 }}</td>
+                                    <td class="text-center">{{ $evaluation->scope_count ?? '-' }}</td>
                                     <td class="text-center">
                                         <span class="badge {{ $statusBadge }} rounded-pill">{{ $statusLabel }}</span>
                                     </td>
