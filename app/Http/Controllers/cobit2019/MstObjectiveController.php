@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\cobit2019;
 
+use App\Http\Controllers\Controller;
+use App\Models\MstAligngoals;
+use App\Models\MstEntergoals;
 use App\Models\MstObjective;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Arr;
-use App\Models\MstEntergoals;
-use App\Models\MstAligngoals;
 
 class MstObjectiveController extends Controller
 {
@@ -77,10 +77,10 @@ class MstObjectiveController extends Controller
         // load master goal lists for MASTER view
         $masterEnterGoals = MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get();
         $masterAlignGoals = MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
-    // load master roles
-    $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
+        // load master roles
+        $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
 
-    return view('cobit2019.objectives.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles'));
+        return view('cobit2019.objectives.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles'));
     }
 
     /**
@@ -164,7 +164,6 @@ class MstObjectiveController extends Controller
                 case 'domains':
                     $payload['domains'] = $o->domains ?? [];
                     break;
-
 
                 case 'practices':
                 case 'organizational':
