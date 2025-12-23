@@ -44,9 +44,17 @@
                         {{-- JS will populate this --}}
                     </div>
                 </div>
-                <div class="card-footer bg-white text-center">
-                     <button class="btn btn-sm btn-outline-primary" id="btn-select-all">Select All</button>
-                     <button class="btn btn-sm btn-outline-secondary" id="btn-deselect-all">Deselect All</button>
+                <div class="card-footer bg-white">
+                     <div class="mb-2 text-start">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="show-max-level">
+                            <label class="form-check-label small" for="show-max-level">
+                                Show Max Level
+                            </label>
+                        </div>
+                     </div>
+                     <button class="btn btn-sm btn-outline-primary w-100 mb-1" id="btn-select-all">Select All</button>
+                     <button class="btn btn-sm btn-outline-secondary w-100" id="btn-deselect-all">Deselect All</button>
                 </div>
             </div>
         </div>
@@ -129,146 +137,173 @@
     }
     
     /* Footer Sticky Columns (optional, keeps left cols visible in footer) */
-    tfoot td.sticky-col {
-        z-index: 10;
-        background-color: #f8f9fa !important;
+    /* Footer Sticky Bottom Implementation */
+    tfoot tr { 
+        height: 40px; /* Essential for accurate stacking calculation */
     }
     
     tfoot td {
         position: sticky;
-        bottom: 0;
-        z-index: 20;
+        z-index: 25; /* Layer above body content */
         background-color: #f8f9fa !important;
-        border-top: 2px solid #dee2e6;
+        vertical-align: middle;
+        /* box-shadow: 0 -1px 0 #dee2e6;  Optional divider */
+    }
+
+    /* Stack Strategy: Bottom-Up Stacking for 4 known rows */
+    /* Row 4: Gap Analysis */
+    tfoot tr:nth-last-child(1) td { 
+        bottom: 0px; 
+        border-bottom: 2px solid #dee2e6;
     }
     
-    tfoot td.sticky-col {   
-        z-index: 30 !important; /* Intersection footer + sticky col */
+    /* Row 3: Target */
+    tfoot tr:nth-last-child(2) td { 
+        bottom: 40px; 
     }
+    
+    /* Row 2: Maturity Score */
+    tfoot tr:nth-last-child(3) td { 
+        bottom: 80px; 
+    }
+    
+    /* Row 1: Total Selected */
+    tfoot tr:nth-last-child(4) td { 
+        bottom: 120px; 
+        border-top: 4px solid #fff; /* Visual separation from body */
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* Shadow throwing upwards */
+    }
+
+    /* Sticky Columns (Left Horizontal Scroll) within Sticky Footer */
+    /* Needs highest Z-index to float over everything */
+    tfoot td.sticky-col {
+        z-index: 35 !important; 
+        left: 0;
+        background-color: #f8f9fa !important;
+    }
+    
+    /* Specific offsets for footer sticky cols */
+    tfoot td.sticky-col:nth-child(1) { left: 0px; }
+    tfoot td.sticky-col:nth-child(2) { left: 50px; }
+    tfoot td.sticky-col:nth-child(3) { left: 140px; }
 </style>
 
 <script>
 /**
  * All-Years Assessment Report
+ * Refactored for Maintainability & Scalability (KISS, SOLID)
  */
 (function() {
     'use strict';
 
-    // Configuration
-    const Config = {
-        maxLevels: 5, // Simplified max level for visuals
-        colors: {
+    // ==========================================================================
+    // 1. CONFIGURATION & CONSTANTS
+    // ==========================================================================
+    const CONFIG = {
+        MAX_LEVELS: 5,
+        TARGET_BUMN_OVERRIDE: 3.00, // Hardcoded target for BUMN scopes
+        
+        // Static Max Levels Reference per Objective
+        MAX_LEVELS_REF: {
+            'EDM01': 4, 'EDM02': 5, 'EDM03': 4, 'EDM04': 4, 'EDM05': 4,
+            'APO01': 5, 'APO02': 4, 'APO03': 5, 'APO04': 4, 'APO05': 5, 'APO06': 5, 'APO07': 4, 'APO08': 5, 'APO09': 4, 'APO10': 5, 'APO11': 5, 'APO12': 5, 'APO13': 5, 'APO14': 5,
+            'BAI01': 5, 'BAI02': 4, 'BAI03': 4, 'BAI04': 5, 'BAI05': 5, 'BAI06': 4, 'BAI07': 5, 'BAI08': 5, 'BAI09': 5, 'BAI10': 4, 'BAI11': 5,
+            'DSS01': 5, 'DSS02': 5, 'DSS03': 5, 'DSS04': 4, 'DSS05': 5, 'DSS06': 5,
+            'MEA01': 5, 'MEA02': 5, 'MEA03': 5, 'MEA04': 4
+        },
+
+        COLORS: {
             bg:   ['#ffebee', '#fff3e0', '#fff8e1', '#e8f5e9', '#e3f2fd', '#f3e5f5'],
             text: ['#c62828', '#ef6c00', '#f57f17', '#2e7d32', '#1565c0', '#6a1b9a']
+        },
+        SELECTORS: {
+            scopeSearch: 'scope-search',
+            scopeFilters: 'scope-filters',
+            btnSelectAll: 'btn-select-all',
+            btnDeselectAll: 'btn-deselect-all',
+            chkShowMaxLevel: 'show-max-level',
+            selectedCountBadge: 'selected-count-badge',
+            tableHeader: 'table-header-row',
+            tableBody: 'recap-table-body',
+            tableFooter: 'recap-table-footer'
         }
     };
 
-    // Data from server
-    const AppData = {
-        objectives: @json($objectives),
-        scopes: @json($processedData ?? []) // Array of processed scope objects
-    };
-
-    // State
-    const State = {
+    // ==========================================================================
+    // 2. GLOBAL STATE
+    // ==========================================================================
+    const STATE = {
         selectedScopeIds: new Set(),
-        currentView: 'table'
+        currentView: 'table',
+        showMaxLevel: false
     };
 
-    // Utilities
+    // Data from Server (Considered Read-Only)
+    const SERVER_DATA = {
+        objectives: @json($objectives),
+        scopes: @json($processedData ?? []) 
+    };
+
+    // ==========================================================================
+    // 3. UTILITIES & BUSINESS LOGIC
+    // ==========================================================================
     const Utils = {
         escape: s => (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])),
+        
         fmt: n => (Number(n) || 0).toFixed(2),
-        // Helper to generate a vibrant color from string
-        stringToColor: function(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        
+        getEffectiveTarget(scope) {
+            if (scope.scope_name && scope.scope_name.toLowerCase().includes('bumn')) {
+                return CONFIG.TARGET_BUMN_OVERRIDE;
             }
-            const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-            return '#' + '00000'.substring(0, 6 - c.length) + c;
+            return scope.target_maturity ? Number(scope.target_maturity) : 0;
+        },
+
+        calculateAverage(values) {
+            const validValues = values.filter(v => v !== null && v !== undefined);
+            return validValues.length ? (validValues.reduce((a,b) => a+b, 0) / validValues.length) : 0;
+        },
+
+        countValidScores(values) {
+            return values.filter(v => v !== null && v !== undefined).length;
+        },
+
+        getScoreColor(score) {
+            return {
+                bg: CONFIG.COLORS.bg[score] || '#f8f9fa',
+                text: CONFIG.COLORS.text[score] || '#6c757d'
+            };
         }
     };
 
-    const ReportApp = {
-        init() {
-            document.addEventListener('DOMContentLoaded', () => {
-                // Initialize selection (default: select latest 5)
-                AppData.scopes.slice(0, 5).forEach(s => State.selectedScopeIds.add(s.scope_id));
-                
-                this.renderFilter();
-                this.renderTable();
-                this.bindEvents();
-            });
-        },
-
-        bindEvents() {
-
-
-            // Search Filter
-            document.getElementById('scope-search').addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                document.querySelectorAll('.scope-item').forEach(el => {
-                    const text = el.textContent.toLowerCase();
-                    el.style.display = text.includes(term) ? 'block' : 'none';
-                });
-            });
-
-            // Select/Deselect All
-            document.getElementById('btn-select-all').addEventListener('click', () => {
-                AppData.scopes.forEach(s => State.selectedScopeIds.add(s.scope_id));
-                this.updateUI();
-            });
-
-            document.getElementById('btn-deselect-all').addEventListener('click', () => {
-                State.selectedScopeIds.clear();
-                this.updateUI();
-            });
-
-            // Delegation for checkbox changes
-            document.getElementById('scope-filters').addEventListener('change', (e) => {
-                if (e.target.matches('.scope-checkbox')) {
-                    const id = parseInt(e.target.value);
-                    if (e.target.checked) State.selectedScopeIds.add(id);
-                    else State.selectedScopeIds.delete(id);
-                    
-                    this.updateUI(); // Re-render current view content
-                    this.updateBadge(); // Update badge
-                }
-            });
-        },
-
-        updateUI() {
-            // Render filter checkboxes strictly? No, they handle themselves visually via 'checked' attribute we don't need to re-render the whole list every time unless we want to sort/filter it.
-            // But 'renderFilter' rebuilds the list. Let's not rebuild the list if just checking a box, but we DO need to update the main content.
-            
-            this.renderTable();
-
-        },
-        
+    // ==========================================================================
+    // 4. VIEW RENDERER (Presentation Layer)
+    // ==========================================================================
+    const View = {
         updateBadge() {
-            document.getElementById('selected-count-badge').textContent = `${State.selectedScopeIds.size} selected`;
+            const el = document.getElementById(CONFIG.SELECTORS.selectedCountBadge);
+            if (el) el.textContent = `${STATE.selectedScopeIds.size} selected`;
         },
 
-        renderFilter() {
-            const container = document.getElementById('scope-filters');
+        renderFilter(scopes) {
+            const container = document.getElementById(CONFIG.SELECTORS.scopeFilters);
             if (!container) return;
 
-            let html = '';
-            // Group by Year for better readability
+            // Group by Year
             const grouped = {};
-            AppData.scopes.forEach(s => {
+            scopes.forEach(s => {
                 if (!grouped[s.year]) grouped[s.year] = [];
                 grouped[s.year].push(s);
             });
 
-            // Sort years asc
-            const years = Object.keys(grouped).sort((a,b) => a - b);
+            // Sort Years Descending
+            const years = Object.keys(grouped).sort((a,b) => b - a);
 
+            let html = '';
             years.forEach(year => {
                 html += `<div class="scope-group-year fw-bold mt-2 mb-1 text-muted small border-bottom">${year}</div>`;
                 grouped[year].forEach(scope => {
-                    const checked = State.selectedScopeIds.has(scope.scope_id) ? 'checked' : '';
+                    const checked = STATE.selectedScopeIds.has(scope.scope_id) ? 'checked' : '';
                     html += `
                         <div class="form-check scope-item">
                             <input class="form-check-input scope-checkbox" type="checkbox" value="${scope.scope_id}" id="chk-${scope.scope_id}" ${checked}>
@@ -278,122 +313,249 @@
                         </div>`;
                 });
             });
-
             container.innerHTML = html;
             this.updateBadge();
         },
 
-        renderTable() {
-            const selectedScopes = AppData.scopes.filter(s => State.selectedScopeIds.has(s.scope_id));
-            
-            // Render Headers
-            const theadRow = document.getElementById('table-header-row');
-            let headerHtml = `
-                    <th style="width:50px;" class="text-center sticky-col">No</th>
-                    <th style="width:90px;" class=" sticky-col">GAMO</th>
-                    <th class="sticky-col">Process Name</th>`;
+        renderTableHeader(selectedScopes) {
+            const row = document.getElementById(CONFIG.SELECTORS.tableHeader);
+            if (!row) return;
+
+            let html = `
+                <th style="width:50px;" class="text-center sticky-col">No</th>
+                <th style="width:90px;" class=" sticky-col">GAMO</th>
+                <th class="sticky-col">Process Name</th>`;
             
             selectedScopes.forEach(s => {
-                headerHtml += `
+                html += `
                     <th style="width:100px;" class="text-center align-middle">
                         <div class="fw-bold fs-6 mb-1 border-bottom pb-1">${Utils.escape(s.year)}</div>
                         <div class="small fw-normal text-dark text-wrap lh-sm">${Utils.escape(s.scope_name)}</div>
                     </th>`;
             });
-            theadRow.innerHTML = headerHtml;
 
-            // Render Body
-            const tbody = document.getElementById('recap-table-body');
-            let bodyHtml = '';
+            if (STATE.showMaxLevel) {
+                 html += `
+                    <th style="width:80px;" class="text-center align-middle bg-secondary text-white">
+                        <div class="fw-bold fs-6">Max Level</div>
+                    </th>`;
+            }
+            row.innerHTML = html;
+        },
+
+        renderTableBody(selectedScopes, objectives) {
+            const tbody = document.getElementById(CONFIG.SELECTORS.tableBody);
+            if (!tbody) return;
 
             if (selectedScopes.length === 0) {
-                bodyHtml = `<tr><td colspan="20" class="text-center py-5 text-muted">Please select scopes from the left panel to view data.</td></tr>`;
-            } else {
-                AppData.objectives.forEach((obj, index) => {
-                    bodyHtml += `
-                        <tr>
-                            <td class="text-center sticky-col fw-semibold bg-white">${index + 1}</td>
-                            <td class="sticky-col bg-white text-wrap fw-bold text-primary" style="font-size:0.85rem;">
-                                ${Utils.escape(obj.objective_id)}
-                            </td>
-                            <td class="sticky-col bg-white" style="min-width:200px;">
-                                <span class="small text-muted">${Utils.escape(obj.objective || '')}</span>
-                            </td>`;
-                    
-                    selectedScopes.forEach(s => {
-                        const score = s.maturity_scores[obj.objective_id];
-                        if (score === null || score === undefined) {
-                            bodyHtml += `<td class="text-center text-muted bg-light border-start">-</td>`;
-                        } else {
-                            const bg = Config.colors.bg[score] || '#f8f9fa';
-                            const text = Config.colors.text[score] || '#6c757d';
-                            bodyHtml += `<td class="text-center fw-bold border-start" style="background-color: ${bg}; color: ${text};">${score}</td>`;
-                        }
-                    });
-
-                    bodyHtml += `</tr>`;
-                });
+                tbody.innerHTML = `<tr><td colspan="20" class="text-center py-5 text-muted">Please select scopes from the left panel to view data.</td></tr>`;
+                return;
             }
-            tbody.innerHTML = bodyHtml;
 
-            // Render Footer (Counts & Averages)
-            const tfoot = document.getElementById('recap-table-footer');
+            let html = '';
+            objectives.forEach((obj, index) => {
+                html += `
+                    <tr>
+                        <td class="text-center sticky-col fw-semibold bg-white">${index + 1}</td>
+                        <td class="sticky-col bg-white text-wrap fw-bold text-primary" style="font-size:0.85rem;">
+                            ${Utils.escape(obj.objective_id)}
+                        </td>
+                        <td class="sticky-col bg-white" style="min-width:200px;">
+                            <span class="small text-muted">${Utils.escape(obj.objective || '')}</span>
+                        </td>`;
+                
+                selectedScopes.forEach(s => {
+                    const score = s.maturity_scores[obj.objective_id];
+                    if (score === null || score === undefined) {
+                        html += `<td class="text-center text-muted bg-light border-start">-</td>`;
+                    } else {
+                        const colors = Utils.getScoreColor(score);
+                        html += `<td class="text-center fw-bold border-start" style="background-color: ${colors.bg}; color: ${colors.text};">${score}</td>`;
+                    }
+                });
+
+                if (STATE.showMaxLevel) {
+                    // Use Static Max Level Reference
+                    const refMax = CONFIG.MAX_LEVELS_REF[obj.objective_id] || '-';
+                    html += `<td class="text-center fw-bold border-start bg-secondary text-white">${refMax}</td>`;
+                }
+                html += `</tr>`;
+            });
+            tbody.innerHTML = html;
+        },
+
+        renderTableFooter(selectedScopes) {
+            const tfoot = document.getElementById(CONFIG.SELECTORS.tableFooter);
+            if (!tfoot) return;
+
             if (selectedScopes.length === 0) {
                 tfoot.innerHTML = '';
-            } else {
-                // Row 1: Total GAMO Selected
-                let footerHtml = `
-                    <tr class="table-light fw-bold border-top-2">
-                         <td colspan="3" class="text-end pe-3 sticky-col">Total GAMO Selected</td>`;
-                
-                selectedScopes.forEach(s => {
-                    // Count non-null scores
-                    const count = Object.values(s.maturity_scores).filter(v => v !== null && v !== undefined).length;
-                    
-                    footerHtml += `
-                        <td class="text-center bg-light text-dark border-start">
-                            ${count}
-                        </td>`;
-                });
-                footerHtml += `</tr>`;
+                return;
+            }
 
-                // Row 2: Average Maturity Score
-                footerHtml += `
-                    <tr class="table-light fw-bold">
-                         <td colspan="3" class="text-end pe-3 sticky-col">Average Maturity Score</td>`;
+            // --- Helper for footer cells ---
+            const createCell = (content, classes = '') => `<td class="text-center border-start ${classes}">${content}</td>`;
+            const createMaxLevelCell = (val = '-') => STATE.showMaxLevel ? `<td class="text-center bg-secondary text-white">${val}</td>` : '';
+            
+            let html = '';
+
+            // ROW 1: Total GAMO Selected
+            html += `<tr class="table-light fw-bold border-top-2">
+                        <td colspan="3" class="text-end pe-3 sticky-col">Total GAMO Selected</td>`;
+            selectedScopes.forEach(s => {
+                const count = Utils.countValidScores(Object.values(s.maturity_scores));
+                html += createCell(count, 'bg-light text-dark');
+            });
+            html += createMaxLevelCell() + `</tr>`;
+
+            // ROW 2: I&T Maturity Score
+            html += `<tr class="table-light fw-bold">
+                        <td colspan="3" class="text-end pe-3 sticky-col">I&T Maturity Score</td>`;
+            selectedScopes.forEach(s => {
+                const avg = Utils.calculateAverage(Object.values(s.maturity_scores));
+                html += createCell(Utils.fmt(avg), 'bg-primary text-white');
+            });
+            html += createMaxLevelCell() + `</tr>`;
+
+            // ROW 3: I&T Target Maturity
+            html += `<tr class="table-info fw-bold">
+                        <td colspan="3" class="text-end pe-3 sticky-col">I&T Target Maturity</td>`;
+            selectedScopes.forEach(s => {
+                const tm = Utils.getEffectiveTarget(s);
+                html += createCell(tm ? Utils.fmt(tm) : '-', 'bg-info text-white');
+            });
+            html += createMaxLevelCell() + `</tr>`;
+
+            // ROW 4: Gap Analysis
+            html += `<tr class="fw-bold text-white">
+                        <td colspan="3" class="text-end pe-3 sticky-col text-dark">Gap Analysis</td>`;
+            selectedScopes.forEach(s => {
+                const avg = Utils.calculateAverage(Object.values(s.maturity_scores));
+                const target = Utils.getEffectiveTarget(s);
+                const gap = avg - target; // Actual - Target
                 
-                selectedScopes.forEach(s => {
-                    // Calculate average of displayed scores
-                    const values = Object.values(s.maturity_scores).filter(v => v !== null && v !== undefined);
-                    const avg = values.length ? (values.reduce((a,b) => a+b, 0) / values.length) : 0;
-                    
-                    footerHtml += `
-                        <td class="text-center bg-primary text-white border-start">
-                            ${Utils.fmt(avg)}
-                        </td>`;
+                const bgClass = gap >= 0 ? 'bg-success' : 'bg-danger';
+                const gapStr = (gap > 0 ? '+' : '') + Utils.fmt(gap);
+
+                html += createCell(gapStr, `${bgClass} text-white`);
+            });
+            html += createMaxLevelCell() + `</tr>`;
+
+            tfoot.innerHTML = html;
+        }
+    };
+
+    // ==========================================================================
+    // 5. CORE APPLICATION CONTROLLER
+    // ==========================================================================
+    const AssessmentReport = {
+        init() {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.loadInitialData();
+                this.cacheElements();
+                this.bindEvents();
+                this.renderAll();
+            });
+        },
+
+        loadInitialData() {
+            // Default: Select latest 5 scopes
+            SERVER_DATA.scopes.slice(0, 5).forEach(s => STATE.selectedScopeIds.add(s.scope_id));
+            
+            // Load Toggle Preference
+            const stored = localStorage.getItem('showMaxLevel');
+            // Default to true if user says it's missing, but logic says default false. 
+            // Let's rely on storage. If null, false.
+            STATE.showMaxLevel = (stored === 'true');
+        },
+
+        cacheElements() {
+            // Optional: Cache frequent DOM elements if needed
+        },
+
+        getSelectedScopes() {
+            return SERVER_DATA.scopes.filter(s => STATE.selectedScopeIds.has(s.scope_id));
+        },
+
+        renderAll() {
+            // Render Filter Sidebar (Only needs to happen once or on data update, but OK to refresh)
+            View.renderFilter(SERVER_DATA.scopes);
+            
+            // Render Main Table
+            const selected = this.getSelectedScopes();
+            View.renderTableHeader(selected);
+            View.renderTableBody(selected, SERVER_DATA.objectives);
+            View.renderTableFooter(selected);
+        },
+
+        // Optimized re-render only for table parts (when checkbox changes)
+        refreshTable() {
+             const selected = this.getSelectedScopes();
+             View.renderTableHeader(selected);
+             View.renderTableBody(selected, SERVER_DATA.objectives);
+             View.renderTableFooter(selected);
+             View.updateBadge();
+        },
+
+        bindEvents() {
+            // 1. Search Scope
+            const searchInput = document.getElementById(CONFIG.SELECTORS.scopeSearch);
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    document.querySelectorAll('.scope-item').forEach(el => {
+                        el.style.display = el.textContent.toLowerCase().includes(term) ? 'block' : 'none';
+                    });
                 });
-                footerHtml += `</tr>`;
-                
-                // Row 3: I&T Target Maturity
-                footerHtml += `
-                    <tr class="table-info fw-bold">
-                         <td colspan="3" class="text-end pe-3 sticky-col">I&T Target Maturity</td>`;
-                
-                selectedScopes.forEach(s => {
-                    const tm = s.target_maturity;
-                    footerHtml += `
-                        <td class="text-center bg-info text-white border-start">
-                            ${tm ? Utils.fmt(tm) : '-'}
-                        </td>`;
+            }
+
+            // 2. Select All
+            const btnAll = document.getElementById(CONFIG.SELECTORS.btnSelectAll);
+            if (btnAll) {
+                btnAll.addEventListener('click', () => {
+                   SERVER_DATA.scopes.forEach(s => STATE.selectedScopeIds.add(s.scope_id));
+                   this.renderAll(); // Need to re-render renderFilter checkboxes too
                 });
-                footerHtml += `</tr>`;
-                
-                tfoot.innerHTML = footerHtml;
+            }
+
+            // 3. Deselect All
+            const btnNone = document.getElementById(CONFIG.SELECTORS.btnDeselectAll);
+            if (btnNone) {
+                btnNone.addEventListener('click', () => {
+                   STATE.selectedScopeIds.clear();
+                   this.renderAll();
+                });
+            }
+
+            // 4. Checkbox Delegation (Filter List)
+            const filterContainer = document.getElementById(CONFIG.SELECTORS.scopeFilters);
+            if (filterContainer) {
+                filterContainer.addEventListener('change', (e) => {
+                    if (e.target.matches('.scope-checkbox')) {
+                        const id = parseInt(e.target.value);
+                        if (e.target.checked) STATE.selectedScopeIds.add(id);
+                        else STATE.selectedScopeIds.delete(id);
+                        
+                        this.refreshTable();
+                    }
+                });
+            }
+
+            // 5. Max Level Toggle
+            const toggleMax = document.getElementById(CONFIG.SELECTORS.chkShowMaxLevel);
+            if (toggleMax) {
+                toggleMax.checked = STATE.showMaxLevel; // Set initial state
+                toggleMax.addEventListener('change', (e) => {
+                    STATE.showMaxLevel = e.target.checked;
+                    localStorage.setItem('showMaxLevel', e.target.checked);
+                    this.refreshTable();
+                });
             }
         }
     };
 
-    ReportApp.init();
+    // Start App
+    AssessmentReport.init();
 
 })();
 </script>

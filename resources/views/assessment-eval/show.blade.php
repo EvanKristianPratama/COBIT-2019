@@ -3036,7 +3036,7 @@
                     const ratingDisplay = level > 0 ? `${level} ${row.ratingLetter}` : '0 N';
                     const maxCap = this.getMaxCapabilityForObjective(row.objectiveId);
                     const targetVal = this.getTargetCapabilityForObjective(row.objectiveId);
-                    const gap = (targetVal === null || targetVal === undefined) ? null : (targetVal - level);
+                    const gap = (targetVal === null || targetVal === undefined) ? null : (level - targetVal);
                     const gapIsNegative = gap !== null && gap < 0;
                     const gapIsPositive = gap !== null && gap > 0;
                     const gapDisplay = gap === null ? '-' : gap;
