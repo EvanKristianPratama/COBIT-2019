@@ -2566,7 +2566,7 @@
             // ===================================================================
 
             function init() {
-                ModeController.setMode('component');
+                ModeController.setMode('gamo');
                 EventListeners.init();
             }
 
