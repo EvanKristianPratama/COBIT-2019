@@ -807,7 +807,7 @@
                                                             <th style="width: 120px;">Practice</th>
                                                             <th style="width: 200px;">Practice Name</th>
                                                             <th style="width: 340px;">Activity</th>
-                                                            <th style="width: 160px;">Answer</th>
+                                                            <th style="width: 130px; min-width: 130px;">Answer</th>
 
                                                             <th style="width: 220px;">Evidence</th>
                                                             <th style="width: 300px; min-width: 300px;">Notes</th>
@@ -3726,18 +3726,18 @@
                                 </thead>
                                 <tbody>
                                     ${data.map(row => `
-                                                    <tr>
-                                                        <td>${row.domain}</td>
-                                                        <td>${row.level}</td>
-                                                        <td>
-                                                            <div class="d-flex gap-1">
-                                                                ${Object.entries(row.ratings).map(([lvl, rating]) => 
-                                                                    `<span class="badge ${rating === 'F' ? 'bg-success' : (rating === 'L' ? 'bg-warning text-dark' : (rating === 'P' ? 'bg-info text-dark' : 'bg-secondary'))}">${lvl}:${rating}</span>`
-                                                                ).join('')}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                `).join('')}
+                                                        <tr>
+                                                            <td>${row.domain}</td>
+                                                            <td>${row.level}</td>
+                                                            <td>
+                                                                <div class="d-flex gap-1">
+                                                                    ${Object.entries(row.ratings).map(([lvl, rating]) => 
+                                                                        `<span class="badge ${rating === 'F' ? 'bg-success' : (rating === 'L' ? 'bg-warning text-dark' : (rating === 'P' ? 'bg-info text-dark' : 'bg-secondary'))}">${lvl}:${rating}</span>`
+                                                                    ).join('')}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    `).join('')}
                                 </tbody>
                             </table>
                         </div>
