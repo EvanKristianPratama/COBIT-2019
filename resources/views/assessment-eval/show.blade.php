@@ -807,7 +807,7 @@
                                                             <th style="width: 120px;">Practice</th>
                                                             <th style="width: 200px;">Practice Name</th>
                                                             <th style="width: 340px;">Activity</th>
-                                                            <th style="width: 130px; min-width: 130px;">Answer</th>
+                                                            <th style="width: 160px; min-width: 120px;">Answer</th>
 
                                                             <th style="width: 220px;">Evidence</th>
                                                             <th style="width: 300px; min-width: 300px;">Notes</th>
