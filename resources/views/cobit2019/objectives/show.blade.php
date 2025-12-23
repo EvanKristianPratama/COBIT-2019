@@ -1829,12 +1829,12 @@
             const ComponentViewController = {
                 async renderComponent(componentType) {
                     if (!componentType) {
-                        DOM.componentResults.style.display = 'none';
                         DOM.componentResults.innerHTML = '';
                         return;
                     }
 
-                    DOM.componentResults.style.display = 'block';
+                    // NOTE: Removed style.display manipulation here. 
+                    // Visibility is handled strictly by ModeController.
                     DOM.componentResults.innerHTML =
                         `<div class="text-muted small">Loading ${Utils.escapeHtml(componentType)} from all objectives…</div>`;
 
