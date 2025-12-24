@@ -89,12 +89,16 @@ class EvidenceController extends Controller
             $page = max(1, (int)$request->input('page', 1));
             $perPage = max(5, min(100, (int)$request->input('per_page', 20)));
             $search = $request->input('search', '');
+            
+            // Get individual column filters
+            $filters = $request->input('filters', []);
 
             $query = MstEvidence::whereIn('eval_id', $evalIds)
                 ->with(['evaluation' => function ($q) {
                     $q->select('eval_id', 'tahun');
                 }]);
 
+            // Apply general search (footer search box)
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
                     $q->where('judul_dokumen', 'like', "%{$search}%")
@@ -102,6 +106,23 @@ class EvidenceController extends Controller
                       ->orWhere('pemilik_dokumen', 'like', "%{$search}%")
                       ->orWhere('grup', 'like', "%{$search}%");
                 });
+            }
+            
+            // Apply column-specific filters (AND logic)
+            if (!empty($filters) && is_array($filters)) {
+                $allowedFields = [
+                    'judul_dokumen', 'no_dokumen', 'grup', 'tipe',
+                    'tahun_terbit', 'tahun_kadaluarsa', 'pemilik_dokumen',
+                    'pengesahan', 'klasifikasi', 'summary'
+                ];
+                
+                foreach ($filters as $field => $value) {
+                    if (empty($value)) continue;
+                    
+                    if (in_array($field, $allowedFields)) {
+                        $query->where($field, 'like', "%{$value}%");
+                    }
+                }
             }
 
             $total = $query->count();

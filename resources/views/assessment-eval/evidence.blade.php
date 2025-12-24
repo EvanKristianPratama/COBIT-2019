@@ -394,8 +394,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const showImportError = (message) => {
         if (!dom.importError) return;
-        dom.importError.textContent = message;
-        dom.importError.classList.remove('d-none');
+        
+        if (!message || message.trim() === '') {
+            // Hide error when message is empty
+            dom.importError.classList.add('d-none');
+            dom.importError.textContent = '';
+        } else {
+            // Show error with message
+            dom.importError.textContent = message;
+            dom.importError.classList.remove('d-none');
+        }
     };
 
     const toggleEmptyState = (show) => {
@@ -411,11 +419,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const bindImportFilters = () => {
         document.querySelectorAll('#import-table thead input[data-filter-field]').forEach((input) => {
-            input.addEventListener('input', (e) => {
+            input.addEventListener('input', debounce((e) => {
                 const field = e.target.getAttribute('data-filter-field');
                 state.importFilters[field] = e.target.value || '';
-                renderImportTable();
-            });
+                
+                // Reset to page 1 when filter changes
+                state.importPagination.currentPage = 1;
+                
+                // Trigger server-side search
+                loadPreviousEvidences();
+            }, 500)); // Debounce 500ms to avoid excessive API calls
         });
     };
 
@@ -724,7 +737,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dom.importTableBody) return;
         dom.importTableBody.innerHTML = '';
 
-        const list = state.importList;
+        const list = state.importList; // Server already filtered data
+        
+        // No client-side filtering needed - backend handles it
 
         if (!list.length) {
             toggleEmptyState(true);
@@ -812,12 +827,25 @@ document.addEventListener('DOMContentLoaded', () => {
         showImportError(''); // Clear errors
 
         const { currentPage, perPage, search } = state.importPagination;
+        
+        // Build filters object from importFilters
+        const filters = {};
+        Object.entries(state.importFilters || {}).forEach(([field, value]) => {
+            if (value && value.trim()) {
+                filters[field] = value.trim();
+            }
+        });
 
         try {
             const params = new URLSearchParams({
                 page: currentPage,
                 per_page: perPage,
                 search: search
+            });
+            
+            // Add filters as separate params (filters[field]=value)
+            Object.entries(filters).forEach(([field, value]) => {
+                params.append(`filters[${field}]`, value);
             });
 
             const url = `/assessment-eval/{{ $evalId }}/evidence/previous?${params.toString()}`;
@@ -908,9 +936,17 @@ document.addEventListener('DOMContentLoaded', () => {
              state.selectedImportIndices.clear();
              state.selectedImportItemsMap.clear();
 
+            // Reset pagination and search
             state.importPagination.currentPage = 1;
             state.importPagination.search = '';
             if(dom.importSearch) dom.importSearch.value = '';
+            
+            // Reset column filters
+            state.importFilters = {};
+            document.querySelectorAll('#import-table thead input[data-filter-field]').forEach(input => {
+                input.value = '';
+            });
+            
             updateImportButtonState();
             loadPreviousEvidences();
         });
@@ -1097,8 +1133,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (dom.importCheckAll) bindImportCheckAll();
-    
-    if (dom.btnUseImported) dom.btnUseImported.addEventListener('click', importSelected);
 
     bindImportFilters();
     bindEvidenceTableFilters();
