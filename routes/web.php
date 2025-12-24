@@ -339,6 +339,11 @@ Route::get('/assessment-eval/{evalId}/report', [AssessmentReportController::clas
      ->name('assessment-eval.report')
      ->middleware('auth');
 
+Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [
+    \App\Http\Controllers\AssessmentEval\ActivityReportController::class, 'show'
+])->name('assessment-eval.report-activity')
+  ->middleware('auth');
+
 Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
      ->name('assessment-eval.score')
      ->middleware('auth');

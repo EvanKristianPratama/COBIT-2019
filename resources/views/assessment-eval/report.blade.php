@@ -137,6 +137,7 @@
             
             html += `
                     <th style="width:80px;" class="text-center">Max Level</th>
+                    <th style="width:80px;" class="text-center">Action</th>
                 </tr>`;
             
             thead.innerHTML = html;
@@ -185,6 +186,11 @@
                 
                 html += `
                         <td class="text-center fw-bold text-secondary">${max}</td>
+                        <td class="text-center">
+                            <a href="/assessment-eval/{{ $evalId }}/report-activity/${id}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>Detail
+                            </a>
+                        </td>
                     </tr>`;
             });
             
