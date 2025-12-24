@@ -249,13 +249,26 @@
             `;
             container.appendChild(col);
 
-            // Prepare Labels (Objectives)
-            const labels = AppData.objectives.map(o => o.objective_id);
+            // Collect union of all GAMOs that have data in selected scopes
+            const activeGamoIds = new Set();
+            selectedScopes.forEach(scope => {
+                Object.entries(scope.maturity_scores || {}).forEach(([objId, val]) => {
+                    if (val !== null && val !== undefined && val !== 0) {
+                        activeGamoIds.add(objId);
+                    }
+                });
+            });
 
-            // Prepare Datasets
+            // Filter objectives to only those in activeGamoIds (keep original order)
+            const filteredObjectives = AppData.objectives.filter(o => activeGamoIds.has(o.objective_id));
+            
+            // Prepare Labels (only active objectives)
+            const labels = filteredObjectives.map(o => o.objective_id);
+
+            // Prepare Datasets (only active objectives data)
             const datasets = selectedScopes.map((s, index) => {
-                 // Extract scores in order of objectives
-                const data = AppData.objectives.map(o => {
+                 // Extract scores in order of filtered objectives
+                const data = filteredObjectives.map(o => {
                     const val = s.maturity_scores[o.objective_id];
                     return (val === null || val === undefined) ? 0 : val;
                 });
