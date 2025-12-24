@@ -44,6 +44,7 @@
                             <th class="text-center" style="width: 100px;">ANSWER</th>
                             <th style="width: 200px;">EVIDENCE</th>
                             <th style="width: 200px;">NOTES</th>
+                            <th class="text-center" style="width: 70px;">LEVEL</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,21 +68,12 @@
                                     <span class="badge {{ $badgeClass }}">{{ $answer }}</span>
                                 </td>
                                 <td>
-                                    @if($activity['evidence'])
-                                        @php
-                                            $evidences = is_array($activity['evidence']) 
-                                                ? $activity['evidence'] 
-                                                : json_decode($activity['evidence'], true) ?? [];
-                                        @endphp
-                                        @if(count($evidences) > 0)
-                                            <ul class="mb-0 ps-3 small">
-                                                @foreach($evidences as $ev)
-                                                    <li>{{ is_array($ev) ? ($ev['name'] ?? $ev['id'] ?? json_encode($ev)) : $ev }}</li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <span class="text-muted small">No evidence</span>
-                                        @endif
+                                    @if(!empty($activity['evidence']) && is_array($activity['evidence']) && count($activity['evidence']) > 0)
+                                        <ul class="mb-0 ps-3 small">
+                                            @foreach($activity['evidence'] as $ev)
+                                                <li>{{ $ev }}</li>
+                                            @endforeach
+                                        </ul>
                                     @else
                                         <span class="text-muted small">No evidence</span>
                                     @endif
@@ -93,10 +85,13 @@
                                         <span class="text-muted small">-</span>
                                     @endif
                                 </td>
+                                <td class="text-center fw-bold">
+                                    {{ $activity['capability_level'] ?? '-' }}
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">
+                                <td colspan="8" class="text-center py-4 text-muted">
                                     No filled activities for this objective.
                                 </td>
                             </tr>

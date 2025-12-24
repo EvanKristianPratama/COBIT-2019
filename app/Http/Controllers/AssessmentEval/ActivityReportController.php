@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\EvaluationService;
 use App\Models\MstEval;
 use App\Models\MstObjective;
+use App\Models\MstEvidence;
 use App\Models\TrsActivityeval;
 use App\Models\TrsScoping;
 use App\Models\TrsEvalDetail;
@@ -56,6 +57,9 @@ class ActivityReportController extends Controller
                 return redirect()->back()->withErrors(['error' => 'Objective not found']);
             }
 
+            // Load all evidences for this evaluation (for display lookup)
+            $evalEvidences = MstEvidence::where('eval_id', $evalId)->get()->keyBy('id');
+
             // Get all activities for this objective with their evaluations
             $activityData = [];
             
@@ -68,6 +72,29 @@ class ActivityReportController extends Controller
                     
                     // Only include if has any response (level_achieved not null)
                     if ($activityEval && $activityEval->level_achieved) {
+                        // Parse evidence - could be JSON array of IDs/names or comma-separated string
+                        $evidenceDisplay = [];
+                        $rawEvidence = $activityEval->evidence;
+                        
+                        if ($rawEvidence) {
+                            // Try JSON decode first
+                            $decoded = json_decode($rawEvidence, true);
+                            if (is_array($decoded)) {
+                                foreach ($decoded as $evItem) {
+                                    if (is_numeric($evItem) && isset($evalEvidences[$evItem])) {
+                                        $evidenceDisplay[] = $evalEvidences[$evItem]->judul_dokumen ?? "Evidence #{$evItem}";
+                                    } elseif (is_array($evItem)) {
+                                        $evidenceDisplay[] = $evItem['name'] ?? $evItem['judul_dokumen'] ?? json_encode($evItem);
+                                    } else {
+                                        $evidenceDisplay[] = (string)$evItem;
+                                    }
+                                }
+                            } else {
+                                // Not JSON, treat as plain text or comma-separated
+                                $evidenceDisplay[] = $rawEvidence;
+                            }
+                        }
+
                         $activityData[] = [
                             'practice_id' => $practice->practice_id,
                             'practice_name' => $practice->practice_name,
@@ -75,7 +102,7 @@ class ActivityReportController extends Controller
                             'activity_description' => $activity->description ?? $activity->activity ?? '',
                             'capability_level' => $activity->capability_lvl ?? $activity->capability_level ?? '',
                             'answer' => $activityEval->level_achieved,
-                            'evidence' => $activityEval->evidence,
+                            'evidence' => $evidenceDisplay, // Now a clean array of strings
                             'notes' => $activityEval->notes
                         ];
                     }
