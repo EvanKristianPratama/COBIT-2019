@@ -104,6 +104,23 @@
         }
     };
 
+    // Max Levels for all 40 GAMOs
+    const MAX_LEVELS_REF = {
+        'EDM01': 4, 'EDM02': 5, 'EDM03': 4, 'EDM04': 4, 'EDM05': 4,
+        'APO01': 5, 'APO02': 4, 'APO03': 5, 'APO04': 4, 'APO05': 5, 'APO06': 5, 'APO07': 4, 'APO08': 5, 'APO09': 4, 'APO10': 5, 'APO11': 5, 'APO12': 5, 'APO13': 5, 'APO14': 5,
+        'BAI01': 5, 'BAI02': 4, 'BAI03': 4, 'BAI04': 5, 'BAI05': 5, 'BAI06': 4, 'BAI07': 5, 'BAI08': 5, 'BAI09': 5, 'BAI10': 4, 'BAI11': 5,
+        'DSS01': 5, 'DSS02': 5, 'DSS03': 5, 'DSS04': 4, 'DSS05': 5, 'DSS06': 5,
+        'MEA01': 5, 'MEA02': 5, 'MEA03': 5, 'MEA04': 4
+    };
+
+    // BUMN 24 GAMOs with target level 3
+    const BUMN_GAMOS = [
+        'EDM01', 'EDM02', 'APO01', 'APO02', 'APO03', 'APO05', 'APO06', 'APO09', 
+        'APO10', 'APO12', 'APO13', 'APO14', 'BAI02', 'BAI03', 'BAI04', 'BAI06', 
+        'BAI07', 'BAI09', 'BAI11', 'DSS01', 'DSS02', 'DSS04', 'DSS05', 'MEA01'
+    ];
+    const BUMN_TARGET = 3;
+
     const ReportApp = {
         init() {
             document.addEventListener('DOMContentLoaded', () => {
@@ -302,6 +319,39 @@
                     borderWidth: 2
                 };
             });
+
+            // Add Max Level reference line
+            const maxLevelData = filteredObjectives.map(o => MAX_LEVELS_REF[o.objective_id] || 5);
+            datasets.push({
+                label: 'Max Level',
+                data: maxLevelData,
+                fill: false,
+                backgroundColor: 'transparent',
+                borderColor: '#6c757d',
+                borderDash: [5, 5],
+                pointBackgroundColor: '#6c757d',
+                pointBorderColor: '#fff',
+                pointRadius: 3,
+                borderWidth: 2
+            });
+
+            // Add BUMN Target reference line (only if any BUMN GAMOs are in filtered list)
+            const bumnData = filteredObjectives.map(o => BUMN_GAMOS.includes(o.objective_id) ? BUMN_TARGET : 0);
+            const hasBumnData = bumnData.some(v => v > 0);
+            if (hasBumnData) {
+                datasets.push({
+                    label: 'BUMN Target (Level 3)',
+                    data: bumnData,
+                    fill: false,
+                    backgroundColor: 'transparent',
+                    borderColor: '#fd7e14',
+                    borderDash: [8, 4],
+                    pointBackgroundColor: '#fd7e14',
+                    pointBorderColor: '#fff',
+                    pointRadius: 3,
+                    borderWidth: 2
+                });
+            }
 
             // Init Chart
             const ctx = document.getElementById('chart-combined').getContext('2d');
