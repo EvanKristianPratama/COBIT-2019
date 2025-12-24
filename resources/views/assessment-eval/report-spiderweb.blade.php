@@ -46,6 +46,8 @@
                             <th style="width: 40px;" class="text-center">Pilih</th>
                             <th style="width: 70px;">Tahun</th>
                             <th>Nama Scope</th>
+                            <th style="width: 80px;" class="text-center">Jumlah GAMO</th>
+                            <th style="width: 100px;" class="text-center">Avg Maturity</th>
                             <th style="width: 120px;" class="text-center">Target Maturity</th>
                         </tr>
                     </thead>
@@ -176,6 +178,12 @@
                 scopes.forEach((scope, idx) => {
                     const isSelected = State.selectedScopeIds.has(scope.scope_id);
                     
+                    // Calculate GAMO count and average maturity for this scope
+                    const maturityScores = scope.maturity_scores || {};
+                    const validScores = Object.values(maturityScores).filter(v => v !== null && v !== undefined && v !== 0);
+                    const gamoCount = validScores.length;
+                    const avgMaturity = gamoCount > 0 ? (validScores.reduce((a, b) => a + b, 0) / gamoCount).toFixed(2) : '-';
+                    
                     html += `<tr class="scope-item" data-scope-id="${scope.scope_id}">
                         <td class="text-center">
                             <input type="checkbox" class="scope-checkbox" value="${scope.scope_id}" ${isSelected ? 'checked' : ''}>
@@ -187,6 +195,8 @@
                     }
                     
                     html += `<td>${Utils.escape(scope.scope_name)}</td>`;
+                    html += `<td class="text-center">${gamoCount}</td>`;
+                    html += `<td class="text-center fw-semibold">${avgMaturity}</td>`;
                     
                     // Only add target maturity cell for first row of each year group
                     if (idx === 0) {
