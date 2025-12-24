@@ -3,7 +3,7 @@
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<div class="container mx-auto p-6">
+<div class="container-fluid px-4 py-3">
     {{-- Header --}}
     <div class="card shadow-sm mb-4 hero-card" style="border:none;box-shadow:0 22px 45px rgba(14,33,70,0.15);">
         <div class="card-header hero-header py-4" style="background:linear-gradient(135deg,#081a3d,#0f2b5c);color:#fff;border:none;">
@@ -33,26 +33,44 @@
             <span class="badge bg-secondary">{{ count($activityData) }} activities</span>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div class="table-responsive" style="max-height: 70vh; overflow: auto;">
                 <table class="table table-sm table-bordered align-middle mb-0" id="activity-report-table">
                     <thead style="background-color: #e9ecef;">
                         <tr>
-                            <th class="text-center" style="width: 50px;">NO</th>
-                            <th style="width: 100px;">PRACTICE</th>
-                            <th style="width: 200px;">PRACTICE NAME</th>
-                            <th>ACTIVITY</th>
-                            <th class="text-center" style="width: 100px;">ANSWER</th>
-                            <th style="width: 200px;">EVIDENCE</th>
-                            <th style="width: 200px;">NOTES</th>
-                            <th class="text-center" style="width: 70px;">LEVEL</th>
+                            <th class="text-center" style="min-width: 50px;">NO</th>
+                            <th style="min-width: 100px;">PRACTICE</th>
+                            <th style="min-width: 180px;">PRACTICE NAME</th>
+                            <th style="min-width: 300px;">ACTIVITY</th>
+                            <th class="text-center" style="min-width: 90px;">ANSWER</th>
+                            <th style="min-width: 250px;">EVIDENCE</th>
+                            <th style="min-width: 200px;">NOTES</th>
+                            <th class="text-center" style="min-width: 60px;">LEVEL</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            // Group activities by practice_id for rowspan calculation
+                            $practiceGroups = collect($activityData)->groupBy('practice_id');
+                            $rowIndex = 0;
+                            $processedPractices = [];
+                        @endphp
+                        
                         @forelse($activityData as $index => $activity)
+                            @php
+                                $practiceId = $activity['practice_id'];
+                                $isFirstInPractice = !in_array($practiceId, $processedPractices);
+                                $practiceRowspan = $isFirstInPractice ? $practiceGroups[$practiceId]->count() : 0;
+                                if ($isFirstInPractice) {
+                                    $processedPractices[] = $practiceId;
+                                    $rowIndex++;
+                                }
+                            @endphp
                             <tr>
-                                <td class="text-center">{{ $index + 1 }}</td>
-                                <td class="fw-semibold">{{ $activity['practice_id'] }}</td>
-                                <td>{{ $activity['practice_name'] }}</td>
+                                @if($isFirstInPractice)
+                                    <td class="text-center" rowspan="{{ $practiceRowspan }}">{{ $rowIndex }}</td>
+                                    <td class="fw-semibold" rowspan="{{ $practiceRowspan }}">{{ $activity['practice_id'] }}</td>
+                                    <td rowspan="{{ $practiceRowspan }}">{{ $activity['practice_name'] }}</td>
+                                @endif
                                 <td>{{ $activity['activity_description'] }}</td>
                                 <td class="text-center">
                                     @php
@@ -75,7 +93,7 @@
                                             @endforeach
                                         </ul>
                                     @else
-                                        <span class="text-muted small">No evidence</span>
+                                        <span class="text-muted small">-</span>
                                     @endif
                                 </td>
                                 <td>
@@ -111,7 +129,14 @@
         z-index: 10;
     }
     #activity-report-table td, #activity-report-table th {
+        vertical-align: top;
+    }
+    #activity-report-table td[rowspan] {
         vertical-align: middle;
+        background-color: #f8f9fa;
+    }
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
     }
 </style>
 @endsection
