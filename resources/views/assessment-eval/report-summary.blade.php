@@ -87,13 +87,15 @@
                 </div>
                 {{-- Detailed Table Section --}}
                 <div class="mt-4">
-                    <table class="table table-bordered align-middle table-striped">
+                    <table class="table table-bordered align-middle" style="border-color: #000; border-width: 2px;">
                         <thead>
-                            <tr class="text-white text-center" style="background-color: #0f2b5c;">
-                                <th style="width: 15%;">Practice</th>
-                                <th style="width: 35%;">Kebijakan Pedoman / Prosedur</th>
-                                <th style="width: 25%;">Evidences / Bukti Pelaksanaan</th>
-                                <th style="width: 25%;">Potensi Perbaikan</th>
+                            <tr class="text-center">
+                                <th class="text-white" style="width: 5%; background-color: #0f2b5c;">Practice</th>
+                                <th class="text-white" style="width: 35%; background-color: #0f2b5c;">Kebijakan Pedoman /
+                                    Prosedur</th>
+                                <th class="text-white" style="width: 25%; background-color: #0f2b5c;">Evidences / Bukti
+                                    Pelaksanaan</th>
+                                <th class="text-white" style="width: 35%; background-color: #0f2b5c;">Potensi Perbaikan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -106,11 +108,11 @@
                                         <tr>
                                             {{-- Column 1: Practice (Rowspan) --}}
                                             @if ($index === 0)
-                                                <td rowspan="{{ $activityCount }}" class="align-top bg-white">
-                                                    <div class="fw-bold text-primary mb-1">
-                                                        {{ str_replace('"', '', $practice->practice_id) }}</div>
-                                                    <div class="small text-muted">
-                                                        {{ str_replace('"', '', $practice->practice_name) }}</div>
+                                                <td rowspan="{{ $activityCount }}"
+                                                    class="align-middle bg-white text-center" style="width: 1%;">
+                                                    <div class="fw-bold text-primary p-2 text-nowrap">
+                                                        {{ str_replace('"', '', $practice->practice_id) }}
+                                                    </div>
                                                 </td>
                                             @endif
 
@@ -130,20 +132,17 @@
 
                                             {{-- Column 4: Notes (Perbaikan) --}}
                                             <td class="align-top">
-                                                @if (isset($activity->assessment) && !empty($activity->assessment['notes']))
-                                                    <div class="small text-break">{!! nl2br(e($activity->assessment['notes'])) !!}</div>
-                                                @else
-                                                    <div class="text-muted small fst-italic text-center">-</div>
-                                                @endif
+                                                <textarea class="form-control form-control-sm bg-white" rows="2" style="resize: vertical; font-size: 0.85rem;">{{ isset($activity->assessment['notes']) ? $activity->assessment['notes'] : '' }}</textarea>
                                             </td>
                                         </tr>
                                     @endforeach
                                 @else
                                     {{-- Fallback if no activities --}}
                                     <tr>
-                                        <td class="align-top bg-white">
-                                            <div class="fw-bold text-primary">
-                                                {{ str_replace('"', '', $practice->practice_id) }}</div>
+                                        <td class="align-middle bg-white text-center" style="width: 1%;">
+                                            <div class="fw-bold text-primary p-2 text-nowrap">
+                                                {{ str_replace('"', '', $practice->practice_id) }}
+                                            </div>
                                         </td>
                                         <td colspan="3" class="text-center text-muted small">No activities defined.</td>
                                     </tr>
@@ -152,7 +151,6 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
         @endforeach
     </div>
