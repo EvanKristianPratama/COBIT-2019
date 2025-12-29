@@ -8,6 +8,7 @@ use App\Models\MstEval;
 use App\Models\MstObjective;
 use App\Models\MstEvidence;
 use App\Models\TrsActivityeval;
+use App\Models\TrsObjectiveScore;
 use App\Models\TrsScoping;
 use App\Models\TrsEvalDetail;
 use App\Models\User;
@@ -27,7 +28,7 @@ class ActivityReportController extends Controller
     /**
      * Show activity report for a specific objective
      */
-    public function show($evalId, $objectiveId)
+    public function show($evalId, $objectiveId, Request $request)
     {
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
@@ -48,6 +49,8 @@ class ActivityReportController extends Controller
                 return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
             }
 
+            $organization = $owner->organisasi ?? 'N/A';
+
             // Get the objective
             $objective = MstObjective::with(['practices.activities'])
                 ->where('objective_id', $objectiveId)
@@ -57,14 +60,38 @@ class ActivityReportController extends Controller
                 return redirect()->back()->withErrors(['error' => 'Objective not found']);
             }
 
+            // Calculate max level for this objective
+            $maxLevel = 0;
+            foreach ($objective->practices as $practice) {
+                foreach ($practice->activities as $activity) {
+                    $lvl = (int)($activity->capability_lvl ?? $activity->capability_level ?? 0);
+                    if ($lvl > $maxLevel) $maxLevel = $lvl;
+                }
+            }
+
+            // Get current maturity level from score table
+            $objectiveScore = TrsObjectiveScore::where('eval_id', $evalId)
+                ->where('objective_id', $objectiveId)
+                ->first();
+            $currentLevel = $objectiveScore ? $objectiveScore->level : 0;
+
             // Load all evidences for this evaluation (for display lookup)
             $evalEvidences = MstEvidence::where('eval_id', $evalId)->get()->keyBy('id');
+
+            // Filter parameters
+            $filterLevel = $request->query('level');
 
             // Get all activities for this objective with their evaluations
             $activityData = [];
             
             foreach ($objective->practices as $practice) {
                 foreach ($practice->activities as $activity) {
+                    // Check if capability level filter applies
+                    $capLevel = $activity->capability_lvl ?? $activity->capability_level ?? '';
+                    if ($filterLevel && (string)$capLevel !== (string)$filterLevel) {
+                        continue;
+                    }
+
                     // Get evaluation for this activity
                     $activityEval = TrsActivityeval::where('eval_id', $evalId)
                         ->where('activity_id', $activity->activity_id)
@@ -72,12 +99,11 @@ class ActivityReportController extends Controller
                     
                     // Only include if has any response (level_achieved not null)
                     if ($activityEval && $activityEval->level_achieved) {
-                        // Parse evidence - could be JSON array of IDs/names or comma-separated string
+                        // Parse evidence
                         $evidenceDisplay = [];
                         $rawEvidence = $activityEval->evidence;
                         
                         if ($rawEvidence) {
-                            // Try JSON decode first
                             $decoded = json_decode($rawEvidence, true);
                             if (is_array($decoded)) {
                                 foreach ($decoded as $evItem) {
@@ -90,7 +116,6 @@ class ActivityReportController extends Controller
                                     }
                                 }
                             } else {
-                                // Not JSON, treat as plain text or comma-separated
                                 $evidenceDisplay[] = $rawEvidence;
                             }
                         }
@@ -100,23 +125,34 @@ class ActivityReportController extends Controller
                             'practice_name' => $practice->practice_name,
                             'activity_id' => $activity->activity_id,
                             'activity_description' => $activity->description ?? $activity->activity ?? '',
-                            'capability_level' => $activity->capability_lvl ?? $activity->capability_level ?? '',
+                            'capability_level' => (string)$capLevel,
                             'answer' => $activityEval->level_achieved,
-                            'evidence' => $evidenceDisplay, // Now a clean array of strings
+                            'evidence' => $evidenceDisplay,
                             'notes' => $activityEval->notes
                         ];
                     }
                 }
             }
 
-            // Sort by practice_id then activity_id
+            // Primary sort by capability_level (ASC), secondary by practice_id (ASC)
             usort($activityData, function($a, $b) {
+                // Secondary sort: practice_id
+                $lvlA = (int)$a['capability_level'];
+                $lvlB = (int)$b['capability_level'];
+                
+                if ($lvlA !== $lvlB) {
+                    return $lvlA <=> $lvlB;
+                }
+                
                 $pCompare = strcmp($a['practice_id'], $b['practice_id']);
-                return $pCompare !== 0 ? $pCompare : strcmp($a['activity_id'], $b['activity_id']);
+                if ($pCompare !== 0) return $pCompare;
+                
+                return strcmp($a['activity_id'], $b['activity_id']);
             });
 
             return view('assessment-eval.report-activity', compact(
-                'evaluation', 'evalId', 'objective', 'activityData'
+                'evaluation', 'evalId', 'objective', 'activityData', 
+                'filterLevel', 'currentLevel', 'maxLevel', 'organization'
             ));
 
         } catch (\Exception $e) {

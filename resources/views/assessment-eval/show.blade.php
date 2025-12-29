@@ -3010,6 +3010,7 @@
                 <th style="width:100px;" class="text-center">Target</th>
                 <th style="width:100px;" class="text-center">Gap</th>
                 <th style="width:100px;" class="text-center">Max Level</th>
+                <th style="width:100px;" class="text-center">Action</th>
             </tr>
         `;
 
@@ -3077,6 +3078,14 @@
                 </td>
                 <td class="text-center fw-bold text-secondary">
                     ${maxCap}
+                </td>
+                <td class="text-center">
+                    <a href="/assessment-eval/${this.currentEvalId}/report-activity/${row.objectiveId}" 
+                       class="btn btn-xs btn-outline-primary rounded-pill py-1 px-3" 
+                       style="font-size: 0.7rem; font-weight: 600;"
+                       title="View Activity Report">
+                        Detail
+                    </a>
                 </td>
             `;
                     tbody.appendChild(tr);

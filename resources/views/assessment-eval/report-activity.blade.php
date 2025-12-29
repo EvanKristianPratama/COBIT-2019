@@ -13,9 +13,6 @@
                     <div class="hero-eval-id" style="font-size:1.05rem;font-weight:600;margin-top:0.25rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);">
                         {{ $objective->objective_id }} - {{ $objective->objective ?? 'Objective' }}
                     </div>
-                    <div class="hero-eval-year text-uppercase" style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:0.06em;">
-                        Assessment Year: {{ $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->tahun ?? 'N/A' }}
-                    </div>
                 </div>
                 <div>
                     <a href="{{ route('assessment-eval.report', $evalId) }}" class="btn btn-light btn-sm rounded-pill px-3">
@@ -26,11 +23,67 @@
         </div>
     </div>
 
+    {{-- Brief Info Section --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-4 p-4 text-center bg-light border-end d-flex flex-column justify-content-center">
+                            <div class="text-uppercase small fw-bold text-muted mb-1">Capability Maturity</div>
+                            <div class="display-5 fw-bold text-primary">{{ $currentLevel }}/{{ $maxLevel }}</div>
+                            <div class="small text-secondary fw-semibold mt-1">Level {{ $currentLevel }} of Max {{ $maxLevel }}</div>
+                        </div>
+                        <div class="col-md-8 p-4">
+                            <div class="row">
+                                <div class="col-sm-4 mb-3 mb-sm-0">
+                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Assessment ID</div>
+                                    <div class="fw-bold text-dark" style="font-size: 1.1rem;">#{{ $evalId }}</div>
+                                </div>
+                                <div class="col-sm-4 mb-3 mb-sm-0">
+                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Assessment Year</div>
+                                    <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->tahun ?? 'N/A' }}</div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Organization</div>
+                                    <div class="fw-bold text-dark text-truncate" style="font-size: 1.1rem;" title="{{ $organization }}">
+                                        {{ $organization }}
+                                    </div>
+                                </div>
+                            </div>
+                            <hr class="my-3 opacity-10">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Target Objective</div>
+                                    <div class="fw-semibold text-secondary small">
+                                        {{ $objective->objective_id }} - {{ $objective->objective }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Activity Table --}}
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold text-primary">Filled Activities</h5>
-            <span class="badge bg-secondary">{{ count($activityData) }} activities</span>
+            <div class="d-flex align-items-center gap-3">
+                <h5 class="mb-0 fw-bold text-primary">Filled Activities</h5>
+                <span class="badge bg-secondary">{{ count($activityData) }} activities</span>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2">
+                <label for="level-filter" class="form-label mb-0 small fw-bold text-secondary">Filter by Level:</label>
+                <select class="form-select form-select-sm" id="level-filter" style="width: 120px;">
+                    <option value="">All Levels</option>
+                    @for($i = 2; $i <= 5; $i++)
+                        <option value="{{ $i }}" {{ (string)$filterLevel === (string)$i ? 'selected' : '' }}>Level {{ $i }}</option>
+                    @endfor
+                </select>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 70vh; overflow: auto;">
@@ -49,27 +102,29 @@
                     </thead>
                     <tbody>
                         @php
-                            // Group activities by practice_id for rowspan calculation
-                            $practiceGroups = collect($activityData)->groupBy('practice_id');
+                            // Group activities by (level, practice_id) for rowspan calculation
+                            $groups = collect($activityData)->groupBy(function($item) {
+                                return $item['capability_level'] . '-' . $item['practice_id'];
+                            });
                             $rowIndex = 0;
-                            $processedPractices = [];
+                            $processedGroups = [];
                         @endphp
                         
                         @forelse($activityData as $index => $activity)
                             @php
-                                $practiceId = $activity['practice_id'];
-                                $isFirstInPractice = !in_array($practiceId, $processedPractices);
-                                $practiceRowspan = $isFirstInPractice ? $practiceGroups[$practiceId]->count() : 0;
-                                if ($isFirstInPractice) {
-                                    $processedPractices[] = $practiceId;
+                                $groupId = $activity['capability_level'] . '-' . $activity['practice_id'];
+                                $isFirstInGroup = !in_array($groupId, $processedGroups);
+                                $groupRowspan = $isFirstInGroup ? $groups[$groupId]->count() : 0;
+                                if ($isFirstInGroup) {
+                                    $processedGroups[] = $groupId;
                                     $rowIndex++;
                                 }
                             @endphp
                             <tr>
-                                @if($isFirstInPractice)
-                                    <td class="text-center" rowspan="{{ $practiceRowspan }}">{{ $rowIndex }}</td>
-                                    <td class="fw-semibold" rowspan="{{ $practiceRowspan }}">{{ $activity['practice_id'] }}</td>
-                                    <td rowspan="{{ $practiceRowspan }}">{{ $activity['practice_name'] }}</td>
+                                @if($isFirstInGroup)
+                                    <td class="text-center" rowspan="{{ $groupRowspan }}">{{ $rowIndex }}</td>
+                                    <td class="fw-semibold" rowspan="{{ $groupRowspan }}">{{ $activity['practice_id'] }}</td>
+                                    <td rowspan="{{ $groupRowspan }}">{{ $activity['practice_name'] }}</td>
                                 @endif
                                 <td>{{ $activity['activity_description'] }}</td>
                                 <td class="text-center">
@@ -110,7 +165,7 @@
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center py-4 text-muted">
-                                    No filled activities for this objective.
+                                    No filled activities for this criteria.
                                 </td>
                             </tr>
                         @endforelse
@@ -121,7 +176,29 @@
     </div>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const levelFilter = document.getElementById('level-filter');
+        if (levelFilter) {
+            levelFilter.addEventListener('change', function() {
+                const val = this.value;
+                const url = new URL(window.location.href);
+                if (val) {
+                    url.searchParams.set('level', val);
+                } else {
+                    url.searchParams.delete('level');
+                }
+                window.location.href = url.toString();
+            });
+        }
+    });
+</script>
+
 <style>
+    .extreme-small {
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+    }
     #activity-report-table th {
         position: sticky;
         top: 0;
