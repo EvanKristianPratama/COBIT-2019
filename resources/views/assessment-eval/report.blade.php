@@ -187,9 +187,11 @@
                 html += `
                         <td class="text-center fw-bold text-secondary">${max}</td>
                         <td class="text-center">
-                            <a href="/assessment-eval/{{ $evalId }}/report-activity/${id}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye me-1"></i>Detail
-                            </a>
+                                    <a href="/assessment-eval/{{ $evalId }}/report-activity/${id}" 
+                                       class="btn btn-xs btn-outline-primary rounded-pill py-1 px-3" 
+                                       style="font-size: 0.7rem; font-weight: 600;">
+                                        Detail
+                                    </a>
                         </td>
                     </tr>`;
             });
