@@ -1,14 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\GuestController;
 use App\Http\Controllers\Admin\AssessmentController as AdminAssessment;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\AssessmentController;
-use App\Http\Controllers\cobit2019\DfController;
+use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
+use App\Http\Controllers\AssessmentEval\AssessmentListController;
+use App\Http\Controllers\AssessmentEval\AssessmentReportController;
+use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
+use App\Http\Controllers\AssessmentEval\EvidenceController;
+use App\Http\Controllers\AssessmentEval\TargetMaturityController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\cobit2019\Df10Controller;
 use App\Http\Controllers\cobit2019\Df2Controller;
 use App\Http\Controllers\cobit2019\Df3Controller;
 use App\Http\Controllers\cobit2019\Df4Controller;
@@ -17,29 +20,27 @@ use App\Http\Controllers\cobit2019\Df6Controller;
 use App\Http\Controllers\cobit2019\Df7Controller;
 use App\Http\Controllers\cobit2019\Df8Controller;
 use App\Http\Controllers\cobit2019\Df9Controller;
-use App\Http\Controllers\cobit2019\Df10Controller;
+use App\Http\Controllers\cobit2019\DfController;
+use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\cobit2019\Step2Controller;
 use App\Http\Controllers\cobit2019\Step3Controller;
 use App\Http\Controllers\cobit2019\Step4Controller;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
-use App\Http\Controllers\cobit2019\MstObjectiveController;
-use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
-use App\Http\Controllers\AssessmentEval\AssessmentReportController;
-use App\Http\Controllers\AssessmentEval\AssessmentListController;
-use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
-use App\Http\Controllers\AssessmentEval\EvidenceController;
-use App\Http\Controllers\AssessmentEval\TargetMaturityController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Route;
 
 Route::bind('evalId', function ($value) {
     try {
         // Try to decrypt if it looks like hex (long string)
         if (ctype_xdigit($value) && strlen($value) > 20) {
-             return Crypt::decryptString(hex2bin($value));
+            return Crypt::decryptString(hex2bin($value));
         }
+
         // Fallback for direct integer access (optional: can remove if strict security is needed)
         // But helpful during migration or debugging.
-        // User asked to hide it, so maybe strict? 
+        // User asked to hide it, so maybe strict?
         // Let's allow int for backward compatibility if logic fails or during dev.
         return $value;
     } catch (\Exception $e) {
@@ -50,16 +51,16 @@ Route::bind('evalId', function ($value) {
 // Public routes
 
 Route::get('/assessment/join', [AssessmentController::class, 'showJoinForm'])
-     ->name('assessment.join')
-     ->middleware('auth');
+    ->name('assessment.join')
+    ->middleware('auth');
 
 Route::post('/assessment/join', [AssessmentController::class, 'join'])
-     ->name('assessment.join.store')
-     ->middleware('auth');
+    ->name('assessment.join.store')
+    ->middleware('auth');
 
 Route::post('/assessment/request', [AssessmentController::class, 'requestAssessment'])
-     ->middleware('auth')
-     ->name('assessment.request');
+    ->middleware('auth')
+    ->name('assessment.request');
 
 Route::get('/objectives', [MstObjectiveController::class, 'index']);
 // Route::get('/objectives/{id}', [MstObjectiveController::class, 'show']);
@@ -69,48 +70,46 @@ Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('co
 Route::get('/objectives/component/{component}', [MstObjectiveController::class, 'byComponent'])
     ->name('cobit2019.objectives.bycomponent');
 
-
 // Admin routes (auth + role check di controller)
 Route::prefix('admin')
-     ->middleware('auth')
-     ->name('admin.')
-     ->group(function() {
+    ->middleware('auth')
+    ->name('admin.')
+    ->group(function () {
 
-    // Dashboard (alias assessments.index)
-    Route::get('dashboard', [AdminAssessment::class, 'index'])
-         ->name('dashboard');
-    Route::get('assessments', [AdminAssessment::class, 'index'])
-         ->name('assessments.index');
+        // Dashboard (alias assessments.index)
+        Route::get('dashboard', [AdminAssessment::class, 'index'])
+            ->name('dashboard');
+        Route::get('assessments', [AdminAssessment::class, 'index'])
+            ->name('assessments.index');
 
-     // Page users
-     Route::get('users', [UserAdminController::class, 'index'])
-         ->name('users.index');
-     Route::put('users/{id}', [UserAdminController::class, 'update'])->name('users.update');
-     Route::put('users/{user}/deactivate', [UserAdminController::class, 'deactivate'])->name('users.deactivate');
-     Route::put('users/{user}/activate', [UserAdminController::class, 'activate'])->name('users.activate');
+        // Page users
+        Route::get('users', [UserAdminController::class, 'index'])
+            ->name('users.index');
+        Route::put('users/{id}', [UserAdminController::class, 'update'])->name('users.update');
+        Route::put('users/{user}/deactivate', [UserAdminController::class, 'deactivate'])->name('users.deactivate');
+        Route::put('users/{user}/activate', [UserAdminController::class, 'activate'])->name('users.activate');
 
-    // CRUD Assessment
-    Route::post('assessments', [AdminAssessment::class, 'store'])
-         ->name('assessments.store');
-    Route::get('assessments/{assessment_id}', [AdminAssessment::class, 'show'])
-         ->name('assessments.show');
-    Route::delete('assessments/{assessment_id}', [AdminAssessment::class, 'destroy'])
-         ->name('assessments.destroy');
+        // CRUD Assessment
+        Route::post('assessments', [AdminAssessment::class, 'store'])
+            ->name('assessments.store');
+        Route::get('assessments/{assessment_id}', [AdminAssessment::class, 'show'])
+            ->name('assessments.show');
+        Route::delete('assessments/{assessment_id}', [AdminAssessment::class, 'destroy'])
+            ->name('assessments.destroy');
 
+        // Tampilkan semua pending requests
+        Route::get('requests', [AdminAssessment::class, 'pendingRequests'])
+            ->name('requests');
 
-         // Tampilkan semua pending requests
-Route::get('requests', [AdminAssessment::class, 'pendingRequests'])
-     ->name('requests');
+        // **Request–Approve** routes
+        // Tampilkan semua pending requests
+        Route::get('requests', [AdminAssessment::class, 'pendingRequests'])
+            ->name('requests');
 
-    // **Request–Approve** routes
-    // Tampilkan semua pending requests
-    Route::get('requests', [AdminAssessment::class, 'pendingRequests'])
-         ->name('requests');
-
-    // Approve satu request berdasar index di JSON
-    Route::post('requests/{idx}/approve', [AdminAssessment::class, 'approveRequest'])
-         ->name('requests.approve');
-});
+        // Approve satu request berdasar index di JSON
+        Route::post('requests/{idx}/approve', [AdminAssessment::class, 'approveRequest'])
+            ->name('requests.approve');
+    });
 
 // Redirect ke halaman login
 Route::get('/', function () {
@@ -129,7 +128,6 @@ Route::get('login/google/callback', [LoginController::class, 'handleGoogleCallba
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
-
 
 // Home route
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
@@ -156,24 +154,23 @@ Route::post('/step2/store', [Step2Controller::class, 'storeStep2'])
 
 // Route GET untuk tampilkan Step 3
 Route::get('/step3', [Step3Controller::class, 'index'])
-     ->name('step3.index')
-     ->middleware('auth');
+    ->name('step3.index')
+    ->middleware('auth');
 
 // Route POST untuk simpan Step 3 ke session
 Route::post('/step3/store', [Step3Controller::class, 'store'])
-     ->name('step3.store')
-     ->middleware('auth');
-
+    ->name('step3.store')
+    ->middleware('auth');
 
 // Route GET untuk tampilkan Step 4
 Route::get('/step4', [Step4Controller::class, 'index'])
-     ->name('step4.index')
-     ->middleware('auth');
+    ->name('step4.index')
+    ->middleware('auth');
 
 // Route POST untuk simpan Step 4 ke session
 Route::post('/step4/store', [Step4Controller::class, 'store'])
-     ->name('step4.store')
-     ->middleware('auth');
+    ->name('step4.store')
+    ->middleware('auth');
 
 // DF1
 Route::get('/df1/form/{id}', [DfController::class, 'showDesignFactorForm'])
@@ -258,86 +255,91 @@ Route::get('/df10/output/{id}', [Df10Controller::class, 'showOutput'])
 // Route untuk toggle akses DF middleware
 Route::get('/akses-df/toggle', function () {
     $current = session('jabatan_df_middleware_enabled', true);
-    session(['jabatan_df_middleware_enabled' => !$current]);
+    session(['jabatan_df_middleware_enabled' => ! $current]);
+
     return back();
 })->name('akses-df.toggle');
 
 // Assessment Evaluation routes
 Route::get('/assessment-eval', [AssessmentEvalController::class, 'index'])
-     ->name('assessment-eval.index')
-     ->middleware('auth');
+    ->name('assessment-eval.index')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/list', [AssessmentListController::class, 'index'])
-     ->name('assessment-eval.list')
-     ->middleware('auth');
+    ->name('assessment-eval.list')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/report-all', [AssessmentReportController::class, 'index'])
-     ->name('assessment-eval.report.all')
-     ->middleware('auth');
+    ->name('assessment-eval.report.all')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/report-spiderweb', [AssessmentReportController::class, 'spiderweb'])
-     ->name('assessment-eval.report.spiderweb')
-     ->middleware('auth');
+    ->name('assessment-eval.report.spiderweb')
+    ->middleware('auth');
 
 Route::resource('assessment-eval/target-maturity', TargetMaturityController::class)
-     ->only(['index', 'store', 'destroy'])
-     ->middleware('auth');
+    ->only(['index', 'store', 'destroy'])
+    ->middleware('auth');
 
 Route::post('/assessment-eval/create', [AssessmentEvalController::class, 'createAssessment'])
-     ->name('assessment-eval.create')
-     ->middleware('auth');
+    ->name('assessment-eval.create')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}', [AssessmentEvalController::class, 'showAssessment'])
-     ->name('assessment-eval.show')
-     ->middleware('auth');
+    ->name('assessment-eval.show')
+    ->middleware('auth');
 
 Route::post('/assessment-eval/{evalId}/update-scope', [AssessmentScopeController::class, 'update'])
-     ->name('assessment-eval.update-scope')
-     ->middleware('auth');
+    ->name('assessment-eval.update-scope')
+    ->middleware('auth');
 
 Route::delete('/assessment-eval/delete-scope', [AssessmentScopeController::class, 'destroy'])
-     ->name('assessment-eval.delete-scope')
-     ->middleware('auth');
+    ->name('assessment-eval.delete-scope')
+    ->middleware('auth');
 
 Route::post('/assessment-eval/{evalId}/save', [AssessmentEvalController::class, 'save'])
-     ->name('assessment-eval.save')
-     ->middleware('auth');
+    ->name('assessment-eval.save')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/load', [AssessmentEvalController::class, 'load'])
-     ->name('assessment-eval.load')
-     ->middleware('auth');
+    ->name('assessment-eval.load')
+    ->middleware('auth');
 
 Route::delete('/assessment-eval/{evalId}', [AssessmentEvalController::class, 'delete'])
-     ->name('assessment-eval.delete')
-     ->middleware('auth');
+    ->name('assessment-eval.delete')
+    ->middleware('auth');
 
 Route::post('/assessment-eval/{evalId}/finish', [AssessmentEvalController::class, 'finish'])
-     ->name('assessment-eval.finish')
-     ->middleware('auth');
+    ->name('assessment-eval.finish')
+    ->middleware('auth');
 
 Route::post('/assessment-eval/{evalId}/unlock', [AssessmentEvalController::class, 'unlock'])
-     ->name('assessment-eval.unlock')
-     ->middleware('auth');
+    ->name('assessment-eval.unlock')
+    ->middleware('auth');
 
 Route::post('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 'store'])
-     ->name('assessment-eval.evidence.store')
-     ->middleware('auth');
+    ->name('assessment-eval.evidence.store')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 'index'])
-     ->name('assessment-eval.evidence.index')
-     ->middleware('auth');
+    ->name('assessment-eval.evidence.index')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/evidence/previous', [EvidenceController::class, 'previous'])
     ->name('assessment-eval.evidence.previous')
     ->middleware('auth');
 
 Route::put('/assessment-eval/evidence/{evidenceId}', [EvidenceController::class, 'update'])
-     ->name('assessment-eval.evidence.update')
-     ->middleware('auth');
+    ->name('assessment-eval.evidence.update')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/report', [AssessmentReportController::class, 'show'])
-     ->name('assessment-eval.report')
-     ->middleware('auth');
+    ->name('assessment-eval.report')
+    ->middleware('auth');
+
+Route::get('/assessment-eval/{evalId}/summary/{objectiveId?}', [AssessmentReportController::class, 'summary'])
+    ->name('assessment-eval.summary')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [
     \App\Http\Controllers\AssessmentEval\ActivityReportController::class, 'show'
@@ -345,5 +347,5 @@ Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [
   ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
-     ->name('assessment-eval.score')
-     ->middleware('auth');
+    ->name('assessment-eval.score')
+    ->middleware('auth');
