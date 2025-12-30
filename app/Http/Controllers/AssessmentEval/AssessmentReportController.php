@@ -5,7 +5,6 @@ namespace App\Http\Controllers\AssessmentEval;
 use App\Http\Controllers\Controller;
 use App\Models\MstEval;
 use App\Models\MstObjective;
-use App\Models\TrsActivityeval;
 use App\Models\TrsEvalDetail;
 use App\Models\TrsObjectiveScore;
 use App\Models\TrsScoping;
@@ -223,7 +222,7 @@ class AssessmentReportController extends Controller
         $evaluation = MstEval::findOrFail($evalId);
 
         // 2 & 3. All Objectives & Practices
-        $objectivesQuery = MstObjective::with(['practices'])->orderBy('objective_id');
+        $objectivesQuery = MstObjective::with(['practices.activities'])->orderBy('objective_id');
 
         if ($objectiveId) {
             $objectivesQuery->where('objective_id', $objectiveId);
@@ -258,13 +257,19 @@ class AssessmentReportController extends Controller
             $maxLevels = [];
         }
 
+        // Suntik data score dan max level ke dalam masing-masing object
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels) {
+            $obj->current_score = $objectiveScores[$obj->objective_id] ?? 0;
+            $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
+
+            return $obj;
+        });
+
         // return response()->json([
         //     'evaluation' => $evaluation,
         //     'objectives' => $objectives,
-        //     'objectiveScores' => $objectiveScores,
-        //     'maxLevels' => $maxLevels,
         // ]);
 
-        return view('assessment-eval.report-summary', compact('evaluation', 'objectives', 'objectiveScores', 'maxLevels'));
+        return view('assessment-eval.report-summary', compact('evaluation', 'objectives'));
     }
 }

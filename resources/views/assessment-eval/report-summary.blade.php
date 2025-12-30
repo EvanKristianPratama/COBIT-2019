@@ -3,23 +3,17 @@
 @section('content')
     <div class="container">
         @foreach ($objectives as $objective)
-            @php
-                $maxLevel = $maxLevels[$objective->objective_id] ?? 5;
-                $score = $objectiveScores[$objective->objective_id] ?? 0;
-                $displayScore = $score;
-            @endphp
-
             <div class="mb-5">
                 {{-- 1. Header Bar --}}
                 <div class="d-flex align-items-center mb-2 px-3 py-2 text-white" style="background-color: #0f2b5c;">
                     <div class="fw-bold fs-5">
-                        1. {{ $objective->objective_id }} - {{ $objective->objective }}
+                        {{ $loop->iteration }}. {{ $objective->objective_id }} - {{ $objective->objective }}
                     </div>
                 </div>
 
                 {{-- 2. Max Level Info --}}
                 <div class="mb-3 text-secondary fw-bold" style="font-size: 0.9rem;">
-                    (Maksimum Level : {{ $maxLevel }})
+                    (Maksimum Level : {{ $objective->max_level }})
                 </div>
 
                 <div class="row g-0">
@@ -38,7 +32,7 @@
                             <div
                                 class="flex-grow-1 bg-white d-flex align-items-center justify-content-center position-relative py-4">
                                 <div class="display-3 fw-bold">
-                                    {{ $displayScore }}/{{ $maxLevel }}
+                                    {{ $objective->current_score }} / {{ $objective->max_level }}
                                 </div>
                             </div>
                         </div>
@@ -72,6 +66,7 @@
                                     @foreach ($objective->practices as $practice)
                                         <div class="col-md-4 mb-2">
                                             <div class="d-flex">
+
                                                 <span class="fw-bold me-1 text-nowrap"
                                                     style="font-size: 0.85rem;">{{ str_replace('"', '', $practice->practice_id) }}</span>
                                                 <span class="text-secondary" style="font-size: 0.85rem;">

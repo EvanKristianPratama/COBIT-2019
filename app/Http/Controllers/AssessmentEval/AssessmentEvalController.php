@@ -172,19 +172,6 @@ class AssessmentEvalController extends Controller
                 ]];
             });
 
-            // return response()->json([
-            //     'objectives' => $objectives,
-            //     'allObjectives' => $allObjectives,
-            //     'evalId' => $evalId,
-            //     'evaluation' => $evaluation,
-            //     'isOwner' => $isOwner,
-            //     'evidences' => $evidences,
-            //     'targetCapabilityMap' => $targetCapabilityMap,
-            //     'allScopes' => $allScopes,
-            //     'activeScope' => $activeScope,
-            //     'scopeDetails' => $scopeDetails,
-            // ]);
-
             return view('assessment-eval.show', compact(
                 'objectives', 'allObjectives', 'evalId', 'evaluation',
                 'isOwner', 'evidences', 'targetCapabilityMap',
