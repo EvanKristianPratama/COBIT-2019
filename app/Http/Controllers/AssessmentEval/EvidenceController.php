@@ -113,7 +113,7 @@ class EvidenceController extends Controller
                 $allowedFields = [
                     'judul_dokumen', 'no_dokumen', 'grup', 'tipe',
                     'tahun_terbit', 'tahun_kadaluarsa', 'pemilik_dokumen',
-                    'pengesahan', 'klasifikasi', 'summary'
+                    'pengesahan', 'klasifikasi', 'summary', 'ket_tipe'
                 ];
                 
                 foreach ($filters as $field => $value) {
@@ -135,7 +135,7 @@ class EvidenceController extends Controller
                 ->get([
                     'id', 'eval_id', 'judul_dokumen', 'no_dokumen', 'grup', 'tipe',
                     'tahun_terbit', 'tahun_kadaluarsa', 'pemilik_dokumen', 'pengesahan',
-                    'klasifikasi', 'summary', 'notes', 'created_at'
+                    'klasifikasi', 'summary', 'link', 'ket_tipe', 'created_at'
                 ]);
 
             $mapped = $evidences->map(function ($evidence) {
@@ -152,7 +152,8 @@ class EvidenceController extends Controller
                     'pengesahan' => $evidence->pengesahan,
                     'klasifikasi' => $evidence->klasifikasi,
                     'summary' => $evidence->summary,
-                    'notes' => $evidence->notes,
+                    'link' => $evidence->link,
+                    'ket_tipe' => $evidence->ket_tipe,
                     'created_at' => $evidence->created_at,
                     'assessment_year' => optional($evidence->evaluation)->tahun ?? null,
                 ];
@@ -192,7 +193,8 @@ class EvidenceController extends Controller
                 'pemilik_dokumen' => 'nullable|string|max:255',
                 'klasifikasi' => 'nullable|string|max:100',
                 'grup' => 'nullable|string|max:100',
-                'notes' => 'nullable|string',
+                'link' => 'nullable|string',
+                'ket_tipe' => 'nullable|string|max:255',
                 'summary' => 'nullable|string',
             ]);
 
@@ -230,7 +232,8 @@ class EvidenceController extends Controller
                 'pemilik_dokumen' => 'nullable|string|max:255',
                 'klasifikasi' => 'nullable|string|max:100',
                 'grup' => 'nullable|string|max:100',
-                'notes' => 'nullable|string',
+                'link' => 'nullable|string',
+                'ket_tipe' => 'nullable|string|max:255',
                 'summary' => 'nullable|string',
             ]);
 
