@@ -23,7 +23,8 @@ class MstEvidence extends Model
         'pemilik_dokumen',
         'klasifikasi',
         'grup',
-        'notes',
+        'link',
+        'ket_tipe',
         'summary',
     ];
 
