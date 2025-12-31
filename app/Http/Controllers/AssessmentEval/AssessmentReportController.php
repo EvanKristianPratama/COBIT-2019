@@ -222,7 +222,11 @@ class AssessmentReportController extends Controller
         $evaluation = MstEval::findOrFail($evalId);
 
         // 2 & 3. All Objectives & Practices
-        $objectivesQuery = MstObjective::with(['practices.activities'])->orderBy('objective_id');
+        $objectivesQuery = MstObjective::with([
+            'practices.activities.evaluations' => function ($query) use ($evalId) {
+                $query->where('eval_id', $evalId); // <--- Filter Kuncinya
+            },
+        ])->orderBy('objective_id');
 
         if ($objectiveId) {
             $objectivesQuery->where('objective_id', $objectiveId);
@@ -257,10 +261,83 @@ class AssessmentReportController extends Controller
             $maxLevels = [];
         }
 
+        // 6. Fetch Evidence Types for classification
+        $evidenceTypes = \App\Models\MstEvidence::where('eval_id', $evalId)
+            ->get()
+            ->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])
+            ->toArray();
+
         // Suntik data score dan max level ke dalam masing-masing object
-        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels) {
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evidenceTypes) {
             $obj->current_score = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
+
+            $filledEvidenceCount = 0;
+
+            foreach ($obj->practices as $practice) {
+                // Variabel untuk menyimpan history evidence di practice ini (agar tidak duplikat)
+                $daftarEvidenceUnikPractice = [];
+
+                foreach ($practice->activities as $activity) {
+                    // Ambil item pertama dari relasi hasMany (karena 1 activity hanya punya 1 nilai per eval_id ini)
+                    $evalData = $activity->evaluations->first();
+
+                    // Logic Deduplikasi Evidence dalam satu Practice
+                    if ($evalData && !empty($evalData->evidence)) {
+                        $barisEvidenceMentah = explode("\n", $evalData->evidence);
+                        $policyList = [];
+                        $executionList = [];
+
+                        foreach ($barisEvidenceMentah as $namaDokumen) {
+                            $namaDokumenNormalisasi = strtolower(trim($namaDokumen));
+                            if ($namaDokumenNormalisasi === '') {
+                                continue;
+                            }
+
+                            if (!in_array($namaDokumenNormalisasi, $daftarEvidenceUnikPractice)) {
+                                $daftarEvidenceUnikPractice[] = $namaDokumenNormalisasi;
+
+                                // Lookup Tipe
+                                $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
+
+                                // Filter Logic: Politik vs Pelaksanaan
+                                if ($tipe && stripos($tipe, 'Dokumen Kebijakan') !== false) {
+                                    $policyList[] = trim($namaDokumen);
+                                } else {
+                                    $executionList[] = trim($namaDokumen);
+                                }
+                            }
+                        }
+
+                        // Inject hasil filter langsung ke objek assessment siap pakai di View
+                        $evalData->policy_list = $policyList;
+                        $evalData->execution_list = $executionList;
+                    }
+
+                    // Suntikkan sebagai 'assessment' agar View & JSON langsung dapat datanya
+                    $activity->assessment = $evalData;
+
+                    // Hitung jika evidence tidak kosong
+                    if ($evalData && ! empty($evalData->evidence)) {
+                        $filledEvidenceCount++;
+                    }
+
+                    // Hapus relasi asli agar JSON bersih
+                    $activity->unsetRelation('evaluations');
+                }
+
+                // Filter logic dipindah ke Controller: Hanya simpan activity yang punya evidence
+                $filteredActivities = $practice->activities->filter(function ($act) {
+                    return ! empty($act->assessment) && ! empty($act->assessment->evidence);
+                })->values();
+
+                $practice->setRelation('activities', $filteredActivities);
+
+                // Set count properties for explicit access in View
+                $practice->filled_evidence_count = $filteredActivities->count();
+            }
+
+            $obj->filled_evidence_count = $filledEvidenceCount;
 
             return $obj;
         });
