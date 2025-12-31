@@ -51,13 +51,14 @@
                                 <th>No. Dokumen</th>
                                 <th class="text-center">Grup</th>
                                 <th>Tipe</th>
+                                <th>Ket. Tipe</th>
                                 <th class="text-center">Tahun Terbit</th>
                                 <th class="text-center">Tahun Kadaluarsa</th>
                                 <th>Pemilik</th>
                                 <th>Pengesahan</th>
                                 <th class="text-center">Klasifikasi</th>
                                 <th>Ringkasan</th>
-                                <th>Link Dokumen</th>
+                                <th>Link</th>
                                 <th class="text-center">Aksi</th>
                             </tr>
                             <tr class="table-light">
@@ -66,6 +67,7 @@
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari no dok" data-filter-field="no_dokumen"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari grup" data-filter-field="grup"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari tipe" data-filter-field="tipe"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari ket tipe" data-filter-field="ket_tipe"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari terbit" data-filter-field="tahun_terbit"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari kadaluarsa" data-filter-field="tahun_kadaluarsa"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari pemilik" data-filter-field="pemilik_dokumen"></th>
@@ -84,6 +86,7 @@
                                 <td data-field="no_dokumen">{{ $evidence->no_dokumen ?? '-' }}</td>
                                 <td class="text-center" data-field="grup">{{ $evidence->grup ?? '-' }}</td>
                                 <td data-field="tipe">{{ $evidence->tipe ?? '-' }}</td>
+                                <td data-field="ket_tipe">{{ $evidence->ket_tipe ?? '-' }}</td>
                                 <td class="text-center" data-field="tahun_terbit">{{ $evidence->tahun_terbit ?? '-' }}</td>
                                 <td class="text-center" data-field="tahun_kadaluarsa">{{ $evidence->tahun_kadaluarsa ?? '-' }}</td>
                                 <td data-field="pemilik_dokumen">{{ $evidence->pemilik_dokumen ?? '-' }}</td>
@@ -91,8 +94,8 @@
                                 <td class="text-center" data-field="klasifikasi">{{ $evidence->klasifikasi ?? '-' }}</td>
                                 <td data-field="summary">{{ $evidence->summary ?? '-' }}</td>
                                 <td>
-                                    @if($evidence->notes)
-                                        <a href="{{ $evidence->notes }}" target="_blank" class="text-decoration-none">Link</a>
+                                    @if($evidence->link)
+                                        <a href="{{ $evidence->link }}" target="_blank" class="text-decoration-none">Link</a>
                                     @else
                                         -
                                     @endif
@@ -111,7 +114,7 @@
                             </tr>
                         @empty
                             <tr data-empty-row="true">
-                                <td colspan="13" class="text-center py-3 text-muted">
+                                <td colspan="14" class="text-center py-3 text-muted">
                                     Tidak ada dokumen evidence ditemukan.
                                 </td>
                             </tr>
@@ -181,7 +184,15 @@
                         </div>
                         <div class="col-md-6">
                             <label for="tipe" class="form-label">Tipe Dokumen</label>
-                            <input type="text" class="form-control" id="tipe" name="tipe" placeholder="e.g. Policy, Procedure, Report">
+                            <select class="form-select" id="tipe" name="tipe">
+                                <option value="">Pilih Tipe</option>
+                                <option value="Design">Design</option>
+                                <option value="Implementation">Implementation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ket_tipe" class="form-label">Keterangan Tipe</label>
+                            <input type="text" class="form-control" id="ket_tipe" name="ket_tipe">
                         </div>
                         <div class="col-md-6">
                             <label for="tahun_terbit" class="form-label">Tahun Terbit</label>
@@ -214,8 +225,8 @@
                             <textarea class="form-control" id="summary" name="summary" rows="2"></textarea>
                         </div>
                         <div class="col-12">
-                            <label for="notes" class="form-label">Link Document (URL)</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="https://..."></textarea>
+                            <label for="link" class="form-label">Link Document (URL)</label>
+                            <textarea class="form-control" id="link" name="link" rows="2" placeholder="https://..."></textarea>
                         </div>
                     </div>
                 </form>
@@ -255,6 +266,7 @@
                                 <th>No. Dokumen</th>
                                 <th class="text-center">Grup</th>
                                 <th>Tipe</th>
+                                <th>Ket. Tipe</th>
                                 <th class="text-center" style="width:110px;">Tahun Terbit</th>
                                 <th class="text-center" style="width:130px;">Tahun Kadaluarsa</th>
                                 <th>Pemilik</th>
@@ -269,6 +281,7 @@
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari no dok" data-filter-field="no_dokumen"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari grup" data-filter-field="grup"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari tipe" data-filter-field="tipe"></th>
+                                <th><input type="text" class="form-control form-control-sm" placeholder="Cari ket tipe" data-filter-field="ket_tipe"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari terbit" data-filter-field="tahun_terbit"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari kadaluarsa" data-filter-field="tahun_kadaluarsa"></th>
                                 <th><input type="text" class="form-control form-control-sm" placeholder="Cari pemilik" data-filter-field="pemilik_dokumen"></th>
@@ -478,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             tr.setAttribute('data-empty-row', 'true');
             tr.innerHTML = `
-                <td colspan="13" class="text-center py-3 text-muted">
+                <td colspan="14" class="text-center py-3 text-muted">
                     Tidak ada dokumen evidence ditemukan.
                 </td>
             `;
@@ -490,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         data.forEach((evidence, idx) => {
             const tr = document.createElement('tr');
-            const linkHtml = evidence.notes ? `<a href="${evidence.notes}" target="_blank" class="text-decoration-none">Link</a>` : '-';
+            const linkHtml = evidence.link ? `<a href="${evidence.link}" target="_blank" class="text-decoration-none">Link</a>` : '-';
             
             let actionHtml = '-';
             if (flags.isOwner) {
@@ -512,6 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td data-field="no_dokumen">${safe(evidence.no_dokumen)}</td>
                 <td class="text-center" data-field="grup">${safe(evidence.grup)}</td>
                 <td data-field="tipe">${safe(evidence.tipe)}</td>
+                <td data-field="ket_tipe">${safe(evidence.ket_tipe)}</td>
                 <td class="text-center" data-field="tahun_terbit">${safe(evidence.tahun_terbit)}</td>
                 <td class="text-center" data-field="tahun_kadaluarsa">${safe(evidence.tahun_kadaluarsa)}</td>
                 <td data-field="pemilik_dokumen">${safe(evidence.pemilik_dokumen)}</td>
@@ -591,13 +605,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('no_dokumen').value = evidence.no_dokumen || '';
             document.getElementById('grup').value = evidence.grup || '';
             document.getElementById('tipe').value = evidence.tipe || '';
+            document.getElementById('ket_tipe').value = evidence.ket_tipe || '';
             document.getElementById('tahun_terbit').value = evidence.tahun_terbit || '';
             document.getElementById('tahun_kadaluarsa').value = evidence.tahun_kadaluarsa || '';
             document.getElementById('pemilik_dokumen').value = evidence.pemilik_dokumen || '';
             document.getElementById('pengesahan').value = evidence.pengesahan || '';
             document.getElementById('klasifikasi').value = evidence.klasifikasi || '';
             document.getElementById('summary').value = evidence.summary || '';
-            document.getElementById('notes').value = evidence.notes || '';
+            document.getElementById('link').value = evidence.link || '';
         });
     };
 
@@ -627,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tr = document.createElement('tr');
         tr.classList.add('table-success');
 
-        const linkHtml = evidence.notes ? `<a href="${evidence.notes}" target="_blank" class="text-decoration-none">Link</a>` : '-';
+        const linkHtml = evidence.link ? `<a href="${evidence.link}" target="_blank" class="text-decoration-none">Link</a>` : '-';
 
         let actionHtml = '-';
         if (flags.isOwner) {
@@ -647,6 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td>${safe(evidence.no_dokumen)}</td>
             <td class="text-center">${safe(evidence.grup)}</td>
             <td>${safe(evidence.tipe)}</td>
+            <td>${safe(evidence.ket_tipe)}</td>
             <td class="text-center">${safe(evidence.tahun_terbit)}</td>
             <td class="text-center">${safe(evidence.tahun_kadaluarsa)}</td>
             <td>${safe(evidence.pemilik_dokumen)}</td>
@@ -765,6 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${item.no_dokumen || '-'}</td>
                 <td class="text-center">${item.grup || '-'}</td>
                 <td>${item.tipe || '-'}</td>
+                <td>${item.ket_tipe || '-'}</td>
                 <td class="text-center">${item.tahun_terbit || '-'}</td>
                 <td class="text-center">${item.tahun_kadaluarsa || '-'}</td>
                 <td>${item.pemilik_dokumen || '-'}</td>
@@ -999,7 +1016,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             pengesahan: item.pengesahan || '',
                             klasifikasi: item.klasifikasi || '',
                             summary: item.summary || '',
-                            notes: item.notes || ''
+                            link: item.link || item.notes || '',
+                            ket_tipe: item.ket_tipe || ''
                         })
                     });
 
