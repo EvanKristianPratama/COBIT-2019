@@ -283,7 +283,7 @@ class AssessmentReportController extends Controller
                     $evalData = $activity->evaluations->first();
 
                     // Logic Deduplikasi Evidence dalam satu Practice
-                    if ($evalData && !empty($evalData->evidence)) {
+                    if ($evalData && ! empty($evalData->evidence)) {
                         $barisEvidenceMentah = explode("\n", $evalData->evidence);
                         $policyList = [];
                         $executionList = [];
@@ -294,13 +294,13 @@ class AssessmentReportController extends Controller
                                 continue;
                             }
 
-                            if (!in_array($namaDokumenNormalisasi, $daftarEvidenceUnikPractice)) {
+                            if (! in_array($namaDokumenNormalisasi, $daftarEvidenceUnikPractice)) {
                                 $daftarEvidenceUnikPractice[] = $namaDokumenNormalisasi;
 
                                 // Lookup Tipe
                                 $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
 
-                                // Filter Logic: Politik vs Pelaksanaan
+                                // Filter Logic: Kebijakan vs Pelaksanaan
                                 if ($tipe && stripos($tipe, 'Dokumen Kebijakan') !== false) {
                                     $policyList[] = trim($namaDokumen);
                                 } else {
@@ -326,9 +326,16 @@ class AssessmentReportController extends Controller
                     $activity->unsetRelation('evaluations');
                 }
 
-                // Filter logic dipindah ke Controller: Hanya simpan activity yang punya evidence
+                // Filter logic dipindah ke Controller: Hanya simpan activity yang punya evidence Unik (Normalized/Deduplicated)
                 $filteredActivities = $practice->activities->filter(function ($act) {
-                    return ! empty($act->assessment) && ! empty($act->assessment->evidence);
+                    if (empty($act->assessment)) {
+                        return false;
+                    }
+                    // Cek apakah list hasil deduplikasi ada isinya
+                    $hasPolicy = ! empty($act->assessment->policy_list) && count($act->assessment->policy_list) > 0;
+                    $hasExecution = ! empty($act->assessment->execution_list) && count($act->assessment->execution_list) > 0;
+
+                    return $hasPolicy || $hasExecution;
                 })->values();
 
                 $practice->setRelation('activities', $filteredActivities);
