@@ -2,6 +2,12 @@
 
 namespace App\Http\Controllers\AssessmentEval;
 
+use App\Http\Controllers\Controller;
+use App\Models\MstEval;
+use App\Models\MstObjective;
+use App\Models\TrsObjectiveScore;
+use App\Models\MstEvidence;
+
 class AssessmentSummaryController extends Controller
 {
     public function summary($evalId, $objectiveId = null)
@@ -49,8 +55,14 @@ class AssessmentSummaryController extends Controller
             $maxLevels = [];
         }
 
+        // Fetch Evidence Types for classification (sekali saja)
+        $evidenceTypes = MstEvidence::where('eval_id', $evalId)
+            ->get()
+            ->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])
+            ->toArray();
+
         // Suntik data score dan max level ke dalam masing-masing object
-        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels) {
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evalId, $evidenceTypes) {
             $obj->current_score = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
 
@@ -83,6 +95,29 @@ class AssessmentSummaryController extends Controller
 
                         // Update evidence dengan list yang unik (bisa kosong jika seluruhnya sudah ada sebelumnya)
                         $evalData->evidence = implode("\n", $listEvidenceFinalActivity);
+
+                        // Kategorisasi evidence berdasarkan tipe dari mst_evidence
+                        $policyList = [];
+                        $executionList = [];
+                        
+                        foreach ($listEvidenceFinalActivity as $judulDokumen) {
+                            $namaDokumenNormalisasi = strtolower(trim($judulDokumen));
+                            
+                            // Lookup tipe dari map yang sudah di-load
+                            $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
+                            
+                            // Kategorisasi berdasarkan tipe
+                            if ($tipe && stripos($tipe, 'Design') !== false) {
+                                $policyList[] = $judulDokumen;
+                            } else {
+                                // Jika implementasi atau kosong, masuk ke execution_list
+                                $executionList[] = $judulDokumen;
+                            }
+                        }
+                        
+                        // Tambahkan array kategori ke evalData
+                        $evalData->policy_list = $policyList;
+                        $evalData->execution_list = $executionList;
                     }
 
                     // Suntikkan sebagai 'assessment' agar View & JSON langsung dapat datanya
