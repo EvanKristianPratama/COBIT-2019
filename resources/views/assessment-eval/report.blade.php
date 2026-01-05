@@ -280,7 +280,16 @@
                     </td>`;
                     });
 
-                    html += `<td class="text-center bg-light text-dark">-</td></tr>`; // Max column
+                    html += `
+                    <td class="text-center bg-light text-dark">-</td>
+                    <td class="text-center bg-light text-dark">
+                        <a href="/assessment-eval/{{ $evalId }}/summary-pdf" 
+                           class="btn btn-xs btn-danger rounded-pill py-1 px-3" 
+                           style="font-size: 0.7rem; font-weight: 600;" target="_blank">
+                            Export All
+                        </a>
+                    </td>
+                    </tr>`;
 
                     // Row 2: Average Maturity Score
                     html += `

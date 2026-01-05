@@ -5,9 +5,14 @@
         @foreach ($objectives as $objective)
             <div class="mb-5">
                 {{-- 1. Header Bar --}}
-                <div class="d-flex align-items-center mb-2 px-3 py-2 text-white" style="background-color: #0f2b5c;">
+                <div class="d-flex align-items-center mb-2 px-3 py-2 text-white justify-content-between" style="background-color: #0f2b5c;">
                     <div class="fw-bold fs-5">
                         {{ $loop->iteration }}. {{ $objective->objective_id }} - {{ $objective->objective }}
+                    </div>
+                    <div>
+                        <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}" class="btn btn-sm btn-light text-primary fw-bold" target="_blank">
+                            <i class="fas fa-file-pdf me-1"></i> Export PDF
+                        </a>
                     </div>
                 </div>
 

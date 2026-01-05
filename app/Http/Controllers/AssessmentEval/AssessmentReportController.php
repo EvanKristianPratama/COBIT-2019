@@ -218,6 +218,24 @@ class AssessmentReportController extends Controller
 
     public function summary($evalId, $objectiveId = null)
     {
+        $data = $this->prepareSummaryData($evalId, $objectiveId);
+        return view('assessment-eval.report-summary', $data);
+    }
+
+    public function summaryPdf($evalId, $objectiveId = null)
+    {
+        $data = $this->prepareSummaryData($evalId, $objectiveId);
+        
+        $pdf = \PDF::loadView('assessment-eval.report-summary-pdf', $data);
+        $pdf->setPaper('a4', 'landscape');
+        
+        $filename = 'Summary-Report-' . $evalId . ($objectiveId ? '-' . $objectiveId : '') . '.pdf';
+        
+        return $pdf->stream($filename);
+    }
+
+    private function prepareSummaryData($evalId, $objectiveId = null)
+    {
         // 1. Eval ID (and object for context)
         $evaluation = MstEval::findOrFail($evalId);
 
@@ -232,7 +250,11 @@ class AssessmentReportController extends Controller
             $objectivesQuery->where('objective_id', $objectiveId);
         }
 
-        $objectives = $objectivesQuery->get();
+        $objectives = $objectivesQuery->get()->sortBy(function ($obj) {
+            $order = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+            $prefix = substr($obj->objective_id, 0, 3);
+            return $order[$prefix] ?? 99;
+        });
 
         // 4. Achieved Level per GAMO
         $scoresQuery = TrsObjectiveScore::where('eval_id', $evalId);
@@ -301,7 +323,7 @@ class AssessmentReportController extends Controller
                                 $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
 
                                 // Filter Logic: Politik vs Pelaksanaan
-                                if ($tipe && stripos($tipe, 'Dokumen Kebijakan') !== false) {
+                                if ($tipe && stripos($tipe, 'Design') !== false) {
                                     $policyList[] = trim($namaDokumen);
                                 } else {
                                     $executionList[] = trim($namaDokumen);
@@ -342,11 +364,6 @@ class AssessmentReportController extends Controller
             return $obj;
         });
 
-        // return response()->json([
-        //     'evaluation' => $evaluation,
-        //     'objectives' => $objectives,
-        // ]);
-
-        return view('assessment-eval.report-summary', compact('evaluation', 'objectives'));
+        return compact('evaluation', 'objectives');
     }
 }

@@ -346,6 +346,10 @@ Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [
 ])->name('assessment-eval.report-activity')
   ->middleware('auth');
 
+Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentReportController::class, 'summaryPdf'])
+    ->name('assessment-eval.summary-pdf')
+    ->middleware('auth');
+
 Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
     ->name('assessment-eval.score')
     ->middleware('auth');
