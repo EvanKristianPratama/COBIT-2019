@@ -30,6 +30,7 @@ use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 
 Route::bind('evalId', function ($value) {
     try {
@@ -353,3 +354,11 @@ Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentRe
 Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
     ->name('assessment-eval.score')
     ->middleware('auth');
+
+Route::get('/clear-semua', function() {
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('view:clear');
+    Artisan::call('route:clear');
+    return "Cache Berhasil Dibersihkan!";
+});
