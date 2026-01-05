@@ -322,13 +322,8 @@ class AssessmentReportController extends Controller
                                 // Lookup Tipe
                                 $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
 
-<<<<<<< HEAD
                                 // Filter Logic: Politik vs Pelaksanaan
                                 if ($tipe && stripos($tipe, 'Design') !== false) {
-=======
-                                // Filter Logic: Kebijakan vs Pelaksanaan
-                                if ($tipe && stripos($tipe, 'Dokumen Kebijakan') !== false) {
->>>>>>> c003d2ff03bd5dd338a40cbfa78985665a64ecbf
                                     $policyList[] = trim($namaDokumen);
                                 } else {
                                     $executionList[] = trim($namaDokumen);
