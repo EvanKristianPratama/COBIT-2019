@@ -21,17 +21,17 @@
                     <div class="col-md-3 pe-md-3 mb-3 mb-md-0">
                         <div class="border text-center h-100 d-flex flex-column">
                             {{-- Purple Header --}}
-                            <div class="py-3 text-white d-flex flex-column justify-content-center"
-                                style="background-color: #9b59b6; min-height: 100px;">
-                                <h2 class="m-0 fw-bold display-5">{{ $objective->objective_id }}</h2>
-                                <div class="small px-2 mt-1" style="line-height: 1.2;">
+                            <div class="py-2 text-white d-flex flex-column justify-content-center"
+                                style="background-color: #9b59b6; min-height: 80px;">
+                                <h3 class="m-0 fw-bold">{{ $objective->objective_id }}</h3>
+                                <div class="small px-2 mt-1" style="font-size: 0.75rem; line-height: 1.2;">
                                     {{ $objective->objective }}
                                 </div>
                             </div>
                             {{-- Score Body --}}
                             <div
-                                class="flex-grow-1 bg-white d-flex align-items-center justify-content-center position-relative py-4">
-                                <div class="display-3 fw-bold">
+                                class="flex-grow-1 bg-white d-flex align-items-center justify-content-center position-relative py-3">
+                                <div class="display-6 fw-bold">
                                     {{ $objective->current_score }} / {{ $objective->max_level }}
                                 </div>
                             </div>
@@ -44,13 +44,12 @@
                         <div class="d-flex mb-2 border">
                             {{-- Icon Box --}}
                             <div class="d-flex flex-column align-items-center justify-content-center text-white p-2"
-                                style="background-color: #0f2b5c; width: 90px; flex-shrink: 0;">
-                                <i class="fas fa-bullseye fa-2x mb-1"></i>
-                                <div class="fw-bold small">Tujuan</div>
+                                style="background-color: #0f2b5c; width: 70px; flex-shrink: 0;">
+                                <div class="fw-bold" style="font-size: 0.65rem;">Tujuan</div>
                             </div>
                             {{-- Text --}}
                             <div class="p-2 bg-white flex-grow-1 d-flex align-items-center">
-                                <p class="m-0 text-secondary" style="font-size: 0.85rem; text-align: justify;">
+                                <p class="m-0 text-secondary" style="font-size: 0.75rem; text-align: justify;">
                                     {{ $objective->objective_purpose ?? ($objective->objective_description ?? 'No description available.') }}
                                 </p>
                             </div>
@@ -58,18 +57,20 @@
 
                         {{-- Management Practice Section --}}
                         <div>
-                            <div class="text-white text-center py-2 fw-bold" style="background-color: #0f2b5c;">
+                            <div class="text-white text-center py-1 fw-bold small" style="background-color: #0f2b5c;">
                                 Management Practice
                             </div>
                             <div class="border border-top-0 p-1 bg-white">
                                 <div class="d-grid overflow-auto pb-1"
-                                    style="grid-template-rows: repeat(5, min-content); grid-auto-flow: column; grid-auto-columns: max-content; gap: 1px 10px;">
+                                    style="grid-template-rows: repeat(5, min-content); grid-auto-flow: column; grid-auto-columns: 260px; gap: 1px 12px;">
                                     @foreach ($objective->practices as $practice)
                                         <div>
-                                            <div class="d-flex align-items-start">
+                                            <div class="d-flex align-items-center">
                                                 <span class="fw-bold me-1 text-primary text-nowrap"
-                                                    style="font-size: 0.75rem;">{{ str_replace('"', '', $practice->practice_id) }}</span>
-                                                <span class="text-secondary" style="font-size: 0.75rem;">
+                                                    style="font-size: 0.7rem;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                                <span class="text-secondary text-truncate"
+                                                    style="font-size: 0.7rem; max-width: 230px;"
+                                                    title="{{ str_replace('"', '', $practice->practice_name) }}">
                                                     {{ str_replace('"', '', $practice->practice_name) }}
                                                 </span>
                                             </div>
@@ -138,7 +139,8 @@
 
                                             {{-- Column 4: Notes (Perbaikan) --}}
                                             <td class="align-top">
-                                                <textarea class="form-control form-control-sm bg-white" rows="1" style="resize: vertical; font-size: 0.85rem;"></textarea>
+                                                <textarea class="form-control form-control-sm bg-white" rows="1" style="resize: vertical; font-size: 0.85rem;"
+                                                    placeholder="Masukkan catatan perbaikan"></textarea>
                                             </td>
                                         </tr>
                                     @endforeach
