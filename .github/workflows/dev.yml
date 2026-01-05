@@ -18,3 +18,19 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          timeout: 600000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            **/vendor/**
+            .env.example
+            .gitignore
+            composer.json
+            composer.lock
+            package.json
+            package-lock.json
+            phpunit.xml
+            README.md

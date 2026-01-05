@@ -18,3 +18,19 @@ jobs:
           server: ${{ secrets.PROD_SERVER }}
           username: ${{ secrets.PROD_USERNAME }}
           password: ${{ secrets.PROD_PASSWORD }}
+          port: 21
+          timeout: 600000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            **/vendor/**
+            .env.example
+            .gitignore
+            composer.json
+            composer.lock
+            package.json
+            package-lock.json
+            phpunit.xml
+            README.md
