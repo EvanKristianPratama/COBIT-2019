@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\EvaluationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssessmentReportController extends Controller
 {
@@ -226,7 +227,7 @@ class AssessmentReportController extends Controller
     {
         $data = $this->prepareSummaryData($evalId, $objectiveId);
         
-        $pdf = \PDF::loadView('assessment-eval.report-summary-pdf', $data);
+        $pdf = Pdf::loadView('assessment-eval.report-summary-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
         
         $filename = 'Summary-Report-' . $evalId . ($objectiveId ? '-' . $objectiveId : '') . '.pdf';
