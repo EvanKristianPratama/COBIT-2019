@@ -100,5 +100,5 @@ Jika Anda memiliki pertanyaan atau masukan, silakan hubungi:
 ---
 
 <p align="center">
-  <em>Dibangun dengan ❤️ oleh <a href="https://www.instagram.com/evankristiannn">Evan Kristian</a></em>
+  <em>Dibangun dengan ❤️ oleh <a href="https://www.instagram.com/evankristiannn">Evan Kristian & Rekan rekan</a></em>
 </p>
