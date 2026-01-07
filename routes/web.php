@@ -346,6 +346,11 @@ Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [
 ])->name('assessment-eval.report-activity')
   ->middleware('auth');
 
+Route::get('/assessment-eval/{evalId}/report-activity-pdf/{objectiveId}', [
+    \App\Http\Controllers\AssessmentEval\ActivityReportController::class, 'downloadPdf'
+])->name('assessment-eval.report-activity-pdf')
+  ->middleware('auth');
+
 Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentReportController::class, 'summaryPdf'])
     ->name('assessment-eval.summary-pdf')
     ->middleware('auth');

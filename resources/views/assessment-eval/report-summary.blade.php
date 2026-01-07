@@ -10,7 +10,7 @@
                         {{ $loop->iteration }}. {{ $objective->objective_id }} - {{ $objective->objective }}
                     </div>
                     <div>
-                        <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}" class="btn btn-sm btn-light text-primary fw-bold" target="_blank">
+                        <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}" class="btn btn-sm btn-danger text-white fw-bold rounded-pill px-3" target="_blank">
                             <i class="fas fa-file-pdf me-1"></i> Export PDF
                         </a>
                     </div>
