@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ActivityReportController extends Controller
 {
@@ -29,6 +30,41 @@ class ActivityReportController extends Controller
      * Show activity report for a specific objective
      */
     public function show($evalId, $objectiveId, Request $request)
+    {
+        $filterLevel = $request->query('level');
+        $data = $this->prepareActivityData($evalId, $objectiveId, $filterLevel);
+        
+        if ($data instanceof \Illuminate\Http\RedirectResponse) {
+            return $data;
+        }
+        
+        return view('assessment-eval.report-activity', $data);
+    }
+
+    /**
+     * Download PDF report for a specific objective
+     */
+    public function downloadPdf($evalId, $objectiveId, Request $request)
+    {
+        $filterLevel = $request->query('level');
+        $data = $this->prepareActivityData($evalId, $objectiveId, $filterLevel);
+        
+        if ($data instanceof \Illuminate\Http\RedirectResponse) {
+            return $data;
+        }
+        
+        $pdf = Pdf::loadView('assessment-eval.report-activity-pdf', $data);
+        $pdf->setPaper('a4', 'landscape');
+        
+        $filename = 'Activity-Report-' . $evalId . '-' . $objectiveId . '.pdf';
+        
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Prepare activity data for both view and PDF
+     */
+    private function prepareActivityData($evalId, $objectiveId, $filterLevel = null)
     {
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
@@ -77,9 +113,6 @@ class ActivityReportController extends Controller
 
             // Load all evidences for this evaluation (for display lookup)
             $evalEvidences = MstEvidence::where('eval_id', $evalId)->get()->keyBy('id');
-
-            // Filter parameters
-            $filterLevel = $request->query('level');
 
             // Get all activities for this objective with their evaluations
             $activityData = [];
@@ -150,10 +183,10 @@ class ActivityReportController extends Controller
                 return strcmp($a['activity_id'], $b['activity_id']);
             });
 
-            return view('assessment-eval.report-activity', compact(
+            return compact(
                 'evaluation', 'evalId', 'objective', 'activityData', 
                 'filterLevel', 'currentLevel', 'maxLevel', 'organization'
-            ));
+            );
 
         } catch (\Exception $e) {
             Log::error("Failed to load activity report", [
