@@ -2,9 +2,35 @@
 
 namespace App\Http\Controllers\AssessmentEval;
 
+use App\Http\Controllers\Controller;
+use App\Models\MstEval;
+use App\Models\MstObjective;
+use App\Models\TrsObjectiveScore;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 class AssessmentSummaryController extends Controller
 {
     public function summary($evalId, $objectiveId = null)
+    {
+        $data = $this->getSummary($evalId, $objectiveId);
+
+        // return response()->json($data);
+        return view('assessment-eval.report-summary', $data);
+    }
+
+    public function summaryPdf($evalId, $objectiveId = null)
+    {
+        $data = $this->getSummary($evalId, $objectiveId);
+
+        $pdf = PDF::loadView('assessment-eval.report-summary-pdf', $data);
+        $pdf->setPaper('a4', 'landscape');
+
+        $filename = 'Summary-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    private function getSummary($evalId, $objectiveId = null)
     {
         // 1. Eval ID (and object for context)
         $evaluation = MstEval::findOrFail($evalId);
@@ -49,8 +75,14 @@ class AssessmentSummaryController extends Controller
             $maxLevels = [];
         }
 
+        // 6. Fetch Evidence Types for classification
+        $evidenceTypes = \App\Models\MstEvidence::where('eval_id', $evalId)
+            ->get()
+            ->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])
+            ->toArray();
+
         // Suntik data score dan max level ke dalam masing-masing object
-        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels) {
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evidenceTypes) {
             $obj->current_score = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
 
@@ -67,7 +99,8 @@ class AssessmentSummaryController extends Controller
                     // Logic Deduplikasi Evidence dalam satu Practice
                     if ($evalData && ! empty($evalData->evidence)) {
                         $barisEvidenceMentah = explode("\n", $evalData->evidence);
-                        $listEvidenceFinalActivity = [];
+                        $policyList = [];
+                        $executionList = [];
 
                         foreach ($barisEvidenceMentah as $namaDokumen) {
                             $namaDokumenNormalisasi = strtolower(trim($namaDokumen));
@@ -77,12 +110,22 @@ class AssessmentSummaryController extends Controller
 
                             if (! in_array($namaDokumenNormalisasi, $daftarEvidenceUnikPractice)) {
                                 $daftarEvidenceUnikPractice[] = $namaDokumenNormalisasi;
-                                $listEvidenceFinalActivity[] = trim($namaDokumen);
+
+                                // Lookup Tipe
+                                $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
+
+                                // Filter Logic: Kebijakan vs Pelaksanaan
+                                if ($tipe && stripos($tipe, 'Dokumen Kebijakan') !== false) {
+                                    $policyList[] = trim($namaDokumen);
+                                } else {
+                                    $executionList[] = trim($namaDokumen);
+                                }
                             }
                         }
 
-                        // Update evidence dengan list yang unik (bisa kosong jika seluruhnya sudah ada sebelumnya)
-                        $evalData->evidence = implode("\n", $listEvidenceFinalActivity);
+                        // Inject hasil filter langsung ke objek assessment siap pakai di View
+                        $evalData->policy_list = $policyList;
+                        $evalData->execution_list = $executionList;
                     }
 
                     // Suntikkan sebagai 'assessment' agar View & JSON langsung dapat datanya
@@ -97,9 +140,16 @@ class AssessmentSummaryController extends Controller
                     $activity->unsetRelation('evaluations');
                 }
 
-                // Filter logic dipindah ke Controller: Hanya simpan activity yang punya evidence
+                // Filter logic dipindah ke Controller: Hanya simpan activity yang punya evidence Unik (Normalized/Deduplicated)
                 $filteredActivities = $practice->activities->filter(function ($act) {
-                    return ! empty($act->assessment) && ! empty($act->assessment->evidence);
+                    if (empty($act->assessment)) {
+                        return false;
+                    }
+                    // Cek apakah list hasil deduplikasi ada isinya
+                    $hasPolicy = ! empty($act->assessment->policy_list) && count($act->assessment->policy_list) > 0;
+                    $hasExecution = ! empty($act->assessment->execution_list) && count($act->assessment->execution_list) > 0;
+
+                    return $hasPolicy || $hasExecution;
                 })->values();
 
                 $practice->setRelation('activities', $filteredActivities);
@@ -113,11 +163,6 @@ class AssessmentSummaryController extends Controller
             return $obj;
         });
 
-        // return response()->json([
-        //     'evaluation' => $evaluation,
-        //     'objectives' => $objectives,
-        // ]);
-
-        return view('assessment-eval.report-summary', compact('evaluation', 'objectives'));
+        return compact('evaluation', 'objectives');
     }
 }
