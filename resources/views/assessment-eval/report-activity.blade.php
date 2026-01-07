@@ -15,6 +15,11 @@
                     </div>
                 </div>
                 <div>
+                    <a href="{{ route('assessment-eval.report-activity-pdf', ['evalId' => $evalId, 'objectiveId' => $objective->objective_id]) }}{{ $filterLevel ? '?level=' . $filterLevel : '' }}" 
+                       class="btn btn-sm btn-danger text-white fw-bold rounded-pill px-3 me-2" 
+                       target="_blank">
+                        <i class="fas fa-file-pdf me-1"></i>Export PDF
+                    </a>
                     <a href="{{ route('assessment-eval.report', $evalId) }}" class="btn btn-light btn-sm rounded-pill px-3">
                         <i class="fas fa-arrow-left me-2"></i>Back to Report
                     </a>
