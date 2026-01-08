@@ -740,7 +740,7 @@
                                 <div class="objective-summary mt-3">
                                     @if ($objective->objective_description)
                                         <div class="summary-column">
-                                            <div class="summary-label">Activity</div>
+                                            <div class="summary-label">Description</div>
                                             <p class="objective-description-text mb-0">
                                                 {{ $objective->objective_description }}
                                             </p>

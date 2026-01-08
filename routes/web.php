@@ -1,17 +1,13 @@
 <?php
 
-use App\Http\Controllers\Admin\AssessmentController as AdminAssessment;
-use App\Http\Controllers\Admin\UserAdminController;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\GuestController;
 use App\Http\Controllers\AssessmentController;
-use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
-use App\Http\Controllers\AssessmentEval\AssessmentListController;
-use App\Http\Controllers\AssessmentEval\AssessmentReportController;
-use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
-use App\Http\Controllers\AssessmentEval\EvidenceController;
-use App\Http\Controllers\AssessmentEval\TargetMaturityController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\cobit2019\DfController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\cobit2019\Df10Controller;
 use App\Http\Controllers\cobit2019\Df2Controller;
 use App\Http\Controllers\cobit2019\Df3Controller;
 use App\Http\Controllers\cobit2019\Df4Controller;
@@ -20,17 +16,20 @@ use App\Http\Controllers\cobit2019\Df6Controller;
 use App\Http\Controllers\cobit2019\Df7Controller;
 use App\Http\Controllers\cobit2019\Df8Controller;
 use App\Http\Controllers\cobit2019\Df9Controller;
-use App\Http\Controllers\cobit2019\DfController;
-use App\Http\Controllers\cobit2019\MstObjectiveController;
+use App\Http\Controllers\cobit2019\Df10Controller;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\cobit2019\Step2Controller;
 use App\Http\Controllers\cobit2019\Step3Controller;
 use App\Http\Controllers\cobit2019\Step4Controller;
+use App\Http\Controllers\cobit2019\MstObjectiveController;
+use App\Http\Controllers\AssessmentEval\EvidenceController;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
-use App\Http\Controllers\GuestController;
-use App\Http\Controllers\HomeController;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\AssessmentEval\AssessmentSummaryController;
+use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
+use App\Http\Controllers\AssessmentEval\AssessmentListController;
+use App\Http\Controllers\AssessmentEval\AssessmentReportController;
+use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
+use App\Http\Controllers\AssessmentEval\TargetMaturityController;
 
 Route::bind('evalId', function ($value) {
     try {
@@ -338,8 +337,12 @@ Route::get('/assessment-eval/{evalId}/report', [AssessmentReportController::clas
     ->name('assessment-eval.report')
     ->middleware('auth');
 
-Route::get('/assessment-eval/{evalId}/summary/{objectiveId?}', [AssessmentReportController::class, 'summary'])
+Route::get('/assessment-eval/{evalId}/summary/{objectiveId?}', [AssessmentSummaryController::class, 'summary'])
     ->name('assessment-eval.summary')
+    ->middleware('auth');
+
+Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryPdf'])
+    ->name('assessment-eval.summary-pdf')
     ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [
@@ -351,10 +354,6 @@ Route::get('/assessment-eval/{evalId}/report-activity-pdf/{objectiveId}', [
     \App\Http\Controllers\AssessmentEval\ActivityReportController::class, 'downloadPdf'
 ])->name('assessment-eval.report-activity-pdf')
   ->middleware('auth');
-
-Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentReportController::class, 'summaryPdf'])
-    ->name('assessment-eval.summary-pdf')
-    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
     ->name('assessment-eval.score')
