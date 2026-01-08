@@ -59,7 +59,7 @@
                             <hr class="my-3 opacity-10">
                             <div class="row">
                                 <div class="col-12">
-                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Target Objective</div>
+                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">{{ $areaObjective->area }} Objective</div>
                                     <div class="fw-semibold text-secondary small">
                                         {{ $objective->objective_id }} - {{ $objective->objective }}
                                     </div>

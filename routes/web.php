@@ -24,12 +24,13 @@ use App\Http\Controllers\cobit2019\Step4Controller;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\AssessmentEval\EvidenceController;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
-use App\Http\Controllers\AssessmentEval\AssessmentSummaryController;
+use App\Http\Controllers\AssessmentEval\ActivityReportController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
 use App\Http\Controllers\AssessmentEval\AssessmentListController;
-use App\Http\Controllers\AssessmentEval\AssessmentReportController;
-use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
 use App\Http\Controllers\AssessmentEval\TargetMaturityController;
+use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
+use App\Http\Controllers\AssessmentEval\AssessmentReportController;
+use App\Http\Controllers\AssessmentEval\AssessmentSummaryController;
 
 Route::bind('evalId', function ($value) {
     try {
@@ -345,15 +346,13 @@ Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSu
     ->name('assessment-eval.summary-pdf')
     ->middleware('auth');
 
-Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [
-    \App\Http\Controllers\AssessmentEval\ActivityReportController::class, 'show'
-])->name('assessment-eval.report-activity')
-  ->middleware('auth');
+Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [ActivityReportController::class, 'show'])
+    ->name('assessment-eval.report-activity')
+    ->middleware('auth');
 
-Route::get('/assessment-eval/{evalId}/report-activity-pdf/{objectiveId}', [
-    \App\Http\Controllers\AssessmentEval\ActivityReportController::class, 'downloadPdf'
-])->name('assessment-eval.report-activity-pdf')
-  ->middleware('auth');
+Route::get('/assessment-eval/{evalId}/report-activity-pdf/{objectiveId}', [ActivityReportController::class, 'downloadPdf'])
+    ->name('assessment-eval.report-activity-pdf')
+    ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
     ->name('assessment-eval.score')

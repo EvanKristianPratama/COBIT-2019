@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers\AssessmentEval;
 
-use App\Http\Controllers\Controller;
-use App\Services\EvaluationService;
-use App\Models\MstEval;
-use App\Models\MstObjective;
-use App\Models\MstEvidence;
-use App\Models\TrsActivityeval;
-use App\Models\TrsObjectiveScore;
-use App\Models\TrsScoping;
-use App\Models\TrsEvalDetail;
 use App\Models\User;
+use App\Models\MstEval;
+use App\Models\TrsDomain;
+use App\Models\TrsScoping;
+use App\Models\MstEvidence;
+use App\Models\MstObjective;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Models\TrsEvalDetail;
+use App\Models\TrsActivityeval;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\TrsObjectiveScore;
+use App\Services\EvaluationService;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
 
 class ActivityReportController extends Controller
 {
@@ -34,7 +36,7 @@ class ActivityReportController extends Controller
         $filterLevel = $request->query('level');
         $data = $this->prepareActivityData($evalId, $objectiveId, $filterLevel);
         
-        if ($data instanceof \Illuminate\Http\RedirectResponse) {
+        if ($data instanceof RedirectResponse) {
             return $data;
         }
         
@@ -49,7 +51,7 @@ class ActivityReportController extends Controller
         $filterLevel = $request->query('level');
         $data = $this->prepareActivityData($evalId, $objectiveId, $filterLevel);
         
-        if ($data instanceof \Illuminate\Http\RedirectResponse) {
+        if ($data instanceof RedirectResponse) {
             return $data;
         }
         
@@ -95,6 +97,9 @@ class ActivityReportController extends Controller
             if (!$objective) {
                 return redirect()->back()->withErrors(['error' => 'Objective not found']);
             }
+
+            // Get area objective
+            $areaObjective = TrsDomain::where('objective_id', $objectiveId)->first();
 
             // Calculate max level for this objective
             $maxLevel = 0;
@@ -184,7 +189,7 @@ class ActivityReportController extends Controller
             });
 
             return compact(
-                'evaluation', 'evalId', 'objective', 'activityData', 
+                'evaluation', 'evalId', 'objective', 'areaObjective', 'activityData', 
                 'filterLevel', 'currentLevel', 'maxLevel', 'organization'
             );
 
