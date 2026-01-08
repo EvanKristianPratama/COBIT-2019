@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MstEval;
 use App\Models\MstObjective;
 use App\Models\TrsObjectiveScore;
+use App\Models\MstEvidence;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssessmentSummaryController extends Controller
@@ -76,7 +77,7 @@ class AssessmentSummaryController extends Controller
         }
 
         // 6. Fetch Evidence Types for classification
-        $evidenceTypes = \App\Models\MstEvidence::where('eval_id', $evalId)
+        $evidenceTypes = MstEvidence::where('eval_id', $evalId)
             ->get()
             ->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])
             ->toArray();
@@ -115,7 +116,8 @@ class AssessmentSummaryController extends Controller
                                 $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
 
                                 // Filter Logic: Kebijakan vs Pelaksanaan
-                                if ($tipe && stripos($tipe, 'Dokumen Kebijakan') !== false) {
+                                // Updated to use 'Design' based on latest requirements
+                                if ($tipe && stripos($tipe, 'Design') !== false) {
                                     $policyList[] = trim($namaDokumen);
                                 } else {
                                     $executionList[] = trim($namaDokumen);
