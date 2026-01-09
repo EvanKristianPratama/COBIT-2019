@@ -131,7 +131,7 @@ class AssessmentSummaryController extends Controller
 
                                 // Filter Logic: Kebijakan vs Pelaksanaan
                                 // Updated to use 'Design' based on latest requirements
-                                if ($tipe && stripos($tipe, 'Dokumen Kebijakan') !== false) {
+                                if ($tipe && stripos($tipe, 'Design') !== false) {
                                     $policyList[] = trim($namaDokumen);
                                 } else {
                                     $executionList[] = trim($namaDokumen);
