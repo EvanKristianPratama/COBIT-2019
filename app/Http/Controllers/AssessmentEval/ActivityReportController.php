@@ -116,6 +116,16 @@ class ActivityReportController extends Controller
                 ->first();
             $currentLevel = $objectiveScore ? $objectiveScore->level : 0;
 
+            // Fetch Target Capabilities
+            $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
+            $targetLevel = $targetCapabilityMap[$objectiveId] ?? 0;
+
+            // Rating Map for calculation
+            $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+            
+            // Calculate Rating String (e.g., 4F)
+            $ratingString = $this->calculateRatingString($objective, $currentLevel, $evalId);
+
             // Load all evidences for this evaluation (for display lookup)
             $evalEvidences = MstEvidence::where('eval_id', $evalId)->get()->keyBy('id');
 
@@ -190,9 +200,9 @@ class ActivityReportController extends Controller
 
             return compact(
                 'evaluation', 'evalId', 'objective', 'areaObjective', 'activityData', 
-                'filterLevel', 'currentLevel', 'maxLevel', 'organization'
+                'filterLevel', 'currentLevel', 'maxLevel', 'organization',
+                'targetLevel', 'ratingString'
             );
-
         } catch (\Exception $e) {
             Log::error("Failed to load activity report", [
                 'eval_id' => $evalId, 
@@ -201,5 +211,48 @@ class ActivityReportController extends Controller
             ]);
             return redirect()->back()->withErrors(['error' => 'Failed to load activity report: ' . $e->getMessage()]);
         }
+    }
+
+    private function calculateRatingString($obj, $finalLevel, $evalId)
+    {
+        if ($finalLevel == 0) return '0N';
+
+        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+        $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
+        foreach ($obj->practices as $p) {
+            foreach ($p->activities as $a) {
+                $lvl = (int) ($a->capability_lvl ?? $a->capability_level ?? 0);
+                if ($lvl >= 2 && $lvl <= 5) {
+                    $activitiesByLevel[$lvl][] = $a;
+                }
+            }
+        }
+
+        $lvlToCheck = max(2, $finalLevel);
+        $acts = $activitiesByLevel[$lvlToCheck] ?? [];
+        if (empty($acts)) return $finalLevel . 'F';
+
+        $totalScore = 0;
+        $count = 0;
+        foreach ($acts as $a) {
+            $activityEval = \App\Models\TrsActivityeval::where('eval_id', $evalId)
+                ->where('activity_id', $a->activity_id)
+                ->first();
+            
+            $r = $activityEval ? $activityEval->level_achieved : 'N';
+            $totalScore += $ratingMap[$r] ?? 0;
+            $count++;
+        }
+        
+        if ($count == 0) return $finalLevel . 'F';
+        
+        $avgScore = $totalScore / $count;
+
+        $letter = 'N';
+        if ($avgScore > 0.85) $letter = 'F';
+        elseif ($avgScore > 0.50) $letter = 'L';
+        elseif ($avgScore > 0.15) $letter = 'P';
+
+        return $finalLevel . $letter;
     }
 }

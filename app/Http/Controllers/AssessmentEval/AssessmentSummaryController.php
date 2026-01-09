@@ -82,10 +82,24 @@ class AssessmentSummaryController extends Controller
             ->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])
             ->toArray();
 
+        // 7. Fetch Target Capabilities
+        $evaluationService = app(\App\Services\EvaluationService::class);
+        $targetCapabilityMap = $evaluationService->fetchTargetCapabilities($evaluation);
+
+        // 8. Rating Map for calculation
+        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+
         // Suntik data score dan max level ke dalam masing-masing object
-        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evidenceTypes) {
-            $obj->current_score = $objectiveScores[$obj->objective_id] ?? 0;
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evidenceTypes, $ratingMap, $targetCapabilityMap) {
+            $currentLevel = $objectiveScores[$obj->objective_id] ?? 0;
+            $obj->current_score = $currentLevel;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
+
+            // Calculate Rating String (e.g., 4F)
+            $obj->rating_string = $this->calculateRatingString($obj, $currentLevel, $ratingMap);
+            
+            // Inject Target
+            $obj->target_level = $targetCapabilityMap[$obj->objective_id] ?? 0;
 
             $filledEvidenceCount = 0;
 
@@ -165,6 +179,39 @@ class AssessmentSummaryController extends Controller
             return $obj;
         });
 
-        return compact('evaluation', 'objectives');
+        return compact('evaluation', 'objectives', 'targetCapabilityMap');
+    }
+
+    private function calculateRatingString($obj, $finalLevel, $ratingMap)
+    {
+        if ($finalLevel == 0) return '0N';
+
+        $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
+        foreach ($obj->practices as $p) {
+            foreach ($p->activities as $a) {
+                $lvl = (int) ($a->capability_lvl ?? $a->capability_level ?? 0);
+                if ($lvl >= 2 && $lvl <= 5) {
+                    $activitiesByLevel[$lvl][] = $a;
+                }
+            }
+        }
+
+        $lvlToCheck = max(2, $finalLevel);
+        $acts = $activitiesByLevel[$lvlToCheck] ?? [];
+        if (empty($acts)) return $finalLevel . 'F';
+
+        $totalScore = 0;
+        foreach ($acts as $a) {
+            $r = $a->assessment->level_achieved ?? 'N';
+            $totalScore += $ratingMap[$r] ?? 0;
+        }
+        $avgScore = $totalScore / count($acts);
+
+        $letter = 'N';
+        if ($avgScore > 0.85) $letter = 'F';
+        elseif ($avgScore > 0.50) $letter = 'L';
+        elseif ($avgScore > 0.15) $letter = 'P';
+
+        return $finalLevel . $letter;
     }
 }

@@ -115,12 +115,33 @@
     <div class="brief-info">
         <table>
             <tr>
-                <td style="width: 25%;" class="maturity-box">
-                    <div class="info-label">Capability Maturity</div>
-                    <div class="maturity-value">{{ $currentLevel }}/{{ $maxLevel }}</div>
-                    <div style="font-size: 7pt; color: #666; margin-top: 3px;">Level {{ $currentLevel }} of Max {{ $maxLevel }}</div>
+                <td style="width: 45%; vertical-align: middle;">
+                    <table style="width: 100%; border-collapse: collapse; border: 1pt solid #000;">
+                        <thead>
+                            <tr style="background-color: #9b59b6; color: #fff;">
+                                <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; background-color: #9b59b6; color: #fff; padding: 2px; text-align: center; vertical-align: middle;">{{ $objective->objective_id }}</th>
+                                <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; font-style: italic; text-align: center; background-color: #9b59b6; color: #fff; padding: 2px; vertical-align: middle;">Capability Level</th>
+                                <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; font-style: italic; text-align: center; background-color: #9b59b6; color: #fff; padding: 2px; vertical-align: middle;">Rating</th>
+                                <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; font-style: italic; text-align: center; background-color: #9b59b6; color: #fff; padding: 2px; vertical-align: middle;">Capability Target {{ $evaluation->tahun ?? '2024' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="background-color: #9b59b6; color: #fff; font-size: 6pt; font-weight: bold; font-style: italic; text-align: center; border: 0.5pt solid #fff; padding: 4px; vertical-align: middle;">Capability Level:</td>
+                                <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $currentLevel }}</td>
+                                <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $ratingString }}</td>
+                                <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $targetLevel }}</td>
+                            </tr>
+                            <tr>
+                                <td style="background-color: #9b59b6; color: #fff; font-size: 6pt; font-weight: bold; font-style: italic; text-align: center; border: 0.5pt solid #fff; padding: 4px; vertical-align: middle;">Max Level:</td>
+                                <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $maxLevel }}</td>
+                                <td style="background-color: #fff; border: 0.5pt solid #000;"></td>
+                                <td style="background-color: #fff; border: 0.5pt solid #000;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </td>
-                <td style="width: 75%; padding-left: 15px;">
+                <td style="width: 55%; padding-left: 15px;">
                     <table style="width: 100%; border: none;">
                         <tr>
                             <td style="width: 33%;">
@@ -175,9 +196,9 @@
             @forelse($activityData as $index => $activity)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="text-center">{{ $activity['practice_id'] }}</td>
-                    <td>{{ $activity['practice_name'] }}</td>
-                    <td>{{ $activity['activity_description'] }}</td>
+                    <td class="text-center">{{ str_replace('"', '', $activity['practice_id']) }}</td>
+                    <td>{{ str_replace('"', '', $activity['practice_name']) }}</td>
+                    <td>{{ str_replace('"', '', $activity['activity_description']) }}</td>
                     <td class="text-center">
                         @php
                             $ans = strtoupper($activity['answer']);

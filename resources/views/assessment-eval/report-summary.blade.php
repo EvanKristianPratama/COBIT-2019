@@ -19,29 +19,38 @@
                 </div>
 
                 <div class="row g-0">
-                    {{-- 3. Left Column: Score Card --}}
-                    <div class="col-md-3 pe-md-3 mb-3 mb-md-0">
-                        <div class="border text-center h-100 d-flex flex-column">
-                            {{-- Purple Header --}}
-                            <div class="py-2 text-white d-flex flex-column justify-content-center"
-                                style="background-color: #9b59b6; min-height: 60px;">
-                                <h3 class="m-0 fw-bold">{{ $objective->objective_id }}</h3>
-                                <div class="small px-2 mt-1" style="font-size: 0.75rem; line-height: 1.2;">
-                                    {{ $objective->objective }}
-                                </div>
-                            </div>
-                            {{-- Score Body --}}
-                            <div
-                                class="flex-grow-1 bg-white d-flex align-items-center justify-content-center position-relative py-2">
-                                <div class="display-6 fw-bold">
-                                    {{ $objective->current_score }} / {{ $objective->max_level }}
-                                </div>
-                            </div>
+                    {{-- 3. Left Column: Score Card (3 Boxes) --}}
+                    <div class="col-md-4 pe-md-3 mb-3 mb-md-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
+                                <thead>
+                                    <tr style="background-color: #9b59b6; color: #fff;">
+                                        <th style="width: 25%; border: 1px solid #fff; background-color: #9b59b6; color: #fff; text-align: center; vertical-align: middle;">{{ $objective->objective_id }}</th>
+                                        <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">Capability Level</th>
+                                        <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">Rating</th>
+                                        <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">Capability Target {{ $evaluation->tahun ?? '2025' }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="height: 35px;">
+                                        <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff;">Capability Level:</td>
+                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->current_score }}</td>
+                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->rating_string }}</td>
+                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->target_level }}</td>
+                                    </tr>
+                                    <tr style="height: 35px;">
+                                        <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff;">Max Level:</td>
+                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->max_level }}</td>
+                                        <td style="background-color: #fff; border: 1px solid #000;"></td>
+                                        <td style="background-color: #fff; border: 1px solid #000;"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
                     {{-- 4. Right Column: Details --}}
-                    <div class="col-md-9">
+                    <div class="col-md-8">
                         {{-- Tujuan / Purpose Section --}}
                         <div class="d-flex mb-2 border">
                             {{-- Icon Box --}}
