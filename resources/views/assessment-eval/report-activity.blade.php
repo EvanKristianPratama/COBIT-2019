@@ -50,7 +50,7 @@
                                             <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff; padding: 4px;">Capability Level:</td>
                                             <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $currentLevel }}</td>
                                             <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $ratingString }}</td>
-                                            <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $targetLevel === null ? '-' : $targetLevel }}</td>
+                                            <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $targetLevel === null || $targetLevel === '' ? '-' : $targetLevel }}</td>
                                         </tr>
                                         <tr style="height: 40px;">
                                             <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff; padding: 4px;">Max Level:</td>
