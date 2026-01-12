@@ -118,7 +118,7 @@ class ActivityReportController extends Controller
 
             // Fetch Target Capabilities
             $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
-            $targetLevel = $targetCapabilityMap[$objectiveId] ?? 0;
+            $targetLevel = $targetCapabilityMap[$objectiveId] ?? null;
 
             // Rating Map for calculation
             $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
