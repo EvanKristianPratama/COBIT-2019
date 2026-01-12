@@ -118,7 +118,7 @@ class ActivityReportController extends Controller
 
             // Fetch Target Capabilities
             $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
-            $targetLevel = $targetCapabilityMap[$objectiveId] ?? 0;
+            $targetLevel = $targetCapabilityMap[$objectiveId] ?? null;
 
             // Rating Map for calculation
             $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
@@ -198,10 +198,50 @@ class ActivityReportController extends Controller
                 return strcmp($a['activity_id'], $b['activity_id']);
             });
 
+            // Calculate rating per level for display
+            $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+            $levelRatings = [];
+            
+            // Group activities by level
+            $activitiesByLevel = collect($activityData)->groupBy('capability_level');
+            
+            foreach ($activitiesByLevel as $level => $activities) {
+                $totalScore = 0;
+                $count = 0;
+                
+                foreach ($activities as $act) {
+                    $answer = $act['answer'];
+                    $totalScore += $ratingMap[$answer] ?? 0;
+                    $count++;
+                }
+                
+                if ($count > 0) {
+                    $avgScore = $totalScore / $count;
+                    
+                    // Determine letter rating
+                    $letter = 'N';
+                    if ($avgScore > 0.85) $letter = 'F';
+                    elseif ($avgScore > 0.50) $letter = 'L';
+                    elseif ($avgScore > 0.15) $letter = 'P';
+                    
+                    $levelRatings[$level] = [
+                        'rating' => $level . $letter,
+                        'score' => round($avgScore * 100, 1),
+                        'count' => $count
+                    ];
+                } else {
+                    $levelRatings[$level] = [
+                        'rating' => $level . 'N',
+                        'score' => 0,
+                        'count' => 0
+                    ];
+                }
+            }
+
             return compact(
                 'evaluation', 'evalId', 'objective', 'areaObjective', 'activityData', 
                 'filterLevel', 'currentLevel', 'maxLevel', 'organization',
-                'targetLevel', 'ratingString'
+                'targetLevel', 'ratingString', 'levelRatings'
             );
         } catch (\Exception $e) {
             Log::error("Failed to load activity report", [
