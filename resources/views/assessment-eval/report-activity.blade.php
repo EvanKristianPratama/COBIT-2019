@@ -34,12 +34,35 @@
             <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
                 <div class="card-body p-0">
                     <div class="row g-0">
-                        <div class="col-md-4 p-4 text-center bg-light border-end d-flex flex-column justify-content-center">
-                            <div class="text-uppercase small fw-bold text-muted mb-1">Capability Maturity</div>
-                            <div class="display-5 fw-bold text-primary">{{ $currentLevel }}/{{ $maxLevel }}</div>
-                            <div class="small text-secondary fw-semibold mt-1">Level {{ $currentLevel }} of Max {{ $maxLevel }}</div>
+                        <div class="col-md-5 p-3 text-center bg-light border-end d-flex flex-column justify-content-center">
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
+                                    <thead>
+                                        <tr style="background-color: #9b59b6; color: #fff;">
+                                            <th style="width: 25%; border: 1px solid #fff; background-color: #9b59b6; color: #fff; text-align: center; vertical-align: middle;">{{ $objective->objective_id }}</th>
+                                            <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; padding: 4px; background-color: #9b59b6; color: #fff;">Capability Level</th>
+                                            <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; padding: 4px; background-color: #9b59b6; color: #fff;">Rating</th>
+                                            <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; padding: 4px; background-color: #9b59b6; color: #fff;">Capability Target {{ $evaluation->tahun ?? '2025' }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="height: 40px;">
+                                            <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff; padding: 4px;">Capability Level:</td>
+                                            <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $currentLevel }}</td>
+                                            <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $ratingString }}</td>
+                                            <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $targetLevel }}</td>
+                                        </tr>
+                                        <tr style="height: 40px;">
+                                            <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff; padding: 4px;">Max Level:</td>
+                                            <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1.15rem; border: 1px solid #000; padding: 4px;">{{ $maxLevel }}</td>
+                                            <td style="background-color: #fff; border: 1px solid #000;"></td>
+                                            <td style="background-color: #fff; border: 1px solid #000;"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="col-md-8 p-4">
+                        <div class="col-md-7 p-4">
                             <div class="row">
                                 <div class="col-sm-4 mb-3 mb-sm-0">
                                     <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Assessment ID</div>
@@ -59,7 +82,7 @@
                             <hr class="my-3 opacity-10">
                             <div class="row">
                                 <div class="col-12">
-                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Target Objective</div>
+                                    <div class="text-uppercase extreme-small fw-bold text-muted mb-1">{{ $areaObjective->area }} Objective</div>
                                     <div class="fw-semibold text-secondary small">
                                         {{ $objective->objective_id }} - {{ $objective->objective }}
                                     </div>
@@ -128,10 +151,10 @@
                             <tr>
                                 @if($isFirstInGroup)
                                     <td class="text-center" rowspan="{{ $groupRowspan }}">{{ $rowIndex }}</td>
-                                    <td class="fw-semibold" rowspan="{{ $groupRowspan }}">{{ $activity['practice_id'] }}</td>
-                                    <td rowspan="{{ $groupRowspan }}">{{ $activity['practice_name'] }}</td>
+                                    <td class="fw-semibold" rowspan="{{ $groupRowspan }}">{{ str_replace('"', '', $activity['practice_id']) }}</td>
+                                    <td rowspan="{{ $groupRowspan }}">{{ str_replace('"', '', $activity['practice_name']) }}</td>
                                 @endif
-                                <td>{{ $activity['activity_description'] }}</td>
+                                <td>{{ str_replace('"', '', $activity['activity_description']) }}</td>
                                 <td class="text-center">
                                     @php
                                         $answer = $activity['answer'];

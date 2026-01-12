@@ -76,21 +76,36 @@
 
             <table style="width: 100%; border: none; margin-bottom: 10px;">
                 <tr style="border: none;">
-                    {{-- Left Column: Score --}}
-                    <td style="width: 20%; border: none; padding-right: 15px;">
-                        <div class="score-card">
-                            <div class="header-purple">
-                                <div style="font-size: 16pt;">{{ $objective->objective_id }}</div>
-                                <div style="font-size: 8pt;">{{ $objective->objective }}</div>
-                            </div>
-                            <div class="score-value">
-                                {{ $objective->current_score }} / {{ $objective->max_level }}
-                            </div>
-                        </div>
+                    {{-- Left Column: Score (3 Boxes) --}}
+                    <td style="width: 40%; border: none; padding-right: 15px;">
+                        <table style="width: 100%; border-collapse: collapse; border: 1pt solid #000;">
+                            <thead>
+                                <tr style="background-color: #9b59b6; color: #fff;">
+                                    <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; background-color: #9b59b6; color: #fff; text-align: center; vertical-align: middle;">{{ $objective->objective_id }}</th>
+                                    <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; font-style: italic; text-align: center; background-color: #9b59b6; color: #fff; vertical-align: middle;">Capability Level</th>
+                                    <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; font-style: italic; text-align: center; background-color: #9b59b6; color: #fff; vertical-align: middle;">Rating</th>
+                                    <th style="width: 25%; font-size: 6pt; border: 0.5pt solid #fff; font-style: italic; text-align: center; background-color: #9b59b6; color: #fff; vertical-align: middle;">Capability Target {{ $evaluation->tahun ?? '2024' }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="background-color: #9b59b6; color: #fff; font-size: 6pt; font-weight: bold; font-style: italic; text-align: center; border: 0.5pt solid #fff; padding: 4px; vertical-align: middle;">Capability Level:</td>
+                                    <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $objective->current_score }}</td>
+                                    <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $objective->rating_string }}</td>
+                                    <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $objective->target_level }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #9b59b6; color: #fff; font-size: 6pt; font-weight: bold; font-style: italic; text-align: center; border: 0.5pt solid #fff; padding: 4px; vertical-align: middle;">Max Level:</td>
+                                    <td style="background-color: #fff; color: #000; font-size: 11pt; font-weight: bold; text-align: center; border: 0.5pt solid #000; padding: 4px; vertical-align: middle;">{{ $objective->max_level }}</td>
+                                    <td style="background-color: #fff; border: 0.5pt solid #000;"></td>
+                                    <td style="background-color: #fff; border: 0.5pt solid #000;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </td>
 
                     {{-- Right Column: Details --}}
-                    <td style="width: 80%; border: none;">
+                    <td style="width: 60%; border: none;">
                         <div style="border: 1px solid #ccc; margin-bottom: 10px; padding: 5px;">
                             <strong>Tujuan:</strong><br>
                             {{ $objective->objective_purpose ?? ($objective->objective_description ?? '-') }}
