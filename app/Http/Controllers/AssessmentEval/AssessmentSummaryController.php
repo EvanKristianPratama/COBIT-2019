@@ -4,10 +4,15 @@ namespace App\Http\Controllers\AssessmentEval;
 
 use App\Http\Controllers\Controller;
 use App\Models\MstEval;
-use App\Models\MstObjective;
-use App\Models\TrsObjectiveScore;
 use App\Models\MstEvidence;
+use App\Models\MstObjective;
+use App\Models\TrsActivityeval;
+use App\Models\TrsObjectiveScore;
+use App\Models\TrsSummaryReport;
+use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AssessmentSummaryController extends Controller
 {
@@ -58,6 +63,12 @@ class AssessmentSummaryController extends Controller
 
         $objectiveScores = $scoresQuery->pluck('level', 'objective_id')->toArray();
 
+        // Pre-fetch Saved Notes
+        $savedNotes = TrsSummaryReport::where('eval_id', $evalId)
+            ->when($objectiveId, fn ($q) => $q->where('objective_id', $objectiveId))
+            ->pluck('notes', 'objective_id')
+            ->toArray();
+
         // 5. Max Capability Level (Hardcoded)
         $maxLevels = [
             'EDM01' => 4, 'EDM02' => 5, 'EDM03' => 4, 'EDM04' => 4, 'EDM05' => 4,
@@ -76,28 +87,28 @@ class AssessmentSummaryController extends Controller
             $maxLevels = [];
         }
 
-        // 6. Fetch Evidence Types for classification
-        $evidenceTypes = MstEvidence::where('eval_id', $evalId)
-            ->get()
-            ->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])
-            ->toArray();
+        // 6. Fetch Evidence Types for classification AND ID map
+        $allEvidence = MstEvidence::where('eval_id', $evalId)->get();
+        // Map: lowercase(filename) -> type
+        $evidenceTypes = $allEvidence->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])->toArray();
 
         // 7. Fetch Target Capabilities
-        $evaluationService = app(\App\Services\EvaluationService::class);
+        $evaluationService = app(EvaluationService::class);
         $targetCapabilityMap = $evaluationService->fetchTargetCapabilities($evaluation);
 
         // 8. Rating Map for calculation
-        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
 
         // Suntik data score dan max level ke dalam masing-masing object
-        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evidenceTypes, $ratingMap, $targetCapabilityMap) {
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evidenceTypes, $ratingMap, $targetCapabilityMap, $savedNotes) {
             $currentLevel = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->current_score = $currentLevel;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
+            $obj->saved_note = $savedNotes[$obj->objective_id] ?? '';
 
             // Calculate Rating String (e.g., 4F)
             $obj->rating_string = $this->calculateRatingString($obj, $currentLevel, $ratingMap);
-            
+
             // Inject Target
             $obj->target_level = $targetCapabilityMap[$obj->objective_id] ?? 0;
 
@@ -182,9 +193,36 @@ class AssessmentSummaryController extends Controller
         return compact('evaluation', 'objectives', 'targetCapabilityMap');
     }
 
+    public function saveNote(Request $request, $evalId)
+    {
+        $request->validate([
+            'objective_id' => 'required|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $objectiveId = $request->input('objective_id');
+        $notes = $request->input('notes');
+
+        // 1. Save or Update Summary Report
+        $summaryReport = TrsSummaryReport::updateOrCreate(
+            ['eval_id' => $evalId, 'objective_id' => $objectiveId],
+            ['notes' => $notes]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notes saved.',
+            'debug' => [
+                'ids_found_in_mst_evidence' => 'SKIPPED_AS_REQUESTED',
+            ],
+        ]);
+    }
+
     private function calculateRatingString($obj, $finalLevel, $ratingMap)
     {
-        if ($finalLevel == 0) return '0N';
+        if ($finalLevel == 0) {
+            return '0N';
+        }
 
         $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
         foreach ($obj->practices as $p) {
@@ -198,7 +236,9 @@ class AssessmentSummaryController extends Controller
 
         $lvlToCheck = max(2, $finalLevel);
         $acts = $activitiesByLevel[$lvlToCheck] ?? [];
-        if (empty($acts)) return $finalLevel . 'F';
+        if (empty($acts)) {
+            return $finalLevel.'F';
+        }
 
         $totalScore = 0;
         foreach ($acts as $a) {
@@ -208,10 +248,14 @@ class AssessmentSummaryController extends Controller
         $avgScore = $totalScore / count($acts);
 
         $letter = 'N';
-        if ($avgScore > 0.85) $letter = 'F';
-        elseif ($avgScore > 0.50) $letter = 'L';
-        elseif ($avgScore > 0.15) $letter = 'P';
+        if ($avgScore > 0.85) {
+            $letter = 'F';
+        } elseif ($avgScore > 0.50) {
+            $letter = 'L';
+        } elseif ($avgScore > 0.15) {
+            $letter = 'P';
+        }
 
-        return $finalLevel . $letter;
+        return $finalLevel.$letter;
     }
 }

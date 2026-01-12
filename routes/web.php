@@ -342,6 +342,10 @@ Route::get('/assessment-eval/{evalId}/summary/{objectiveId?}', [AssessmentSummar
     ->name('assessment-eval.summary')
     ->middleware('auth');
 
+Route::post('/assessment-eval/{evalId}/summary/save-note', [AssessmentSummaryController::class, 'saveNote'])
+    ->name('assessment-eval.summary.save-note')
+    ->middleware('auth');
+
 Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryPdf'])
     ->name('assessment-eval.summary-pdf')
     ->middleware('auth');

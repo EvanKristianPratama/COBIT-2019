@@ -22,27 +22,58 @@
                     {{-- 3. Left Column: Score Card (3 Boxes) --}}
                     <div class="col-md-4 pe-md-3 mb-3 mb-md-0">
                         <div class="table-responsive">
-                            <table class="table table-bordered mb-0" style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
+                            <table class="table table-bordered mb-0"
+                                style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                                 <thead>
+                                    {{-- New Top Row: Objective ID --}}
                                     <tr style="background-color: #9b59b6; color: #fff;">
-                                        <th style="width: 25%; border: 1px solid #fff; background-color: #9b59b6; color: #fff; text-align: center; vertical-align: middle;">{{ $objective->objective_id }}</th>
-                                        <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">Capability Level</th>
-                                        <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">Rating</th>
-                                        <th style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">Capability Target {{ $evaluation->tahun ?? '2025' }}</th>
+                                        <th colspan="4"
+                                            style="border: 1px solid #fff; background-color: #9b59b6; color: #fff; text-align: center; vertical-align: middle; padding: 8px;">
+                                            <div class="fw-bold" style="font-size: 1.1rem; line-height: 1.2;">
+                                                {{ $objective->objective_id }}
+                                            </div>
+                                            <div style="font-size: 0.65rem; margin-top: 4px;">{{ $objective->objective }}
+                                            </div>
+                                        </th>
+                                    </tr>
+                                    {{-- Header Row --}}
+                                    <tr style="background-color: #9b59b6; color: #fff;">
+                                        <th
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            Capability Level
+                                        </th>
+                                        <th
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            Max Level
+                                        </th>
+                                        <th
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            Rating
+                                        </th>
+                                        <th
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            Capability Target {{ $evaluation->tahun ?? '2025' }}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr style="height: 35px;">
-                                        <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff;">Capability Level:</td>
-                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->current_score }}</td>
-                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->rating_string }}</td>
-                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->target_level }}</td>
-                                    </tr>
-                                    <tr style="height: 35px;">
-                                        <td style="background-color: #9b59b6; color: #fff; font-size: 0.65rem; font-weight: bold; font-style: italic; text-align: center; vertical-align: middle; border: 1px solid #fff;">Max Level:</td>
-                                        <td style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">{{ $objective->max_level }}</td>
-                                        <td style="background-color: #fff; border: 1px solid #000;"></td>
-                                        <td style="background-color: #fff; border: 1px solid #000;"></td>
+                                        <td
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            {{ $objective->current_score }}
+                                        </td>
+                                        <td
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            {{ $objective->max_level }}
+                                        </td>
+                                        <td
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            {{ $objective->rating_string }}
+                                        </td>
+                                        <td
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            {{ $objective->target_level }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -108,15 +139,14 @@
 
                 {{-- Detailed Table Section --}}
                 <div class="mt-2">
-                    <table class="table table-bordered align-middle" style="border-color: #000; border-width: 2px;">
+                    <table class="table table-bordered align-middle mb-0" style="border-color: #000; border-width: 2px;">
                         <thead>
                             <tr class="text-center">
                                 <th class="text-white" style="width: 5%; background-color: #0f2b5c;">Practice</th>
-                                <th class="text-white" style="width: 30%; background-color: #0f2b5c;">Kebijakan Pedoman /
+                                <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Kebijakan Pedoman /
                                     Prosedur</th>
-                                <th class="text-white" style="width: 30%; background-color: #0f2b5c;">Evidences / Bukti
+                                <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Evidences / Bukti
                                     Pelaksanaan</th>
-                                <th class="text-white" style="width: 35%; background-color: #0f2b5c;">Potensi Perbaikan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -162,11 +192,7 @@
                                                 @endif
                                             </td>
 
-                                            {{-- Column 4: Notes (Perbaikan) --}}
-                                            <td class="align-top">
-                                                <textarea class="form-control form-control-sm bg-white" rows="1" style="resize: vertical; font-size: 0.85rem;"
-                                                    placeholder="Masukkan catatan perbaikan"></textarea>
-                                            </td>
+
                                         </tr>
                                     @endforeach
                                 @else
@@ -177,7 +203,7 @@
                                                 {{ str_replace('"', '', $practice->practice_id) }}
                                             </div>
                                         </td>
-                                        <td colspan="3" class="text-center fst-italic text-muted small">Belum ada
+                                        <td colspan="2" class="text-center fst-italic text-muted small">Belum ada
                                             Kebijakan & Bukti Pelaksanaan</td>
                                     </tr>
                                 @endif
@@ -185,7 +211,78 @@
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Potensi Perbaikan Section (Per GAMO) --}}
+                <div class="mt-2 border">
+                    <div class="d-flex justify-content-between align-items-center text-white px-2 py-1"
+                        style="background-color: #0f2b5c;">
+                        <div class="fw-bold small">Potensi Perbaikan</div>
+                        <button class="btn btn-sm btn-light py-0 px-2 fw-bold d-flex align-items-center"
+                            onclick="saveNote('{{ $evaluation->eval_id }}', '{{ $objective->objective_id }}', this)"
+                            style="font-size: 0.7rem;">
+                            <i class="fas fa-save me-1"></i> Simpan
+                        </button>
+                    </div>
+                    <div class="p-2 bg-white">
+                        <textarea id="note-{{ $objective->objective_id }}" class="form-control border-0" rows="3"
+                            placeholder="Masukkan catatan perbaikan untuk {{ $objective->objective_id }}...">{{ $objective->saved_note }}</textarea>
+                    </div>
+                </div>
             </div>
         @endforeach
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        function saveNote(evalId, objectiveId, btn) {
+            const textarea = document.getElementById(`note-${objectiveId}`);
+            const noteContent = textarea.value;
+            const originalText = btn.innerHTML;
+
+            // UI Feedback: Loading
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+            btn.disabled = true;
+
+            fetch(`/assessment-eval/${evalId}/summary/save-note`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        objective_id: objectiveId,
+                        notes: noteContent
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Success Feedback
+                        btn.innerHTML = '<i class="fas fa-check me-1"></i> Tersimpan';
+                        btn.classList.remove('btn-light');
+                        btn.classList.add('btn-success', 'text-white');
+
+                        // Revert back after 2 seconds
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan';
+                            btn.disabled = false;
+                            btn.classList.remove('btn-success', 'text-white');
+                            btn.classList.add('btn-light');
+                        }, 2000);
+                    } else {
+                        alert('Gagal menyimpan catatan: ' + (data.message || 'Unknown error'));
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat menyimpan.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+        }
+    </script>
+@endpush
