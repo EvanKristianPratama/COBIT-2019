@@ -72,7 +72,7 @@
                                         </td>
                                         <td
                                             style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
-                                            {{ $objective->target_level }}
+                                            {{ $objective->target_level == 0 ? '-' : $objective->target_level }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -113,23 +113,18 @@
 
                     {{-- Management Practice Section --}}
                     <div class="col-12 mt-2">
-                        <div class="text-white text-center py-1 fw-bold small" style="background-color: #0f2b5c;">
-                            Management Practice
+                        <div class="text-center py-1 fw-bold small text-white" style="background-color: #0f2b5c;">
+                            Management Practices List
                         </div>
-                        <div class="border border-top-0 p-1 bg-white">
-                            <div class="d-grid overflow-auto pb-1"
-                                style="grid-template-rows: repeat(5, min-content); grid-auto-flow: column; grid-auto-columns: 260px; gap: 1px 12px;">
+                        <div class="border border-top-0 p-2 bg-white">
+                            <div style="column-count: 3; ">
                                 @foreach ($objective->practices as $practice)
-                                    <div>
-                                        <div class="d-flex align-items-center">
-                                            <span class="fw-bold me-1 text-primary text-nowrap"
-                                                style="font-size: 0.7rem;">{{ str_replace('"', '', $practice->practice_id) }}</span>
-                                            <span class="text-secondary text-truncate"
-                                                style="font-size: 0.7rem; max-width: 230px;"
-                                                title="{{ str_replace('"', '', $practice->practice_name) }}">
-                                                {{ str_replace('"', '', $practice->practice_name) }}
-                                            </span>
-                                        </div>
+                                    <div class="d-flex align-items-center mb-2" style="break-inside: avoid;">
+                                        <span class="fw-bold me-2 text-dark text-nowrap"
+                                            style="font-size: 0.75rem; line-height: 1.2;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                        <span class="text-secondary" style="font-size: 0.75rem; line-height: 1.2;">
+                                            {{ str_replace('"', '', $practice->practice_name) }}
+                                        </span>
                                     </div>
                                 @endforeach
                             </div>
@@ -214,19 +209,24 @@
 
                 {{-- Potensi Perbaikan Section (Per GAMO) --}}
                 <div class="mt-2 border">
-                    <div class="d-flex justify-content-between align-items-center text-white px-2 py-1"
-                        style="background-color: #0f2b5c;">
-                        <div class="fw-bold small">Potensi Perbaikan</div>
-                        <button class="btn btn-sm btn-light py-0 px-2 fw-bold d-flex align-items-center"
-                            onclick="saveNote('{{ $evaluation->eval_id }}', '{{ $objective->objective_id }}', this)"
-                            style="font-size: 0.7rem;">
-                            <i class="fas fa-save me-1"></i> Simpan
-                        </button>
-                    </div>
-                    <div class="p-2 bg-white">
-                        <textarea id="note-{{ $objective->objective_id }}" class="form-control border-0" rows="3"
-                            placeholder="Masukkan catatan perbaikan untuk {{ $objective->objective_id }}...">{{ $objective->saved_note }}</textarea>
-                    </div>
+                    <form action="{{ route('assessment-eval.summary.save-note', ['evalId' => $evaluation->eval_id]) }}"
+                        method="POST">
+                        @csrf
+                        <input type="hidden" name="objective_id" value="{{ $objective->objective_id }}">
+
+                        <div class="d-flex justify-content-between align-items-center text-white px-2 py-1"
+                            style="background-color: #0f2b5c;">
+                            <div class="fw-bold small">Potensi Perbaikan</div>
+                            <button type="submit" class="btn btn-sm btn-light py-0 px-2 fw-bold d-flex align-items-center"
+                                style="font-size: 0.7rem;">
+                                <i class="fas fa-save me-1"></i> Simpan
+                            </button>
+                        </div>
+                        <div class="p-2 bg-white">
+                            <textarea name="notes" class="form-control border-0" rows="3"
+                                placeholder="Masukkan catatan perbaikan untuk {{ $objective->objective_id }}...">{{ $objective->saved_note }}</textarea>
+                        </div>
+                    </form>
                 </div>
             </div>
         @endforeach
@@ -235,54 +235,24 @@
 
 @push('scripts')
     <script>
-        function saveNote(evalId, objectiveId, btn) {
-            const textarea = document.getElementById(`note-${objectiveId}`);
-            const noteContent = textarea.value;
-            const originalText = btn.innerHTML;
-
-            // UI Feedback: Loading
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
-            btn.disabled = true;
-
-            fetch(`/assessment-eval/${evalId}/summary/save-note`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        objective_id: objectiveId,
-                        notes: noteContent
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Success Feedback
-                        btn.innerHTML = '<i class="fas fa-check me-1"></i> Tersimpan';
-                        btn.classList.remove('btn-light');
-                        btn.classList.add('btn-success', 'text-white');
-
-                        // Revert back after 2 seconds
-                        setTimeout(() => {
-                            btn.innerHTML = originalText;
-                            btn.innerHTML = '<i class="fas fa-save me-1"></i> Simpan';
-                            btn.disabled = false;
-                            btn.classList.remove('btn-success', 'text-white');
-                            btn.classList.add('btn-light');
-                        }, 2000);
-                    } else {
-                        alert('Gagal menyimpan catatan: ' + (data.message || 'Unknown error'));
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Terjadi kesalahan saat menyimpan.');
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: '{{ session('success') }}',
+                    timer: 2000,
+                    showConfirmButton: false
                 });
-        }
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: '{{ session('error') }}'
+                });
+            @endif
+        });
     </script>
 @endpush

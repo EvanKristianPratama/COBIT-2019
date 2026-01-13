@@ -209,13 +209,7 @@ class AssessmentSummaryController extends Controller
             ['notes' => $notes]
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notes saved.',
-            'debug' => [
-                'ids_found_in_mst_evidence' => 'SKIPPED_AS_REQUESTED',
-            ],
-        ]);
+        return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
     }
 
     private function calculateRatingString($obj, $finalLevel, $ratingMap)
