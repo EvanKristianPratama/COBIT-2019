@@ -208,6 +208,8 @@ class AssessmentReportController extends Controller
             }
         }
 
+// ... (existing code)
+
         usort($processedData, function ($a, $b) {
             return ($a['year'] == $b['year'])
                 ? strcmp($a['scope_name'], $b['scope_name'])
@@ -215,5 +217,64 @@ class AssessmentReportController extends Controller
         });
 
         return compact('objectives', 'processedData');
+    }
+
+    public function exportPdf(\Illuminate\Http\Request $request)
+    {
+        try {
+            $scopeIds = $request->input('scope_ids', []);
+            
+            // Allow comma separated string if coming from simple form submit
+            if (is_string($scopeIds)) {
+                $scopeIds = explode(',', $scopeIds);
+            }
+            
+            $scopeIds = array_filter($scopeIds, function($id) { return is_numeric($id); });
+
+            if (empty($scopeIds)) {
+                 return redirect()->back()->withErrors(['error' => 'No scopes selected for export.']);
+            }
+
+            // Reuse existing data fetching logic
+            $reportData = $this->getReportData();
+            
+            if (isset($reportData['error'])) {
+                 return redirect()->back()->withErrors(['error' => $reportData['error']]);
+            }
+
+            // Filter data based on selected scopes
+            $allScopedData = $reportData['processedData'];
+            $selectedData = array_filter($allScopedData, function ($item) use ($scopeIds) {
+                return in_array($item['scope_id'], $scopeIds);
+            });
+
+            // Re-index array
+            $selectedData = array_values($selectedData);
+
+            // BUMN Target Override Logic (matches JS config)
+            $targetBumnOverride = 3.00;
+
+            // Augment data with effective targets for PDF view simplicity
+            foreach ($selectedData as &$data) {
+                $isBumn = stripos($data['scope_name'], 'bumn') !== false;
+                $data['effective_target'] = $isBumn ? $targetBumnOverride : ($data['target_maturity'] ?? 0);
+            }
+            unset($data); 
+
+            $pdf = Pdf::loadView('assessment-eval.report-all-pdf', [
+                'objectives' => $reportData['objectives'],
+                'selectedData' => $selectedData,
+                'showMaxLevel' => $request->input('show_max_level') == '1'
+            ]);
+
+            // Set paper size to landscape for better table view
+            $pdf->setPaper('a4', 'landscape');
+
+            return $pdf->download('All_Assessments_Report_' . date('Y-m-d_H-i') . '.pdf');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to export PDF', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
+            return redirect()->back()->withErrors(['error' => 'Failed to export PDF: ' . $e->getMessage()]);
+        }
     }
 }

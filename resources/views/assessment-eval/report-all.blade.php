@@ -17,8 +17,12 @@
                 <div>
                      <div class="btn-group me-2" role="group">
                     <a href="{{ route('assessment-eval.report.spiderweb') }}" class="btn btn-outline-light btn-sm px-3 me-2">
-                         <i class="fas fa-spider me-2"></i>Spiderweb View
+                        <i class="fas fa-spider me-2"></i>Spiderweb View
                     </a>
+
+                    <button class="btn btn-danger btn-sm px-3 me-2" id="btn-export-pdf">
+                         <i class="fas fa-file-pdf me-2"></i>Export PDF
+                    </button>
 
                     <a href="{{ route('assessment-eval.list') }}" class="btn btn-light btn-sm rounded-pill px-3">
                         <i class="fas fa-list me-2"></i>Back to List
@@ -133,7 +137,45 @@
     /* Top Left Intersection (Header + Sticky Col) needs highest Z */
     thead th.sticky-col {
         z-index: 30 !important;
-        background-color: #f8f9fa !important;
+        background-color: #f0f0f0 !important; /* Match PDF Header Gray */
+    }
+    
+    /* ANALOG STYLE OVERRIDES */
+    #recap-table, #recap-table th, #recap-table td {
+        border: 1px solid #000 !important;
+        font-family: sans-serif;
+        font-size: 11px; /* Slightly larger than PDF 10px for screen readability */
+    }
+
+    #recap-table thead th {
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+    }
+
+    /* MATCH PDF FOOTER: Only Row 1 (Total GAMO) has gray background */
+    #recap-table tfoot tr:first-child td {
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+    }
+
+    #recap-table tfoot tr:not(:first-child) td {
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+
+    /* Override bootstrap specific classes if needed */
+    .bg-primary, .bg-info, .bg-light, .bg-success, .bg-danger {
+        background-color: transparent !important;
+        color: inherit !important;
+    }
+
+    /* Re-apply heat map logic via JS mostly, but footer needs helpers */
+    table#recap-table tfoot tr td.gap-pos { color: #008000 !important; font-weight: bold; } /* Pure Green */
+    table#recap-table tfoot tr td.gap-neg { color: #ff0000 !important; font-weight: bold; } /* Pure Red */
+    
+    /* Sticky overrides for analog look */
+    .sticky-col {
+         border-right: 1px solid #000 !important; 
     }
     
     /* Footer Sticky Columns (optional, keeps left cols visible in footer) */
@@ -213,6 +255,7 @@
         },
 
         COLORS: {
+            // Updated to match PDF exactly
             bg:   ['#ffebee', '#fff3e0', '#fff8e1', '#e8f5e9', '#e3f2fd', '#f3e5f5'],
             text: ['#c62828', '#ef6c00', '#f57f17', '#2e7d32', '#1565c0', '#6a1b9a']
         },
@@ -225,7 +268,9 @@
             selectedCountBadge: 'selected-count-badge',
             tableHeader: 'table-header-row',
             tableBody: 'recap-table-body',
-            tableFooter: 'recap-table-footer'
+            tableBody: 'recap-table-body',
+            tableFooter: 'recap-table-footer',
+            btnExportPdf: 'btn-export-pdf'
         }
     };
 
@@ -434,10 +479,10 @@
                 const target = Utils.getEffectiveTarget(s);
                 const gap = avg - target; // Actual - Target
                 
-                const bgClass = gap >= 0 ? 'bg-success' : 'bg-danger';
+                const gapClass = gap >= 0 ? 'gap-pos' : 'gap-neg';
                 const gapStr = (gap > 0 ? '+' : '') + Utils.fmt(gap);
 
-                html += createCell(gapStr, `${bgClass} text-white`);
+                html += createCell(gapStr, gapClass);
             });
             html += createMaxLevelCell() + `</tr>`;
 
@@ -549,6 +594,49 @@
                     STATE.showMaxLevel = e.target.checked;
                     localStorage.setItem('showMaxLevel', e.target.checked);
                     this.refreshTable();
+                });
+            }
+
+            // 6. Export PDF
+            const btnExport = document.getElementById(CONFIG.SELECTORS.btnExportPdf);
+            if (btnExport) {
+                btnExport.addEventListener('click', () => {
+                    const selected = Array.from(STATE.selectedScopeIds);
+                    if (selected.length === 0) {
+                        alert('Please select at least one scope to export.');
+                        return;
+                    }
+
+                    // Create hidden form to submit IDs
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ route('assessment-eval.report.all-pdf') }}";
+                    form.target = '_blank'; // Open in new tab (optional, but good for downloads)
+
+                    // CSRF Token
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = "{{ csrf_token() }}";
+                    form.appendChild(csrf);
+
+                    // IDs
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'scope_ids';
+                    input.value = selected.join(',');
+                    form.appendChild(input);
+
+                    // Show Max Level
+                    const showMaxInput = document.createElement('input');
+                    showMaxInput.type = 'hidden';
+                    showMaxInput.name = 'show_max_level';
+                    showMaxInput.value = STATE.showMaxLevel ? '1' : '0';
+                    form.appendChild(showMaxInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                    document.body.removeChild(form);
                 });
             }
         }

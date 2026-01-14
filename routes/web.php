@@ -274,6 +274,10 @@ Route::get('/assessment-eval/report-all', [AssessmentReportController::class, 'i
     ->name('assessment-eval.report.all')
     ->middleware('auth');
 
+Route::post('/assessment-eval/report-all/pdf', [AssessmentReportController::class, 'exportPdf'])
+    ->name('assessment-eval.report.all-pdf')
+    ->middleware('auth');
+
 Route::get('/assessment-eval/report-spiderweb', [AssessmentReportController::class, 'spiderweb'])
     ->name('assessment-eval.report.spiderweb')
     ->middleware('auth');

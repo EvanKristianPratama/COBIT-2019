@@ -74,7 +74,7 @@ class EvaluationService
     public function loadEvaluation($evalId)
     {
         $evaluation = MstEval::with([
-            'activityEvaluations.activity.practices.objective'
+            'activityEvaluations.activity.practice.objective'
         ])->findOrFail($evalId);
 
         $formattedData = [
@@ -87,7 +87,7 @@ class EvaluationService
 
         foreach ($evaluation->activityEvaluations as $activityEval) {
             $activity = $activityEval->activity;
-            $practice = $activity->practices;
+            $practice = $activity->practice;
             $objective = $practice ? $practice->objective : null;
             
             $formattedData['activity_evaluations'][$activityEval->activity_id] = [

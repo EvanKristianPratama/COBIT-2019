@@ -27,7 +27,7 @@ class MstActivities extends Model
         // 'objective_purpose',
     ];
 
-    public function practices()
+    public function practice()
     {
         return $this->belongsTo(MstPractice::class, 'practice_id');
     }
