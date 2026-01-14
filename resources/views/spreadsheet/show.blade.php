@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- JSpreadsheet CE CDN (v4) -->
-<script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
-<link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
-<script src="https://jsuites.net/v4/jsuites.js"></script>
-<link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
+<!-- JSpreadsheet v5 CDN -->
+<script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
+<script src="https://jsuites.net/v5/jsuites.js"></script>
+<link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.css" type="text/css" />
+<link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
 
 <!-- Material Icons (Required for Toolbar) -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons" />
@@ -63,7 +63,6 @@
     #spreadsheet-container {
         overflow: auto;
         border-radius: 0.5rem;
-        border: 1px solid #e0e0e0;
     }
 
     /* Icon */
@@ -79,88 +78,54 @@
         font-size: 1.25rem;
     }
 
-    /* JSpreadsheet Styling */
-    .jexcel_container {
+    /* JSpreadsheet v5 Styling */
+    .jss {
         font-family: 'Nunito', 'Arial', sans-serif;
     }
     
-    /* Toolbar - Google Sheets Style */
-    .jexcel_toolbar {
+    /* Toolbar Styling */
+    .jtoolbar {
         background-color: #f8f9fa !important;
         border-bottom: 1px solid #e0e0e0 !important;
         padding: 8px 12px !important;
-        display: flex;
-        gap: 6px;
-        align-items: center;
-        flex-wrap: wrap;
     }
     
-    .jexcel_toolbar_item {
+    .jtoolbar-item {
         color: #5f6368 !important;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         border-radius: 6px;
-        border: 1px solid transparent;
         transition: all 0.15s ease;
-        cursor: pointer;
     }
 
-    .jexcel_toolbar_item:hover {
+    .jtoolbar-item:hover {
         background-color: #e8eaed !important;
         color: #202124 !important;
     }
     
-    .jexcel_toolbar_item.active {
+    .jtoolbar-item.selected {
         background-color: #e8f0fe !important;
         color: #1a73e8 !important;
     }
 
-    .jexcel_toolbar_item i {
-        font-size: 18px;
-    }
-    
-    /* Separator */
-    .jexcel_toolbar_item.jexcel_toolbar_divisor {
-        width: 1px;
-        height: 24px;
-        background-color: #dadce0;
-        margin: 0 6px;
-        border: none;
-        cursor: default;
-    }
-    
     /* Table Styling */
-    .jexcel {
-        border-top: none !important;
-    }
-
-    .jexcel td {
+    .jss td {
         border-right: 1px solid #e0e0e0;
         border-bottom: 1px solid #e0e0e0;
     }
 
-    .jexcel thead td {
+    .jss thead td {
         background-color: #f8f9fa;
         font-weight: 600;
         color: #5f6368;
     }
 
-    .jexcel tbody tr td:first-child {
+    .jss tbody tr td:first-child {
         background-color: #f8f9fa;
         font-weight: 600;
         color: #5f6368;
     }
 
-    .jexcel td.highlight {
+    .jss td.highlight {
         background-color: #e8f0fe !important;
-    }
-
-    .jexcel td.highlight-left, .jexcel td.highlight-top,
-    .jexcel td.highlight-right, .jexcel td.highlight-bottom {
-        border-color: #1a73e8 !important;
     }
 
     /* Buttons */
@@ -173,23 +138,42 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
     }
+
+    /* Tabs styling */
+    .jss_tab {
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px 4px 0 0;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    .jss_tab.jss_tab_selected {
+        background-color: #fff;
+        border-bottom: 1px solid #fff;
+    }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
-    const container = document.getElementById('spreadsheet-container');
-    const saveBtn = document.getElementById('btn-save');
-    const statusBar = document.getElementById('status-bar');
-    const statusMessage = document.getElementById('status-message');
+    var container = document.getElementById('spreadsheet-container');
+    var saveBtn = document.getElementById('btn-save');
+    var statusBar = document.getElementById('status-bar');
+    var statusMessage = document.getElementById('status-message');
     
-    // Show status
-    function showStatus(message, type = 'info') {
-        statusBar.className = `alert alert-${type} py-2 px-3 mb-3`;
+    // Spreadsheet instance (array for v5)
+    var spreadsheet = null;
+
+    // Show status message
+    function showStatus(message, type) {
+        type = type || 'info';
+        statusBar.className = 'alert alert-' + type + ' py-2 px-3 mb-3';
         statusMessage.textContent = message;
         statusBar.classList.remove('d-none');
         if (type === 'success') {
-            setTimeout(() => statusBar.classList.add('d-none'), 3000);
+            setTimeout(function() { 
+                statusBar.classList.add('d-none'); 
+            }, 3000);
         }
     }
 
@@ -198,10 +182,10 @@ document.addEventListener('DOMContentLoaded', function() {
         statusBar.classList.add('d-none');
     }
 
-    // Default grid generator - creates a proper 2D array
+    // Default grid generator
     function getDefaultGrid(rows, cols) {
-        rows = rows || 25;
-        cols = cols || 15;
+        rows = rows || 30;
+        cols = cols || 20;
         var data = [];
         for (var i = 0; i < rows; i++) {
             var row = [];
@@ -213,238 +197,109 @@ document.addEventListener('DOMContentLoaded', function() {
         return data;
     }
 
-    // Validate and fix data to ensure it's a proper 2D array
+    // Validate data
     function validateData(data) {
         if (!data || !Array.isArray(data) || data.length === 0) {
             return getDefaultGrid();
         }
-        
-        // Check if first row is an array
         if (!Array.isArray(data[0])) {
             return getDefaultGrid();
         }
-        
-        // Ensure all rows have same length
-        var maxCols = 0;
-        for (var i = 0; i < data.length; i++) {
-            if (Array.isArray(data[i]) && data[i].length > maxCols) {
-                maxCols = data[i].length;
-            }
-        }
-        
-        if (maxCols === 0) {
-            return getDefaultGrid();
-        }
-        
-        // Normalize rows
-        for (var i = 0; i < data.length; i++) {
-            if (!Array.isArray(data[i])) {
-                data[i] = [];
-            }
-            while (data[i].length < maxCols) {
-                data[i].push('');
-            }
-        }
-        
         return data;
     }
 
+    // Get active worksheet
+    function getWorksheet() {
+        if (spreadsheet && spreadsheet[0]) {
+            return spreadsheet[0];
+        }
+        return null;
+    }
+
     try {
-        console.log("[Spreadsheet] Initializing...");
-        
-        // Clean container
+        console.log("[Spreadsheet] Initializing v5...");
         container.innerHTML = '';
 
-        // Parse saved data from PHP
+        // Parse saved data
         var rawData = {!! json_encode($spreadsheet->data) !!};
-        console.log("[Spreadsheet] Raw data type:", typeof rawData);
-        console.log("[Spreadsheet] Raw data:", rawData);
-
-        // Handle if data is a JSON string (double-encoded)
+        
         if (typeof rawData === 'string' && rawData.length > 0) {
             try {
                 rawData = JSON.parse(rawData);
-                console.log("[Spreadsheet] Parsed string to:", rawData);
             } catch (e) {
-                console.warn("[Spreadsheet] Could not parse string:", e);
                 rawData = null;
             }
         }
 
-        // Prepare configuration
+        // Prepare data
         var cellData = getDefaultGrid();
-        var cellStyle = null; // null instead of {} to avoid jspreadsheet issues
-        
+        var cellStyle = {};
+        var mergeCells = {};
+
         if (rawData && typeof rawData === 'object') {
-            // Check if it's our structured format with cells property
             if (rawData.cells && Array.isArray(rawData.cells)) {
-                console.log("[Spreadsheet] Found structured format with cells");
                 cellData = validateData(rawData.cells);
-                
-                // Only use style if it has actual properties
-                if (rawData.style && typeof rawData.style === 'object' && Object.keys(rawData.style).length > 0) {
-                    cellStyle = rawData.style;
-                }
-            } 
-            // Legacy: plain 2D array
-            else if (Array.isArray(rawData)) {
-                console.log("[Spreadsheet] Found legacy array format");
+                if (rawData.style) cellStyle = rawData.style;
+                if (rawData.mergeCells) mergeCells = rawData.mergeCells;
+            } else if (Array.isArray(rawData)) {
                 cellData = validateData(rawData);
             }
         }
 
-        console.log("[Spreadsheet] Final cell data:", cellData);
-        console.log("[Spreadsheet] Cell data rows:", cellData.length, "cols:", cellData[0] ? cellData[0].length : 0);
+        // Initialize JSpreadsheet v5
+        spreadsheet = jspreadsheet(container, {
+            toolbar: true,
+            worksheets: [{
+                data: cellData,
+                style: cellStyle,
+                mergeCells: mergeCells,
+                worksheetName: '{{ $spreadsheet->title }}',
+                minDimensions: [20, 30],
+                tableOverflow: true,
+                tableWidth: '100%',
+                tableHeight: '70vh',
+                columnDrag: true,
+                rowDrag: true,
+                columns: (function() {
+                    var cols = [];
+                    for (var i = 0; i < 20; i++) {
+                        cols.push({ type: 'text', width: 120 });
+                    }
+                    return cols;
+                })()
+            }],
+            // Events
+            onchange: function(instance, cell, x, y, value) {
+                console.log('[Spreadsheet] Cell changed:', x, y, value);
+            },
+            onselection: function(instance, x1, y1, x2, y2, origin) {
+                console.log('[Spreadsheet] Selection:', x1, y1, 'to', x2, y2);
+            }
+        });
 
-        // JSpreadsheet instance reference
-        var spreadsheetInstance = null;
-
-        // Build config object
-        var config = {
-            data: cellData,
-            minDimensions: [15, 25],
-            allowInsertRow: true,
-            allowInsertColumn: true,
-            allowDeleteRow: true,
-            allowDeleteColumn: true,
-            allowRenameColumn: true,
-            columnSorting: false,
-            wordWrap: true,
-            tableOverflow: true,
-            tableWidth: '100%',
-            tableHeight: '70vh',
-            toolbar: [
-                { 
-                    type: 'i', 
-                    content: 'undo',
-                    onclick: function() { if(spreadsheetInstance) spreadsheetInstance.undo(); }
-                },
-                { 
-                    type: 'i', 
-                    content: 'redo',
-                    onclick: function() { if(spreadsheetInstance) spreadsheetInstance.redo(); }
-                },
-                { 
-                    type: 'i', 
-                    content: 'save',
-                    onclick: function() { saveBtn.click(); }
-                },
-                { type: 'divisor' },
-                { 
-                    type: 'i', 
-                    content: 'format_bold',
-                    onclick: function() { 
-                        if(spreadsheetInstance) {
-                            var sel = spreadsheetInstance.getSelected();
-                            if(sel) spreadsheetInstance.setStyle(sel, 'font-weight', 'bold');
-                        }
-                    }
-                },
-                { 
-                    type: 'i', 
-                    content: 'format_italic',
-                    onclick: function() { 
-                        if(spreadsheetInstance) {
-                            var sel = spreadsheetInstance.getSelected();
-                            if(sel) spreadsheetInstance.setStyle(sel, 'font-style', 'italic');
-                        }
-                    }
-                },
-                { 
-                    type: 'i', 
-                    content: 'format_underlined',
-                    onclick: function() { 
-                        if(spreadsheetInstance) {
-                            var sel = spreadsheetInstance.getSelected();
-                            if(sel) spreadsheetInstance.setStyle(sel, 'text-decoration', 'underline');
-                        }
-                    }
-                },
-                { type: 'divisor' },
-                { type: 'color', content: 'format_color_text', k: 'color' },
-                { type: 'color', content: 'format_color_fill', k: 'background-color' },
-                { type: 'divisor' },
-                { 
-                    type: 'i', 
-                    content: 'format_align_left',
-                    onclick: function() { 
-                        if(spreadsheetInstance) {
-                            var sel = spreadsheetInstance.getSelected();
-                            if(sel) spreadsheetInstance.setStyle(sel, 'text-align', 'left');
-                        }
-                    }
-                },
-                { 
-                    type: 'i', 
-                    content: 'format_align_center',
-                    onclick: function() { 
-                        if(spreadsheetInstance) {
-                            var sel = spreadsheetInstance.getSelected();
-                            if(sel) spreadsheetInstance.setStyle(sel, 'text-align', 'center');
-                        }
-                    }
-                },
-                { 
-                    type: 'i', 
-                    content: 'format_align_right',
-                    onclick: function() { 
-                        if(spreadsheetInstance) {
-                            var sel = spreadsheetInstance.getSelected();
-                            if(sel) spreadsheetInstance.setStyle(sel, 'text-align', 'right');
-                        }
-                    }
-                },
-                { type: 'divisor' },
-                { 
-                    type: 'i', 
-                    content: 'add',
-                    onclick: function() { if(spreadsheetInstance) spreadsheetInstance.insertRow(); }
-                },
-                { 
-                    type: 'i', 
-                    content: 'view_column',
-                    onclick: function() { if(spreadsheetInstance) spreadsheetInstance.insertColumn(); }
-                },
-                { type: 'divisor' },
-                { 
-                    type: 'i', 
-                    content: 'file_download',
-                    onclick: function() { if(spreadsheetInstance) spreadsheetInstance.download(); }
-                }
-            ]
-        };
-
-        // Only add style if we have valid styles
-        if (cellStyle !== null) {
-            config.style = cellStyle;
-        }
-
-        // Initialize JSpreadsheet
-        console.log("[Spreadsheet] Creating jspreadsheet with config:", config);
-        spreadsheetInstance = jspreadsheet(container, config);
-        console.log("[Spreadsheet] Initialized successfully!");
+        console.log("[Spreadsheet] v5 Initialized successfully!");
 
         // Save functionality
         saveBtn.addEventListener('click', function() {
             var btn = this;
             var originalHTML = btn.innerHTML;
+            var ws = getWorksheet();
+
+            if (!ws) {
+                showStatus('Error: Worksheet not found', 'danger');
+                return;
+            }
 
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
             showStatus('Saving your spreadsheet...', 'warning');
 
-            if (!spreadsheetInstance) {
-                showStatus('Error: Spreadsheet instance not found', 'danger');
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-                return;
-            }
-
-            // Collect data
+            // Collect data from worksheet
             var payload = {
-                cells: spreadsheetInstance.getData(),
-                style: spreadsheetInstance.getStyle(),
-                colWidths: spreadsheetInstance.getWidth()
+                cells: ws.getData(),
+                style: ws.getStyle(),
+                mergeCells: ws.getMerge(),
+                colWidths: ws.getWidth()
             };
 
             console.log("[Spreadsheet] Saving payload:", payload);
@@ -462,7 +317,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(function(result) {
-                console.log("[Spreadsheet] Save response:", result);
                 if (result.success) {
                     btn.innerHTML = '<i class="fas fa-check me-2"></i>Saved!';
                     showStatus('Spreadsheet saved successfully!', 'success');

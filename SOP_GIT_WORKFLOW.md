@@ -1,8 +1,6 @@
 # SOP Alur Kerja Git & Kolaborasi Development (CBIOO Project)
 **Team:** 2 Full Stack Developers (Evan & Jetro)  
-**Stack:** Laravel (Blade/Controller/Model)
-
----
+**Stack:** Laravel (Blade/Controller/M
 
 ## 1. Aturan Dasar (Golden Rules)
 1.  **JANGAN PERNAH** push langsung ke branch `main`.
