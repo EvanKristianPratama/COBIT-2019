@@ -64,6 +64,23 @@
                 </div>
               </div>
             </div>
+            
+            <div class="row g-4 justify-content-center mt-2">
+                 <!-- Spreadsheet Tools Card -->
+                 <div class="col-md-6 col-xl-4">
+                  <div class="card home-tool-card border-0 p-3 h-100">
+                    <a href="{{ route('spreadsheet.index') }}" class="text-decoration-none">
+                      <div class="card-body text-center p-4">
+                        <div class="home-icon-circle bg-success-light mb-3 mx-auto">
+                          <i class="fas fa-table fa-2x text-success"></i>
+                        </div>
+                        <h6 class="card-title fw-bold mb-1">Spreadsheet Tools</h6>
+                        <p class="text-muted small mb-0">Tools untuk analisis data (Excel-like)</p>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+            </div>
           </div>
         </div>
 
@@ -193,6 +210,7 @@
   .bg-warning-light { background-color: #fff3cd; }
   .bg-danger-light { background-color: #fde2e4; }
   .bg-info-light { background-color: #d7efff; }
+  .bg-success-light { background-color: #e8f5e9; }
 
   .home-sidebar-card {
     box-shadow: 0 20px 45px rgba(8, 26, 61, 0.08);

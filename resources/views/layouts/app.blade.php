@@ -258,6 +258,12 @@
                                     <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
                                 </a>
                             </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ route('spreadsheet.index') }}"
+                                    class="{{ Route::is('spreadsheet.*') ? 'active' : '' }}">
+                                    <i class="fas fa-table"></i> Spreadsheet Tools
+                                </a>
+                            </li>
                         </ol>
                     </nav>
                 </div>

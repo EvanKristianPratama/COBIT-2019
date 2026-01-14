@@ -31,6 +31,7 @@ use App\Http\Controllers\AssessmentEval\TargetMaturityController;
 use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
 use App\Http\Controllers\AssessmentEval\AssessmentReportController;
 use App\Http\Controllers\AssessmentEval\AssessmentSummaryController;
+use App\Http\Controllers\Spreadsheet\SpreadsheetController;
 
 Route::bind('evalId', function ($value) {
     try {
@@ -365,6 +366,19 @@ Route::get('/assessment-eval/{evalId}/report-activity-pdf/{objectiveId}', [Activ
 Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
     ->name('assessment-eval.score')
     ->middleware('auth');
+
+// Spreadsheet Tools
+Route::prefix('spreadsheet')
+    ->middleware('auth')
+    ->name('spreadsheet.')
+    ->group(function () {
+        Route::get('/', [SpreadsheetController::class, 'index'])->name('index');
+        Route::get('/create', [SpreadsheetController::class, 'create'])->name('create');
+        Route::post('/', [SpreadsheetController::class, 'store'])->name('store');
+        Route::get('/{id}', [SpreadsheetController::class, 'show'])->name('show');
+        Route::post('/{id}/save', [SpreadsheetController::class, 'saveData'])->name('save');
+        Route::delete('/{id}', [SpreadsheetController::class, 'destroy'])->name('destroy');
+    });
 
 Route::get('/clear-semua', function() {
     Artisan::call('config:clear');
