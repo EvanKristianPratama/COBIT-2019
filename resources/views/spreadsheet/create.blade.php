@@ -4,10 +4,10 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-6 col-md-8">
-            <div class="card shadow-lg border-0 rounded-4 bg-white">
-                <div class="card-header bg-gradient text-white py-4 rounded-top-4" style="background: linear-gradient(135deg, #0f2b5c, #1a3d6b);">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header py-4 rounded-top-4" style="background: linear-gradient(135deg, #0f2b5c, #1a3d6b) !important; color: white;">
                     <div class="d-flex align-items-center">
-                        <div class="icon-wrapper me-3 text-white">
+                        <div class="icon-wrapper me-3 text-white" style="background: rgba(255,255,255,0.2);">
                             <i class="fas fa-table fa-2x"></i>
                         </div>
                         <div>
