@@ -10,18 +10,21 @@ use Illuminate\Support\Facades\Crypt;
 class MstEval extends Model
 {
     use HasFactory, SoftDeletes;
-    
+
     protected $appends = ['encrypted_id'];
 
     protected $table = 'mst_eval';
+
     protected $primaryKey = 'eval_id';
+
     public $incrementing = true;
+
     protected $keyType = 'int';
-    
+
     protected $fillable = [
         'user_id',
         'status',
-        'tahun'
+        'tahun',
     ];
 
     /**

@@ -1,13 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\GuestController;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\AssessmentEval\ActivityReportController;
+use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
+use App\Http\Controllers\AssessmentEval\AssessmentListController;
+use App\Http\Controllers\AssessmentEval\AssessmentReportController;
+use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
+use App\Http\Controllers\AssessmentEval\AssessmentSummaryController;
+use App\Http\Controllers\AssessmentEval\EvidenceController;
+use App\Http\Controllers\AssessmentEval\TargetMaturityController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\cobit2019\DfController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\cobit2019\Df10Controller;
 use App\Http\Controllers\cobit2019\Df2Controller;
 use App\Http\Controllers\cobit2019\Df3Controller;
 use App\Http\Controllers\cobit2019\Df4Controller;
@@ -16,22 +21,17 @@ use App\Http\Controllers\cobit2019\Df6Controller;
 use App\Http\Controllers\cobit2019\Df7Controller;
 use App\Http\Controllers\cobit2019\Df8Controller;
 use App\Http\Controllers\cobit2019\Df9Controller;
-use App\Http\Controllers\cobit2019\Df10Controller;
-use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\cobit2019\DfController;
+use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\cobit2019\Step2Controller;
 use App\Http\Controllers\cobit2019\Step3Controller;
 use App\Http\Controllers\cobit2019\Step4Controller;
-use App\Http\Controllers\cobit2019\MstObjectiveController;
-use App\Http\Controllers\AssessmentEval\EvidenceController;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
-use App\Http\Controllers\AssessmentEval\ActivityReportController;
-use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
-use App\Http\Controllers\AssessmentEval\AssessmentListController;
-use App\Http\Controllers\AssessmentEval\TargetMaturityController;
-use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
-use App\Http\Controllers\AssessmentEval\AssessmentReportController;
-use App\Http\Controllers\AssessmentEval\AssessmentSummaryController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Spreadsheet\SpreadsheetController;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Route;
 
 Route::bind('evalId', function ($value) {
     try {
@@ -45,7 +45,7 @@ Route::bind('evalId', function ($value) {
         // User asked to hide it, so maybe strict?
         // Let's allow int for backward compatibility if logic fails or during dev.
         return $value;
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         abort(404);
     }
 });
@@ -380,10 +380,11 @@ Route::prefix('spreadsheet')
         Route::delete('/{id}', [SpreadsheetController::class, 'destroy'])->name('destroy');
     });
 
-Route::get('/clear-semua', function() {
+Route::get('/clear-semua', function () {
     Artisan::call('config:clear');
     Artisan::call('cache:clear');
     Artisan::call('view:clear');
     Artisan::call('route:clear');
-    return "Cache Berhasil Dibersihkan!";
+
+    return 'Cache Berhasil Dibersihkan!';
 });
