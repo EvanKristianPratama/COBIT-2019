@@ -377,6 +377,7 @@ Route::prefix('spreadsheet')
         Route::post('/', [SpreadsheetController::class, 'store'])->name('store');
         Route::get('/{id}', [SpreadsheetController::class, 'show'])->name('show');
         Route::post('/{id}/save', [SpreadsheetController::class, 'saveData'])->name('save');
+        Route::put('/{id}', [SpreadsheetController::class, 'update'])->name('update');
         Route::delete('/{id}', [SpreadsheetController::class, 'destroy'])->name('destroy');
     });
 

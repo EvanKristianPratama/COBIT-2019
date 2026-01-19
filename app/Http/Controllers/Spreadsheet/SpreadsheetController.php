@@ -66,6 +66,22 @@ class SpreadsheetController extends Controller
         }
     }
 
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string'
+        ]);
+
+        $spreadsheet = Spreadsheet::where('user_id', Auth::id())->findOrFail($id);
+        $spreadsheet->update([
+            'title' => $request->title,
+            'description' => $request->description
+        ]);
+
+        return redirect()->route('spreadsheet.index')->with('success', 'Spreadsheet updated successfully.');
+    }
+
     public function destroy($id)
     {
         $spreadsheet = Spreadsheet::where('user_id', Auth::id())->findOrFail($id);

@@ -24,67 +24,71 @@
                 </div>
             @endif
 
-            <!-- Spreadsheets Grid -->
+            <!-- Spreadsheets List -->
             @if($spreadsheets->count() > 0)
-                <div class="row g-4">
-                    @foreach($spreadsheets as $sheet)
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card h-100 border-0 shadow-sm spreadsheet-card">
-                                <div class="card-body p-4">
-                                    <div class="d-flex justify-content-between align-items-start mb-3">
-                                        <div class="spreadsheet-icon">
-                                            <i class="fas fa-file-excel"></i>
-                                        </div>
-                                        <div class="dropdown">
-                                            <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
-                                                <i class="fas fa-ellipsis-v"></i>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end shadow">
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('spreadsheet.show', $sheet->id) }}">
-                                                        <i class="fas fa-edit me-2 text-primary"></i>Open & Edit
+                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="table-responsive" style="overflow: visible;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 border-0 text-uppercase small fw-bold text-muted py-3" style="width: 50%;">Name</th>
+                                    <th class="border-0 text-uppercase small fw-bold text-muted py-3">Last Modified</th>
+                                    <th class="pe-4 border-0 text-uppercase small fw-bold text-muted py-3 text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($spreadsheets as $sheet)
+                                    <tr class="spreadsheet-row" data-href="{{ route('spreadsheet.show', $sheet->id) }}" style="cursor: pointer;">
+                                        <td class="ps-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="list-icon me-3">
+                                                    <i class="fas fa-file-excel"></i>
+                                                </div>
+                                                <div>
+                                                    <a href="{{ route('spreadsheet.show', $sheet->id) }}" class="text-decoration-none d-block">
+                                                        <h6 class="mb-0 fw-bold text-dark">{{ $sheet->title }}</h6>
                                                     </a>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <form action="{{ route('spreadsheet.destroy', $sheet->id) }}" method="POST" class="delete-form">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="button" class="dropdown-item text-danger btn-delete">
-                                                            <i class="fas fa-trash me-2"></i>Delete
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    
-                                    <a href="{{ route('spreadsheet.show', $sheet->id) }}" class="text-decoration-none">
-                                        <h5 class="card-title fw-bold text-dark mb-2">{{ $sheet->title }}</h5>
-                                    </a>
-                                    
-                                    <p class="card-text text-muted small mb-3">
-                                        {{ Str::limit($sheet->description, 80) ?: 'No description' }}
-                                    </p>
-                                    
-                                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                        <div class="d-flex gap-2 w-100">
-                                            <a href="{{ route('spreadsheet.show', $sheet->id) }}" class="btn btn-sm btn-outline-primary flex-grow-1">
-                                                Open <i class="fas fa-arrow-right ms-1"></i>
-                                            </a>
-                                            <form action="{{ route('spreadsheet.destroy', $sheet->id) }}" method="POST" class="delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete" title="Delete Spreadsheet">
-                                                    <i class="fas fa-trash"></i>
+                                                    <small class="text-muted d-block text-truncate" style="max-width: 400px;">
+                                                        {{ $sheet->description ?: 'No description' }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3">
+                                            <span class="text-muted small">
+                                                <i class="far fa-clock me-1"></i>
+                                                {{ $sheet->updated_at->diffForHumans() }}
+                                            </span>
+                                        </td>
+                                        <td class="pe-4 py-3 text-end action-column">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <a href="{{ route('spreadsheet.show', $sheet->id) }}" target="_blank" class="btn btn-light btn-sm text-success rounded-circle shadow-sm" title="Open in New Tab" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-light btn-sm text-warning rounded-circle shadow-sm btn-edit-details" 
+                                                    title="Edit Details"
+                                                    style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;"
+                                                    data-id="{{ $sheet->id }}" 
+                                                    data-title="{{ $sheet->title }}" 
+                                                    data-description="{{ $sheet->description }}">
+                                                    <i class="fas fa-edit"></i>
                                                 </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
+                                                <form action="{{ route('spreadsheet.destroy', $sheet->id) }}" method="POST" class="d-inline delete-form">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" class="btn btn-light btn-sm text-danger rounded-circle shadow-sm btn-delete" 
+                                                        title="Delete"
+                                                        style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             @else
                 <!-- Empty State -->
@@ -95,12 +99,42 @@
                         </div>
                         <h4 class="fw-bold text-muted mb-2">No Spreadsheets Yet</h4>
                         <p class="text-muted mb-4">Get started by creating your first spreadsheet</p>
-                        <a href="{{ route('spreadsheet.create') }}" class="btn btn-primary btn-lg">
+                        <a href="{{ route('spreadsheet.create') }}" class="btn btn-primary btn-lg px-4">
                             <i class="fas fa-plus me-2"></i>Create Your First Spreadsheet
                         </a>
                     </div>
                 </div>
             @endif
+        </div>
+    </div>
+</div>
+
+<!-- Edit Spreadsheet Modal -->
+<div class="modal fade" id="editSpreadsheetModal" tabindex="-1" aria-labelledby="editSpreadsheetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="editSpreadsheetModalLabel" style="color: #0f2b5c;">Edit Spreadsheet Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editSpreadsheetForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="edit_title" class="form-label fw-bold small text-muted text-uppercase">Title</label>
+                        <input type="text" class="form-control form-control-lg border-0 bg-light" id="edit_title" name="title" required placeholder="Enter spreadsheet title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label fw-bold small text-muted text-uppercase">Description</label>
+                        <textarea class="form-control border-0 bg-light" id="edit_description" name="description" rows="4" placeholder="Enter a brief description"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -114,16 +148,19 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
     }
-    .spreadsheet-icon {
-        width: 48px;
-        height: 48px;
-        background: linear-gradient(135deg, #28a745, #20c997);
-        border-radius: 10px;
+    .list-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(40, 167, 69, 0.1);
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 1.25rem;
+        color: #28a745;
+        font-size: 1.1rem;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(15, 43, 92, 0.02);
     }
     .empty-state-icon {
         width: 100px;
@@ -179,6 +216,42 @@
                         form.submit();
                     }
                 }
+            });
+        });
+
+        // Row Click Navigation
+        document.querySelectorAll('.spreadsheet-row').forEach(row => {
+            row.addEventListener('click', function(e) {
+                // Ignore if clicked on buttons, links, or dropdowns
+                if (e.target.closest('.action-column') || e.target.closest('.dropdown') || e.target.closest('a') || e.target.closest('button')) {
+                    return;
+                }
+                const href = this.getAttribute('data-href');
+                if (href) window.location.href = href;
+            });
+        });
+
+        // Edit Modal Handling
+        const editButtons = document.querySelectorAll('.btn-edit-details');
+        const editModal = new bootstrap.Modal(document.getElementById('editSpreadsheetModal'));
+        const editForm = document.getElementById('editSpreadsheetForm');
+        const editTitleInput = document.getElementById('edit_title');
+        const editDescriptionInput = document.getElementById('edit_description');
+
+        editButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const id = this.getAttribute('data-id');
+                const title = this.getAttribute('data-title');
+                const description = this.getAttribute('data-description');
+
+                editForm.action = `/spreadsheet/${id}`;
+                editTitleInput.value = title;
+                editDescriptionInput.value = (description === 'null' || !description) ? '' : description;
+
+                editModal.show();
             });
         });
     });
