@@ -1208,7 +1208,7 @@
                     window.SERVER_EVIDENCES.forEach(ev => {
                         let label = ev.judul_dokumen;
                         if (ev.no_dokumen) {
-                            label += ' - ' + ev.no_dokumen;
+                            label += ' || ' + ev.no_dokumen;
                         }
                         this.evidenceLibrary.add(label);
                     });
@@ -1283,7 +1283,7 @@
                 if (!item) return '';
                 let label = (item.judul_dokumen || '').trim();
                 if (item.no_dokumen) {
-                    label += label ? ` - ${item.no_dokumen.trim()}` : item.no_dokumen.trim();
+                    label += label ? ` || ${item.no_dokumen.trim()}` : item.no_dokumen.trim();
                 }
                 return label || '-';
             }
@@ -1762,7 +1762,7 @@
             setupEvidenceListener() {
                 document.addEventListener('evidenceAdded', (e) => {
                     if (e.detail && e.detail.judul_dokumen) {
-                        const evidenceText = e.detail.judul_dokumen + (e.detail.no_dokumen ? ' - ' + e.detail
+                        const evidenceText = e.detail.judul_dokumen + (e.detail.no_dokumen ? ' || ' + e.detail
                             .no_dokumen : '');
                         this.addEvidenceToLibrary(evidenceText, {
                             refresh: true
@@ -1784,7 +1784,8 @@
                     const assessmentData = {
                         assessmentData: this.levelScores,
                         notes: fieldPayload.notes,
-                        evidence: fieldPayload.evidence
+                        evidence: fieldPayload.evidence,
+                        evidenceNames: fieldPayload.evidenceNames
                     };
 
                     this.updateLoadingProgress('Saving to server...', 60);
@@ -2273,6 +2274,7 @@
             collectFieldData() {
                 const notes = {};
                 const evidence = {};
+                const evidenceNames = {};
 
                 document.querySelectorAll('.assessment-textarea[data-activity-id]').forEach(field => {
                     const activityId = field.getAttribute('data-activity-id');
@@ -2287,12 +2289,20 @@
                         notes[activityId] = value;
                     } else {
                         evidence[activityId] = value;
+                        // Build evidenceNames array: Split by newline, then split each line by ' - ' and take the first part
+                        evidenceNames[activityId] = value.split('\n')
+                            .map(line => {
+                                const parts = line.split(' || ');
+                                return parts[0].trim();
+                            })
+                            .filter(item => item.length > 0);
                     }
                 });
 
                 return {
                     notes,
-                    evidence
+                    evidence,
+                    evidenceNames
                 };
             }
 
@@ -3735,18 +3745,18 @@
                                 </thead>
                                 <tbody>
                                     ${data.map(row => `
-                                                        <tr>
-                                                            <td>${row.domain}</td>
-                                                            <td>${row.level}</td>
-                                                            <td>
-                                                                <div class="d-flex gap-1">
-                                                                    ${Object.entries(row.ratings).map(([lvl, rating]) => 
-                                                                        `<span class="badge ${rating === 'F' ? 'bg-success' : (rating === 'L' ? 'bg-warning text-dark' : (rating === 'P' ? 'bg-info text-dark' : 'bg-secondary'))}">${lvl}:${rating}</span>`
-                                                                    ).join('')}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    `).join('')}
+                                                                                <tr>
+                                                                                    <td>${row.domain}</td>
+                                                                                    <td>${row.level}</td>
+                                                                                    <td>
+                                                                                        <div class="d-flex gap-1">
+                                                                                            ${Object.entries(row.ratings).map(([lvl, rating]) => 
+                                                                                                `<span class="badge ${rating === 'F' ? 'bg-success' : (rating === 'L' ? 'bg-warning text-dark' : (rating === 'P' ? 'bg-info text-dark' : 'bg-secondary'))}">${lvl}:${rating}</span>`
+                                                                                            ).join('')}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            `).join('')}
                                 </tbody>
                             </table>
                         </div>
