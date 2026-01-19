@@ -1206,11 +1206,8 @@
                 this.evidenceLibrary = new Set();
                 if (window.SERVER_EVIDENCES && Array.isArray(window.SERVER_EVIDENCES)) {
                     window.SERVER_EVIDENCES.forEach(ev => {
-                        let label = ev.judul_dokumen;
-                        if (ev.no_dokumen) {
-                            label += ' || ' + ev.no_dokumen;
-                        }
-                        this.evidenceLibrary.add(label);
+                        let label = ev.judul_dokumen || '';
+                        this.evidenceLibrary.add(label.trim());
                     });
                 }
             }
@@ -1281,11 +1278,7 @@
 
             formatEvidenceLabel(item) {
                 if (!item) return '';
-                let label = (item.judul_dokumen || '').trim();
-                if (item.no_dokumen) {
-                    label += label ? ` || ${item.no_dokumen.trim()}` : item.no_dokumen.trim();
-                }
-                return label || '-';
+                return (item.judul_dokumen || '').trim() || '-';
             }
 
             renderEvidenceModalRows() {
@@ -1337,14 +1330,14 @@
                 displayList.forEach((item, index) => {
                     const rawLabel = this.formatEvidenceLabel(item);
                     const safeLabel = this.escapeHtml(rawLabel);
-                    const isChecked = this.currentSessionSelectedEvidence.has(safeLabel);
+                    const isChecked = this.currentSessionSelectedEvidence.has(rawLabel);
                     const tr = document.createElement('tr');
                     // Show global index instead of page index
                     const globalIndex = startIndex + index + 1;
 
                     tr.innerHTML = `
                 <td class="text-center align-middle">
-                    <input type="checkbox" class="form-check-input" value="${safeLabel}" id="evidence-modal-checkbox-${startIndex + index}" ${isChecked ? 'checked' : ''}>
+                    <input type="checkbox" class="form-check-input" data-raw-label="${safeLabel}" id="evidence-modal-checkbox-${startIndex + index}" ${isChecked ? 'checked' : ''}>
                 </td>
                 <td class="text-center align-middle">${globalIndex}</td>
                 <td class="align-middle">${this.escapeHtml(item.judul_dokumen || '-')}</td>
@@ -1362,9 +1355,9 @@
                     const checkbox = tr.querySelector('.form-check-input');
                     checkbox.addEventListener('change', (e) => {
                         if (e.target.checked) {
-                            this.currentSessionSelectedEvidence.add(safeLabel);
+                            this.currentSessionSelectedEvidence.add(rawLabel);
                         } else {
-                            this.currentSessionSelectedEvidence.delete(safeLabel);
+                            this.currentSessionSelectedEvidence.delete(rawLabel);
                         }
                     });
 
@@ -1762,8 +1755,7 @@
             setupEvidenceListener() {
                 document.addEventListener('evidenceAdded', (e) => {
                     if (e.detail && e.detail.judul_dokumen) {
-                        const evidenceText = e.detail.judul_dokumen + (e.detail.no_dokumen ? ' || ' + e.detail
-                            .no_dokumen : '');
+                        const evidenceText = e.detail.judul_dokumen;
                         this.addEvidenceToLibrary(evidenceText, {
                             refresh: true
                         });
@@ -2289,12 +2281,9 @@
                         notes[activityId] = value;
                     } else {
                         evidence[activityId] = value;
-                        // Build evidenceNames array: Split by newline, then split each line by ' - ' and take the first part
+                        // Build evidenceNames array: Split by newline and trim each line
                         evidenceNames[activityId] = value.split('\n')
-                            .map(line => {
-                                const parts = line.split(' || ');
-                                return parts[0].trim();
-                            })
+                            .map(line => line.trim())
                             .filter(item => item.length > 0);
                     }
                 });
@@ -3745,18 +3734,18 @@
                                 </thead>
                                 <tbody>
                                     ${data.map(row => `
-                                                                                <tr>
-                                                                                    <td>${row.domain}</td>
-                                                                                    <td>${row.level}</td>
-                                                                                    <td>
-                                                                                        <div class="d-flex gap-1">
-                                                                                            ${Object.entries(row.ratings).map(([lvl, rating]) => 
-                                                                                                `<span class="badge ${rating === 'F' ? 'bg-success' : (rating === 'L' ? 'bg-warning text-dark' : (rating === 'P' ? 'bg-info text-dark' : 'bg-secondary'))}">${lvl}:${rating}</span>`
-                                                                                            ).join('')}
-                                                                                        </div>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            `).join('')}
+                                                                                                        <tr>
+                                                                                                            <td>${row.domain}</td>
+                                                                                                            <td>${row.level}</td>
+                                                                                                            <td>
+                                                                                                                <div class="d-flex gap-1">
+                                                                                                                    ${Object.entries(row.ratings).map(([lvl, rating]) => 
+                                                                                                                        `<span class="badge ${rating === 'F' ? 'bg-success' : (rating === 'L' ? 'bg-warning text-dark' : (rating === 'P' ? 'bg-info text-dark' : 'bg-secondary'))}">${lvl}:${rating}</span>`
+                                                                                                                    ).join('')}
+                                                                                                                </div>
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    `).join('')}
                                 </tbody>
                             </table>
                         </div>
