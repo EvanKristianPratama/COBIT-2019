@@ -6,6 +6,10 @@ use App\Models\MstEval;
 use App\Models\TrsActivityeval;
 use App\Models\TrsObjectiveScore;
 use App\Models\TrsMaturityScore;
+use App\Models\TrsSummaryReport;
+use App\Models\TrsSummaryActivity;
+use App\Models\MstActivities;
+use App\Models\MstEvidence;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +37,24 @@ class EvaluationService
                 // Get all activity IDs from the request
                 $incomingActivityIds = collect($data['activity_evaluations'])->pluck('activity_id')->toArray();
                 
+                // Pre-fetch Map: Activity ID -> Objective ID
+                // Optimizes query to avoid N+1 inside loop
+                $activityObjectiveMap = MstActivities::with('practice')
+                    ->whereIn('activity_id', $incomingActivityIds)
+                    ->get()
+                    ->mapWithKeys(function ($act) {
+                        return [$act->activity_id => $act->practice->objective_id ?? null];
+                    });
+
+                // Pre-fetch Map: Evidence Filename -> Evidence ID
+                // Assumes filenames are unique per evaluation context or just picks one
+                // NORMALIZATION: Map lowercase trimmed key to ID for robust lookup
+                $evidenceMap = MstEvidence::where('eval_id', $evaluation->eval_id)
+                    ->get()
+                    ->mapWithKeys(function ($item) {
+                        return [strtolower(trim($item->judul_dokumen)) => $item->id];
+                    });
+
                 // Delete activities that are not in the incoming data (completely removed from form)
                 TrsActivityeval::withTrashed()
                     ->where('eval_id', $evaluation->eval_id)
@@ -42,7 +64,7 @@ class EvaluationService
                 foreach ($data['activity_evaluations'] as $activityData) {
                     // Always save or update the activity, even if rated as 'N'
                     // This preserves evidence and notes when levels are changed
-                    TrsActivityeval::updateOrCreate(
+                    $activityEval = TrsActivityeval::updateOrCreate(
                         [
                             'eval_id' => $evaluation->eval_id,
                             'activity_id' => $activityData['activity_id']
@@ -53,6 +75,53 @@ class EvaluationService
                             'notes' => $activityData['notes'] ?? null
                         ]
                     );
+
+                    // --- NORMALIZATION LOGIC START ---
+                    
+                    // 1. Resolve Objective ID for this activity
+                    $objectiveId = $activityObjectiveMap[$activityData['activity_id']] ?? null;
+
+                    if ($objectiveId) {
+                        // 2. Ensure Summary Report exists (parent container)
+                        $summaryReport = TrsSummaryReport::firstOrCreate(
+                            [
+                                'eval_id' => $evaluation->eval_id,
+                                'objective_id' => $objectiveId
+                            ]
+                        );
+
+                        // 3. Sync Evidence Mapping
+                        // First, clear existing mappings for this specific activity evaluation to avoid duplicates
+                        TrsSummaryActivity::where('activityeval_id', $activityEval->id)->delete();
+
+                        if (!empty($activityData['evidence'])) {
+                            // Priority 1: Use explicitly provided evidence names (Array from Frontend)
+                            if (!empty($activityData['evidence_names']) && is_array($activityData['evidence_names'])) {
+                                $files = $activityData['evidence_names'];
+                            } 
+                            // Priority 2: Fallback to parsing the evidence string (Legacy/Backup)
+                            else {
+                                $files = preg_split('/\r\n|\r|\n/', $activityData['evidence']);
+                            }
+                            
+                            foreach ($files as $file) {
+                                $filename = trim($file);
+                                if (empty($filename)) continue;
+
+                                // Lookup Evidence ID (Normalized)
+                                $normalizedName = strtolower($filename);
+                                $evidenceId = $evidenceMap[$normalizedName] ?? null;
+
+                                // Link evidence, allowing NULL evidence_id for unknown documents if requested
+                                TrsSummaryActivity::create([
+                                    'summary_id' => $summaryReport->id,
+                                    'activityeval_id' => $activityEval->id,
+                                    'evidence_id' => $evidenceId
+                                ]);
+                            }
+                        }
+                    }
+                    // --- NORMALIZATION LOGIC END ---
                 }
             }
 
@@ -115,6 +184,7 @@ class EvaluationService
             $levelScores = $assessmentData['assessmentData'];
             $notes = $assessmentData['notes'] ?? [];
             $evidence = $assessmentData['evidence'] ?? [];
+            $evidenceNames = $assessmentData['evidenceNames'] ?? [];
             
             foreach ($levelScores as $objectiveId => $levels) {
                 foreach ($levels as $level => $levelData) {
@@ -126,6 +196,7 @@ class EvaluationService
                                 'activity_id' => $activityId,
                                 'level_achieved' => $levelAchieved,
                                 'evidence' => $evidence[$activityId] ?? null,
+                                'evidence_names' => $evidenceNames[$activityId] ?? null,
                                 'notes' => $notes[$activityId] ?? null
                             ];
                             $processedActivityIds[$activityId] = true;
@@ -142,6 +213,7 @@ class EvaluationService
                         'activity_id' => $actId,
                         'level_achieved' => null, // Allow null for unrated activities
                         'evidence' => $evidence[$actId] ?? null,
+                        'evidence_names' => $evidenceNames[$actId] ?? null,
                         'notes' => $notes[$actId] ?? null
                     ];
                 }

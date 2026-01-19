@@ -6,13 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\MstEval;
 use App\Models\MstEvidence;
 use App\Models\MstObjective;
-use App\Models\TrsActivityeval;
 use App\Models\TrsObjectiveScore;
 use App\Models\TrsSummaryReport;
 use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class AssessmentSummaryController extends Controller
 {

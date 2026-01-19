@@ -87,11 +87,11 @@
                             {{-- Icon Box --}}
                             <div class="d-flex flex-column align-items-center justify-content-center text-white p-2"
                                 style="background-color: #0f2b5c; width: 70px; flex-shrink: 0;">
-                                <div class="fw-bold" style="font-size: 0.65rem;">Deskripsi</div>
+                                <div class="fw-bold" style="font-size: 0.55rem;">Description</div>
                             </div>
                             {{-- Text --}}
                             <div class="p-2 bg-white flex-grow-1 d-flex align-items-center">
-                                <p class="m-0 text-secondary" style="font-size: 0.75rem; text-align: justify;">
+                                <p class="m-0 text-secondary" style="font-size: 0.65rem; text-align: justify;">
                                     {{ $objective->objective_description ?? 'No description available.' }}
                                 </p>
                             </div>
@@ -100,11 +100,11 @@
                             {{-- Icon Box --}}
                             <div class="d-flex flex-column align-items-center justify-content-center text-white p-2"
                                 style="background-color: #0f2b5c; width: 70px; flex-shrink: 0;">
-                                <div class="fw-bold" style="font-size: 0.65rem;">Tujuan</div>
+                                <div class="fw-bold" style="font-size: 0.55rem;">Purpose</div>
                             </div>
                             {{-- Text --}}
                             <div class="p-2 bg-white flex-grow-1 d-flex align-items-center">
-                                <p class="m-0 text-secondary" style="font-size: 0.75rem; text-align: justify;">
+                                <p class="m-0 text-secondary" style="font-size: 0.65rem; text-align: justify;">
                                     {{ $objective->objective_purpose ?? 'No description available.' }}
                                 </p>
                             </div>
