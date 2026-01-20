@@ -30,6 +30,9 @@
                     <button class="btn btn-success px-4" id="btn-save">
                         <i class="fas fa-save me-2"></i>Save
                     </button>
+                    <a href="{{ route('spreadsheet.export', $spreadsheet->id) }}" class="btn btn-outline-success" title="Export as Excel">
+                        <i class="fas fa-download me-1"></i>Excel
+                    </a>
                     <button class="btn btn-outline-primary" id="btn-fullscreen" title="Toggle Fullscreen">
                         <i class="fas fa-expand" id="fullscreen-icon"></i>
                     </button>

@@ -375,7 +375,9 @@ Route::prefix('spreadsheet')
         Route::get('/', [SpreadsheetController::class, 'index'])->name('index');
         Route::get('/create', [SpreadsheetController::class, 'create'])->name('create');
         Route::post('/', [SpreadsheetController::class, 'store'])->name('store');
+        Route::post('/import', [SpreadsheetController::class, 'import'])->name('import');
         Route::get('/{id}', [SpreadsheetController::class, 'show'])->name('show');
+        Route::get('/{id}/export', [SpreadsheetController::class, 'export'])->name('export');
         Route::post('/{id}/save', [SpreadsheetController::class, 'saveData'])->name('save');
         Route::put('/{id}', [SpreadsheetController::class, 'update'])->name('update');
         Route::delete('/{id}', [SpreadsheetController::class, 'destroy'])->name('destroy');
