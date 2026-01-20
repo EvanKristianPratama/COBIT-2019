@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Spreadsheet;
 
 use App\Http\Controllers\Controller;
 use App\Models\Spreadsheet;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -14,12 +12,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class SpreadsheetController extends Controller
 {
-    private const VALIDATION_RULES = [
-        'title' => 'required|string|max:255',
-        'description' => 'nullable|string'
-    ];
-
-    public function index(Request $request): View
+    public function index(Request $request)
     {
         $spreadsheets = Spreadsheet::where('user_id', Auth::id())
             ->orderBy('updated_at', 'desc')
@@ -28,14 +21,17 @@ class SpreadsheetController extends Controller
         return view('spreadsheet.index', compact('spreadsheets'));
     }
 
-    public function create(): View
+    public function create()
     {
         return view('spreadsheet.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        $request->validate(self::VALIDATION_RULES);
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string'
+        ]);
 
         $spreadsheet = Spreadsheet::create([
             'user_id' => Auth::id(),
@@ -47,14 +43,14 @@ class SpreadsheetController extends Controller
         return redirect()->route('spreadsheet.show', $spreadsheet->id);
     }
 
-    public function show($id): View
+    public function show($id)
     {
-        $spreadsheet = $this->findUserSpreadsheet($id);
-
+        $spreadsheet = Spreadsheet::where('user_id', Auth::id())->findOrFail($id);
+        
         return view('spreadsheet.show', compact('spreadsheet'));
     }
 
-    public function saveData(Request $request, $id): JsonResponse
+    public function saveData(Request $request, $id)
     {
         try {
             $spreadsheet = Spreadsheet::where('user_id', Auth::id())->findOrFail($id);
@@ -64,43 +60,33 @@ class SpreadsheetController extends Controller
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            Log::error('Spreadsheet save error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+            \Log::error('Spreadsheet save error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    public function update(Request $request, $id): RedirectResponse
+    public function update(Request $request, $id)
     {
-        $request->validate(self::VALIDATION_RULES);
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string'
+        ]);
 
-        $spreadsheet = $this->findUserSpreadsheet($id);
+        $spreadsheet = Spreadsheet::where('user_id', Auth::id())->findOrFail($id);
         $spreadsheet->update([
             'title' => $request->title,
             'description' => $request->description
         ]);
 
-        return redirect()
-            ->route('spreadsheet.index')
-            ->with('success', 'Spreadsheet updated successfully.');
+        return redirect()->route('spreadsheet.index')->with('success', 'Spreadsheet updated successfully.');
     }
 
-    public function destroy($id): RedirectResponse
+    public function destroy($id)
     {
-        $spreadsheet = $this->findUserSpreadsheet($id);
+        $spreadsheet = Spreadsheet::where('user_id', Auth::id())->findOrFail($id);
         $spreadsheet->delete();
 
-        return redirect()
-            ->route('spreadsheet.index')
-            ->with('success', 'Spreadsheet deleted successfully.');
-    }
-
-    private function findUserSpreadsheet($id): Spreadsheet
-    {
-        return Spreadsheet::where('user_id', Auth::id())->findOrFail($id);
+        return redirect()->route('spreadsheet.index')->with('success', 'Spreadsheet deleted successfully.');
     }
 
     public function import(Request $request)
