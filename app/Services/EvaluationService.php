@@ -46,9 +46,7 @@ class EvaluationService
                         return [$act->activity_id => $act->practice->objective_id ?? null];
                     });
 
-                // Pre-fetch Map: Evidence Filename -> Evidence ID
-                // Assumes filenames are unique per evaluation context or just picks one
-                // NORMALIZATION: Map lowercase trimmed key to ID for robust lookup
+ 
                 $evidenceMap = MstEvidence::where('eval_id', $evaluation->eval_id)
                     ->get()
                     ->mapWithKeys(function ($item) {
