@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\UserAdminController;
-use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\cobit2019\DesignToolkitController;
 use App\Http\Controllers\AssessmentEval\ActivityReportController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
 use App\Http\Controllers\AssessmentEval\AssessmentListController;
@@ -52,15 +52,15 @@ Route::bind('evalId', function ($value) {
 
 // Public routes
 
-Route::get('/assessment/join', [AssessmentController::class, 'showJoinForm'])
+Route::get('/assessment/join', [DesignToolkitController::class, 'showJoinForm'])
     ->name('assessment.join')
     ->middleware('auth');
 
-Route::post('/assessment/join', [AssessmentController::class, 'join'])
+Route::post('/assessment/join', [DesignToolkitController::class, 'join'])
     ->name('assessment.join.store')
     ->middleware('auth');
 
-Route::post('/assessment/request', [AssessmentController::class, 'requestAssessment'])
+Route::post('/assessment/request', [DesignToolkitController::class, 'requestAssessment'])
     ->middleware('auth')
     ->name('assessment.request');
 
