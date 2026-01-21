@@ -152,7 +152,6 @@
         </div>
     </div>
 </div>
-@include('cobit2019.cobitPagination')
 
 <!-- Inisialisasi Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

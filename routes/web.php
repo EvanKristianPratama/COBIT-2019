@@ -135,9 +135,9 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
 // Cobit Home view
-Route::get('/cobit2019/cobit_home', function () {
-    return view('cobit2019.cobit_home');
-})->name('cobit.home')->middleware('auth');
+Route::get('/cobit2019/cobit_home', [DesignToolkitController::class, 'showJoinForm'])
+    ->name('cobit.home')
+    ->middleware('auth');
 
 // Target capability routes
 Route::middleware('auth')->group(function () {
