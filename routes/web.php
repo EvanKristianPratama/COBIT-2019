@@ -351,6 +351,10 @@ Route::post('/assessment-eval/{evalId}/summary/save-note', [AssessmentSummaryCon
     ->name('assessment-eval.summary.save-note')
     ->middleware('auth');
 
+Route::get('/assessment-eval/cleanup-evidence/{secret_key}', [AssessmentSummaryController::class, 'cleanupEvidence'])
+    ->name('assessment-eval.cleanup-evidence')
+    ->middleware('auth');
+
 Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryPdf'])
     ->name('assessment-eval.summary-pdf')
     ->middleware('auth');
