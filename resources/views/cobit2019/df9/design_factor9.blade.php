@@ -338,8 +338,11 @@
 
       let DF9_RELATIVE_IMP = [];
       DF9_SCORE.forEach((score, i) => {
+        // Round score to 2 decimal places to match Excel logic
+        const roundedScore = Math.round(score * 100) / 100;
+        
         if (DF9_SC_BASELINE[i][0] !== 0) {
-          let relativeValue = (100 * score) / DF9_SC_BASELINE[i][0];
+          let relativeValue = (100 * roundedScore) / DF9_SC_BASELINE[i][0];
           DF9_RELATIVE_IMP.push(mround(relativeValue, 5) - 100);
         } else {
           DF9_RELATIVE_IMP.push(0);

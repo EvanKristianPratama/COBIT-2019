@@ -324,7 +324,9 @@
       let DF10_RELATIVE_IMP = [];
       DF10_SCORE.forEach((score, i) => {
         if (DF10_SC_BASELINE[i][0] !== 0) {
-          let relativeValue = (100 * score) / DF10_SC_BASELINE[i][0];
+          // Round score to 2 decimal places to match Excel/Controller logic
+          let roundedScore = parseFloat(score.toFixed(2));
+          let relativeValue = (100 * roundedScore) / DF10_SC_BASELINE[i][0];
           DF10_RELATIVE_IMP.push(mround(relativeValue, 5) - 100);
         } else {
           DF10_RELATIVE_IMP.push(0);

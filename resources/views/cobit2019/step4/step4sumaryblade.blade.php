@@ -1,127 +1,106 @@
-{{-- resources/views/cobit2019/step4/step4‐matrices.blade.php --}}
+{{-- resources/views/cobit2019/step4/step4sumaryblade.blade.php --}}
 @extends('cobit2019.cobitTools')
 @section('cobit-tools-content')
   @include('cobit2019.cobitPagination')
 
   @php
-    use Illuminate\Support\Str;
-
-    // Daftar lengkap 40 kode COBIT 2019 (1-indexed untuk konsistensi dengan kolom database)
     $cobitCodes = [
-      '',  // index 0 (tidak digunakan)
-      'EDM01','EDM02','EDM03','EDM04','EDM05',
+      '', 'EDM01','EDM02','EDM03','EDM04','EDM05',
       'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
       'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
       'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
       'MEA01','MEA02','MEA03','MEA04'
     ];
-
-    // Gunakan semua 40 kode (index 1-40) untuk semua tabel, agar konsisten dengan Step 2 & 3
-    // Bahkan ketika belum ada data DF sama sekali
-    $allCodes2 = collect(range(1, 40));
-    $allCodes3 = collect(range(1, 40));
-    
-    // Ambil bobot dari session/controller
-    $weights2 = $step2['weights'] ?? session('step2.weights', [0, 0, 0, 0]);
-    $weights3 = $step3['weights'] ?? session('step3.weights', [0, 0, 0, 0, 0, 0]);
-
-    // Siapkan array "Refined Scope" dari Step 3 untuk Step 4
-    // Gunakan $code sebagai key untuk menghindari index mismatch
-    $step3RefinedScopes = [];
-    foreach ($allCodes3 as $code) {
-      // Hitung kembali "Refined Scope" di server
-      $total3 = 0;
-      for ($n = 5; $n <= 10; $n++) {
-        // Use first() instead of firstWhere since relation is already scoped
-        $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
-        $colKey = "r_df{$n}_{$code}";
-        $v = ($rec && isset($rec->$colKey)) ? $rec->$colKey : 0;
-        $total3 += $v * ($weights3[$n - 5] ?? 0);
-      }
-      // Use code as key, not index
-      $step3RefinedScopes[$code] = $total3;
-    }
-
-    // Gabungkan kedua list kode untuk Step 4 (semuanya menggunakan 1-40)
-    $allCodes = $allCodes2->merge($allCodes3)->unique()->values();
+    $weights2 = $step2['weights'] ?? [1, 1, 1, 1];
+    $weights3 = $step3['weights'] ?? [1, 1, 1, 1, 1, 1];
+    $allRelImps = $AllRelImps ?? [];
+    $combinedTotals = $combinedTotals ?? [];
+    $refinedScopes = $refinedScopes ?? [];
+    $initialScopes = $initialScopes ?? [];
   @endphp
+
   <form action="{{ route('step4.store') }}" method="POST" id="step4Form">
     @csrf
 
-    <div class="container my-4">
-      <div class="row gx-4">
+    <div class="container-fluid px-4 py-3">
+      
+      {{-- Header Section --}}
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="text-primary fw-bold mb-1">
+            <i class="bi bi-diagram-3 me-2"></i>COBIT 2019 Design Factor Analysis
+          </h4>
+          <p class="text-muted mb-0 small">Summary of Steps 2, 3 & 4 - Governance System Scope</p>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+          <i class="bi bi-save me-2"></i>Save Progress
+        </button>
+      </div>
 
-        {{-- STEP 2 MATRIX (kiri) --}}
-        <div class="col-md-6">
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white py-3">
-              <h6 class="mb-0">Step 2: Determine the Initial Scope of the Governance System</h6>
+      <div class="row g-4">
+
+        {{-- STEP 2 CARD --}}
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-1-circle me-2"></i>Step 2: Initial Scope</h6>
+                  <small class="opacity-75">Determine the Initial Scope of the Governance System</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step2Table" data-col="initial">
+                  <i class="bi bi-sort-down"></i> Sort
+                </button>
+              </div>
             </div>
             <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm mb-0" id="step2Table">
-                  <thead>
-                    <tr class="bg-white">
-                      <th class="text-center bg-secondary text-white" style="width: 120px;">Design Factor</th>
-                      <th class="text-center bg-primary text-white">Enterprise Strategy</th>
-                      <th class="text-center bg-primary text-white">Enterprise Goals</th>
-                      <th class="text-center bg-primary text-white">Risk Profile</th>
-                      <th class="text-center bg-primary text-white">IT-Related Issues</th>
-                      <th class="text-center bg-info text-info">Total</th>
-                      <th class="text-center bg-secondary text-white" style="width: 200px;">
-                        Initial Scope:<br>Governance/Management Objectives Score
-                      </th>
+              <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover table-sm mb-0 align-middle" id="step2Table">
+                  <thead class="sticky-top bg-light">
+                    <tr>
+                      <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                      <th class="text-center text-muted small fw-semibold" title="Enterprise Strategy">DF1</th>
+                      <th class="text-center text-muted small fw-semibold" title="Enterprise Goals">DF2</th>
+                      <th class="text-center text-muted small fw-semibold" title="Risk Profile">DF3</th>
+                      <th class="text-center text-muted small fw-semibold" title="IT-Related Issues">DF4</th>
+                      <th class="text-center text-muted small fw-semibold bg-info bg-opacity-10" style="width:70px;">Total</th>
+                      <th class="text-center text-muted small fw-semibold" style="width:140px;">Initial Scope</th>
                     </tr>
-                    <tr class="bg-warning">
-                      <th class="fw-bold bg-warning text-center text-white">Weight</th>
+                    <tr class="bg-warning bg-opacity-25">
+                      <td class="text-center small fw-bold text-warning">Weight</td>
                       @for ($i = 0; $i < 4; $i++)
-                        <th class="text-center bg-success">
-                          <input type="number" name="weight2[{{ $i + 1 }}]" value="{{ $weights2[$i] }}"
-                            class="form-control form-control-sm text-center weight2-input" style="width: 60px;"
-                            data-index="{{ $i }}">
-                        </th>
+                        <td class="text-center p-1">
+                          <input type="number" name="weight2[{{ $i + 1 }}]" value="{{ $weights2[$i] ?? 1 }}"
+                            class="form-control form-control-sm text-center border-0 bg-transparent weight2-input fw-bold" 
+                            style="width:45px; margin:0 auto;" data-index="{{ $i }}">
+                        </td>
                       @endfor
-                      <th class="text-center bg-info text-white">—</th>
-                      <th></th>
+                      <td class="text-center">—</td>
+                      <td></td>
                     </tr>
                   </thead>
                   <tbody>
-                      @foreach ($allCodes2 as $idx => $code)
-                       @php
-                         $values2 = [];
-                         $total2 = 0;
-                         for ($n = 1; $n <= 4; $n++) {
-                           // Use first() instead of firstWhere since relation is already scoped
-                           $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
-                           $colKey = "r_df{$n}_{$code}";
-                           $v = ($rec && isset($rec->$colKey)) ? $rec->$colKey : 0;
-                          $values2[] = $v;
-                          $total2 += ($v * ($weights2[$n - 1] ?? 0));
-                        }
+                    @for ($code = 1; $code <= 40; $code++)
+                      @php
+                        $relImps = $allRelImps[$code] ?? [0,0,0,0,0,0,0,0,0,0];
+                        $step2Data = $step2['data'][$code] ?? null;
+                        $total2 = $step2Data['total_objective'] ?? 0;
+                        $initialScore = $initialScopes[$code] ?? 0;
                       @endphp
-                      <tr>
-                        <td class="fw-bold bg-primary-subtle text-center">
-                          {{ $cobitCodes[$code] ?? '' }}
-                        </td>
-                        @foreach ($values2 as $i => $val2)
-                          @php
-                            $cls = '';
-                            if ($val2 < 0) {
-                              $cls = 'bg-danger bg-opacity-10';
-                            } elseif ($val2 > 0) {
-                              $cls = 'bg-success bg-opacity-10';
-                            }
-                          @endphp
-                          <td class="text-center {{ $cls }} fw-medium value2-cell" data-value="{{ $val2 }}">
-                            {{ number_format($val2, 0) }}
+                      <tr class="objective-row" data-code="{{ $code }}" data-initial-score="{{ $initialScore }}">
+                        <td class="text-center fw-semibold text-primary">{{ $cobitCodes[$code] ?? '' }}</td>
+                        @for ($n = 0; $n < 4; $n++)
+                          @php $val = $relImps[$n] ?? 0; @endphp
+                          <td class="text-center small value2-cell {{ $val < 0 ? 'text-danger' : ($val > 0 ? 'text-success' : 'text-muted') }}" data-value="{{ $val }}">
+                            {{ $val != 0 ? number_format($val, 0) : '–' }}
                           </td>
-                        @endforeach
-                        <td class="text-center bg-info bg-opacity-10 fw-bold total2-cell">
+                        @endfor
+                        <td class="text-center fw-bold bg-info bg-opacity-10 total2-cell" data-total="{{ $total2 }}">
                           {{ number_format($total2, 0) }}
                         </td>
-                        <td class="text-center fw-medium initial-scope-cell2">0</td>
+                        <td class="text-center initial-scope-cell2" data-score="{{ $initialScore }}"></td>
                       </tr>
-                    @endforeach
+                    @endfor
                   </tbody>
                 </table>
               </div>
@@ -129,880 +108,366 @@
           </div>
         </div>
 
-        {{-- STEP 3 MATRIX (kanan) --}}
-        <div class="col-md-6">
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white py-3">
-              <h6 class="mb-0">Step 3: Refine the Scope of the Governance System</h6>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm mb-0" id="step3Table">
-                  <thead>
-                    <tr class="bg-white">
-                      <th class="text-center bg-secondary text-white" style="width: 140px;">Design Factor</th>
-                      <th class="text-center bg-primary text-white">Threat Landscape</th>
-                      <th class="text-center bg-primary text-white">Compliance Req’s</th>
-                      <th class="text-center bg-primary text-white">Role of IT</th>
-                      <th class="text-center bg-primary text-white">“Sourcing Model for IT”</th>
-                      <th class="text-center bg-primary text-white">IT Implementation on Methods</th>
-                      <th class="text-center bg-primary text-white">Technology Adoption Strategy</th>
-                      <th class="text-center bg-info text-white">Total</th>
-                      <th class="text-center bg-secondary text-white" style="width: 200px;">
-                        Refined Scope:<br>Governance/Management Objectives Score
-                      </th>
-                    </tr>
-                    <tr class="bg-success">
-                      <th class="fw-bold bg-warning text-center text-white">Weight</th>
-                      @for ($i = 0; $i < 6; $i++)
-                        <th class="text-center bg-success">
-                          <input type="number" name="weight3[{{ $i + 1 }}]" value="{{ $weights3[$i] }}"
-                            class="form-control form-control-sm text-center weight3-input" style="width: 60px;"
-                            data-index="{{ $i }}">
-                        </th>
-                      @endfor
-                      <th class="text-center bg-info text-white">—</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @foreach ($allCodes3 as $idx => $code)
-                      @php
-                        $values3 = [];
-                        $total3 = 0;
-                        for ($n = 5; $n <= 10; $n++) {
-                          // Use first() instead of firstWhere since relation is already scoped
-                          $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
-                          $colKey = "r_df{$n}_{$code}";
-                          $v = ($rec && isset($rec->$colKey)) ? $rec->$colKey : 0;
-                          $values3[] = $v;
-                          $total3 += ($v * ($weights3[$n - 5] ?? 0));
-                        }
-                      @endphp
-                      <tr>
-                        <td class="fw-bold bg-primary-subtle text-center">
-                          {{ $cobitCodes[$code] ?? '' }}
-                        </td>
-                        @foreach ($values3 as $i => $val3)
-                          @php
-                            $cls = '';
-                            if ($val3 < 0) {
-                              $cls = 'bg-danger bg-opacity-10';
-                            } elseif ($val3 > 0) {
-                              $cls = 'bg-success bg-opacity-10';
-                            }
-                          @endphp
-                          <td class="text-center {{ $cls }} fw-medium value3-cell" data-value="{{ $val3 }}">
-                            {{ number_format($val3, 0) }}
-                          </td>
-                        @endforeach
-                        <td class="text-center bg-info bg-opacity-10 fw-bold total3-cell">
-                          {{ number_format($total3, 0) }}
-                        </td>
-                        <td class="text-center fw-medium refined-scope-cell3" data-refined="{{ $total3 }}">0</td>
-                      </tr>
-                    @endforeach
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div> {{-- /.row --}}
-
-      {{-- STEP 4 ADJUSTMENT --}}
-      <div class="row gx-4 mt-4">
-        <div class="col-12">
-          <div class="card shadow-sm mb-4">
-            <div class="card-header" style="background-color:#4B0082;">
-              <h6 class="mb-0 text-white">Step 4: Conclude the Scope of the Governance System</h6>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm mb-0" id="step4Table">
-                  <thead class="bg-gray-200">
-                    <tr>
-                      <th class="text-center bg-secondary text-white" style="width: 120px;">Design Factor</th>
-                      <th class="text-center bg-secondary text-white" style="width: 120px;">
-                        Adjustment<br>(–100 s.d. +100)
-                      </th>
-                      <th class="text-center bg-secondary text-white">Reason (Adjustment)</th>
-                      <th class="text-center bg-black text-white">
-                        Concluded Scope:<br>Governance/Management Objectives Priority
-                      </th>
-                      <th class="text-center bg-black text-white">Suggested Target Capability Level</th>
-                      <th class="text-center bg-secondary text-white">Agreed Target Capability Level</th>
-                      <th class="text-center bg-secondary text-white">Reason (Target)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @foreach($allCodes as $idx => $code)
-                      @php $refinedValue = $step3RefinedScopes[$idx] ?? 0; @endphp
-                      <tr>
-                        <td class="fw-bold bg-primary-subtle text-center">
-                          {{ $cobitCodes[$code] ?? $code }}
-                        </td>
-                        <td class="px-1 py-1">
-                          <input type="number" name="adjustment[{{ $code }}]"
-                            class="form-control form-control-sm text-center adjust-input"
-                            style="width: 80px; margin: 0 auto;" min="-100" max="100" step="1"
-                            value="{{ old("adjustment.$code", $step4Adjust[$code] ?? 0) }}"
-                            data-refined="{{ $refinedValue }}" data-index="{{ $idx }}">
-                        </td>
-                        <td class="px-1 py-1">
-                          <input type="text" name="reason_adjust[{{ $code }}]" class="form-control form-control-sm"
-                            placeholder="Masukkan alasan…"
-                            value="{{ old("reason_adjust.$code", $step4ReasonAdj[$code] ?? '') }}">
-                        </td>
-                        <td class="text-center py-1 concluded-scope-cell" data-refined="{{ $refinedValue }}">0</td>
-                        <td class="px-1 py-1 suggested-cell" data-code="{{ $code }}">0</td>
-                        <td class="px-1 py-1 agreed-cell" data-code="{{ $code }}">0</td>
-                        <td class="px-1 py-1">
-                          <input type="text" name="reason_target[{{ $code }}]" class="form-control form-control-sm"
-                            placeholder="Masukkan alasan…"
-                            value="{{ old("reason_target.$code", $step4ReasonTgt[$code] ?? '') }}">
-                        </td>
-                      </tr>
-                    @endforeach
-                  </tbody>
-                </table>
-                <div class="card-footer text-end">
-                  <button type="submit" class="btn btn-outline-primary">
-                    <i class="bi bi-save"></i> Simpan Sementara
-                  </button>
+        {{-- STEP 3 CARD --}}
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-2-circle me-2"></i>Step 3: Refined Scope</h6>
+                  <small class="opacity-75">Refine the Scope of the Governance System</small>
                 </div>
+                <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step3Table" data-col="refined">
+                  <i class="bi bi-sort-down"></i> Sort
+                </button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover table-sm mb-0 align-middle" id="step3Table">
+                  <thead class="sticky-top bg-light">
+                    <tr>
+                      <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                      <th class="text-center text-muted small fw-semibold" title="Threat Landscape">DF5</th>
+                      <th class="text-center text-muted small fw-semibold" title="Compliance Requirements">DF6</th>
+                      <th class="text-center text-muted small fw-semibold" title="Role of IT">DF7</th>
+                      <th class="text-center text-muted small fw-semibold" title="Sourcing Model">DF8</th>
+                      <th class="text-center text-muted small fw-semibold" title="IT Implementation">DF9</th>
+                      <th class="text-center text-muted small fw-semibold" title="Technology Adoption">DF10</th>
+                      <th class="text-center text-muted small fw-semibold bg-info bg-opacity-10" style="width:70px;">Total</th>
+                      <th class="text-center text-muted small fw-semibold" style="width:140px;">Refined Scope</th>
+                    </tr>
+                    <tr class="bg-warning bg-opacity-25">
+                      <td class="text-center small fw-bold text-warning">Weight</td>
+                      @for ($i = 0; $i < 6; $i++)
+                        <td class="text-center p-1">
+                          <input type="number" name="weight3[{{ $i + 1 }}]" value="{{ $weights3[$i] ?? 1 }}"
+                            class="form-control form-control-sm text-center border-0 bg-transparent weight3-input fw-bold" 
+                            style="width:45px; margin:0 auto;" data-index="{{ $i }}">
+                        </td>
+                      @endfor
+                      <td class="text-center">—</td>
+                      <td></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for ($code = 1; $code <= 40; $code++)
+                      @php
+                        $relImps = $allRelImps[$code] ?? [0,0,0,0,0,0,0,0,0,0];
+                        $step3Data = $step3['data'][$code] ?? null;
+                        $totalCombined = $combinedTotals[$code] ?? 0;
+                        $refinedScore = $refinedScopes[$code] ?? 0;
+                      @endphp
+                      <tr class="objective-row" data-code="{{ $code }}" data-refined-score="{{ $refinedScore }}">
+                        <td class="text-center fw-semibold text-primary">{{ $cobitCodes[$code] ?? '' }}</td>
+                        @for ($n = 4; $n < 10; $n++)
+                          @php $val = $relImps[$n] ?? 0; @endphp
+                          <td class="text-center small value3-cell {{ $val < 0 ? 'text-danger' : ($val > 0 ? 'text-success' : 'text-muted') }}" data-value="{{ $val }}">
+                            {{ $val != 0 ? number_format($val, 0) : '–' }}
+                          </td>
+                        @endfor
+                        <td class="text-center fw-bold bg-info bg-opacity-10 total3-cell" data-total="{{ $totalCombined }}">
+                          {{ number_format($totalCombined, 0) }}
+                        </td>
+                        <td class="text-center refined-scope-cell3" data-score="{{ $refinedScore }}"></td>
+                      </tr>
+                    @endfor
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         </div>
-      </div> {{-- /.row --}}
 
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white py-3">
-          <h6 class="mb-0">Agreed Target Capability Radar</h6>
+      </div>
+
+      {{-- STEP 4 SECTION --}}
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0 fw-bold"><i class="bi bi-3-circle me-2"></i>Step 4: Concluded Scope</h6>
+              <small class="opacity-75">Conclude the Scope of the Governance System</small>
+            </div>
+            <div class="btn-group">
+              <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step4Table" data-col="concluded">
+                <i class="bi bi-sort-down"></i> Sort by Priority
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-light" id="resetSort">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="card-body" style="padding: 1rem;">
-          <div class="mt-2" style="max-width:600px; margin:auto;">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0 align-middle" id="step4Table">
+              <thead class="bg-light sticky-top">
+                <tr>
+                  <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                  <th class="text-center text-muted small fw-semibold" style="width:100px;">Adjustment</th>
+                  <th class="text-muted small fw-semibold" style="min-width:180px;">Reason (Adjustment)</th>
+                  <th class="text-center small fw-semibold text-white" style="width:150px; background:#4B0082;">
+                    Concluded Priority
+                  </th>
+                  <th class="text-center small fw-semibold text-white" style="width:120px; background:#4B0082;">
+                    Suggested Level
+                  </th>
+                  <th class="text-center text-muted small fw-semibold" style="width:120px;">Agreed Level</th>
+                  <th class="text-muted small fw-semibold" style="min-width:180px;">Reason (Target)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for ($code = 1; $code <= 40; $code++)
+                  @php $refinedScore = $refinedScopes[$code] ?? 0; @endphp
+                  <tr class="objective-row" data-code="{{ $code }}" data-refined="{{ $refinedScore }}">
+                    <td class="text-center fw-semibold text-primary">{{ $cobitCodes[$code] ?? '' }}</td>
+                    <td class="text-center p-1">
+                      <input type="number" name="adjustment[{{ $code }}]"
+                        class="form-control form-control-sm text-center adjust-input mx-auto"
+                        style="width:70px;" min="-100" max="100" step="1"
+                        value="{{ old("adjustment.$code", $step4Adjust[$code] ?? 0) }}"
+                        data-refined="{{ $refinedScore }}">
+                    </td>
+                    <td class="p-1">
+                      <input type="text" name="reason_adjust[{{ $code }}]" 
+                        class="form-control form-control-sm border-0 bg-light"
+                        placeholder="Reason..."
+                        value="{{ old("reason_adjust.$code", $step4ReasonAdj[$code] ?? '') }}">
+                    </td>
+                    <td class="text-center concluded-scope-cell" data-refined="{{ $refinedScore }}"></td>
+                    <td class="text-center suggested-cell"></td>
+                    <td class="text-center agreed-cell"></td>
+                    <td class="p-1">
+                      <input type="text" name="reason_target[{{ $code }}]" 
+                        class="form-control form-control-sm border-0 bg-light"
+                        placeholder="Reason..."
+                        value="{{ old("reason_target.$code", $step4ReasonTgt[$code] ?? '') }}">
+                    </td>
+                  </tr>
+                @endfor
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {{-- RADAR CHART --}}
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);">
+          <h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart me-2"></i>Agreed Target Capability Radar</h6>
+        </div>
+        <div class="card-body">
+          <div style="max-width:550px; margin:auto;">
             <canvas id="step4Chart"></canvas>
           </div>
         </div>
       </div>
 
-
-    </div> {{-- /.container --}}
+    </div>
   </form>
 
-  </div>
-  </div>
-  </div>
-  </div>
+  </div></div></div></div>
 
-
-  {{-- Chart.js + Logic untuk menghitung semua v-bar (Step 2, Step 3, Step 4) --}}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      //
-      // STEP 2: Hitung “Initial Scope” v-bar untuk setiap baris di #step2Table
-      //
-      (function () {
-        const weightInputs2 = document.querySelectorAll('.weight2-input');
-        const rows2 = document.querySelectorAll('#step2Table tbody tr');
-
-        function roundToNearest5(x) {
-          return Math.round(x / 5) * 5;
-        }
-        function formatInteger(x) {
-          return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-          }).format(x);
-        }
-
-        function updateInitialScopeForRow(row) {
-          const cells = row.querySelectorAll('.value2-cell');
-          const w = Array.from(weightInputs2).map(i => parseFloat(i.value) || 0);
-
-          let tot = 0;
-          cells.forEach((cell, idx) => {
-            const v = parseFloat(cell.dataset.value) || 0;
-            tot += v * (w[idx] || 0);
-          });
-          row.querySelector('.total2-cell').textContent = formatInteger(tot);
-          return tot;
-        }
-
-        function renderAllInitialScopes() {
-          const allTotals = Array.from(rows2).map(r => updateInitialScopeForRow(r));
-          const maxT = Math.max(...allTotals.map(v => Math.abs(v)), 1);
-
-          rows2.forEach((row, i) => {
-            const tot = allTotals[i];
-            let pct = 0;
-            if (maxT !== 0) {
-              pct = Math.trunc((tot / maxT) * 100);
-              pct = tot >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
-            }
-            const cell = row.querySelector('.initial-scope-cell2');
-            cell.innerHTML = '';
-
-            const container = document.createElement('div');
-            container.style.cssText = `
-                position: relative;
-                height: 20px;
-                width: 180px;
-                background: #f8f9fa;
-                border: 1px solid #ddd;
-                margin: 0 auto;
-                overflow: hidden;
-              `;
-            const centerLine = document.createElement('div');
-            centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
-            container.appendChild(centerLine);
-
-            const barWidth = Math.min(Math.abs(pct) / 2, 50);
-            const bar = document.createElement('div');
-            if (pct >= 0) {
-              bar.style.cssText = `
-                  position: absolute;
-                  left: 50%;
-                  top: 0;
-                  height: 100%;
-                  width: ${barWidth}%;
-                  background-color: rgba(40, 167, 69, 0.8);
-                  transition: all 0.5s ease;
-                `;
-            } else {
-              bar.style.cssText = `
-                  position: absolute;
-                  right: 50%;
-                  top: 0;
-                  height: 100%;
-                  width: ${barWidth}%;
-                  background-color: rgba(220, 53, 69, 0.8);
-                  transition: all 0.5s ease;
-                `;
-            }
-            container.appendChild(bar);
-
-            const label = document.createElement('div');
-            label.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.8rem;
-                font-weight: 500;
-                color: #343a40;
-                z-index: 1;
-              `;
-            label.textContent = formatInteger(pct);
-            container.appendChild(label);
-
-            cell.appendChild(container);
-            cell.setAttribute('data-scope', pct);
-          });
-        }
-
-        // expose to global so other blocks can call when weights change
-        window.renderAllInitialScopes = function () {
-          const allTotals = Array.from(rows2).map(r => updateInitialScopeForRow(r));
-          const maxT = Math.max(...allTotals.map(v => Math.abs(v)), 1);
-
-          rows2.forEach((row, i) => {
-            const tot = allTotals[i];
-            let pct = 0;
-            if (maxT !== 0) {
-              pct = Math.trunc((tot / maxT) * 100);
-              pct = tot >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
-            }
-            const cell = row.querySelector('.initial-scope-cell2');
-            cell.innerHTML = '';
-
-            const container = document.createElement('div');
-            container.style.cssText = `
-                position: relative;
-                height: 20px;
-                width: 180px;
-                background: #f8f9fa;
-                border: 1px solid #ddd;
-                margin: 0 auto;
-                overflow: hidden;
-              `;
-            const centerLine = document.createElement('div');
-            centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
-            container.appendChild(centerLine);
-
-            const barWidth = Math.min(Math.abs(pct) / 2, 50);
-            const bar = document.createElement('div');
-            if (pct >= 0) {
-              bar.style.cssText = `
-                  position: absolute;
-                  left: 50%;
-                  top: 0;
-                  height: 100%;
-                  width: ${barWidth}%;
-                  background-color: rgba(40, 167, 69, 0.8);
-                  transition: all 0.5s ease;
-                `;
-            } else {
-              bar.style.cssText = `
-                  position: absolute;
-                  right: 50%;
-                  top: 0;
-                  height: 100%;
-                  width: ${barWidth}%;
-                  background-color: rgba(220, 53, 69, 0.8);
-                  transition: all 0.5s ease;
-                `;
-            }
-            container.appendChild(bar);
-
-            const label = document.createElement('div');
-            label.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.8rem;
-                font-weight: 500;
-                color: #343a40;
-                z-index: 1;
-              `;
-            label.textContent = formatInteger(pct);
-            container.appendChild(label);
-
-            cell.appendChild(container);
-            cell.setAttribute('data-scope', pct);
-          });
-        }
-
-        // initial render and bind listeners to weight inputs so editing updates charts
-        renderAllInitialScopes();
-        weightInputs2.forEach(i => i.addEventListener('input', () => {
-          // ensure numeric value
-          if (i.value === '') i.value = 0;
-          window.renderAllInitialScopes();
-          if (typeof window.renderAllRefinedScopes === 'function') window.renderAllRefinedScopes();
-          if (typeof window.updateStep4All === 'function') window.updateStep4All();
-        }));
-      })();
-
-
-      /// STEP 3: Hitung “Refined Scope” v‑bar untuk setiap baris di #step3Table
-      (function () {
-        const weightInputs3 = document.querySelectorAll('.weight3-input');
-        const rows2 = document.querySelectorAll('#step2Table tbody tr');
-        const rows3 = document.querySelectorAll('#step3Table tbody tr');
-
-        function roundToNearest5(x) {
-          return Math.round(x / 5) * 5;
-        }
-        function formatInteger(x) {
-          return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-          }).format(x);
-        }
-
-        // 1) Hitung raw combined = (DF5..DF10 total) + (Initial Scope dari Step 2)
-        function updateRawCombined(row, idx) {
-          // a) tot3 = sum DF5..DF10 * bobot
-          const cells = row.querySelectorAll('.value3-cell');
-          const w = Array.from(weightInputs3).map(i => parseFloat(i.value) || 0);
-          let tot3 = 0;
-          cells.forEach((cell, i) => {
-            tot3 += (parseFloat(cell.dataset.value) || 0) * (w[i] || 0);
-          });
-
-          // b) initPct = data-scope dari Step 2 baris sama idx
-          const initCell = rows2[idx].querySelector('.initial-scope-cell2');
-          const initPct = parseFloat(initCell.getAttribute('data-scope')) || 0;
-
-          return tot3 + initPct;
-        }
-
-        // 2) Render semua refined scopes
-        function renderAllRefinedScopes() {
-          // a) kumpulkan semua rawCombined untuk normalisasi
-          const rawCombined = Array.from(rows3).map((row, i) => updateRawCombined(row, i));
-          const maxAbs = Math.max(...rawCombined.map(v => Math.abs(v)), 1);
-
-          // b) per baris, hitung pct, tulis Total & gambar bar
-          rows3.forEach((row, i) => {
-            const combined = rawCombined[i];
-            // tulis nilai total (combined) di kolom Total3
-            row.querySelector('.total3-cell').textContent = formatInteger(combined);
-
-            // hitung persen relatif
-            let pct = 0;
-            if (maxAbs !== 0) {
-              pct = Math.trunc((combined / maxAbs) * 100);
-              pct = combined >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
-            }
-
-            // gambar v‑bar di kolom refined-scope
-            const cell = row.querySelector('.refined-scope-cell3');
-            cell.innerHTML = '';
-
-            const container = document.createElement('div');
-            container.style.cssText = `
-           position: relative;
-           height: 20px;
-           width: 180px;
-           background: #f8f9fa;
-           border: 1px solid #ddd;
-           margin: 0 auto;
-           overflow: hidden;
-         `;
-            const centerLine = document.createElement('div');
-            centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
-            container.appendChild(centerLine);
-
-            const barWidth = Math.min(Math.abs(pct) / 2, 50);
-            const bar = document.createElement('div');
-            if (pct >= 0) {
-              bar.style.cssText = `
-             position: absolute;
-             left: 50%;
-             top: 0;
-             height: 100%;
-             width: ${barWidth}%;
-             background-color: rgba(40, 167, 69, 0.8);
-             transition: all 0.5s ease;
-           `;
-            } else {
-              bar.style.cssText = `
-             position: absolute;
-             right: 50%;
-             top: 0;
-             height: 100%;
-             width: ${barWidth}%;
-             background-color: rgba(220, 53, 69, 0.8);
-             transition: all 0.5s ease;
-           `;
-            }
-            container.appendChild(bar);
-
-            const label = document.createElement('div');
-            label.style.cssText = `
-           position: absolute;
-           top: 0;
-           left: 0;
-           right: 0;
-           bottom: 0;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           font-size: 0.8rem;
-           font-weight: 500;
-           color: #343a40;
-           z-index: 1;
-         `;
-            label.textContent = formatInteger(pct);
-            container.appendChild(label);
-
-            cell.appendChild(container);
-            cell.setAttribute('data-scope', pct);
-          });
-        }
-
-        // expose to global so other blocks can call when weights change
-        window.renderAllRefinedScopes = function () {
-          // a) kumpulkan semua rawCombined untuk normalisasi
-          const rawCombined = Array.from(rows3).map((row, i) => updateRawCombined(row, i));
-          const maxAbs = Math.max(...rawCombined.map(v => Math.abs(v)), 1);
-
-          // b) per baris, hitung pct, tulis Total & gambar bar
-          rows3.forEach((row, i) => {
-            const combined = rawCombined[i];
-            // tulis nilai total (combined) di kolom Total3
-            row.querySelector('.total3-cell').textContent = formatInteger(combined);
-
-            // hitung persen relatif
-            let pct = 0;
-            if (maxAbs !== 0) {
-              pct = Math.trunc((combined / maxAbs) * 100);
-              pct = combined >= 0 ? roundToNearest5(pct) : -roundToNearest5(Math.abs(pct));
-            }
-
-            // gambar v‑bar di kolom refined-scope
-            const cell = row.querySelector('.refined-scope-cell3');
-            cell.innerHTML = '';
-
-            const container = document.createElement('div');
-            container.style.cssText = `
-           position: relative;
-           height: 20px;
-           width: 180px;
-           background: #f8f9fa;
-           border: 1px solid #ddd;
-           margin: 0 auto;
-           overflow: hidden;
-         `;
-            const centerLine = document.createElement('div');
-            centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
-            container.appendChild(centerLine);
-
-            const barWidth = Math.min(Math.abs(pct) / 2, 50);
-            const bar = document.createElement('div');
-            if (pct >= 0) {
-              bar.style.cssText = `
-             position: absolute;
-             left: 50%;
-             top: 0;
-             height: 100%;
-             width: ${barWidth}%;
-             background-color: rgba(40, 167, 69, 0.8);
-             transition: all 0.5s ease;
-           `;
-            } else {
-              bar.style.cssText = `
-             position: absolute;
-             right: 50%;
-             top: 0;
-             height: 100%;
-             width: ${barWidth}%;
-             background-color: rgba(220, 53, 69, 0.8);
-             transition: all 0.5s ease;
-           `;
-            }
-            container.appendChild(bar);
-
-            const label = document.createElement('div');
-            label.style.cssText = `
-           position: absolute;
-           top: 0;
-           left: 0;
-           right: 0;
-           bottom: 0;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           font-size: 0.8rem;
-           font-weight: 500;
-           color: #343a40;
-           z-index: 1;
-         `;
-            label.textContent = formatInteger(pct);
-            container.appendChild(label);
-
-            cell.appendChild(container);
-            cell.setAttribute('data-scope', pct);
-          });
-        }
-
-        // initial render and bind weight change listeners
-        renderAllRefinedScopes();
-        weightInputs3.forEach(i => i.addEventListener('input', () => {
-          if (i.value === '') i.value = 0;
-          window.renderAllRefinedScopes();
-          if (typeof window.updateStep4All === 'function') window.updateStep4All();
-        }));
-      })();
-
-
-      //
-      // STEP 4: Hitung “Concluded Scope” v-bar dan “Suggested/Agreed Target” setiap kali Adjustment berubah
-      //
-      (function () {
-        const adjustInputs = document.querySelectorAll('.adjust-input');
-        const rows4 = document.querySelectorAll('#step4Table tbody tr');
-
-        // ── Helper ──
-        function roundToNearest5(x) {
-          return Math.round(x / 5) * 5;
-        }
-        function formatInteger(x) {
-          return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-          }).format(x);
-        }
-
-        // ── HITUNG Concluded Scope (Refined Scope + Adjustment) ──
-        function updateConcludedRaw(row, idx) {
-          // 1) Ambil pct dari Step 3
-          const refRow = document.querySelectorAll('#step3Table tbody tr')[idx];
-          const refinedPct = parseFloat(refRow.querySelector('.refined-scope-cell3').dataset.scope) || 0;
-
-          // 2) Ambil nilai adjustment dari Step 4
-          const adjustment = parseFloat(row.querySelector('.adjust-input').value) || 0;
-
-          // 3) Jumlahkan
-          return refinedPct + adjustment;
-        }
-
-
-        // ── RENDER v-bar “Concluded Scope” DI SETIAP ROW ──
-        function renderConcludedBars() {
-          rows4.forEach((row, i) => {
-            const pct = roundToNearest5(updateConcludedRaw(row, i));
-
-            const cell = row.querySelector('.concluded-scope-cell');
-            cell.innerHTML = '';
-
-            // wadah bar
-            const container = document.createElement('div');
-            container.style.cssText = `
-        position: relative;
-        height: 20px;
-        width: 180px;
-        background: #f8f9fa;
-        border: 1px solid #ddd;
-        margin: 0 auto;
-        overflow: hidden;
-      `;
-            // garis tengah
-            const centerLine = document.createElement('div');
-            centerLine.style.cssText = 'position: absolute; left:50%; top:0; bottom:0; width:1px; background:#aaa;';
-            container.appendChild(centerLine);
-
-            // buat bar
-            const barWidth = Math.min(Math.abs(pct) / 2, 50);
-            const bar = document.createElement('div');
-            if (pct >= 0) {
-              bar.style.cssText = `
-          position: absolute;
-          left: 50%;
-          top: 0;
-          height: 100%;
-          width: ${barWidth}%;
-          background-color: rgba(40, 167, 69, 0.8);
-          transition: width 0.3s ease;
-        `;
-            } else {
-              bar.style.cssText = `
-          position: absolute;
-          right: 50%;
-          top: 0;
-          height: 100%;
-          width: ${barWidth}%;
-          background-color: rgba(220, 53, 69, 0.8);
-          transition: width 0.3s ease;
-        `;
-            }
-            container.appendChild(bar);
-
-            // label di tengah
-            const label = document.createElement('div');
-            label.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: #343a40;
-        z-index: 1;
-      `;
-            label.textContent = formatInteger(pct);
-            container.appendChild(label);
-
-            cell.appendChild(container);
-            cell.setAttribute('data-scope', pct);
-          });
-        }
-
-        // ── HITUNG Suggested Level BERDASARKAN nilai Concluded─
-        function computeSuggestedLevel(concludedPct) {
-          if (concludedPct >= 75) return 4;
-          if (concludedPct >= 50) return 3;
-          if (concludedPct >= 25) return 2;
-          return 1;
-        }
-
-        // ── RENDER horizontal bar biru/ungu di cell Suggested atau Agreed ──
-        function renderSmallBar(container, level, color) {
-          container.innerHTML = '';
-
-          const wrapper = document.createElement('div');
-          wrapper.style.cssText = `
-        position: relative;
-        height: 20px;
-        width: 100%;
-        background: #e9ecef;
-        border: 1px solid #ddd;
-        overflow: hidden;
-        border-radius: 3px;
-      `;
-
-          const bar = document.createElement('div');
-          bar.style.cssText = `
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: ${level * 20}%;
-        background-color: ${color};
-        transition: width 0.3s ease;
-      `;
-          wrapper.appendChild(bar);
-
-          const label = document.createElement('div');
-          label.style.cssText = `
-        position: absolute;
-        top: 0;
-        right: 4px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: #343a40;
-        z-index: 1;
-      `;
-          label.textContent = level;
-          wrapper.appendChild(label);
-
-          container.appendChild(wrapper);
-        }
-
-        // ── RENDER Suggested + Agreed berdasarkan nilai Concluded─
-        function renderSuggestedAgreed() {
-          rows4.forEach(row => {
-            const concludedPct = parseFloat(row.querySelector('.concluded-scope-cell').getAttribute('data-scope')) || 0;
-            const suggestedLevel = computeSuggestedLevel(concludedPct);
-
-            const suggestedCell = row.querySelector('.suggested-cell');
-            const agreedCell = row.querySelector('.agreed-cell');
-
-            renderSmallBar(suggestedCell, suggestedLevel, 'rgba(0, 123, 255, 0.8)');
-            renderSmallBar(agreedCell, suggestedLevel, 'rgba(108, 13, 171, 0.8)');
-          });
-        }
-
-        // ── FUNGSI UTAMA: panggil keduanya (Concluded + Suggested/Agreed) ──
-        function updateStep4All() {
-          renderConcludedBars();
-          renderSuggestedAgreed();
-        }
-        // expose updateStep4All so other blocks can call
-        window.updateStep4All = updateStep4All;
-
-        // Pas halaman siap, panggil sekali
-        updateStep4All();
-
-        // Setiap kali user mengubah Adjustment, panggil ulang
-        adjustInputs.forEach(input => {
-          input.addEventListener('input', () => {
-            updateStep4All();
-          });
+      // ─── HELPERS ───
+      const roundTo5 = x => Math.round(x / 5) * 5;
+      const fmt = x => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(x);
+
+      function createVBar(pct, compact = false) {
+        const w = compact ? 120 : 140;
+        const h = compact ? 18 : 20;
+        const container = document.createElement('div');
+        container.style.cssText = `position:relative;height:${h}px;width:${w}px;background:#f1f3f4;border-radius:4px;margin:0 auto;overflow:hidden;`;
+        
+        const center = document.createElement('div');
+        center.style.cssText = 'position:absolute;left:50%;top:0;bottom:0;width:1px;background:#dee2e6;';
+        container.appendChild(center);
+
+        const barWidth = Math.min(Math.abs(pct) / 2, 50);
+        const bar = document.createElement('div');
+        const isPos = pct >= 0;
+        bar.style.cssText = `position:absolute;${isPos?'left:50%':'right:50%'};top:2px;bottom:2px;width:${barWidth}%;background:${isPos?'#28a745':'#dc3545'};border-radius:2px;transition:width 0.3s;`;
+        container.appendChild(bar);
+
+        const lbl = document.createElement('span');
+        lbl.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#212529;';
+        lbl.textContent = fmt(pct);
+        container.appendChild(lbl);
+        return container;
+      }
+
+      function createLevelBar(level, color) {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:relative;height:20px;width:90px;background:#e9ecef;border-radius:4px;overflow:hidden;margin:0 auto;';
+        const bar = document.createElement('div');
+        bar.style.cssText = `position:absolute;left:0;top:2px;bottom:2px;width:${level*20}%;background:${color};border-radius:2px;transition:width 0.3s;`;
+        wrapper.appendChild(bar);
+        const lbl = document.createElement('span');
+        lbl.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#212529;';
+        lbl.textContent = level;
+        wrapper.appendChild(lbl);
+        return wrapper;
+      }
+
+      const getSuggestedLevel = pct => pct >= 75 ? 4 : pct >= 50 ? 3 : pct >= 25 ? 2 : 1;
+
+      // ─── RENDER FUNCTIONS ───
+      function renderStep2() {
+        const rows = document.querySelectorAll('#step2Table tbody tr.objective-row');
+        const totals = Array.from(rows).map(r => parseFloat(r.querySelector('.total2-cell').dataset.total) || 0);
+        const maxAbs = Math.max(...totals.map(Math.abs), 1);
+        rows.forEach((row, i) => {
+          let pct = maxAbs ? Math.trunc((totals[i] / maxAbs) * 100) : 0;
+          pct = totals[i] >= 0 ? roundTo5(pct) : -roundTo5(Math.abs(pct));
+          const cell = row.querySelector('.initial-scope-cell2');
+          cell.innerHTML = '';
+          cell.appendChild(createVBar(pct, true));
+          cell.dataset.scope = pct;
         });
-      })();
+      }
 
-      // ── STEP 4: Chart.js Radar Chart ──
-      // Ambil semua label dari tabel Step 4
-      // const labels = Array.from(document.querySelectorAll('#step4Table tbody tr td:first-child'))
-      //   .map(td => td.textContent.trim());
-      // Ambil semua data agreed-cell dari tabel Step 4
-      const rows = Array.from(document.querySelectorAll('#step4Table tbody tr'));
-      const labels = rows.map(r => r.querySelector('td').textContent.trim());
-      const dataAgreed = rows.map(r => parseFloat(r.querySelector('.agreed-cell').textContent) || 0);
+      function renderStep3() {
+        const rows = document.querySelectorAll('#step3Table tbody tr.objective-row');
+        const totals = Array.from(rows).map(r => parseFloat(r.querySelector('.total3-cell').dataset.total) || 0);
+        const maxAbs = Math.max(...totals.map(Math.abs), 1);
+        rows.forEach((row, i) => {
+          let pct = maxAbs ? Math.trunc((totals[i] / maxAbs) * 100) : 0;
+          pct = totals[i] >= 0 ? roundTo5(pct) : -roundTo5(Math.abs(pct));
+          const cell = row.querySelector('.refined-scope-cell3');
+          cell.innerHTML = '';
+          cell.appendChild(createVBar(pct, true));
+          cell.dataset.scope = pct;
+        });
+      }
 
-      // Maximum Capability Data (sesuai urutan dari gambar)
-      const dataMaximum = [
-        4, 5, 4, 4, 4, 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5, 5, 5, 5, 5,
-        4, 4, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5, 5, 5, 4
-      ];
+      function renderStep4() {
+        const rows4 = document.querySelectorAll('#step4Table tbody tr.objective-row');
+        const rows3 = document.querySelectorAll('#step3Table tbody tr.objective-row');
+        rows4.forEach((row, i) => {
+          const refinedPct = parseFloat(rows3[i]?.querySelector('.refined-scope-cell3')?.dataset.scope || 0);
+          const adj = parseFloat(row.querySelector('.adjust-input').value) || 0;
+          const concluded = roundTo5(refinedPct + adj);
+          
+          const cc = row.querySelector('.concluded-scope-cell');
+          cc.innerHTML = '';
+          cc.appendChild(createVBar(concluded));
+          cc.dataset.scope = concluded;
 
-      const ctx = document.getElementById('step4Chart').getContext('2d');
-      const step4Chart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Agreed Target Capability Level',
-              data: dataAgreed,
-              fill: false,
-              backgroundColor: 'transparent',
-              borderColor: 'rgba(54, 162, 235, 1)',  // Biru
-              borderWidth: 2,
-              pointRadius: 0,
-              pointHoverRadius: 0
-            },
-            {
-              label: 'Maximum Capability',
-              data: dataMaximum,
-              fill: false,
-              backgroundColor: 'transparent',
-              borderColor: 'orange',
-              borderWidth: 2,
-              pointRadius: 0,
-              pointHoverRadius: 0
-            }
-          ]
-        },
-        options: {
-          maintainAspectRatio: true,
-          scales: {
-            r: {
-              suggestedMin: 0,
-              suggestedMax: 5,
-              ticks: { stepSize: 1 }
-            }
-          },
-          plugins: {
-            legend: {
-              display: true, // tampilkan legend sekarang karena ada dua garis
-              labels: {
-                color: '#333'
-              }
-            },
-            tooltip: {
-              enabled: false
-            }
-          },
-          elements: {
-            line: {
-              tension: 0
-            }
+          const lvl = getSuggestedLevel(concluded);
+          const sc = row.querySelector('.suggested-cell');
+          sc.innerHTML = '';
+          sc.appendChild(createLevelBar(lvl, '#007bff'));
+          
+          const ac = row.querySelector('.agreed-cell');
+          ac.innerHTML = '';
+          ac.appendChild(createLevelBar(lvl, '#6f42c1'));
+        });
+        updateChart();
+      }
+
+      // ─── SORTING ───
+      const sortState = { step2Table: 'none', step3Table: 'none', step4Table: 'none' };
+      
+      function sortTable(tableId, colType) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr.objective-row'));
+        
+        // Toggle sort direction
+        sortState[tableId] = sortState[tableId] === 'desc' ? 'asc' : 'desc';
+        const dir = sortState[tableId] === 'desc' ? -1 : 1;
+
+        rows.sort((a, b) => {
+          let valA, valB;
+          if (colType === 'initial') {
+            valA = parseFloat(a.querySelector('.initial-scope-cell2')?.dataset.scope || 0);
+            valB = parseFloat(b.querySelector('.initial-scope-cell2')?.dataset.scope || 0);
+          } else if (colType === 'refined') {
+            valA = parseFloat(a.querySelector('.refined-scope-cell3')?.dataset.scope || 0);
+            valB = parseFloat(b.querySelector('.refined-scope-cell3')?.dataset.scope || 0);
+          } else {
+            valA = parseFloat(a.querySelector('.concluded-scope-cell')?.dataset.scope || 0);
+            valB = parseFloat(b.querySelector('.concluded-scope-cell')?.dataset.scope || 0);
           }
+          return (valB - valA) * dir;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Update button icon
+        const btn = document.querySelector(`[data-table="${tableId}"] i`);
+        if (btn) btn.className = sortState[tableId] === 'desc' ? 'bi bi-sort-down' : 'bi bi-sort-up';
+      }
+
+      function resetSort() {
+        ['step2Table', 'step3Table', 'step4Table'].forEach(tableId => {
+          const table = document.getElementById(tableId);
+          const tbody = table.querySelector('tbody');
+          const rows = Array.from(tbody.querySelectorAll('tr.objective-row'));
+          rows.sort((a, b) => parseInt(a.dataset.code) - parseInt(b.dataset.code));
+          rows.forEach(row => tbody.appendChild(row));
+          sortState[tableId] = 'none';
+        });
+        document.querySelectorAll('.btn-sort i').forEach(i => i.className = 'bi bi-sort-down');
+      }
+
+      // ─── CHART ───
+      let chart;
+      function updateChart() {
+        const rows = Array.from(document.querySelectorAll('#step4Table tbody tr.objective-row'));
+        const labels = rows.map(r => r.querySelector('td').textContent.trim());
+        const data = rows.map(r => {
+          const ac = r.querySelector('.agreed-cell span');
+          return ac ? parseInt(ac.textContent) || 0 : 0;
+        });
+        const maxCap = [4,5,4,4,4,5,4,5,4,5,5,4,5,4,5,5,5,5,5,5,4,4,5,5,4,5,5,5,5,4,5,5,5,5,4,5,5,5,5,4];
+
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = data;
+          chart.update();
+        } else {
+          chart = new Chart(document.getElementById('step4Chart').getContext('2d'), {
+            type: 'radar',
+            data: {
+              labels,
+              datasets: [
+                { label: 'Agreed Level', data, fill: false, borderColor: '#007bff', borderWidth: 2, pointRadius: 0 },
+                { label: 'Maximum', data: maxCap, fill: false, borderColor: '#ffc107', borderWidth: 2, pointRadius: 0 }
+              ]
+            },
+            options: {
+              maintainAspectRatio: true,
+              scales: { r: { suggestedMin: 0, suggestedMax: 5, ticks: { stepSize: 1 } } },
+              plugins: { legend: { display: true }, tooltip: { enabled: false } }
+            }
+          });
         }
+      }
+
+      // ─── INIT ───
+      renderStep2();
+      renderStep3();
+      renderStep4();
+
+      document.querySelectorAll('.adjust-input').forEach(i => i.addEventListener('input', renderStep4));
+      document.querySelectorAll('.btn-sort').forEach(btn => {
+        btn.addEventListener('click', () => sortTable(btn.dataset.table, btn.dataset.col));
       });
-
-
-
-
+      document.getElementById('resetSort')?.addEventListener('click', resetSort);
     });
-
-
-    // DOMContentLoaded
-
-
   </script>
 
-  {{-- Tambahan styling agar tampilan tabel tidak terlalu mepet --}}
   <style>
-    #step2Table th,
-    #step2Table td,
-    #step3Table th,
-    #step3Table td,
-    #step4Table th,
-    #step4Table td {
-      vertical-align: middle;
-      text-align: center;
-    }
-
-    /* Pastikan kolom “Design Factor” berwarna berbeda dengan yang lain */
-    #step2Table td:first-child,
-    #step3Table td:first-child,
-    #step4Table td:first-child {
-      background-color: #f0f8ff;
-    }
+    .sticky-top { position: sticky; top: 0; z-index: 10; }
+    #step2Table, #step3Table, #step4Table { font-size: 13px; }
+    #step2Table th, #step3Table th, #step4Table th { border-bottom: 2px solid #dee2e6; }
+    #step2Table td, #step3Table td, #step4Table td { border-color: #f1f3f4; }
+    .objective-row:hover { background-color: #f8f9fa !important; }
+    .form-control:focus { box-shadow: 0 0 0 2px rgba(102,126,234,0.25); }
+    .btn-sort { font-size: 12px; padding: 4px 10px; }
   </style>
 @endsection

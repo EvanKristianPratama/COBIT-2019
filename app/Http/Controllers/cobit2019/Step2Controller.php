@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DfStep2;
+use App\Models\TrsStep2;
 
 class Step2Controller extends Controller
 {
@@ -40,16 +41,34 @@ class Step2Controller extends Controller
     {
         $request->validate([
             'weights' => 'required|json',
+            'totals' => 'nullable|json',
         ]);
 
         $assessmentId = session('assessment_id') ?? $request->input('assessment_id');
         $userId = Auth::id();
         $weights = json_decode($request->input('weights'), true);
+        $totals = $request->has('totals') ? json_decode($request->input('totals'), true) : null;
+        $relImps = $request->has('relative_importances') ? json_decode($request->input('relative_importances'), true) : null;
+        $initialScopes = $request->has('initial_scope_scores') ? json_decode($request->input('initial_scope_scores'), true) : null;
 
         DfStep2::updateOrCreate(
             ['assessment_id' => $assessmentId, 'user_id' => $userId],
             ['weights' => $weights]
         );
+
+        // Save to trs_step2 table (per objective)
+        $this->saveTrsStep2($assessmentId, $userId, $weights, $relImps, $totals, $initialScopes);
+
+        // Store step2 weights, totals and relative importances into session so Step 3 can read them
+        if (is_array($weights)) {
+            session(['step2.weights' => array_values($weights)]);
+        }
+        if (is_array($totals)) {
+            session(['step2.totals' => $totals]);
+        }
+        if (is_array($relImps)) {
+            session(['step2.relative_importances' => $relImps]);
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -59,6 +78,59 @@ class Step2Controller extends Controller
         }
 
         return redirect()->route('step2.index')->with('success', 'Data Step 2 berhasil disimpan.');
+    }
+
+    /**
+     * Save data to trs_step2 table per objective
+     */
+    private function saveTrsStep2(
+        int $assessmentId, 
+        int $userId, 
+        ?array $weights, 
+        ?array $relImps, 
+        ?array $totals,
+        ?array $initialScopes
+    ): void {
+        $weights = is_array($weights) ? array_values($weights) : [1, 1, 1, 1];
+
+        // Get assessment with relative importances from database
+        $assessment = $this->getAssessmentWithRelativeImportances($assessmentId);
+        if (!$assessment) {
+            return;
+        }
+
+        // Process all 40 objectives
+        for ($code = 1; $code <= 40; $code++) {
+            // Get relative importances from database
+            $relImpRow = [];
+            for ($n = 1; $n <= 4; $n++) {
+                $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
+                $col = "r_df{$n}_{$code}";
+                $relImpRow[] = ($rec && isset($rec->$col)) ? $rec->$col : 0;
+            }
+            
+            // Calculate total for this objective (sum of weighted rel_imp)
+            $totalObjective = 0;
+            for ($i = 0; $i < 4; $i++) {
+                $totalObjective += ($relImpRow[$i] ?? 0) * ($weights[$i] ?? 1);
+            }
+
+            TrsStep2::updateOrCreate(
+                [
+                    'assessment_id' => $assessmentId,
+                    'user_id' => $userId,
+                    'objective_code' => $code,
+                ],
+                [
+                    'rel_imp_df1' => $relImpRow[0] ?? 0,
+                    'rel_imp_df2' => $relImpRow[1] ?? 0,
+                    'rel_imp_df3' => $relImpRow[2] ?? 0,
+                    'rel_imp_df4' => $relImpRow[3] ?? 0,
+                    'total_objective' => $totalObjective,
+                    'initial_scope_score' => $initialScopes[$code - 1] ?? $totalObjective,
+                ]
+            );
+        }
     }
 
     /**

@@ -290,10 +290,13 @@ class Df10Controller extends Controller
 
         $DF10_RELATIVE_IMP = [];
         foreach ($DF10_SCORE as $i => $score) {
+            // Round score to 2 decimal places to match Excel logic
+            $roundedScore = round($score, 2);
+            
             // Cek apakah baseline tidak nol untuk menghindari pembagian oleh nol
             if ($DF10_SC_BASELINE[$i][0] != 0) {
-                // Hitung nilai relatif
-                $relativeValue = (100 * $score / $DF10_SC_BASELINE[$i][0]);
+                // Hitung nilai relatif using rounded score
+                $relativeValue = (100 * $roundedScore / $DF10_SC_BASELINE[$i][0]);
                 // Bulatkan ke kelipatan 5 dan kurangi 100
                 $DF10_RELATIVE_IMP[$i] = mround($relativeValue, 5) - 100;
             } else {
