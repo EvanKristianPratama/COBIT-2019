@@ -291,10 +291,13 @@ class Df9Controller extends Controller
 
         $DF9_RELATIVE_IMP = [];
         foreach ($DF9_SCORE as $i => $score) {
+            // Round score to 2 decimal places to match Excel logic
+            $roundedScore = round($score, 2);
+            
             // Cek apakah baseline tidak nol untuk menghindari pembagian oleh nol
             if ($DF9_SC_BASELINE[$i][0] != 0) {
-                // Hitung nilai relatif
-                $relativeValue = (100 * $score / $DF9_SC_BASELINE[$i][0]);
+                // Hitung nilai relatif using rounded score
+                $relativeValue = (100 * $roundedScore / $DF9_SC_BASELINE[$i][0]);
                 // Bulatkan ke kelipatan 5 dan kurangi 100
                 $DF9_RELATIVE_IMP[$i] = mround($relativeValue, 5) - 100;
             } else {

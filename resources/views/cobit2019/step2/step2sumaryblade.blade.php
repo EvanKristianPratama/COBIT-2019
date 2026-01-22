@@ -3,435 +3,279 @@
 @section('cobit-tools-content')
   @include('cobit2019.cobitPagination')
 
-  <!-- Bungkus seluruh tampilan Step 2 di dalam sebuah form -->
   <form action="{{ route('step2.store') }}" method="POST" id="step2Form">
     @csrf
-    <!-- Hidden input untuk menyimpan data weight dan relative importances -->
     <input type="hidden" name="weights" id="weightsInput">
     <input type="hidden" name="relative_importances" id="relative_importancesInput">
     <input type="hidden" name="totals" id="totalsInput">
+    <input type="hidden" name="initial_scope_scores" id="initialScopeScoresInput">
 
-    <div class="container my-4">
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white py-3">
-          <h5 class="mb-0">Step 2: Determine the initial scope of the Governance System</h5>
+    @php
+      $cobitCodes = [
+        '', 'EDM01','EDM02','EDM03','EDM04','EDM05',
+        'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
+        'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
+        'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
+        'MEA01','MEA02','MEA03','MEA04'
+      ];
+      $allCodes = collect(range(1, 40));
+      $weights = $savedWeights ?? session('step2.weights', [1, 1, 1, 1]);
+    @endphp
+
+    <div class="container-fluid px-4 py-3">
+      
+      {{-- Header Section --}}
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: #667eea;">
+            <i class="bi bi-1-circle-fill me-2"></i>Step 2: Initial Scope
+          </h4>
+          <p class="text-muted mb-0 small">Determine the Initial Scope of the Governance System</p>
         </div>
-        <div class="card-body">
-          <!-- Assessment ID -->
-          <div class="d-flex align-items-center mb-4">
-            <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
-              <i class="fas me-2"></i>
-              Design Factor ID: <strong>{{ $assessment->assessment_id }}</strong>
-            </div>
-          </div>
-
-          @php
-            use Illuminate\Support\Str;
-            
-            // Daftar lengkap 40 kode COBIT 2019 (1-indexed untuk konsistensi dengan kolom database)
-            $cobitCodes = [
-              '',  // index 0 (tidak digunakan)
-              'EDM01','EDM02','EDM03','EDM04','EDM05',
-              'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
-              'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
-              'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
-              'MEA01','MEA02','MEA03','MEA04'
-            ];
-            
-            // Kumpulkan kode yang ada dari database (jika ada)
-            $existingCodes = collect();
-            for ($n = 1; $n <= 4; $n++) {
-              $ris = $assessment->{'df' . $n . 'RelativeImportances'}->first();
-              if ($ris) {
-                foreach ($ris->toArray() as $col => $val) {
-                  if (Str::startsWith($col, "r_df{$n}_")) {
-                    $existingCodes->push(Str::after($col, "r_df{$n}_"));
-                  }
-                }
-              }
-            }
-            
-            // Gunakan semua 40 kode (index 1-40) sebagai default, agar tabel selalu muncul
-            // Bahkan ketika belum ada data DF sama sekali
-            $allCodes = collect(range(1, 40));
-            
-            // Weights dari controller atau session
-            $sessionWeights = session('step2.weights') ?? [1, 1, 1, 1];
-            $weights = $savedWeights ?? old('weight', $sessionWeights);
-          @endphp
-
-          <!-- Tabel Relative Importance Matrix -->
-          <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3">
-              <h6 class="mb-0 fw-bold text-primary">Relative Importance Matrix</h6>
-              <!-- Tombol kecil Simpan Sementara -->
-              <div class="mt-3">
-                <button type="button" id="saveButton" class="btn btn-sm btn-secondary">Simpan Weight</button>
-              </div>
-            </div>
-
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm mb-0" id="matrixTable">
-                  <thead>
-                    <tr>
-                      <th class="text-center bg-secondary fw-bold text-white" style="width: 120px;">Design Factor</th>
-                      <th class="text-center bg-primary text-white">Enterprise Strategy</th>
-                      <th class="text-center bg-primary text-white">Enterprise Goals</th>
-                      <th class="text-center bg-primary text-white">Risk Profile</th>
-                      <th class="text-center bg-primary text-white">IT-Related Issues</th>
-                      <th class="text-center bg-info text-white">Total</th>
-                      <th class="text-center bg-secondary text-white" style="width: 200px;">
-                        Initial Scope:<br>Governance/Management Objectives
-                      </th>
-                    </tr>
-                    <tr class="bg-warning">
-                      <th class="fw-bold bg-success text-center text-white">Weight</th>
-                      @for ($i = 0; $i < 4; $i++)
-                        <th class="text-center bg-success">
-                          <input type="number" name="weight[{{ $i + 1 }}]" value="{{ $weights[$i] }}"
-                            class="form-control form-control-sm text-center d-block mx-auto weight-input"
-                            style="width: 60px;" data-index="{{ $i }}">
-                        </th>
-                      @endfor
-                      <th class="text-center">-</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @foreach ($allCodes as $code)
-                      <tr>
-                        <td class="fw-bold bg-primary-subtle">
-                          {{ $cobitCodes[$code] ?? '' }}
-                        </td>
-                        @php
-                          $total = 0;
-                          $values = [];
-                        @endphp
-                        @for ($n = 1; $n <= 4; $n++)
-                          @php
-                            // Get first record from relation (already scoped to current assessment)
-                            $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
-                            $col = "r_df{$n}_{$code}";
-                            // Default value: 0 if Relative Importance not yet set (KISS principle)
-                            $val = ($rec && isset($rec->$col)) ? $rec->$col : 0;
-                            $values[] = $val;
-                            $total += $val;
-                            $cls = $val < 0
-                              ? 'bg-danger bg-opacity-10'
-                              : ($val > 0 ? 'bg-success bg-opacity-10' : '');
-                          @endphp
-                          <td class="text-center {{ $cls }} fw-medium value-cell" data-value="{{ $val }}">
-                            {{ number_format($val, 0) }}
-                          </td>
-                        @endfor
-                        <td class="text-center bg-info bg-opacity-10 fw-bold total-cell">
-                          {{ number_format($total, 0) }}
-                        </td>
-                        <td class="text-center fw-medium initial-scope-cell">0</td>
-                      </tr>
-                    @endforeach
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Chart Utama: Initial Scope vs. Weights -->
-          <div class="card shadow-sm">
-            <div class="card-header bg-white py-3">
-              <h6 class="mb-0 fw-bold text-primary">Chart: Initial Scope vs. Weights</h6>
-            </div>
-            <div class="card-body">
-              <canvas id="initialScopeChart" style="height:300px;"></canvas>
-            </div>
-          </div>
-
-
+        <div class="d-flex align-items-center gap-3">
+          <span id="saveStatus" class="small text-muted"></span>
+          <button type="button" id="saveButton" class="btn btn-primary shadow-sm">
+            <i class="bi bi-save me-2"></i>Save
+          </button>
         </div>
       </div>
+
+      {{-- Main Card --}}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0 fw-bold"><i class="bi bi-table me-2"></i>Relative Importance Matrix</h6>
+              <small class="opacity-75">Design Factor ID: {{ $assessment->assessment_id }}</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-light" id="sortBtn">
+              <i class="bi bi-sort-down"></i> Sort by Score
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+            <table class="table table-hover table-sm mb-0 align-middle" id="matrixTable">
+              <thead class="sticky-top bg-light">
+                <tr>
+                  <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                  <th class="text-center text-muted small fw-semibold" title="Enterprise Strategy">DF1</th>
+                  <th class="text-center text-muted small fw-semibold" title="Enterprise Goals">DF2</th>
+                  <th class="text-center text-muted small fw-semibold" title="Risk Profile">DF3</th>
+                  <th class="text-center text-muted small fw-semibold" title="IT-Related Issues">DF4</th>
+                  <th class="text-center text-muted small fw-semibold bg-info bg-opacity-10" style="width:70px;">Total</th>
+                  <th class="text-center text-muted small fw-semibold" style="width:150px;">Initial Scope Score</th>
+                </tr>
+                <tr class="bg-warning bg-opacity-25">
+                  <td class="text-center small fw-bold text-warning">Weight</td>
+                  @for ($i = 0; $i < 4; $i++)
+                    <td class="text-center p-1">
+                      <input type="number" name="weight[{{ $i + 1 }}]" value="{{ $weights[$i] ?? 1 }}"
+                        class="form-control form-control-sm text-center border-0 bg-transparent weight-input fw-bold" 
+                        style="width:50px; margin:0 auto;" data-index="{{ $i }}">
+                    </td>
+                  @endfor
+                  <td class="text-center">—</td>
+                  <td></td>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach ($allCodes as $code)
+                  @php
+                    $total = 0;
+                    $values = [];
+                    for ($n = 1; $n <= 4; $n++) {
+                      $rec = $assessment->{'df' . $n . 'RelativeImportances'}->first();
+                      $col = "r_df{$n}_{$code}";
+                      $val = ($rec && isset($rec->$col)) ? $rec->$col : 0;
+                      $values[] = $val;
+                      $total += $val;
+                    }
+                  @endphp
+                  <tr class="objective-row" data-code="{{ $code }}">
+                    <td class="text-center fw-semibold text-primary">{{ $cobitCodes[$code] ?? '' }}</td>
+                    @foreach ($values as $i => $val)
+                      <td class="text-center small value-cell {{ $val < 0 ? 'text-danger' : ($val > 0 ? 'text-success' : 'text-muted') }}" data-value="{{ $val }}">
+                        {{ $val != 0 ? number_format($val, 0) : '–' }}
+                      </td>
+                    @endforeach
+                    <td class="text-center fw-bold bg-info bg-opacity-10 total-cell">{{ number_format($total, 0) }}</td>
+                    <td class="text-center initial-scope-cell"></td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {{-- Chart Section --}}
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);">
+          <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart me-2"></i>Initial Scope Distribution</h6>
+        </div>
+        <div class="card-body">
+          <div style="height: 400px;">
+            <canvas id="initialScopeChart"></canvas>
+          </div>
+        </div>
+      </div>
+
     </div>
   </form>
 
-  <!-- Styles tambahan -->
-  <style>
-    .table {
-      margin-bottom: 0;
-    }
-
-    .table th {
-      border-top: none;
-      font-weight: 600;
-      vertical-align: middle;
-    }
-
-    .table td {
-      vertical-align: middle;
-    }
-
-    .table input[type="number"] {
-      -moz-appearance: textfield;
-    }
-
-    .table input[type="number"]::-webkit-outer-spin-button,
-    .table input[type="number"]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
-    .table-hover tbody tr:hover {
-      background-color: rgba(var(--bs-primary-rgb), 0.05);
-    }
-  </style>
-
-  <!-- Chart.js via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const weightInputs = document.querySelectorAll('.weight-input');
-      const rows = document.querySelectorAll('#matrixTable tbody tr');
+      const rows = document.querySelectorAll('#matrixTable tbody tr.objective-row');
+      let sortAsc = false;
 
-      function roundToNearest(number, multiple) {
-        return Math.round(number / multiple) * multiple;
-      }
+      const roundTo5 = x => Math.round(x / 5) * 5;
+      const fmt = x => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(x);
 
-      function number_format(number, decimals) {
-        return new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals
-        }).format(number);
-      }
-
-      function calculateTotal(row) {
-        const cells = row.querySelectorAll('.value-cell');
-        const weights = Array.from(weightInputs).map(input => parseFloat(input.value) || 0);
-        let total = 0;
-        cells.forEach((cell, index) => {
-          const value = parseFloat(cell.dataset.value) || 0;
-          total += value * weights[index];
-        });
-        row.querySelector('.total-cell').textContent = number_format(total, 0);
-        return total;
-      }
-
-      function updateInitialScope(total, maxTotal, row) {
-        let initialScope = 0;
-        if (maxTotal !== 0) {
-          const percentage = Math.trunc((total / maxTotal) * 100);
-          initialScope = total >= 0
-            ? roundToNearest(percentage, 5)
-            : -roundToNearest(Math.abs(percentage), 5);
-        }
-        // Bersihkan cell dan buat container dengan width tetap
-        const cell = row.querySelector('.initial-scope-cell');
-        cell.innerHTML = '';
-
+      function createVBar(pct) {
         const container = document.createElement('div');
-        container.style.cssText = `
-          position: relative; 
-          height: 20px; 
-          width: 180px; 
-          background: #f8f9fa; 
-          border: 1px solid #ddd;
-          margin: 0 auto;
-          overflow: hidden;
-        `;
+        container.style.cssText = 'position:relative;height:18px;width:130px;background:#f1f3f4;border-radius:4px;margin:0 auto;overflow:hidden;';
+        
+        const center = document.createElement('div');
+        center.style.cssText = 'position:absolute;left:50%;top:0;bottom:0;width:1px;background:#dee2e6;';
+        container.appendChild(center);
 
-        // Garis tengah sebagai baseline
-        const centerLine = document.createElement('div');
-        centerLine.style.cssText = 'position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #aaa;';
-        container.appendChild(centerLine);
-
-        // Buat bar chart
+        const barWidth = Math.min(Math.abs(pct) / 2, 50);
         const bar = document.createElement('div');
-        const barWidth = Math.abs(initialScope) / 2;
-
-        if (initialScope >= 0) {
-          bar.style.cssText = `
-          position: absolute;
-          left: 50%;
-          top: 0;
-          height: 100%;
-          width: ${barWidth}%;
-          background-color: rgba(40, 167, 69, 0.8);
-          transition: all 1s ease;
-          max-width: 50%;
-          `;
-        } else {
-          bar.style.cssText = `
-          position: absolute;
-          right: 50%;
-          top: 0;
-          height: 100%;
-          width: ${barWidth}%;
-          background-color: rgba(220, 53, 69, 0.8);
-          transition: all 1s ease;
-          max-width: 50%;
-          `;
-        }
+        const isPos = pct >= 0;
+        bar.style.cssText = `position:absolute;${isPos?'left:50%':'right:50%'};top:2px;bottom:2px;width:${barWidth}%;background:${isPos?'#28a745':'#dc3545'};border-radius:2px;transition:width 0.3s;`;
         container.appendChild(bar);
 
-        // Label nilai di tengah bar
-        const label = document.createElement('div');
-        label.style.cssText = `
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.8rem;
-          font-weight: 500;
-          color: #343a40;
-          z-index: 1;
-        `;
-        label.textContent = number_format(initialScope, 0);
-        container.appendChild(label);
-
-        cell.appendChild(container);
-        cell.setAttribute('data-scope', initialScope);
-        return initialScope;
+        const lbl = document.createElement('span');
+        lbl.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#212529;';
+        lbl.textContent = fmt(pct);
+        container.appendChild(lbl);
+        return container;
       }
 
-      function calculateInitialScope() {
-        // 1. Hitung total tiap baris
-        const totals = Array.from(rows).map(row => calculateTotal(row));
-        // 3. Tentukan nilai maksimum untuk normalisasi scope
-        const maxTotal = Math.max(...totals);
+      function calculateAll() {
+        const weights = Array.from(weightInputs).map(i => parseFloat(i.value) || 0);
+        const totals = [];
+        const relImps = [];
+        const codes = [];
 
-        // 4. Hitung initialScope untuk tiap baris dan kumpulkan ke array
-        const scopes = totals.map((total, index) =>
-          updateInitialScope(total, maxTotal, rows[index])
-        );
-        renderInitialScopeChart(scopes);
-        const weights = Array.from(weightInputs).map(input => parseFloat(input.value) || 0);
-        const relativeImportances = Array.from(rows).map(row =>
-          Array.from(row.querySelectorAll('.value-cell'))
-            .map(cell => parseFloat(cell.dataset.value) || 0)
-        );
-        // 7. Simpan ke hidden inputs
-        document.getElementById('totalsInput').value = JSON.stringify(totals);
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('.value-cell');
+          let total = 0;
+          const rowVals = [];
+          cells.forEach((cell, i) => {
+            const v = parseFloat(cell.dataset.value) || 0;
+            rowVals.push(v);
+            total += v * weights[i];
+          });
+          relImps.push(rowVals);
+          totals.push(total);
+          codes.push(row.querySelector('td').textContent.trim());
+          row.querySelector('.total-cell').textContent = fmt(total);
+        });
+
+        const maxT = Math.max(...totals.map(Math.abs), 1);
+        const scopes = totals.map((t, i) => {
+          let pct = maxT ? Math.trunc((t / maxT) * 100) : 0;
+          pct = t >= 0 ? roundTo5(pct) : -roundTo5(Math.abs(pct));
+          const cell = rows[i].querySelector('.initial-scope-cell');
+          cell.innerHTML = '';
+          cell.appendChild(createVBar(pct));
+          cell.dataset.scope = pct;
+          return pct;
+        });
+
+        // Save to hidden inputs
+        const totalsByCode = {};
+        codes.forEach((c, i) => totalsByCode[c] = totals[i]);
         document.getElementById('weightsInput').value = JSON.stringify(weights);
-        document.getElementById('relative_importancesInput').value = JSON.stringify(relativeImportances);
+        document.getElementById('relative_importancesInput').value = JSON.stringify(relImps);
+        document.getElementById('totalsInput').value = JSON.stringify(totalsByCode);
+        document.getElementById('initialScopeScoresInput').value = JSON.stringify(scopes);
+
+        renderChart(codes, scopes);
       }
 
-
-      function renderInitialScopeChart(scopes) {
-        const labels = Array.from(rows).map(row => row.querySelector('td').textContent.trim());
-        const backgroundColors = scopes.map(scope => scope >= 0 ? '#28a745' : '#dc3545');
+      function renderChart(labels, scopes) {
         const ctx = document.getElementById('initialScopeChart').getContext('2d');
-
-        if (window.initialScopeChart instanceof Chart) {
-          window.initialScopeChart.destroy();
-        }
-        window.initialScopeChart = new Chart(ctx, {
+        if (window.scopeChart) window.scopeChart.destroy();
+        window.scopeChart = new Chart(ctx, {
           type: 'bar',
           data: {
-            labels: labels,
+            labels,
             datasets: [{
               label: 'Initial Scope',
               data: scopes,
-              backgroundColor: backgroundColors
+              backgroundColor: scopes.map(s => s >= 0 ? '#28a745' : '#dc3545')
             }]
           },
           options: {
             indexAxis: 'y',
+            maintainAspectRatio: false,
             scales: {
-              x: {
-                beginAtZero: true,
-                grid: {
-                  drawBorder: true,
-                  drawOnChartArea: true,
-                  drawTicks: false
-                }
-              },
-              y: { ticks: { autoSkip: false, maxTicksLimit: 40 } }
+              x: { beginAtZero: true },
+              y: { ticks: { autoSkip: false, font: { size: 10 } } }
             },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return number_format(context.parsed.x, 0);
-                  }
-                }
-              }
-            }
+            plugins: { legend: { display: false } }
           }
         });
       }
 
-      // Event listener untuk input weight
-      let saveInterval;
-      const statusIndicator = document.createElement('span');
-      statusIndicator.className = 'ms-2 text-muted small';
-      statusIndicator.style.transition = 'opacity 0.5s';
-      document.querySelector('.card-header h5').appendChild(statusIndicator);
-
-      function showSavingStatus(status) {
-        if (status === 'saving') {
-          statusIndicator.textContent = 'Saving...';
-          statusIndicator.className = 'ms-2 text-warning small';
-          statusIndicator.style.opacity = '1';
-        } else if (status === 'saved') {
-          statusIndicator.textContent = 'All changes saved';
-          statusIndicator.className = 'ms-2 text-success small';
-          setTimeout(() => { statusIndicator.style.opacity = '0'; }, 3000);
-        } else if (status === 'error') {
-          statusIndicator.textContent = 'Error saving';
-          statusIndicator.className = 'ms-2 text-danger small';
-        }
+      function sortTable() {
+        const tbody = document.querySelector('#matrixTable tbody');
+        const rowsArr = Array.from(rows);
+        sortAsc = !sortAsc;
+        rowsArr.sort((a, b) => {
+          const va = parseFloat(a.querySelector('.initial-scope-cell').dataset.scope) || 0;
+          const vb = parseFloat(b.querySelector('.initial-scope-cell').dataset.scope) || 0;
+          return sortAsc ? va - vb : vb - va;
+        });
+        rowsArr.forEach(r => tbody.appendChild(r));
+        document.querySelector('#sortBtn i').className = sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down';
       }
 
+      // Auto-save
+      let saveTimer;
       function autoSave() {
-        calculateInitialScope(); // pastikan hidden inputs terupdate
-        
         const form = document.getElementById('step2Form');
-        const formData = new FormData(form);
-
-        showSavingStatus('saving');
-
+        document.getElementById('saveStatus').textContent = 'Saving...';
         fetch(form.action, {
           method: 'POST',
-          body: formData,
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest', // tandai sebagai AJAX
-            'Accept': 'application/json'
-          }
+          body: new FormData(form),
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'success') {
-            showSavingStatus('saved');
-            console.log(data.message);
-          }
+        .then(r => r.json())
+        .then(() => {
+          document.getElementById('saveStatus').textContent = 'Saved ✓';
+          setTimeout(() => document.getElementById('saveStatus').textContent = '', 3000);
         })
-        .catch(error => {
-          showSavingStatus('error');
-          console.error('Auto-save error:', error);
-        });
+        .catch(() => document.getElementById('saveStatus').textContent = 'Error!');
       }
 
-      weightInputs.forEach(input => {
-        input.addEventListener('input', function () {
-          calculateInitialScope();
-          
-          // Debounce auto-save (tunggu 1 detik setelah berhenti mengetik)
-          clearTimeout(saveInterval);
-          saveInterval = setTimeout(autoSave, 1000);
-        });
-      });
+      weightInputs.forEach(i => i.addEventListener('input', () => {
+        calculateAll();
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(autoSave, 1000);
+      }));
 
-      // Hitung ulang saat halaman dimuat awal
-      calculateInitialScope();
-
-      // Tombol simpan manual (optional sekarang, tapi tetap berguna)
-      document.getElementById('saveButton')?.addEventListener('click', function () {
-        calculateInitialScope();
+      document.getElementById('sortBtn').addEventListener('click', sortTable);
+      document.getElementById('saveButton').addEventListener('click', () => {
+        calculateAll();
         document.getElementById('step2Form').submit();
       });
+
+      calculateAll();
     });
   </script>
+
+  <style>
+    .sticky-top { position: sticky; top: 0; z-index: 10; }
+    #matrixTable { font-size: 13px; }
+    #matrixTable th { border-bottom: 2px solid #dee2e6; }
+    #matrixTable td { border-color: #f1f3f4; }
+    .objective-row:hover { background-color: #f8f9fa !important; }
+    .form-control:focus { box-shadow: 0 0 0 2px rgba(102,126,234,0.25); }
+  </style>
 @endsection
