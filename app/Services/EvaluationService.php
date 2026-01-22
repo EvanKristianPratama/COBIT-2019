@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\MstEval;
-use App\Models\TrsActivityeval;
-use App\Models\TrsObjectiveScore;
-use App\Models\TrsMaturityScore;
-use App\Models\TrsSummaryReport;
-use App\Models\TrsSummaryActivity;
 use App\Models\MstActivities;
+use App\Models\MstEval;
 use App\Models\MstEvidence;
-use Illuminate\Support\Facades\DB;
+use App\Models\TrsActivityeval;
+use App\Models\TrsMaturityScore;
+use App\Models\TrsObjectiveScore;
+use App\Models\TrsSummaryActivity;
+use App\Models\TrsSummaryReport;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class EvaluationService
@@ -26,17 +26,17 @@ class EvaluationService
 
             $evaluation = MstEval::updateOrCreate(
                 [
-                    'eval_id' => $data['eval_id'] ?? null
+                    'eval_id' => $data['eval_id'] ?? null,
                 ],
                 [
-                    'user_id' => $data['user_id'] ?? Auth::id()
+                    'user_id' => $data['user_id'] ?? Auth::id(),
                 ]
             );
 
             if (isset($data['activity_evaluations'])) {
                 // Get all activity IDs from the request
                 $incomingActivityIds = collect($data['activity_evaluations'])->pluck('activity_id')->toArray();
-                
+
                 // Pre-fetch Map: Activity ID -> Objective ID
                 // Optimizes query to avoid N+1 inside loop
                 $activityObjectiveMap = MstActivities::with('practice')
@@ -60,24 +60,24 @@ class EvaluationService
                     ->where('eval_id', $evaluation->eval_id)
                     ->whereNotIn('activity_id', $incomingActivityIds)
                     ->forceDelete();
-                
+
                 foreach ($data['activity_evaluations'] as $activityData) {
                     // Always save or update the activity, even if rated as 'N'
                     // This preserves evidence and notes when levels are changed
                     $activityEval = TrsActivityeval::updateOrCreate(
                         [
                             'eval_id' => $evaluation->eval_id,
-                            'activity_id' => $activityData['activity_id']
+                            'activity_id' => $activityData['activity_id'],
                         ],
                         [
                             'level_achieved' => $activityData['level_achieved'],
                             'evidence' => $activityData['evidence'] ?? null,
-                            'notes' => $activityData['notes'] ?? null
+                            'notes' => $activityData['notes'] ?? null,
                         ]
                     );
 
                     // --- NORMALIZATION LOGIC START ---
-                    
+
                     // 1. Resolve Objective ID for this activity
                     $objectiveId = $activityObjectiveMap[$activityData['activity_id']] ?? null;
 
@@ -86,7 +86,7 @@ class EvaluationService
                         $summaryReport = TrsSummaryReport::firstOrCreate(
                             [
                                 'eval_id' => $evaluation->eval_id,
-                                'objective_id' => $objectiveId
+                                'objective_id' => $objectiveId,
                             ]
                         );
 
@@ -94,29 +94,32 @@ class EvaluationService
                         // First, clear existing mappings for this specific activity evaluation to avoid duplicates
                         TrsSummaryActivity::where('activityeval_id', $activityEval->id)->delete();
 
-                        if (!empty($activityData['evidence'])) {
+                        if (! empty($activityData['evidence'])) {
                             // Priority 1: Use explicitly provided evidence names (Array from Frontend)
-                            if (!empty($activityData['evidence_names']) && is_array($activityData['evidence_names'])) {
+                            if (! empty($activityData['evidence_names']) && is_array($activityData['evidence_names'])) {
                                 $files = $activityData['evidence_names'];
-                            } 
+                            }
                             // Priority 2: Fallback to parsing the evidence string (Legacy/Backup)
                             else {
                                 $files = preg_split('/\r\n|\r|\n/', $activityData['evidence']);
                             }
-                            
+
                             foreach ($files as $file) {
                                 $filename = trim($file);
-                                if (empty($filename)) continue;
+                                if (empty($filename)) {
+                                    continue;
+                                }
 
                                 // Lookup Evidence ID (Normalized)
                                 $normalizedName = strtolower($filename);
                                 $evidenceId = $evidenceMap[$normalizedName] ?? null;
 
-                                // Link evidence, allowing NULL evidence_id for unknown documents if requested
+                                // Link evidence, save miss_evidence when evidence not found
                                 TrsSummaryActivity::create([
                                     'summary_id' => $summaryReport->id,
                                     'activityeval_id' => $activityEval->id,
-                                    'evidence_id' => $evidenceId
+                                    'evidence_id' => $evidenceId,
+                                    'miss_evidence' => $evidenceId === null ? $filename : null,
                                 ]);
                             }
                         }
@@ -129,6 +132,7 @@ class EvaluationService
             $this->updateCalculatedScores($evaluation->eval_id);
 
             DB::commit();
+
             return $evaluation;
 
         } catch (\Exception $e) {
@@ -143,7 +147,7 @@ class EvaluationService
     public function loadEvaluation($evalId)
     {
         $evaluation = MstEval::with([
-            'activityEvaluations.activity.practice.objective'
+            'activityEvaluations.activity.practice.objective',
         ])->findOrFail($evalId);
 
         $formattedData = [
@@ -151,21 +155,21 @@ class EvaluationService
             'user_id' => $evaluation->user_id,
             'created_at' => $evaluation->created_at,
             'updated_at' => $evaluation->updated_at,
-            'activity_evaluations' => []
+            'activity_evaluations' => [],
         ];
 
         foreach ($evaluation->activityEvaluations as $activityEval) {
             $activity = $activityEval->activity;
             $practice = $activity->practice;
             $objective = $practice ? $practice->objective : null;
-            
+
             $formattedData['activity_evaluations'][$activityEval->activity_id] = [
                 'activity_id' => $activityEval->activity_id,
                 'level_achieved' => $activityEval->level_achieved,
                 'evidence' => $activityEval->evidence,
                 'notes' => $activityEval->notes,
                 'capability_lvl' => $activity->capability_lvl ?? null,
-                'objective_id' => $objective ? $objective->objective_id : null
+                'objective_id' => $objective ? $objective->objective_id : null,
             ];
         }
 
@@ -185,19 +189,19 @@ class EvaluationService
             $notes = $assessmentData['notes'] ?? [];
             $evidence = $assessmentData['evidence'] ?? [];
             $evidenceNames = $assessmentData['evidenceNames'] ?? [];
-            
+
             foreach ($levelScores as $objectiveId => $levels) {
                 foreach ($levels as $level => $levelData) {
                     if (isset($levelData['activities'])) {
                         foreach ($levelData['activities'] as $activityId => $score) {
                             $levelAchieved = $this->scoreToLetter($score);
-                            
+
                             $activityEvaluations[] = [
                                 'activity_id' => $activityId,
                                 'level_achieved' => $levelAchieved,
                                 'evidence' => $evidence[$activityId] ?? null,
                                 'evidence_names' => $evidenceNames[$activityId] ?? null,
-                                'notes' => $notes[$activityId] ?? null
+                                'notes' => $notes[$activityId] ?? null,
                             ];
                             $processedActivityIds[$activityId] = true;
                         }
@@ -208,13 +212,13 @@ class EvaluationService
             // check for activities with notes/evidence but no rating
             $otherIds = array_unique(array_merge(array_keys($notes), array_keys($evidence)));
             foreach ($otherIds as $actId) {
-                if (!isset($processedActivityIds[$actId])) {
+                if (! isset($processedActivityIds[$actId])) {
                     $activityEvaluations[] = [
                         'activity_id' => $actId,
                         'level_achieved' => null, // Allow null for unrated activities
                         'evidence' => $evidence[$actId] ?? null,
                         'evidence_names' => $evidenceNames[$actId] ?? null,
-                        'notes' => $notes[$actId] ?? null
+                        'notes' => $notes[$actId] ?? null,
                     ];
                 }
             }
@@ -223,14 +227,14 @@ class EvaluationService
                 if (isset($levelData['activities'])) {
                     foreach ($levelData['activities'] as $activityId => $score) {
                         $levelAchieved = $this->scoreToLetter($score);
-                        
+
                         // Include all activities, even those rated as 'N'
                         // This preserves evidence and notes when levels are changed
                         $activityEvaluations[] = [
                             'activity_id' => $activityId,
                             'level_achieved' => $levelAchieved,
                             'evidence' => $levelData['evidence'][$activityId] ?? null,
-                            'notes' => $levelData['notes'][$activityId] ?? null
+                            'notes' => $levelData['notes'][$activityId] ?? null,
                         ];
                     }
                 }
@@ -238,7 +242,7 @@ class EvaluationService
         }
 
         return [
-            'activity_evaluations' => $activityEvaluations
+            'activity_evaluations' => $activityEvaluations,
         ];
     }
 
@@ -247,9 +251,16 @@ class EvaluationService
      */
     private function scoreToLetter($score)
     {
-        if ($score > 0.85) return 'F';
-        if ($score > 0.50) return 'L';
-        if ($score > 0.15) return 'P';
+        if ($score > 0.85) {
+            return 'F';
+        }
+        if ($score > 0.50) {
+            return 'L';
+        }
+        if ($score > 0.15) {
+            return 'P';
+        }
+
         return 'N';
     }
 
@@ -260,11 +271,11 @@ class EvaluationService
     {
         $scoreMap = [
             'N' => 0.00,
-            'P' => 1/3,
-            'L' => 2/3,
-            'F' => 1.00
+            'P' => 1 / 3,
+            'L' => 2 / 3,
+            'F' => 1.00,
         ];
-        
+
         return $scoreMap[$letter] ?? 0.00;
     }
 
@@ -275,11 +286,11 @@ class EvaluationService
     {
         try {
             DB::beginTransaction();
-            
+
             $evaluation = MstEval::create([
-                'user_id' => $userId
+                'user_id' => $userId,
             ]);
-            
+
             DB::commit();
 
             // refresh model to ensure any DB-generated fields are loaded
@@ -290,13 +301,13 @@ class EvaluationService
             }
 
             return $evaluation;
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Failed to create new evaluation", [
+            Log::error('Failed to create new evaluation', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
         }
@@ -310,15 +321,17 @@ class EvaluationService
         try {
             // coba cari by eval_id (custom) lalu fallback ke primary key
             $evaluation = MstEval::where('eval_id', $evalId)->first();
-            if (!$evaluation && is_numeric($evalId)) {
+            if (! $evaluation && is_numeric($evalId)) {
                 $evaluation = MstEval::find($evalId);
             }
+
             return $evaluation;
         } catch (\Exception $e) {
-            Log::error("Failed to get evaluation by ID", [
+            Log::error('Failed to get evaluation by ID', [
                 'eval_id' => $evalId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -329,7 +342,7 @@ class EvaluationService
     public function getUserEvaluations($userId = null)
     {
         $userId = $userId ?? Auth::id();
-        
+
         return MstEval::with('activityEvaluations')
             ->where('user_id', $userId)
             ->orderBy('updated_at', 'desc')
@@ -343,16 +356,17 @@ class EvaluationService
     {
         try {
             DB::beginTransaction();
-            
+
             $evaluation = MstEval::findOrFail($evalId);
-            
+
             TrsActivityeval::where('eval_id', $evalId)->delete();
-            
+
             $evaluation->delete();
-            
+
             DB::commit();
+
             return true;
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -365,12 +379,12 @@ class EvaluationService
     public function getEvaluationStats($evalId)
     {
         $evaluation = MstEval::with('activityEvaluations')->findOrFail($evalId);
-        
+
         $totalActivities = $evaluation->activityEvaluations->count();
         $achievementCounts = $evaluation->activityEvaluations
             ->groupBy('level_achieved')
             ->map->count();
-            
+
         return [
             'total_activities' => $totalActivities,
             'achievement_distribution' => [
@@ -378,9 +392,10 @@ class EvaluationService
                 'P' => $achievementCounts['P'] ?? 0,
                 'L' => $achievementCounts['L'] ?? 0,
                 'F' => $achievementCounts['F'] ?? 0,
-            ]
+            ],
         ];
     }
+
     /**
      * Calculate the overall IT Maturity Score for an evaluation
      * Logic exactly matches the AssessmentEvalController::report method
@@ -388,10 +403,10 @@ class EvaluationService
     public function calculateMaturityScore($evalId)
     {
         $evaluation = MstEval::with([
-            'activityEvaluations.activity.practices.objective'
+            'activityEvaluations.activity.practices.objective',
         ])->find($evalId);
 
-        if (!$evaluation) {
+        if (! $evaluation) {
             return 0;
         }
 
@@ -406,15 +421,15 @@ class EvaluationService
 
         // Fetch objectives that are relevant to this evaluation (based on activities)
         // This ensures we don't average in 0s for objectives that weren't selected
-        $objectives = \App\Models\MstObjective::whereHas('practices.activities', function($q) use ($relevantActivityIds) {
+        $objectives = \App\Models\MstObjective::whereHas('practices.activities', function ($q) use ($relevantActivityIds) {
             $q->whereIn('activity_id', $relevantActivityIds);
         })->with(['practices.activities'])->get();
 
         if ($objectives->isEmpty()) {
             return 0;
         }
-        
-        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+
+        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
         $calculatedLevels = [];
 
         foreach ($objectives as $obj) {
@@ -424,7 +439,7 @@ class EvaluationService
             foreach ($obj->practices as $p) {
                 if ($p->activities) {
                     foreach ($p->activities as $a) {
-                        $lvl = (int)$a->capability_lvl;
+                        $lvl = (int) $a->capability_lvl;
                         if ($lvl >= 2 && $lvl <= 5) {
                             $activitiesByLevel[$lvl][] = $a;
                             $allLevelsFound[] = $lvl;
@@ -435,22 +450,28 @@ class EvaluationService
 
             if (empty($allLevelsFound)) {
                 $calculatedLevels[] = 0;
+
                 continue;
             }
-            
+
             $minLevel = min($allLevelsFound);
 
-            $getScore = function($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
-                if ($lvl < $minLevel) return 1.0;
-                
+            $getScore = function ($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
+                if ($lvl < $minLevel) {
+                    return 1.0;
+                }
+
                 $acts = $activitiesByLevel[$lvl] ?? [];
-                if (empty($acts)) return 0.0;
+                if (empty($acts)) {
+                    return 0.0;
+                }
 
                 $vals = 0;
                 foreach ($acts as $a) {
                     $r = $activityData[$a->activity_id]['level_achieved'] ?? 'N';
                     $vals += ($ratingMap[$r] ?? 0.0);
                 }
+
                 return $vals / count($acts);
             };
 
@@ -460,25 +481,37 @@ class EvaluationService
             $score5 = $getScore(5);
 
             $finalLevel = 0;
-            if ($score2 <= 0.15) $finalLevel = 0;
-            elseif ($score2 <= 0.50) $finalLevel = 1;
-            elseif ($score2 <= 0.85) $finalLevel = 2;
-            else {
-                if ($score3 <= 0.50) $finalLevel = 2;
-                elseif ($score3 <= 0.85) $finalLevel = 3;
-                else {
-                    if ($score4 <= 0.50) $finalLevel = 3;
-                    elseif ($score4 <= 0.85) $finalLevel = 4;
-                    else {
-                        if ($score5 <= 0.50) $finalLevel = 4;
-                        else $finalLevel = 5;
+            if ($score2 <= 0.15) {
+                $finalLevel = 0;
+            } elseif ($score2 <= 0.50) {
+                $finalLevel = 1;
+            } elseif ($score2 <= 0.85) {
+                $finalLevel = 2;
+            } else {
+                if ($score3 <= 0.50) {
+                    $finalLevel = 2;
+                } elseif ($score3 <= 0.85) {
+                    $finalLevel = 3;
+                } else {
+                    if ($score4 <= 0.50) {
+                        $finalLevel = 3;
+                    } elseif ($score4 <= 0.85) {
+                        $finalLevel = 4;
+                    } else {
+                        if ($score5 <= 0.50) {
+                            $finalLevel = 4;
+                        } else {
+                            $finalLevel = 5;
+                        }
                     }
                 }
             }
 
             if ($minLevel > 2) {
                 $startScore = $getScore($minLevel);
-                if ($startScore <= 0.15) $finalLevel = 0;
+                if ($startScore <= 0.15) {
+                    $finalLevel = 0;
+                }
             }
 
             $calculatedLevels[] = $finalLevel;
@@ -498,7 +531,9 @@ class EvaluationService
     public function updateCalculatedScores($evalId)
     {
         $evaluation = MstEval::find($evalId);
-        if (!$evaluation) return;
+        if (! $evaluation) {
+            return;
+        }
 
         // 1. Calculate Score (reuse existing logic)
         // We need to slightly modify calculateMaturityScore or extract the core logic
@@ -516,21 +551,21 @@ class EvaluationService
         // Use Scope (Selected Domains) to determine relevant objectives, EXACTLY like the report page
         // If we only look at "activities with data", we might miss 0-scored objectives that are part of the scope
         // causing the average to be higher (smaller divisor).
-        
+
         $selectedDomains = \App\Models\TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
 
-        if (!empty($selectedDomains)) {
+        if (! empty($selectedDomains)) {
             $objectives = \App\Models\MstObjective::with(['practices.activities'])
                 ->where(function ($q) use ($selectedDomains) {
                     foreach ($selectedDomains as $domain) {
-                        $domain = trim((string)$domain);
+                        $domain = trim((string) $domain);
                         if ($domain !== '') {
-                            $q->orWhere('objective_id', 'like', $domain . '%');
+                            $q->orWhere('objective_id', 'like', $domain.'%');
                         }
                     }
                 })->get();
         } else {
-            // Fallback: If no scope defined, should we verify all? 
+            // Fallback: If no scope defined, should we verify all?
             // Or fallback to activities? Report falls back to ALL.
             // Let's stick to ALL to match Report logic 1:1.
             $objectives = \App\Models\MstObjective::with(['practices.activities'])->get();
@@ -538,10 +573,11 @@ class EvaluationService
 
         if ($objectives->isEmpty()) {
             TrsMaturityScore::create(['eval_id' => $evalId, 'score' => 0]);
+
             return;
         }
 
-        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
         $calculatedLevels = [];
 
         foreach ($objectives as $obj) {
@@ -551,7 +587,7 @@ class EvaluationService
             foreach ($obj->practices as $p) {
                 if ($p->activities) {
                     foreach ($p->activities as $a) {
-                        $lvl = (int)$a->capability_lvl;
+                        $lvl = (int) $a->capability_lvl;
                         if ($lvl >= 2 && $lvl <= 5) {
                             $activitiesByLevel[$lvl][] = $a;
                             $allLevelsFound[] = $lvl;
@@ -566,18 +602,23 @@ class EvaluationService
                 TrsObjectiveScore::create([
                     'eval_id' => $evalId,
                     'objective_id' => $obj->objective_id,
-                    'level' => 0
+                    'level' => 0,
                 ]);
+
                 continue;
             }
-            
+
             $minLevel = min($allLevelsFound);
 
-            $getScore = function($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
-                if ($lvl < $minLevel) return 1.0;
-                
+            $getScore = function ($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
+                if ($lvl < $minLevel) {
+                    return 1.0;
+                }
+
                 $acts = $activitiesByLevel[$lvl] ?? [];
-                if (empty($acts)) return 0.0;
+                if (empty($acts)) {
+                    return 0.0;
+                }
 
                 $vals = 0;
                 foreach ($acts as $a) {
@@ -586,6 +627,7 @@ class EvaluationService
                     $r = $actRecord ? $actRecord->level_achieved : 'N';
                     $vals += ($ratingMap[$r] ?? 0.0);
                 }
+
                 return $vals / count($acts);
             };
 
@@ -595,25 +637,37 @@ class EvaluationService
             $score5 = $getScore(5);
 
             $finalLevel = 0;
-            if ($score2 <= 0.15) $finalLevel = 0;
-            elseif ($score2 <= 0.50) $finalLevel = 1;
-            elseif ($score2 <= 0.85) $finalLevel = 2;
-            else {
-                if ($score3 <= 0.50) $finalLevel = 2;
-                elseif ($score3 <= 0.85) $finalLevel = 3;
-                else {
-                    if ($score4 <= 0.50) $finalLevel = 3;
-                    elseif ($score4 <= 0.85) $finalLevel = 4;
-                    else {
-                        if ($score5 <= 0.50) $finalLevel = 4;
-                        else $finalLevel = 5;
+            if ($score2 <= 0.15) {
+                $finalLevel = 0;
+            } elseif ($score2 <= 0.50) {
+                $finalLevel = 1;
+            } elseif ($score2 <= 0.85) {
+                $finalLevel = 2;
+            } else {
+                if ($score3 <= 0.50) {
+                    $finalLevel = 2;
+                } elseif ($score3 <= 0.85) {
+                    $finalLevel = 3;
+                } else {
+                    if ($score4 <= 0.50) {
+                        $finalLevel = 3;
+                    } elseif ($score4 <= 0.85) {
+                        $finalLevel = 4;
+                    } else {
+                        if ($score5 <= 0.50) {
+                            $finalLevel = 4;
+                        } else {
+                            $finalLevel = 5;
+                        }
                     }
                 }
             }
 
             if ($minLevel > 2) {
                 $startScore = $getScore($minLevel);
-                if ($startScore <= 0.15) $finalLevel = 0;
+                if ($startScore <= 0.15) {
+                    $finalLevel = 0;
+                }
             }
 
             $calculatedLevels[] = $finalLevel;
@@ -622,7 +676,7 @@ class EvaluationService
             TrsObjectiveScore::create([
                 'eval_id' => $evalId,
                 'objective_id' => $obj->objective_id,
-                'level' => $finalLevel
+                'level' => $finalLevel,
             ]);
         }
 
@@ -631,10 +685,9 @@ class EvaluationService
         // Save overall maturity score
         TrsMaturityScore::create([
             'eval_id' => $evalId,
-            'score' => $avgScore
+            'score' => $avgScore,
         ]);
     }
-
 
     /**
      * Helper: Get and sort objectives
@@ -643,11 +696,14 @@ class EvaluationService
     {
         $objectives = \App\Models\MstObjective::with(['practices.activities'])->get();
         $domainOrder = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
-        
-        return $objectives->sortBy(function($obj) use ($domainOrder) {
+
+        return $objectives->sortBy(function ($obj) use ($domainOrder) {
             $prefix = preg_replace('/[0-9]+/', '', $obj->objective_id);
-            if (empty($prefix)) $prefix = substr($obj->objective_id, 0, 3);
+            if (empty($prefix)) {
+                $prefix = substr($obj->objective_id, 0, 3);
+            }
             $rank = $domainOrder[$prefix] ?? 99;
+
             return sprintf('%02d_%s', $rank, $obj->objective_id);
         })->values();
     }
@@ -659,7 +715,7 @@ class EvaluationService
     {
         $targetCapabilityMap = [];
         $assessmentYear = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? null;
-        
+
         if ($assessmentYear) {
             $targetCapability = \App\Models\TargetCapability::where('user_id', $evaluation->user_id)
                 ->where('tahun', (int) $assessmentYear)
@@ -669,17 +725,18 @@ class EvaluationService
             if ($targetCapability) {
                 // List of all 40 GAMOs
                 $fields = [
-                    'EDM01','EDM02','EDM03','EDM04','EDM05',
-                    'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
-                    'BAI01','BAI02','BAI03','BAI04','BAI05','BAI06','BAI07','BAI08','BAI09','BAI10','BAI11',
-                    'DSS01','DSS02','DSS03','DSS04','DSS05','DSS06',
-                    'MEA01','MEA02','MEA03','MEA04',
+                    'EDM01', 'EDM02', 'EDM03', 'EDM04', 'EDM05',
+                    'APO01', 'APO02', 'APO03', 'APO04', 'APO05', 'APO06', 'APO07', 'APO08', 'APO09', 'APO10', 'APO11', 'APO12', 'APO13', 'APO14',
+                    'BAI01', 'BAI02', 'BAI03', 'BAI04', 'BAI05', 'BAI06', 'BAI07', 'BAI08', 'BAI09', 'BAI10', 'BAI11',
+                    'DSS01', 'DSS02', 'DSS03', 'DSS04', 'DSS05', 'DSS06',
+                    'MEA01', 'MEA02', 'MEA03', 'MEA04',
                 ];
                 foreach ($fields as $field) {
                     $targetCapabilityMap[$field] = $targetCapability->$field !== null ? (int) $targetCapability->$field : null;
                 }
             }
         }
+
         return $targetCapabilityMap;
     }
 
@@ -688,14 +745,14 @@ class EvaluationService
      */
     public function calculateObjectiveMaturity($obj, $activityData)
     {
-        $ratingMap = ['N' => 0.0, 'P' => 1.0/3.0, 'L' => 2.0/3.0, 'F' => 1.0];
+        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
         $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
         $allLevelsFound = [];
 
         foreach ($obj->practices as $p) {
             if ($p->activities) {
                 foreach ($p->activities as $a) {
-                    $lvl = (int)$a->capability_lvl;
+                    $lvl = (int) $a->capability_lvl;
                     if ($lvl >= 2 && $lvl <= 5) {
                         $activitiesByLevel[$lvl][] = $a;
                         $allLevelsFound[] = $lvl;
@@ -704,14 +761,20 @@ class EvaluationService
             }
         }
 
-        if (empty($allLevelsFound)) return 0;
-        
+        if (empty($allLevelsFound)) {
+            return 0;
+        }
+
         $minLevel = min($allLevelsFound);
 
-        $getScore = function($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
-            if ($lvl < $minLevel) return 1.0;
+        $getScore = function ($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
+            if ($lvl < $minLevel) {
+                return 1.0;
+            }
             $acts = $activitiesByLevel[$lvl] ?? [];
-            if (empty($acts)) return 0.0;
+            if (empty($acts)) {
+                return 0.0;
+            }
             $vals = 0;
             foreach ($acts as $a) {
                 // Check if activityData is array or object/model
@@ -721,15 +784,16 @@ class EvaluationService
                         $r = $activityData[$a->activity_id]['level_achieved'];
                     } else {
                         // Or maybe direct key access if flat? Assuming nested based on common usage
-                        $r = 'N'; 
+                        $r = 'N';
                     }
                 } else {
                     // Assuming collection or object
-                     $r = isset($activityData[$a->activity_id]) ? $activityData[$a->activity_id]['level_achieved'] : 'N';
+                    $r = isset($activityData[$a->activity_id]) ? $activityData[$a->activity_id]['level_achieved'] : 'N';
                 }
-                
+
                 $vals += ($ratingMap[$r] ?? 0.0);
             }
+
             return $vals / count($acts);
         };
 
@@ -763,7 +827,9 @@ class EvaluationService
 
         if ($minLevel > 2) {
             $startScore = $getScore($minLevel);
-            if ($startScore <= 0.15) $finalLevel = 0;
+            if ($startScore <= 0.15) {
+                $finalLevel = 0;
+            }
         }
 
         return $finalLevel;

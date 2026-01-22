@@ -14,7 +14,8 @@ class TrsSummaryActivity extends Model
     protected $fillable = [
         'summary_id',
         'activityeval_id',
-        'evidence_id'
+        'evidence_id',
+        'miss_evidence'
     ];
 
     public function summaryReport()

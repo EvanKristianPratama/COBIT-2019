@@ -9,6 +9,7 @@ use App\Models\MstObjective;
 use App\Models\TrsObjectiveScore;
 use App\Models\TrsSummaryReport;
 use App\Services\EvaluationService;
+use Artisan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -249,5 +250,35 @@ class AssessmentSummaryController extends Controller
         }
 
         return $finalLevel.$letter;
+    }
+
+    public function cleanupEvidence($secret_key)  // ❌ Hapus parameter $evalId di sini
+    {
+        // Validasi secret key
+        if ($secret_key !== 'rahasia-12345-XyZ') {
+            abort(403, 'Unauthorized');
+        }
+
+        // Cek parameter dari query string
+        $dryRun = request()->has('dry-run');
+        $evalId = request()->get('eval');  // ✅ Ambil dari query string, bukan parameter route
+
+        // Prepare options
+        $options = [];
+        if ($dryRun) {
+            $options['--dry-run'] = true;
+        }
+        if ($evalId) {
+            $options['--eval'] = $evalId;
+        }
+
+        // Jalankan command
+        Artisan::call('evidence:cleanup', $options);
+
+        // Tampilkan hasil
+        $output = Artisan::output();
+
+        // Return dengan format yang mudah dibaca
+        return response("<pre style='background:#1e1e1e;color:#00ff00;padding:20px;font-family:monospace;'>$output</pre>");
     }
 }
