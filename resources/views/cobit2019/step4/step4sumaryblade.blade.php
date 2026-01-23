@@ -1,7 +1,7 @@
 {{-- resources/views/cobit2019/step4/step4sumaryblade.blade.php --}}
 @extends('cobit2019.cobitTools')
 @section('cobit-tools-content')
-  @include('cobit2019.cobitPagination')
+@include('cobit2019.cobitPagination')
 
   @php
     $cobitCodes = [
@@ -42,7 +42,7 @@
         {{-- STEP 2 CARD --}}
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm h-100">
-            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-header text-white py-3" style="background: var(--cobit-gradient);">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 class="mb-0 fw-bold"><i class="bi bi-1-circle me-2"></i>Step 2: Initial Scope</h6>
@@ -58,7 +58,7 @@
                 <table class="table table-hover table-sm mb-0 align-middle" id="step2Table">
                   <thead class="sticky-top bg-light">
                     <tr>
-                      <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                      <th class="text-center text-muted small fw-semibold" style="width:80px;">GAMO</th>
                       <th class="text-center text-muted small fw-semibold" title="Enterprise Strategy">DF1</th>
                       <th class="text-center text-muted small fw-semibold" title="Enterprise Goals">DF2</th>
                       <th class="text-center text-muted small fw-semibold" title="Risk Profile">DF3</th>
@@ -111,7 +111,7 @@
         {{-- STEP 3 CARD --}}
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm h-100">
-            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <div class="card-header text-white py-3" style="background: var(--cobit-gradient);">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 class="mb-0 fw-bold"><i class="bi bi-2-circle me-2"></i>Step 3: Refined Scope</h6>
@@ -127,7 +127,7 @@
                 <table class="table table-hover table-sm mb-0 align-middle" id="step3Table">
                   <thead class="sticky-top bg-light">
                     <tr>
-                      <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                      <th class="text-center text-muted small fw-semibold" style="width:80px;">GAMO</th>
                       <th class="text-center text-muted small fw-semibold" title="Threat Landscape">DF5</th>
                       <th class="text-center text-muted small fw-semibold" title="Compliance Requirements">DF6</th>
                       <th class="text-center text-muted small fw-semibold" title="Role of IT">DF7</th>
@@ -183,7 +183,7 @@
 
       {{-- STEP 4 SECTION --}}
       <div class="card border-0 shadow-sm mt-4">
-        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);">
+        <div class="card-header text-white py-3" style="background: var(--cobit-gradient);">
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h6 class="mb-0 fw-bold"><i class="bi bi-3-circle me-2"></i>Step 4: Concluded Scope</h6>
@@ -204,7 +204,7 @@
             <table class="table table-hover table-sm mb-0 align-middle" id="step4Table">
               <thead class="bg-light sticky-top">
                 <tr>
-                  <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                  <th class="text-center text-muted small fw-semibold" style="width:80px;">GAMO</th>
                   <th class="text-center text-muted small fw-semibold" style="width:100px;">Adjustment</th>
                   <th class="text-muted small fw-semibold" style="min-width:180px;">Reason (Adjustment)</th>
                   <th class="text-center small fw-semibold text-white" style="width:150px; background:#4B0082;">

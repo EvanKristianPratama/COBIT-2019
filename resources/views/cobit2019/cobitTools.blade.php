@@ -1,124 +1,93 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="card border-0 shadow-lg my-4" style="border-radius: 1rem;">
-        <!-- Enhanced Header -->
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3"
-            style="border-radius: 1rem 1rem 0 0;">
+    <div class="cobit-layout-container">
+        <!-- Modern Toolbar Header -->
+        <div class="cobit-header d-flex justify-content-between align-items-center px-4 py-3 shadow-sm text-white">
             <div class="d-flex align-items-center">
-                <i class="fas fa-tools fa-2x me-3"></i>
-                <h2 class="h3 mb-0 fw-light">COBIT 2019 Tools</h2>
+                <div class="icon-box me-3">
+                    <i class="fas fa-tools fa-lg"></i>
+                </div>
+                <div>
+                    <h2 class="h5 mb-0 fw-bold">COBIT 2019 Tools</h2>
+                    <small class="opacity-75" style="letter-spacing: 0.5px;">Design Factor Analysis</small>
+                </div>
             </div>
-            <a href="{{ route('cobit.home') }}" class="btn btn-link text-white p-1 hover-scale">
-                <i class="fas fa-times fa-lg"></i>
+            <a href="{{ route('cobit.home') }}" class="btn btn-link text-white p-2 hover-scale opacity-75 text-decoration-none">
+                <i class="fas fa-times me-1"></i> Close
             </a>
         </div>
 
-        <!-- Body Content -->
-        <div class="card-body p-4">
+        <!-- Main Content Area -->
+        <div class="cobit-content px-4 py-4">
             @php
-                use App\Models\Assessment;
-
+                // Logic for user/assessment removed as requested for UI cleanup
+                // Only keeping necessary PHP if any (currently none strictly needed for display)
                 $user = Auth::user();
                 if ($user && $user->jabatan === 'guest') {
-                    $assessmentId = 'Guest';
-                    $instansi = 'Guest';
-                    $kodeAssessment = '-';
-                    $createdAt = '-';
-                } else {
-                    $assessmentId = session('assessment_id');
-                    $instansi = session('instansi');
-                    $assessment = \App\Models\Assessment::find($assessmentId);
-
-                    $kodeAssessment = $assessment?->kode_assessment ?? '-';
-                    $createdAt = $assessment?->created_at->format('d M Y H:i') ?? '-';
+                    // Quick alert if needed
                 }
-                $userJabatan = $user->jabatan ?? 'Jabatan tidak tersedia';
             @endphp
 
             @if ($user && $user->jabatan === 'guest')
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger shadow-sm border-0 rounded-3 mb-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
                     Anda menggunakan akun guest. Semua data rancangan tidak akan disimpan.
                 </div>
             @endif
 
-            <!-- User Info Panel -->
-            <div class="user-info-panel bg-light rounded-3 p-4 mb-4 shadow-sm">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-id-badge text-primary me-2 fs-5"></i>
-                            <div>
-                                <div class="text-muted small">Assessment ID</div>
-                                <div class="fw-bold text-dark">{{ $assessmentId }}</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-building text-primary me-2 fs-5"></i>
-                            <div>
-                                <div class="text-muted small">Instansi</div>
-                                <div class="fw-bold text-dark">{{ $instansi }}</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-calendar-alt text-primary me-2 fs-5"></i>
-                            <div>
-                                <div class="text-muted small">Timestamp Assessment</div>
-                                <div class="fw-bold text-dark">{{ $createdAt }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-user-tie text-primary me-2 fs-5"></i>
-                            <div>
-                                <div class="text-muted small">Pengguna</div>
-                                <div class="fw-bold text-dark">{{ $user->name }}</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="fas fa-briefcase text-primary me-2 fs-5"></i>
-                            <div>
-                                <div class="text-muted small">Jabatan</div>
-                                <div class="fw-bold text-dark">{{ $userJabatan }}</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-key text-primary me-2 fs-5"></i>
-                            <div>
-                                <div class="text-muted small">Kode Assessment</div>
-                                <div class="fw-bold text-dark">{{ $kodeAssessment }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="content-wrapper">
+                @yield('cobit-tools-content')
             </div>
         </div>
-
-
-        <!-- Content Section -->
-        <div class="tools-content-section border-top pt-4">
-            @yield('cobit-tools-content')
-        </div>
-    </div>
     </div>
 
     <style>
+        :root {
+            --cobit-gradient: linear-gradient(135deg, #081a3d, #0f2b5c, #1a3d6b);
+        }
+
+        /* Modern Layout Overrides */
+        .cobit-layout-container {
+            background-color: #f8f9fc;
+            min-height: calc(100vh - 80px); /* Adjust based on navbar height */
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .cobit-header {
+            background: var(--cobit-gradient);
+        }
+
+        .icon-box {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
         .hover-scale {
-            transition: transform 0.2s ease;
+            transition: all 0.2s ease;
         }
-
         .hover-scale:hover {
-            transform: scale(1.1);
+            transform: translateY(-1px);
+            opacity: 1 !important;
         }
 
-        .user-info-panel {
-            border: 1px solid rgba(44, 110, 213, 0.15);
+        .content-wrapper {
+            animation: fadeIn 0.4s ease-out;
         }
 
-        .tools-content-section {
-            min-height: 300px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 @endsection

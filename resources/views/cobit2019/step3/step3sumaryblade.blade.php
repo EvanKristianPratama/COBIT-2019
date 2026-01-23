@@ -1,5 +1,4 @@
 @extends('cobit2019.cobitTools')
-
 @section('cobit-tools-content')
   @include('cobit2019.cobitPagination')
 
@@ -33,7 +32,7 @@
         </div>
         <div class="d-flex align-items-center gap-3">
           <span id="saveStatus" class="small text-muted"></span>
-          <button type="button" id="save3Button" class="btn text-white shadow-sm" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+          <button type="button" id="save3Button" class="btn text-white shadow-sm" style="background: var(--cobit-gradient);">
             <i class="bi bi-save me-2"></i>Save
           </button>
         </div>
@@ -41,7 +40,7 @@
 
       {{-- Main Card --}}
       <div class="card border-0 shadow-sm">
-        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+        <div class="card-header text-white py-3" style="background: var(--cobit-gradient);">
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h6 class="mb-0 fw-bold"><i class="bi bi-table me-2"></i>Relative Importance Matrix (DF5–DF10)</h6>
@@ -57,7 +56,7 @@
             <table class="table table-hover table-sm mb-0 align-middle" id="matrixTable">
               <thead class="sticky-top bg-light">
                 <tr>
-                  <th class="text-center text-muted small fw-semibold" style="width:80px;">Code</th>
+                  <th class="text-center text-muted small fw-semibold" style="width:80px;">GAMO</th>
                   <th class="text-center text-muted small fw-semibold" title="Threat Landscape">DF5</th>
                   <th class="text-center text-muted small fw-semibold" title="Compliance Requirements">DF6</th>
                   <th class="text-center text-muted small fw-semibold" title="Role of IT">DF7</th>
