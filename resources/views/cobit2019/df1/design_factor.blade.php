@@ -1,6 +1,6 @@
 @extends('cobit2019.cobitTools')
 @section('cobit-tools-content')
-    @include('cobit2019.cobitPagination')
+@include('cobit2019.cobitPagination')
     <div class="container">
         <!-- Card Utama -->
         <div class="row justify-content-center">
@@ -53,149 +53,37 @@
                                     }
                                 }
                             @endphp
-                            @if($isAdmin)
-                                <div class="mb-3">
-                                    <div class="card shadow-sm border-0">
-                                        <div class="card-header bg-primary text-white fw-bold text-center">
-                                            Panel - Distribusi Jawaban Responden
-                                        </div>
-                                        <div class="card-body p-3">
-                                            <div class="accordion" id="adminStatsAccordion">
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header" id="adminStatsHeading">
-                                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#adminStatsCollapse" aria-expanded="true" aria-controls="adminStatsCollapse">
-                                                            Statistik Distribusi
-                                                        </button>
-                                                    </h2>
-                                                    <div id="adminStatsCollapse" class="accordion-collapse collapse show" aria-labelledby="adminStatsHeading" data-bs-parent="#adminStatsAccordion">
-                                                        <div class="accordion-body p-2">
-                                                            <div class="table-responsive">
-                                                                <table class="table table-bordered table-striped table-sm align-middle mb-0">
-                                                                    <thead class="table-light align-middle small">
-                                                                        <tr>
-                                                                            <th class="text-center align-middle" style="width:220px;">Value</th>
-                                                                            <th class="text-center align-middle" style="width:80px;">Total Responden</th>
-                                                                            <th class="text-center align-middle">Distribusi </th>
-                                                                            <th class="text-center align-middle" style="width:160px;">Modus (Mayoritas)</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        @foreach($df1Fields as $f => $label)
-                                                                            @php
-                                                                                $freqs = $df1Freqs[$f] ?? [1=>0,2=>0,3=>0,4=>0,5=>0];
-                                                                                $maxVal = max($freqs);
-                                                                                $suggestions = collect($freqs)->filter(fn($v) => $v === $maxVal && $v > 0)->keys()->all();
-                                                                            @endphp
-                                                                            <tr class="small">
-                                                                                <td class="fw-semibold align-middle text-center">{{ $label }}</td>
-                                                                                <td class="text-center align-middle">{{ $df1Totals[$f] }}</td>
-                                                                                <td class="align-middle">
-                                                                                    <div style="height:90px;max-width:320px;">
-                                                                                        <canvas id="df1_admin_{{ $f }}_chart" height="90" style="height:90px;"></canvas>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td class="text-center align-middle">
-                                                                                    @if(count($suggestions) > 0)
-                                                                                        @foreach($suggestions as $s)
-                                                                                            <span class="badge bg-primary me-1">{{ $s }}</span>
-                                                                                        @endforeach
-                                                                                    @else
-                                                                                        <span class="text-muted">-</span>
-                                                                                    @endif
-                                                                                </td>
-                                                                            </tr>
-                                                                        @endforeach
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                    <!-- Accordion Detil Jawaban Per User -->
-                                <div class="mb-3">
-                                    <div class="accordion" id="df1UserAccordion">
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header" id="df1UserAccordionHeading">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#df1UserAccordionCollapse" aria-expanded="false" aria-controls="df1UserAccordionCollapse">
-                                                    Lihat Detil Jawaban Per User
-                                                </button>
-                                            </h2>
-                                            <div id="df1UserAccordionCollapse" class="accordion-collapse collapse" aria-labelledby="df1UserAccordionHeading" data-bs-parent="#df1UserAccordion">
-                                                <div class="accordion-body p-2">
-                                                    <div class="table-responsive">
-                                                        <table class="table table-bordered table-sm align-middle mb-0">
-                                                            <thead class="table bg-black small">
-                                                                <tr>
-                                                                    <th class="text-center align-middle ">No</th>
-                                                                    <th class="align-middle">Nama</th>
-                                                                    <th class="align-middle">Email</th>
-                                                                    <th class="align-middle">Grup Fungsi</th>
-                                                                    @foreach($df1Fields as $f => $label)
-                                                                        <th class="text-center align-middle">{{ $label }}</th>
-                                                                    @endforeach
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @forelse($allSubmissions ?? [] as $i => $row)
-                                                                    <tr class="small">
-                                                                        <td class="text-center align-middle">{{ $i+1 }}</td>
-                                                                        <td class="align-middle">{{ $users[$row->id] ?? '-' }}</td>
-                                                                        <td class="align-middle">{{ $email[$row->id] ?? '-' }}</td>
-                                                                        <td class="align-middle">{{ $jabatan[$row->id] ?? '-' }}</td>
-                                                                        @foreach($df1Fields as $f => $label)
-                                                                            <td class="text-center align-middle">{{ $row->{$f} ?? '-' }}</td>
-                                                                        @endforeach
-                                                                    </tr>
-                                                                @empty
-                                                                    <tr><td colspan="{{ 3+count($df1Fields) }}" class="text-center text-muted">Belum ada data</td></tr>
-                                                                @endforelse
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             
-                                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                                <script>
-                                document.addEventListener('DOMContentLoaded', function () {
-                                    const freqs = @json($df1Freqs);
-                                    Object.keys(freqs).forEach(function(f) {
-                                        const ctx = document.getElementById('df1_admin_' + f + '_chart');
-                                        if (!ctx) return;
-                                        const data = [freqs[f][1], freqs[f][2], freqs[f][3], freqs[f][4], freqs[f][5]];
-                                        new Chart(ctx, {
-                                            type: 'bar',
-                                            data: {
-                                                labels: ['1','2','3','4','5'],
-                                                datasets: [{
-                                                    label: 'Jumlah',
-                                                    data: data,
-                                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                                                    borderColor: 'rgba(54, 162, 235, 1)',
-                                                    borderWidth: 1
-                                                }]
-                                            },
-                                            options: {
-                                                responsive: true,
-                                                maintainAspectRatio: false,
-                                                plugins: { legend: { display: false } },
-                                                scales: {
-                                                    x: { grid: { display: false } },
-                                                    y: { beginAtZero: true, precision: 0, stepSize: 1, max: 10 }
-                                                }
-                                            }
-                                        });
-                                    });
-                                });
-                                </script>
+                            @if($isAdmin)
+                                @php
+                                    // Prepare optional contact info
+                                    $contacts = [];
+                                    $roles = [];
+                                    if(isset($allSubmissions) && $allSubmissions->isNotEmpty()) {
+                                        foreach ($allSubmissions as $r) {
+                                           $contacts[$r->id] = $email[$r->id] ?? '-';
+                                           $roles[$r->id] = $jabatan[$r->id] ?? '-';
+                                        }
+                                    }
+                                @endphp
+
+                                {{-- TEMPORARILY DISABLED PER USER REQUEST
+                                @include('cobit2019.components.admin-distribution-stats', [
+                                    'title' => 'Panel - Distribusi Jawaban Responden',
+                                    'chartIdPrefix' => 'df1_admin',
+                                    'fields' => $df1Fields,
+                                    'frequencies' => $df1Freqs,
+                                    'totals' => $df1Totals,
+                                    'submissions' => $allSubmissions,
+                                    'users' => $users,
+                                    'contacts' => $contacts,
+                                    'roles' => $roles,
+                                ])
+                                --}}
                             @endif
+                        
+                            
+
 
                             <form action="{{ route('df1.store') }}" method="POST" id="df1Form">
                             @csrf
