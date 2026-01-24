@@ -146,52 +146,44 @@
                         </thead>
                         <tbody>
                             @foreach ($objective->practices as $practice)
-                                @if ($practice->filled_evidence_count > 0)
-                                    @foreach ($practice->activities as $index => $activity)
-                                        <tr>
-                                            {{-- Column 1: Practice (Rowspan) --}}
-                                            @if ($index === 0)
-                                                <td rowspan="{{ $practice->filled_evidence_count }}"
-                                                    class="align-middle text-center" style="width: 1%;">
-                                                    <div class="fw-bold text-primary p-2 text-nowrap">
-                                                        {{ str_replace('"', '', $practice->practice_id) }}
-                                                    </div>
-                                                </td>
+                                @if ($practice->has_evidence > 0)
+                                    <tr>
+                                        {{-- Column 1: Practice --}}
+                                        <td class="align-middle text-center" style="width: 1%;">
+                                            <div class="fw-bold text-primary p-2 text-nowrap">
+                                                {{ str_replace('"', '', $practice->practice_id) }}
+                                            </div>
+                                        </td>
+
+                                        {{-- Column 2: Kebijakan / Prosedur (Design) --}}
+                                        <td class="align-middle">
+                                            @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
+                                                <div class="small text-break">
+                                                    @foreach ($practice->policy_list as $line)
+                                                        <div class="mb-1">• {{ $line }}</div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="text-muted small fst-italic text-center">Belum ada Kebijakan
+                                                    / Prosedur</div>
                                             @endif
+                                        </td>
 
-                                            {{-- Column 2: Kebijakan / Prosedur (Activity Description) --}}
-                                            <td class="align-middle">
-                                                @if (isset($activity->assessment->policy_list) && count($activity->assessment->policy_list) > 0)
-                                                    <div class="small text-break">
-                                                        @foreach ($activity->assessment->policy_list as $line)
-                                                            <div class="mb-1">{{ $line }}</div>
-                                                        @endforeach
-                                                    </div>
-                                                @else
-                                                    <div class="text-muted small fst-italic text-center">Belum ada Kebijakan
-                                                        / Prosedur</div>
-                                                @endif
-                                            </td>
-
-                                            {{-- Column 3: Evidence --}}
-                                            <td class="align-middle">
-                                                @if (isset($activity->assessment->execution_list) && count($activity->assessment->execution_list) > 0)
-                                                    <div class="small text-break">
-                                                        @foreach ($activity->assessment->execution_list as $line)
-                                                            <div class="mb-1">{{ $line }}</div>
-                                                        @endforeach
-                                                    </div>
-                                                @else
-                                                    <div class="text-muted small fst-italic text-center">Belum ada Evidences
-                                                        / Bukti Pelaksanaan</div>
-                                                @endif
-                                            </td>
-
-
-                                        </tr>
-                                    @endforeach
+                                        {{-- Column 3: Evidence / Bukti Pelaksanaan (Execution) --}}
+                                        <td class="align-middle">
+                                            @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
+                                                <div class="small text-break">
+                                                    @foreach ($practice->execution_list as $line)
+                                                        <div class="mb-1">• {{ $line }}</div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="text-muted small fst-italic text-center">Belum ada Evidences
+                                                    / Bukti Pelaksanaan</div>
+                                            @endif
+                                        </td>
+                                    </tr>
                                 @else
-                                    {{-- Fallback if no evidence found for this practice --}}
                                     <tr>
                                         <td class="align-middle text-center" style="width: 1%;">
                                             <div class="fw-bold text-primary p-2 text-nowrap">
