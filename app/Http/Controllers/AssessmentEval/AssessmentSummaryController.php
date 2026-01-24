@@ -7,6 +7,7 @@ use App\Models\MstEval;
 use App\Models\MstEvidence;
 use App\Models\MstObjective;
 use App\Models\TrsObjectiveScore;
+use App\Models\TrsSummaryActivity;
 use App\Models\TrsSummaryReport;
 use App\Services\EvaluationService;
 use Artisan;
@@ -86,10 +87,11 @@ class AssessmentSummaryController extends Controller
             $maxLevels = [];
         }
 
-        // 6. Fetch Evidence Types for classification AND ID map
-        $allEvidence = MstEvidence::where('eval_id', $evalId)->get();
-        // Map: lowercase(filename) -> type
-        $evidenceTypes = $allEvidence->mapWithKeys(fn ($item) => [strtolower(trim($item->judul_dokumen)) => $item->tipe])->toArray();
+        // 6. Pre-fetch Mapped Evidence from trs_summaryactivity (grouped by activityeval_id)
+        $mappedEvidence = TrsSummaryActivity::with('evidence')
+            ->whereHas('activityEval', fn($q) => $q->where('eval_id', $evalId))
+            ->get()
+            ->groupBy('activityeval_id');
 
         // 7. Fetch Target Capabilities
         $evaluationService = app(EvaluationService::class);
@@ -99,7 +101,7 @@ class AssessmentSummaryController extends Controller
         $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
 
         // Suntik data score dan max level ke dalam masing-masing object
-        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $evidenceTypes, $ratingMap, $targetCapabilityMap, $savedNotes) {
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $mappedEvidence, $ratingMap, $targetCapabilityMap, $savedNotes) {
             $currentLevel = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->current_score = $currentLevel;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
@@ -114,74 +116,57 @@ class AssessmentSummaryController extends Controller
             $filledEvidenceCount = 0;
 
             foreach ($obj->practices as $practice) {
-                // Variabel untuk menyimpan history evidence di practice ini (agar tidak duplikat)
+                // Variabel untuk menyimpan evidence unik per practice (deduplicated)
                 $daftarEvidenceUnikPractice = [];
+                $practicePolicyList = [];
+                $practiceExecutionList = [];
 
                 foreach ($practice->activities as $activity) {
                     // Ambil item pertama dari relasi hasMany (karena 1 activity hanya punya 1 nilai per eval_id ini)
                     $evalData = $activity->evaluations->first();
 
-                    // Logic Deduplikasi Evidence dalam satu Practice
-                    if ($evalData && ! empty($evalData->evidence)) {
-                        $barisEvidenceMentah = explode("\n", $evalData->evidence);
-                        $policyList = [];
-                        $executionList = [];
-
-                        foreach ($barisEvidenceMentah as $namaDokumen) {
-                            $namaDokumenNormalisasi = strtolower(trim($namaDokumen));
-                            if ($namaDokumenNormalisasi === '') {
-                                continue;
-                            }
-
-                            if (! in_array($namaDokumenNormalisasi, $daftarEvidenceUnikPractice)) {
-                                $daftarEvidenceUnikPractice[] = $namaDokumenNormalisasi;
-
-                                // Lookup Tipe
-                                $tipe = $evidenceTypes[$namaDokumenNormalisasi] ?? null;
-
-                                // Filter Logic: Kebijakan vs Pelaksanaan
-                                // Updated to use 'Design' based on latest requirements
-                                if ($tipe && stripos($tipe, 'Design') !== false) {
-                                    $policyList[] = trim($namaDokumen);
-                                } else {
-                                    $executionList[] = trim($namaDokumen);
-                                }
+                    // Logic: Fetch evidence from mapping table (trs_summaryactivity)
+                    if ($evalData) {
+                        // Get mapped evidence for this activity evaluation
+                        $activityMappedEvidence = $mappedEvidence[$evalData->id] ?? collect();
+                        
+                        foreach ($activityMappedEvidence as $mappedItem) {
+                            // Get evidence name (from relation or miss_evidence fallback)
+                            $evidenceName = $mappedItem->evidence_name;
+                            if (empty($evidenceName)) continue;
+                            
+                            // Deduplicate within practice
+                            $normalizedName = strtolower(trim($evidenceName));
+                            if (in_array($normalizedName, $daftarEvidenceUnikPractice)) continue;
+                            $daftarEvidenceUnikPractice[] = $normalizedName;
+                            
+                            // Get evidence type (from relation or 'Execution' default)
+                            $tipe = $mappedItem->evidence_type;
+                            
+                            // Filter Logic: Kebijakan (Design) vs Pelaksanaan (Execution)
+                            if ($tipe && stripos($tipe, 'Design') !== false) {
+                                $practicePolicyList[] = $evidenceName;
+                            } else {
+                                $practiceExecutionList[] = $evidenceName;
                             }
                         }
-
-                        // Inject hasil filter langsung ke objek assessment siap pakai di View
-                        $evalData->policy_list = $policyList;
-                        $evalData->execution_list = $executionList;
-                    }
-
-                    // Suntikkan sebagai 'assessment' agar View & JSON langsung dapat datanya
-                    $activity->assessment = $evalData;
-
-                    // Hitung jika evidence tidak kosong
-                    if ($evalData && ! empty($evalData->evidence)) {
-                        $filledEvidenceCount++;
                     }
 
                     // Hapus relasi asli agar JSON bersih
                     $activity->unsetRelation('evaluations');
                 }
 
-                // Filter logic dipindah ke Controller: Hanya simpan activity yang punya evidence Unik (Normalized/Deduplicated)
-                $filteredActivities = $practice->activities->filter(function ($act) {
-                    if (empty($act->assessment)) {
-                        return false;
-                    }
-                    // Cek apakah list hasil deduplikasi ada isinya
-                    $hasPolicy = ! empty($act->assessment->policy_list) && count($act->assessment->policy_list) > 0;
-                    $hasExecution = ! empty($act->assessment->execution_list) && count($act->assessment->execution_list) > 0;
-
-                    return $hasPolicy || $hasExecution;
-                })->values();
-
-                $practice->setRelation('activities', $filteredActivities);
-
-                // Set count properties for explicit access in View
-                $practice->filled_evidence_count = $filteredActivities->count();
+                // Inject evidence lists at PRACTICE level (not activity level)
+                $practice->policy_list = $practicePolicyList;
+                $practice->execution_list = $practiceExecutionList;
+                
+                // Check if practice has any evidence
+                $hasEvidence = !empty($practicePolicyList) || !empty($practiceExecutionList);
+                $practice->has_evidence = $hasEvidence;
+                
+                if ($hasEvidence) {
+                    $filledEvidenceCount++;
+                }
             }
 
             $obj->filled_evidence_count = $filledEvidenceCount;

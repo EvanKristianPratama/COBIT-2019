@@ -32,4 +32,20 @@ class TrsSummaryActivity extends Model
     {
         return $this->belongsTo(MstEvidence::class, 'evidence_id');
     }
+
+    /**
+     * Get evidence name from relation or miss_evidence fallback
+     */
+    public function getEvidenceNameAttribute()
+    {
+        return $this->evidence?->judul_dokumen ?? $this->miss_evidence;
+    }
+
+    /**
+     * Get evidence type from relation or default to 'Execution'
+     */
+    public function getEvidenceTypeAttribute()
+    {
+        return $this->evidence?->tipe ?? 'Execution';
+    }
 }
