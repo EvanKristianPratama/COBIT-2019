@@ -46,7 +46,6 @@ class EvaluationService
                         return [$act->activity_id => $act->practice->objective_id ?? null];
                     });
 
- 
                 $evidenceMap = MstEvidence::where('eval_id', $evaluation->eval_id)
                     ->get()
                     ->mapWithKeys(function ($item) {

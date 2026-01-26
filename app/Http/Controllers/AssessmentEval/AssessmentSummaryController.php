@@ -4,7 +4,6 @@ namespace App\Http\Controllers\AssessmentEval;
 
 use App\Http\Controllers\Controller;
 use App\Models\MstEval;
-use App\Models\MstEvidence;
 use App\Models\MstObjective;
 use App\Models\TrsObjectiveScore;
 use App\Models\TrsSummaryActivity;
@@ -89,7 +88,7 @@ class AssessmentSummaryController extends Controller
 
         // 6. Pre-fetch Mapped Evidence from trs_summaryactivity (grouped by activityeval_id)
         $mappedEvidence = TrsSummaryActivity::with('evidence')
-            ->whereHas('activityEval', fn($q) => $q->where('eval_id', $evalId))
+            ->whereHas('activityEval', fn ($q) => $q->where('eval_id', $evalId))
             ->get()
             ->groupBy('activityeval_id');
 
@@ -101,14 +100,14 @@ class AssessmentSummaryController extends Controller
         $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
 
         // Suntik data score dan max level ke dalam masing-masing object
-        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $mappedEvidence, $ratingMap, $targetCapabilityMap, $savedNotes) {
+        $objectives->map(function ($obj) use ($objectiveScores, $maxLevels, $mappedEvidence, $ratingMap, $targetCapabilityMap, $savedNotes, $evalId) {
             $currentLevel = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->current_score = $currentLevel;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
             $obj->saved_note = $savedNotes[$obj->objective_id] ?? '';
 
             // Calculate Rating String (e.g., 4F)
-            $obj->rating_string = $this->calculateRatingString($obj, $currentLevel, $ratingMap);
+            $obj->rating_string = $this->calculateRatingString($obj, $currentLevel, $ratingMap, $evalId);
 
             // Inject Target
             $obj->target_level = $targetCapabilityMap[$obj->objective_id] ?? 0;
@@ -129,20 +128,24 @@ class AssessmentSummaryController extends Controller
                     if ($evalData) {
                         // Get mapped evidence for this activity evaluation
                         $activityMappedEvidence = $mappedEvidence[$evalData->id] ?? collect();
-                        
+
                         foreach ($activityMappedEvidence as $mappedItem) {
                             // Get evidence name (from relation or miss_evidence fallback)
                             $evidenceName = $mappedItem->evidence_name;
-                            if (empty($evidenceName)) continue;
-                            
+                            if (empty($evidenceName)) {
+                                continue;
+                            }
+
                             // Deduplicate within practice
                             $normalizedName = strtolower(trim($evidenceName));
-                            if (in_array($normalizedName, $daftarEvidenceUnikPractice)) continue;
+                            if (in_array($normalizedName, $daftarEvidenceUnikPractice)) {
+                                continue;
+                            }
                             $daftarEvidenceUnikPractice[] = $normalizedName;
-                            
+
                             // Get evidence type (from relation or 'Execution' default)
                             $tipe = $mappedItem->evidence_type;
-                            
+
                             // Filter Logic: Kebijakan (Design) vs Pelaksanaan (Execution)
                             if ($tipe && stripos($tipe, 'Design') !== false) {
                                 $practicePolicyList[] = $evidenceName;
@@ -159,11 +162,11 @@ class AssessmentSummaryController extends Controller
                 // Inject evidence lists at PRACTICE level (not activity level)
                 $practice->policy_list = $practicePolicyList;
                 $practice->execution_list = $practiceExecutionList;
-                
+
                 // Check if practice has any evidence
-                $hasEvidence = !empty($practicePolicyList) || !empty($practiceExecutionList);
+                $hasEvidence = ! empty($practicePolicyList) || ! empty($practiceExecutionList);
                 $practice->has_evidence = $hasEvidence;
-                
+
                 if ($hasEvidence) {
                     $filledEvidenceCount++;
                 }
@@ -196,7 +199,7 @@ class AssessmentSummaryController extends Controller
         return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
     }
 
-    private function calculateRatingString($obj, $finalLevel, $ratingMap)
+    private function calculateRatingString($obj, $finalLevel, $ratingMap, $evalId)
     {
         if ($finalLevel == 0) {
             return '0N';
@@ -220,7 +223,12 @@ class AssessmentSummaryController extends Controller
 
         $totalScore = 0;
         foreach ($acts as $a) {
-            $r = $a->assessment->level_achieved ?? 'N';
+            // Query database directly to get evaluation data
+            $activityEval = \App\Models\TrsActivityeval::where('eval_id', $evalId)
+                ->where('activity_id', $a->activity_id)
+                ->first();
+
+            $r = $activityEval ? $activityEval->level_achieved : 'N';
             $totalScore += $ratingMap[$r] ?? 0;
         }
         $avgScore = $totalScore / count($acts);

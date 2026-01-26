@@ -4,15 +4,13 @@ namespace App\Http\Controllers\AssessmentEval;
 
 use App\Http\Controllers\Controller;
 use App\Models\MstEval;
-use App\Models\MstObjective;
 use App\Models\TrsEvalDetail;
-use App\Models\TrsObjectiveScore;
 use App\Models\TrsScoping;
 use App\Models\User;
 use App\Services\EvaluationService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssessmentReportController extends Controller
 {
@@ -208,7 +206,7 @@ class AssessmentReportController extends Controller
             }
         }
 
-// ... (existing code)
+        // ... (existing code)
 
         usort($processedData, function ($a, $b) {
             return ($a['year'] == $b['year'])
@@ -223,23 +221,25 @@ class AssessmentReportController extends Controller
     {
         try {
             $scopeIds = $request->input('scope_ids', []);
-            
+
             // Allow comma separated string if coming from simple form submit
             if (is_string($scopeIds)) {
                 $scopeIds = explode(',', $scopeIds);
             }
-            
-            $scopeIds = array_filter($scopeIds, function($id) { return is_numeric($id); });
+
+            $scopeIds = array_filter($scopeIds, function ($id) {
+                return is_numeric($id);
+            });
 
             if (empty($scopeIds)) {
-                 return redirect()->back()->withErrors(['error' => 'No scopes selected for export.']);
+                return redirect()->back()->withErrors(['error' => 'No scopes selected for export.']);
             }
 
             // Reuse existing data fetching logic
             $reportData = $this->getReportData();
-            
+
             if (isset($reportData['error'])) {
-                 return redirect()->back()->withErrors(['error' => $reportData['error']]);
+                return redirect()->back()->withErrors(['error' => $reportData['error']]);
             }
 
             // Filter data based on selected scopes
@@ -259,22 +259,23 @@ class AssessmentReportController extends Controller
                 $isBumn = stripos($data['scope_name'], 'bumn') !== false;
                 $data['effective_target'] = $isBumn ? $targetBumnOverride : ($data['target_maturity'] ?? 0);
             }
-            unset($data); 
+            unset($data);
 
             $pdf = Pdf::loadView('assessment-eval.report-all-pdf', [
                 'objectives' => $reportData['objectives'],
                 'selectedData' => $selectedData,
-                'showMaxLevel' => $request->input('show_max_level') == '1'
+                'showMaxLevel' => $request->input('show_max_level') == '1',
             ]);
 
             // Set paper size to landscape for better table view
             $pdf->setPaper('a4', 'landscape');
 
-            return $pdf->download('All_Assessments_Report_' . date('Y-m-d_H-i') . '.pdf');
+            return $pdf->download('All_Assessments_Report_'.date('Y-m-d_H-i').'.pdf');
 
         } catch (\Exception $e) {
             Log::error('Failed to export PDF', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
-            return redirect()->back()->withErrors(['error' => 'Failed to export PDF: ' . $e->getMessage()]);
+
+            return redirect()->back()->withErrors(['error' => 'Failed to export PDF: '.$e->getMessage()]);
         }
     }
 }
