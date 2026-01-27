@@ -234,69 +234,53 @@
                 <table class="table" style="border: 1px solid #000;">
                     <thead>
                         <tr>
-                            <th style="width: 10%; background-color: #0f2b5c; color: white;">Practice</th>
-                            <th style="width: 45%; background-color: #0f2b5c; color: white;">Kebijakan Pedoman /
+                            <th style="width: 50%; background-color: #0f2b5c; color: white;">Kebijakan Pedoman /
                                 Prosedur</th>
-                            <th style="width: 45%; background-color: #0f2b5c; color: white;">Evidences / Bukti
+                            <th style="width: 50%; background-color: #0f2b5c; color: white;">Evidences / Bukti
                                 Pelaksanaan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($objective->practices as $practice)
-                            @if ($practice->has_evidence > 0)
-                                <tr>
-                                    <td class="text-center" style="vertical-align: middle; width: 10%;">
-                                        <div
-                                            style="font-weight: bold; color: #0d6efd; padding: 2px; white-space: nowrap;">
-                                            {{ str_replace('"', '', $practice->practice_id) }}
+                        @if ($objective->has_evidence)
+                            <tr>
+                                <td style="vertical-align: middle;">
+                                    @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
+                                        <div style="font-size: 9pt;">
+                                            @foreach ($objective->policy_list as $line)
+                                                <div style="margin-bottom: 1px;">• {{ $line }}</div>
+                                            @endforeach
                                         </div>
-                                    </td>
-
-                                    <td style="vertical-align: middle;">
-                                        @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
-                                            <div style="font-size: 9pt;">
-                                                @foreach ($practice->policy_list as $line)
-                                                    <div style="margin-bottom: 1px;">• {{ $line }}</div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <div
-                                                style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                                Belum ada Kebijakan / Prosedur
-                                            </div>
-                                        @endif
-                                    </td>
-
-                                    <td style="vertical-align: middle;">
-                                        @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
-                                            <div style="font-size: 9pt;">
-                                                @foreach ($practice->execution_list as $line)
-                                                    <div style="margin-bottom: 1px;">• {{ $line }}</div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <div
-                                                style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                                Belum ada Evidences / Bukti Pelaksanaan
-                                            </div>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @else
-                                <tr>
-                                    <td class="text-center" style="vertical-align: middle; width: 10%;">
+                                    @else
                                         <div
-                                            style="font-weight: bold; color: #0d6efd; padding: 2px; white-space: nowrap;">
-                                            {{ str_replace('"', '', $practice->practice_id) }}
+                                            style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
+                                            Belum ada Kebijakan / Prosedur
                                         </div>
-                                    </td>
-                                    <td colspan="2"
-                                        style="text-align: center; font-style: italic; color: #6c757d; font-size: 9pt;">
-                                        Belum ada Kebijakan & Bukti Pelaksanaan
-                                    </td>
-                                </tr>
-                            @endif
-                        @endforeach
+                                    @endif
+                                </td>
+
+                                <td style="vertical-align: middle;">
+                                    @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
+                                        <div style="font-size: 9pt;">
+                                            @foreach ($objective->execution_list as $line)
+                                                <div style="margin-bottom: 1px;">• {{ $line }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div
+                                            style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
+                                            Belum ada Evidences / Bukti Pelaksanaan
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td colspan="2"
+                                    style="text-align: center; font-style: italic; color: #6c757d; font-size: 9pt;">
+                                    Belum ada Kebijakan & Bukti Pelaksanaan
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

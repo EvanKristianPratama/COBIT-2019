@@ -8,7 +8,7 @@
                 <div class="d-flex align-items-center mb-2 px-3 py-2 text-white justify-content-between"
                     style="background-color: #0f2b5c;">
                     <div class="fw-bold fs-5">
-                        {{ $loop->iteration }}. {{ $objective->objective_id }} - {{ $objective->objective }}
+                        {{ $objective->objective_id }} - {{ $objective->objective }}
                     </div>
                     <div>
                         <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
@@ -137,64 +137,49 @@
                     <table class="table table-bordered align-middle mb-0" style="border-color: #000; border-width: 2px;">
                         <thead>
                             <tr class="text-center">
-                                <th class="text-white" style="width: 5%; background-color: #0f2b5c;">Practice</th>
-                                <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Kebijakan Pedoman /
+                                <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Kebijakan Pedoman /
                                     Prosedur</th>
                                 <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Evidences / Bukti
                                     Pelaksanaan</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($objective->practices as $practice)
-                                @if ($practice->has_evidence > 0)
-                                    <tr>
-                                        {{-- Column 1: Practice --}}
-                                        <td class="align-middle text-center" style="width: 1%;">
-                                            <div class="fw-bold text-primary p-2 text-nowrap">
-                                                {{ str_replace('"', '', $practice->practice_id) }}
+                            @if ($objective->has_evidence)
+                                <tr>
+                                    {{-- Column 1: Kebijakan / Prosedur (Design) --}}
+                                    <td class="align-middle">
+                                        @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
+                                            <div class="small text-break">
+                                                @foreach ($objective->policy_list as $line)
+                                                    <div class="mb-1">• {{ $line }}</div>
+                                                @endforeach
                                             </div>
-                                        </td>
+                                        @else
+                                            <div class="text-muted small fst-italic text-center">Belum ada Kebijakan
+                                                / Prosedur</div>
+                                        @endif
+                                    </td>
 
-                                        {{-- Column 2: Kebijakan / Prosedur (Design) --}}
-                                        <td class="align-middle">
-                                            @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
-                                                <div class="small text-break">
-                                                    @foreach ($practice->policy_list as $line)
-                                                        <div class="mb-1">• {{ $line }}</div>
-                                                    @endforeach
-                                                </div>
-                                            @else
-                                                <div class="text-muted small fst-italic text-center">Belum ada Kebijakan
-                                                    / Prosedur</div>
-                                            @endif
-                                        </td>
-
-                                        {{-- Column 3: Evidence / Bukti Pelaksanaan (Execution) --}}
-                                        <td class="align-middle">
-                                            @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
-                                                <div class="small text-break">
-                                                    @foreach ($practice->execution_list as $line)
-                                                        <div class="mb-1">• {{ $line }}</div>
-                                                    @endforeach
-                                                </div>
-                                            @else
-                                                <div class="text-muted small fst-italic text-center">Belum ada Evidences
-                                                    / Bukti Pelaksanaan</div>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @else
-                                    <tr>
-                                        <td class="align-middle text-center" style="width: 1%;">
-                                            <div class="fw-bold text-primary p-2 text-nowrap">
-                                                {{ str_replace('"', '', $practice->practice_id) }}
+                                    {{-- Column 2: Evidence / Bukti Pelaksanaan (Execution) --}}
+                                    <td class="align-middle">
+                                        @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
+                                            <div class="small text-break">
+                                                @foreach ($objective->execution_list as $line)
+                                                    <div class="mb-1">• {{ $line }}</div>
+                                                @endforeach
                                             </div>
-                                        </td>
-                                        <td colspan="2" class="text-center fst-italic text-muted small">Belum ada
-                                            Kebijakan & Bukti Pelaksanaan</td>
-                                    </tr>
-                                @endif
-                            @endforeach
+                                        @else
+                                            <div class="text-muted small fst-italic text-center">Belum ada Evidences
+                                                / Bukti Pelaksanaan</div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <td colspan="2" class="text-center fst-italic text-muted small">Belum ada
+                                        Kebijakan & Bukti Pelaksanaan</td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>

@@ -114,12 +114,12 @@ class AssessmentSummaryController extends Controller
 
             $filledEvidenceCount = 0;
 
-            foreach ($obj->practices as $practice) {
-                // Variabel untuk menyimpan evidence unik per practice (deduplicated)
-                $daftarEvidenceUnikPractice = [];
-                $practicePolicyList = [];
-                $practiceExecutionList = [];
+            // Variabel untuk menyimpan evidence unik per GAMO/objective (deduplicated)
+            $daftarEvidenceUnikGamo = [];
+            $objectivePolicyList = [];
+            $objectiveExecutionList = [];
 
+            foreach ($obj->practices as $practice) {
                 foreach ($practice->activities as $activity) {
                     // Ambil item pertama dari relasi hasMany (karena 1 activity hanya punya 1 nilai per eval_id ini)
                     $evalData = $activity->evaluations->first();
@@ -136,21 +136,21 @@ class AssessmentSummaryController extends Controller
                                 continue;
                             }
 
-                            // Deduplicate within practice
+                            // Deduplicate within GAMO/objective (not practice)
                             $normalizedName = strtolower(trim($evidenceName));
-                            if (in_array($normalizedName, $daftarEvidenceUnikPractice)) {
+                            if (in_array($normalizedName, $daftarEvidenceUnikGamo)) {
                                 continue;
                             }
-                            $daftarEvidenceUnikPractice[] = $normalizedName;
+                            $daftarEvidenceUnikGamo[] = $normalizedName;
 
                             // Get evidence type (from relation or 'Execution' default)
                             $tipe = $mappedItem->evidence_type;
 
-                            // Filter Logic: Kebijakan (Design) vs Pelaksanaan (Execution)
-                            if ($tipe && stripos($tipe, 'Design') !== false) {
-                                $practicePolicyList[] = $evidenceName;
+                            // Filter Logic: Kebijakan (Design/Procedure) vs Pelaksanaan (Execution/Report)
+                            if ($tipe && (stripos($tipe, 'Design') !== false || stripos($tipe, 'Procedure') !== false)) {
+                                $objectivePolicyList[] = $evidenceName;
                             } else {
-                                $practiceExecutionList[] = $evidenceName;
+                                $objectiveExecutionList[] = $evidenceName;
                             }
                         }
                     }
@@ -158,18 +158,18 @@ class AssessmentSummaryController extends Controller
                     // Hapus relasi asli agar JSON bersih
                     $activity->unsetRelation('evaluations');
                 }
+            }
 
-                // Inject evidence lists at PRACTICE level (not activity level)
-                $practice->policy_list = $practicePolicyList;
-                $practice->execution_list = $practiceExecutionList;
+            // Inject evidence lists at OBJECTIVE/GAMO level
+            $obj->policy_list = $objectivePolicyList;
+            $obj->execution_list = $objectiveExecutionList;
 
-                // Check if practice has any evidence
-                $hasEvidence = ! empty($practicePolicyList) || ! empty($practiceExecutionList);
-                $practice->has_evidence = $hasEvidence;
+            // Check if objective has any evidence
+            $hasEvidence = ! empty($objectivePolicyList) || ! empty($objectiveExecutionList);
+            $obj->has_evidence = $hasEvidence;
 
-                if ($hasEvidence) {
-                    $filledEvidenceCount++;
-                }
+            if ($hasEvidence) {
+                $filledEvidenceCount = 1; // Count as 1 if GAMO has evidence
             }
 
             $obj->filled_evidence_count = $filledEvidenceCount;
