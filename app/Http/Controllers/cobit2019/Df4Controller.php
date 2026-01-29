@@ -83,7 +83,7 @@ class Df4Controller extends Controller
 
         $designFactor4 = null;
         if ($history['inputs']) {
-            $obj = (object) [];
+            $obj = (object) ['df_id' => $id];
             foreach ($history['inputs'] as $key => $val) {
                 $obj->{$key} = $val;
             }

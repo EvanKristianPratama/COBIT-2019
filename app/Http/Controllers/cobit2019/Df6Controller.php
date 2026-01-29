@@ -82,6 +82,7 @@ class Df6Controller extends Controller
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
 
         $designFactor6 = $history['inputs'] ? (object) [
+            'df_id' => $id,
             'input1df6' => $history['inputs'][0] ?? 0,
             'input2df6' => $history['inputs'][1] ?? 0,
             'input3df6' => $history['inputs'][2] ?? 0,

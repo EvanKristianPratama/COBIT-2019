@@ -82,6 +82,7 @@ class Df9Controller extends Controller
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
 
         $designFactor9 = $history['inputs'] ? (object) [
+            'df_id' => $id,
             'input1df9' => $history['inputs'][0] ?? 0,
             'input2df9' => $history['inputs'][1] ?? 0,
             'input3df9' => $history['inputs'][2] ?? 0,

@@ -81,6 +81,7 @@ class Df5Controller extends Controller
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
 
         $designFactor5 = $history['inputs'] ? (object) [
+            'df_id' => $id,
             'input1df5' => $history['inputs'][0] ?? 0,
             'input2df5' => $history['inputs'][1] ?? 0,
         ] : null;
