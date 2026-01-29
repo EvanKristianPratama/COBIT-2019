@@ -33,7 +33,7 @@ class DfController extends Controller
 
         return view('cobit2019.df1.design_factor', [
             'id' => $id,
-            'history' => null, // Kept for backward compat
+            'history' => null, 
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
             'historyRIArray' => $history['relativeImportance'],
@@ -85,6 +85,7 @@ class DfController extends Controller
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
         $designFactor = $history['inputs'] ? (object) [
+            'df_id' => $id,
             'input1df1' => $history['inputs'][0] ?? 0,
             'input2df1' => $history['inputs'][1] ?? 0,
             'input3df1' => $history['inputs'][2] ?? 0,

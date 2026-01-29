@@ -85,7 +85,7 @@ class Df3Controller extends Controller
             ? $this->service->loadHistory($assessmentId, $id)
             : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor3 = $history['inputs'] ? (object) $history['inputs'] : null;
+        $designFactor3 = $history['inputs'] ? (object) array_merge(['df_id' => $id], $history['inputs']) : null;
 
         $designFactorRelativeImportance = null;
         if ($history['relativeImportance']) {

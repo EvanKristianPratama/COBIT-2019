@@ -85,7 +85,7 @@ class Df2Controller extends Controller
 
         $designFactor2 = null;
         if ($history['inputs']) {
-            $obj = (object) [];
+            $obj = (object) ['df_id' => $id];
             foreach ($history['inputs'] as $idx => $val) {
                 $obj->{"input" . ($idx + 1) . "df2"} = $val;
             }

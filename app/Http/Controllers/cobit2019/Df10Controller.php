@@ -124,6 +124,7 @@ class Df10Controller extends Controller
 
         if ($history['inputs']) {
             $designFactor10 = (object) [
+                'df_id' => $id,
                 'input1df10' => $history['inputs'][0] ?? 0,
                 'input2df10' => $history['inputs'][1] ?? 0,
                 'input3df10' => $history['inputs'][2] ?? 0,
