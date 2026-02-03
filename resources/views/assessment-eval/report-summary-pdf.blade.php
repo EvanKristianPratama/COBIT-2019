@@ -281,7 +281,17 @@
                 </div>
                 <div style="padding: 10px; background-color: white;">
                     <p style="margin: 0; font-size: 10pt; color: #000;">
-                        {{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '-' }}
+                        @php
+                            $rekomendasi = is_array($objective->saved_note)
+                                ? $objective->saved_note['rekomendasi']
+                                : '';
+                            $rekomendasi = trim($rekomendasi);
+                        @endphp
+                        @if (empty($rekomendasi) || $rekomendasi === '-')
+                            <span style="color: #6c757d; font-style: italic;">Belum ada rekomendasi perbaikan</span>
+                        @else
+                            {{ $rekomendasi }}
+                        @endif
                     </p>
                 </div>
             </div>
@@ -293,7 +303,15 @@
                 </div>
                 <div style="padding: 10px; background-color: white;">
                     <p style="margin: 0; font-size: 10pt; color: #000;">
-                        {{ is_array($objective->saved_note) ? $objective->saved_note['catatan'] : '-' }}
+                        @php
+                            $catatan = is_array($objective->saved_note) ? $objective->saved_note['catatan'] : '';
+                            $catatan = trim($catatan);
+                        @endphp
+                        @if (empty($catatan) || $catatan === '-')
+                            <span style="color: #6c757d; font-style: italic;">Belum ada catatan</span>
+                        @else
+                            {{ $catatan }}
+                        @endif
                     </p>
                 </div>
             </div>
