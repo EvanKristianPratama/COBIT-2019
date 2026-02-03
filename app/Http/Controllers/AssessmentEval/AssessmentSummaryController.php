@@ -62,11 +62,18 @@ class AssessmentSummaryController extends Controller
 
         $objectiveScores = $scoresQuery->pluck('level', 'objective_id')->toArray();
 
-        // Pre-fetch Saved Notes
-        $savedNotes = TrsSummaryReport::where('eval_id', $evalId)
+        // Pre-fetch Saved Notes (rekomendasi & catatan)
+        $savedNotesQuery = TrsSummaryReport::where('eval_id', $evalId)
             ->when($objectiveId, fn ($q) => $q->where('objective_id', $objectiveId))
-            ->pluck('notes', 'objective_id')
-            ->toArray();
+            ->get();
+
+        $savedNotes = [];
+        foreach ($savedNotesQuery as $note) {
+            $savedNotes[$note->objective_id] = [
+                'rekomendasi' => $note->rekomendasi ?? '',
+                'catatan' => $note->catatan ?? '',
+            ];
+        }
 
         // 5. Max Capability Level (Hardcoded)
         $maxLevels = [
@@ -104,7 +111,7 @@ class AssessmentSummaryController extends Controller
             $currentLevel = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->current_score = $currentLevel;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
-            $obj->saved_note = $savedNotes[$obj->objective_id] ?? '';
+            $obj->saved_note = $savedNotes[$obj->objective_id] ?? ['rekomendasi' => '', 'catatan' => ''];
 
             // Calculate Rating String (e.g., 4F)
             $obj->rating_string = $this->calculateRatingString($obj, $currentLevel, $ratingMap, $evalId);
@@ -184,16 +191,21 @@ class AssessmentSummaryController extends Controller
     {
         $request->validate([
             'objective_id' => 'required|string',
-            'notes' => 'nullable|string',
+            'rekomendasi' => 'nullable|string',
+            'catatan' => 'nullable|string',
         ]);
 
         $objectiveId = $request->input('objective_id');
-        $notes = $request->input('notes');
+        $rekomendasi = $request->input('rekomendasi');
+        $catatan = $request->input('catatan');
 
         // 1. Save or Update Summary Report
         $summaryReport = TrsSummaryReport::updateOrCreate(
             ['eval_id' => $evalId, 'objective_id' => $objectiveId],
-            ['notes' => $notes]
+            [
+                'rekomendasi' => $rekomendasi,
+                'catatan' => $catatan,
+            ]
         );
 
         return redirect()->back()->with('success', 'Catatan berhasil disimpan.');

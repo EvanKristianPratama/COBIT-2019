@@ -106,17 +106,6 @@
                     <td style="width: 35%; border: none; padding: 0; padding-right: 10px; vertical-align: top;">
                         <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
                             <thead>
-                                {{-- New Top Row: Objective ID --}}
-                                <tr style="background-color: #9b59b6; color: #fff;">
-                                    <th colspan="4"
-                                        style="border: 1px solid #fff; background-color: #9b59b6; color: #fff; text-align: center; vertical-align: middle; padding: 8px;">
-                                        <div style="font-weight: bold; font-size: 1.1rem; line-height: 1.2;">
-                                            {{ $objective->objective_id }}
-                                        </div>
-                                        <div style="font-size: 0.65rem; margin-top: 4px;">{{ $objective->objective }}
-                                        </div>
-                                    </th>
-                                </tr>
                                 {{-- Header Row --}}
                                 <tr style="background-color: #9b59b6; color: #fff;">
                                     <th
@@ -285,14 +274,26 @@
                 </table>
             </div>
 
-            {{-- Potensi Perbaikan Section --}}
+            {{-- Rekomendasi Perbaikan Section --}}
             <div style="margin-top: 5px; border: 1px solid #dee2e6;">
                 <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
-                    Potensi Perbaikan
+                    Rekomendasi Perbaikan
                 </div>
                 <div style="padding: 10px; background-color: white;">
                     <p style="margin: 0; font-size: 10pt; color: #000;">
-                        {{ $objective->saved_note ?? '-' }}
+                        {{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '-' }}
+                    </p>
+                </div>
+            </div>
+
+            {{-- Catatan Section --}}
+            <div style="margin-top: 5px; border: 1px solid #dee2e6;">
+                <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
+                    Catatan
+                </div>
+                <div style="padding: 10px; background-color: white;">
+                    <p style="margin: 0; font-size: 10pt; color: #000;">
+                        {{ is_array($objective->saved_note) ? $objective->saved_note['catatan'] : '-' }}
                     </p>
                 </div>
             </div>

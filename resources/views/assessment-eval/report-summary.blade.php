@@ -10,12 +10,6 @@
                     <div class="fw-bold fs-5">
                         {{ $objective->objective_id }} - {{ $objective->objective }}
                     </div>
-                    <div>
-                        <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
-                            class="btn btn-sm btn-danger text-white fw-bold rounded-pill px-3" target="_blank">
-                            <i class="fas fa-file-pdf me-1"></i> Export PDF
-                        </a>
-                    </div>
                 </div>
 
                 <div class="row g-0">
@@ -25,17 +19,6 @@
                             <table class="table table-bordered mb-0"
                                 style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                                 <thead>
-                                    {{-- New Top Row: Objective ID --}}
-                                    <tr style="background-color: #9b59b6; color: #fff;">
-                                        <th colspan="4"
-                                            style="border: 1px solid #fff; background-color: #9b59b6; color: #fff; text-align: center; vertical-align: middle; padding: 8px;">
-                                            <div class="fw-bold" style="font-size: 1.1rem; line-height: 1.2;">
-                                                {{ $objective->objective_id }}
-                                            </div>
-                                            <div style="font-size: 0.65rem; margin-top: 4px;">{{ $objective->objective }}
-                                            </div>
-                                        </th>
-                                    </tr>
                                     {{-- Header Row --}}
                                     <tr style="background-color: #9b59b6; color: #fff;">
                                         <th
@@ -184,33 +167,127 @@
                     </table>
                 </div>
 
-                {{-- Potensi Perbaikan Section (Per GAMO) --}}
-                <div class="mt-2 border">
+                {{-- Rekomendasi & Catatan Section --}}
+                <div class="mt-2">
                     <form action="{{ route('assessment-eval.summary.save-note', ['evalId' => $evaluation->eval_id]) }}"
                         method="POST">
                         @csrf
                         <input type="hidden" name="objective_id" value="{{ $objective->objective_id }}">
 
-                        <div class="d-flex justify-content-between align-items-center text-white px-2 py-1"
-                            style="background-color: #0f2b5c;">
-                            <div class="fw-bold small">Potensi Perbaikan</div>
-                            <button type="submit" class="btn btn-sm btn-light py-0 px-2 fw-bold d-flex align-items-center"
-                                style="font-size: 0.7rem;">
-                                <i class="fas fa-save me-1"></i> Simpan
-                            </button>
+                        {{-- Rekomendasi Perbaikan --}}
+                        <div class="text-white px-2 py-1" style="background-color: #0f2b5c;">
+                            <div class="fw-bold small">Rekomendasi Perbaikan</div>
                         </div>
-                        <div class="p-2 bg-white">
-                            <textarea name="notes" class="form-control border-0" rows="3"
-                                placeholder="Masukkan catatan perbaikan untuk {{ $objective->objective_id }}...">{{ $objective->saved_note }}</textarea>
+                        <div class="p-2 bg-white border">
+                            <textarea name="rekomendasi" class="form-control border-0" rows="3"
+                                placeholder="Masukkan rekomendasi perbaikan untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '' }}</textarea>
+                        </div>
+
+                        {{-- Catatan --}}
+                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
+                            <div class="fw-bold small">Catatan</div>
+                        </div>
+                        <div class="p-2 bg-white border">
+                            <textarea name="catatan" class="form-control border-0" rows="3"
+                                placeholder="Masukkan catatan untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['catatan'] : '' }}</textarea>
                         </div>
                     </form>
                 </div>
             </div>
+
+            {{-- Floating Action Buttons --}}
+            <div class="sticky-action-group">
+                <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
+                    class="btn btn-danger sticky-action-btn" target="_blank" title="Export PDF">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Export PDF</span>
+                </a>
+                <button type="button" class="btn btn-primary sticky-action-btn" id="saveAllNotesBtn" title="Simpan Semua">
+                    <i class="fas fa-save"></i>
+                    <span>Simpan Semua</span>
+                </button>
+            </div>
         @endforeach
+
     </div>
 @endsection
 
 @push('scripts')
+    <style>
+        .sticky-action-group {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.45rem;
+            z-index: 1050;
+        }
+
+        .sticky-action-btn {
+            border-radius: 999px;
+            padding: 0;
+            font-weight: 600;
+            font-size: 0 !important;
+            /* Hide text completely in collapsed mode */
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Center the icon perfectly */
+            box-shadow: 0 10px 24px rgba(15, 106, 217, 0.18);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sticky-action-btn:hover {
+            width: 160px;
+            padding: 0 1.25rem;
+            justify-content: flex-start;
+            font-size: 0.85rem !important;
+            /* Restore text size on hover */
+        }
+
+        .sticky-action-btn i {
+            font-size: 1.2rem !important;
+            /* Ensure icon stays visible */
+            margin-right: 0 !important;
+            transition: margin 0.3s ease;
+        }
+
+        .sticky-action-btn:hover i {
+            margin-right: 0.5rem !important;
+        }
+
+        .sticky-action-btn.btn-danger {
+            background: linear-gradient(120deg, #dc3545, #c82333);
+            border: none;
+            color: #fff;
+        }
+
+        .sticky-action-btn.btn-primary {
+            background: linear-gradient(120deg, #0f6ad9, #0c4fb5);
+            border: none;
+            color: #fff;
+        }
+
+        .sticky-action-btn.btn-light {
+            background: #fff;
+            color: #0f2b5c;
+            border: 1px solid rgba(15, 43, 92, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            .sticky-action-group {
+                right: 15px;
+                bottom: 15px;
+            }
+        }
+    </style>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             @if (session('success'))
@@ -230,6 +307,78 @@
                     text: '{{ session('error') }}'
                 });
             @endif
+
+            // Save All Notes functionality
+            const saveAllBtn = document.getElementById('saveAllNotesBtn');
+            if (saveAllBtn) {
+                saveAllBtn.addEventListener('click', function() {
+                    // Get all forms on the page
+                    const forms = document.querySelectorAll('form[action*="save-note"]');
+
+                    if (forms.length === 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Tidak Ada Form',
+                            text: 'Tidak ada catatan untuk disimpan.'
+                        });
+                        return;
+                    }
+
+                    // Collect all form data
+                    let savePromises = [];
+                    let savedCount = 0;
+
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        text: 'Sedang menyimpan semua catatan',
+                        icon: 'info',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    forms.forEach(form => {
+                        const formData = new FormData(form);
+                        const actionUrl = form.getAttribute('action');
+
+                        const promise = fetch(actionUrl, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        }).then(response => {
+                            if (response.ok) {
+                                savedCount++;
+                            }
+                            return response;
+                        });
+
+                        savePromises.push(promise);
+                    });
+
+                    Promise.all(savePromises)
+                        .then(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: `${savedCount} catatan berhasil disimpan.`,
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: 'Terjadi kesalahan saat menyimpan catatan.'
+                            });
+                        });
+                });
+            }
         });
     </script>
 @endpush
