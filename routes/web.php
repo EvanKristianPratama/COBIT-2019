@@ -29,6 +29,7 @@ use App\Http\Controllers\cobit2019\Step4Controller;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Auth\SsoCallbackController;
 use App\Http\Controllers\Spreadsheet\SpreadsheetController;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
@@ -127,6 +128,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('login/google', [LoginController::class, 'redirectToGoogle']);
 Route::get('login/google/callback', [LoginController::class, 'handleGoogleCallback']);
+
+// SSO Divusi callback route
+Route::get('/sso/callback', [SsoCallbackController::class, 'handle'])->name('sso.callback');
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
@@ -395,3 +399,19 @@ Route::get('/clear-semua', function () {
 
     return 'Cache Berhasil Dibersihkan!';
 });
+
+// TEMPORARY: Route for generating API Token for testing
+Route::get('/test-api-token', function () {
+    if (!auth()->check()) {
+        return 'Please login first!';
+    }
+    
+    // Create new token
+    $token = auth()->user()->createToken('TestToken')->plainTextToken;
+    
+    return '<h3>API Token Generated (Copy this):</h3>' .
+           '<textarea style="width:100%;height:100px">' . $token . '</textarea>' .
+           '<br><br><b>How to use:</b><br>' .
+           'Run this command in terminal:<br>' .
+           '<code>curl -H "Authorization: Bearer ' . $token . '" -H "Accept: application/json" http://localhost:8000/api/v1/assessments/1</code>';
+})->middleware('web');

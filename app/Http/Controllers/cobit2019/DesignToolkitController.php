@@ -141,7 +141,7 @@ class DesignToolkitController extends Controller
 
         // Create new assessment
         if (in_array(strtolower($kode), ['new', 'create'])) {
-            return $this->createNewAssessment($user);
+            return $this->createNewAssessment($user, $request);
         }
 
         // Join existing assessment
@@ -277,14 +277,16 @@ class DesignToolkitController extends Controller
             ->with('success', 'Berhasil masuk sebagai Guest (session sementara dibuat).');
     }
 
-    private function createNewAssessment($user)
+    private function createNewAssessment($user, Request $request = null)
     {
         $newCode = 'AUTO-' . strtoupper(substr(md5(uniqid()), 0, 6));
+        $tahun = $request ? $request->input('tahun', date('Y')) : date('Y');
 
         $assessment = Assessment::create([
             'kode_assessment' => $newCode,
             'instansi' => $user->organisasi ?? ($user->name ?? 'User Assessment'),
             'user_id' => $user->id,
+            'tahun' => $tahun,
         ]);
 
         session()->put([
@@ -292,6 +294,7 @@ class DesignToolkitController extends Controller
             'instansi' => $assessment->instansi,
             'is_guest' => $this->isGuestUser($user),
             'assessment_temp' => false,
+            'tahun' => $assessment->tahun,
         ]);
 
         return redirect()->route('df1.form', ['id' => session('assessment_id')])

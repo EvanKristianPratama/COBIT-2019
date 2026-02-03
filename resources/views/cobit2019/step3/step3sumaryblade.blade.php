@@ -46,9 +46,14 @@
               <h6 class="mb-0 fw-bold"><i class="bi bi-table me-2"></i>Relative Importance Matrix (DF5–DF10)</h6>
               <small class="opacity-75">Design Factor ID: {{ $assessment->assessment_id }}</small>
             </div>
-            <button type="button" class="btn btn-sm btn-light" id="sortBtn">
-              <i class="bi bi-sort-down"></i> Sort by Score
-            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-light" id="sortBtn">
+                  <i class="bi bi-sort-down"></i> Sort
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-light" id="resetBtn">
+                  <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+            </div>
           </div>
         </div>
         <div class="card-body p-0">
@@ -92,7 +97,7 @@
                     // Get step2 total for this code
                     $tot2 = $step2Totals[$code] ?? ($step2Totals[$loop->index] ?? 0);
                   @endphp
-                  <tr class="objective-row" data-code="{{ $code }}" data-step2-total="{{ $tot2 }}">
+                  <tr class="objective-row" data-code="{{ $code }}" data-step2-total="{{ $tot2 }}" data-original-index="{{ $loop->index }}">
                     <td class="text-center fw-semibold text-primary">{{ $cobitCodes[$code] ?? '' }}</td>
                     @foreach ($values as $i => $val)
                       <td class="text-center small value-cell {{ $val < 0 ? 'text-danger' : ($val > 0 ? 'text-success' : 'text-muted') }}" data-value="{{ $val }}">
@@ -234,6 +239,17 @@
         document.querySelector('#sortBtn i').className = sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down';
       }
 
+      function resetSort() {
+        const tbody = document.querySelector('#matrixTable tbody');
+        const rowsArr = Array.from(rows);
+        rowsArr.sort((a, b) => {
+             return parseInt(a.dataset.originalIndex) - parseInt(b.dataset.originalIndex);
+        });
+        rowsArr.forEach(r => tbody.appendChild(r));
+        sortAsc = false; 
+        document.querySelector('#sortBtn i').className = 'bi bi-sort-down';
+      }
+
       // Auto-save
       let saveTimer;
       function autoSave() {
@@ -259,6 +275,8 @@
       }));
 
       document.getElementById('sortBtn').addEventListener('click', sortTable);
+      document.getElementById('resetBtn').addEventListener('click', resetSort);
+
       document.getElementById('save3Button').addEventListener('click', () => {
         calculateAll();
         document.getElementById('step3Form').submit();

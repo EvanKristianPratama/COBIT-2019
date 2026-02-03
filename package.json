@@ -19,6 +19,8 @@
     },
     "dependencies": {
         "@tailwindcss/vite": "^4.1.11",
-        "prettier-plugin-blade": "^2.1.19"
+        "@vitejs/plugin-vue": "^6.0.4",
+        "prettier-plugin-blade": "^2.1.19",
+        "vue": "^3.5.27"
     }
 }

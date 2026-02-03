@@ -134,13 +134,9 @@
           <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#joinModal">
             Join dengan Kode
           </button>
-          <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
-            @csrf
-            <input type="hidden" name="kode_assessment" value="new">
-            <button type="submit" class="btn btn-primary">
-              Buat Baru
-            </button>
-          </form>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+            Buat Baru
+          </button>
         </div>
 
       </div>
@@ -168,6 +164,32 @@
         </div>
         <div class="modal-footer border-0 pt-0">
           <button type="submit" class="btn btn-primary w-100">Join</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{{-- Create Assessment Modal --}}
+<div class="modal fade" id="createModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title">Buat Assessment Baru</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ route('assessment.join.store') }}">
+        @csrf
+        <input type="hidden" name="kode_assessment" value="new">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="tahun" class="form-label">Tahun Assessment</label>
+            <input type="number" id="tahun" name="tahun" class="form-control form-control-lg" placeholder="YYYY" min="2000" max="2100" value="{{ date('Y') }}" required>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="submit" class="btn btn-primary w-100">Buat Assessment</button>
         </div>
       </form>
     </div>

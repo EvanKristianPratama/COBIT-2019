@@ -84,13 +84,22 @@ class DfController extends Controller
         $assessmentId = session('assessment_id');
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor = $history['inputs'] ? (object) [
-            'df_id' => $id,
-            'input1df1' => $history['inputs'][0] ?? 0,
-            'input2df1' => $history['inputs'][1] ?? 0,
-            'input3df1' => $history['inputs'][2] ?? 0,
-            'input4df1' => $history['inputs'][3] ?? 0,
-        ] : null;
+        $designFactor = null;
+        if ($history['inputs']) {
+            $designFactor = (object) [
+                'df_id' => $id,
+                'input1df1' => $history['inputs'][0] ?? 0,
+                'input2df1' => $history['inputs'][1] ?? 0,
+                'input3df1' => $history['inputs'][2] ?? 0,
+                'input4df1' => $history['inputs'][3] ?? 0,
+            ];
+
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor->{'s_df1_' . ($idx + 1)} = $val;
+                }
+            }
+        }
 
         $designFactorScore = null;
         if ($history['scores']) {

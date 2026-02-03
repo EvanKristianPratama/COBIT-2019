@@ -81,12 +81,21 @@ class Df9Controller extends Controller
         $assessmentId = session('assessment_id');
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
 
-        $designFactor9 = $history['inputs'] ? (object) [
-            'df_id' => $id,
-            'input1df9' => $history['inputs'][0] ?? 0,
-            'input2df9' => $history['inputs'][1] ?? 0,
-            'input3df9' => $history['inputs'][2] ?? 0,
-        ] : null;
+        $designFactor9 = null;
+        if ($history['inputs']) {
+            $designFactor9 = (object) [
+                'df_id' => $id,
+                'input1df9' => $history['inputs'][0] ?? 0,
+                'input2df9' => $history['inputs'][1] ?? 0,
+                'input3df9' => $history['inputs'][2] ?? 0,
+            ];
+
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor9->{'s_df9_' . ($idx + 1)} = $val;
+                }
+            }
+        }
 
         $designFactorRelativeImportance = null;
         if ($history['relativeImportance']) {

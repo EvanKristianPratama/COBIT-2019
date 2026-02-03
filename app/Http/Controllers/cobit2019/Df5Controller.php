@@ -78,13 +78,23 @@ class Df5Controller extends Controller
     public function showOutput(int $id): View
     {
         $assessmentId = session('assessment_id');
-        $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
+        $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor5 = $history['inputs'] ? (object) [
-            'df_id' => $id,
-            'input1df5' => $history['inputs'][0] ?? 0,
-            'input2df5' => $history['inputs'][1] ?? 0,
-        ] : null;
+        $designFactor5 = null;
+        if ($history['inputs']) {
+            $designFactor5 = (object) [
+                'df_id' => $id,
+                'input1df5' => $history['inputs'][0] ?? 0,
+                'input2df5' => $history['inputs'][1] ?? 0,
+            ];
+
+            // Add scores s_df5_1 ... s_df5_40
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor5->{'s_df5_' . ($idx + 1)} = $val;
+                }
+            }
+        }
 
         $designFactorRelativeImportance = null;
         if ($history['relativeImportance']) {

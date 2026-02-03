@@ -81,12 +81,22 @@ class Df6Controller extends Controller
         $assessmentId = session('assessment_id');
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
 
-        $designFactor6 = $history['inputs'] ? (object) [
-            'df_id' => $id,
-            'input1df6' => $history['inputs'][0] ?? 0,
-            'input2df6' => $history['inputs'][1] ?? 0,
-            'input3df6' => $history['inputs'][2] ?? 0,
-        ] : null;
+        $designFactor6 = null;
+        if ($history['inputs']) {
+            $designFactor6 = (object) [
+                'df_id' => $id,
+                'input1df6' => $history['inputs'][0] ?? 0,
+                'input2df6' => $history['inputs'][1] ?? 0,
+                'input3df6' => $history['inputs'][2] ?? 0,
+            ];
+            
+            // Add scores s_df6_1 ... s_df6_40
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor6->{'s_df6_' . ($idx + 1)} = $val;
+                }
+            }
+        }
 
         $designFactorRelativeImportance = null;
         if ($history['relativeImportance']) {

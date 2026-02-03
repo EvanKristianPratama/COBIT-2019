@@ -89,6 +89,11 @@ class Df2Controller extends Controller
             foreach ($history['inputs'] as $idx => $val) {
                 $obj->{"input" . ($idx + 1) . "df2"} = $val;
             }
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $obj->{'s_df2_' . ($idx + 1)} = $val;
+                }
+            }
             $designFactor2 = $obj;
         }
 

@@ -81,12 +81,21 @@ class Df8Controller extends Controller
         $assessmentId = session('assessment_id');
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
 
-        $designFactor8 = $history['inputs'] ? (object) [
-            'df_id' => $id,
-            'input1df8' => $history['inputs'][0] ?? 0,
-            'input2df8' => $history['inputs'][1] ?? 0,
-            'input3df8' => $history['inputs'][2] ?? 0,
-        ] : null;
+        $designFactor8 = null;
+        if ($history['inputs']) {
+            $designFactor8 = (object) [
+                'df_id' => $id,
+                'input1df8' => $history['inputs'][0] ?? 0,
+                'input2df8' => $history['inputs'][1] ?? 0,
+                'input3df8' => $history['inputs'][2] ?? 0,
+            ];
+
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor8->{'s_df8_' . ($idx + 1)} = $val;
+                }
+            }
+        }
 
         $designFactorRelativeImportance = null;
         if ($history['relativeImportance']) {

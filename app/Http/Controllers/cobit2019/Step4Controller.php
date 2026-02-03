@@ -60,23 +60,40 @@ class Step4Controller extends Controller
     /**
      * Simpan data Step 4 (adjustment + alasan)
      */
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\Cobit\Step4Service $step4Service)
     {
         $assessmentId = session('assessment_id');
         $userId = Auth::id();
+        $assessment = $this->getAssessment($assessmentId);
+
+        if (!$assessment) {
+            return redirect()->back()->with('error', 'Assessment not found.');
+        }
 
         // Update weights if provided
         $this->updateWeightsIfProvided($request, $assessmentId, $userId);
 
-        // Save adjustments/reasons to session
+        // Save adjustments/reasons to session (keep for now as backup/UI state)
         session([
             'step4.adjustment' => $request->input('adjustment', []),
             'step4.reason_adjust' => $request->input('reason_adjust', []),
             'step4.reason_target' => $request->input('reason_target', []),
         ]);
 
+        // Gather data for service
+        $stepData = $this->getStepData($assessmentId, $userId);
+        $step4Adjustments = $request->input('adjustment', []);
+
+        // Save to TargetCapability via Service
+        $step4Service->saveTargetCapability(
+            $assessment,
+            $stepData['initialScopes'], // or stepData['step2'] depending on service expectation
+            $stepData['refinedScopes'], // or stepData['step3']
+            $step4Adjustments
+        );
+
         return redirect()->route('step4.index')
-            ->with('success', 'Data Step 4 berhasil disimpan sementara.');
+            ->with('success', 'Data Step 4 berhasil disimpan (termasuk Target Capability).');
     }
 
     /**

@@ -129,6 +129,13 @@ class Df10Controller extends Controller
                 'input2df10' => $history['inputs'][1] ?? 0,
                 'input3df10' => $history['inputs'][2] ?? 0,
             ];
+
+            // Add scores s_df10_1 ... s_df10_40
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor10->{'s_df10_' . ($idx + 1)} = $val;
+                }
+            }
         }
 
         if ($history['relativeImportance']) {

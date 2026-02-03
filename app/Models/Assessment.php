@@ -27,6 +27,7 @@ class Assessment extends Model
         'instansi',
         'user_id',
         'kode_assessment',
+        'tahun',
     ];
 
     /**

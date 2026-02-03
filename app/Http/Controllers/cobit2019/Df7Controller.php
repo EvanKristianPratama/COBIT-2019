@@ -82,13 +82,22 @@ class Df7Controller extends Controller
         $assessmentId = session('assessment_id');
         $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
 
-        $designFactor7 = $history['inputs'] ? (object) [
-            'df_id' => $id,
-            'input1df7' => $history['inputs'][0] ?? 0,
-            'input2df7' => $history['inputs'][1] ?? 0,
-            'input3df7' => $history['inputs'][2] ?? 0,
-            'input4df7' => $history['inputs'][3] ?? 0,
-        ] : null;
+        $designFactor7 = null;
+        if ($history['inputs']) {
+            $designFactor7 = (object) [
+                'df_id' => $id,
+                'input1df7' => $history['inputs'][0] ?? 0,
+                'input2df7' => $history['inputs'][1] ?? 0,
+                'input3df7' => $history['inputs'][2] ?? 0,
+                'input4df7' => $history['inputs'][3] ?? 0,
+            ];
+
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor7->{'s_df7_' . ($idx + 1)} = $val;
+                }
+            }
+        }
 
         $designFactorRelativeImportance = null;
         if ($history['relativeImportance']) {

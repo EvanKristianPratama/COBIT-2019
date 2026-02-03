@@ -109,8 +109,9 @@ final class Df2Service
                 $ri[$i] = 0;
                 continue;
             }
-            // Floor calculation as per original logic
-            $ri[$i] = (int) (floor(100 * $score / $baseline) - 100);
+            $normalizedScore = $score * $ratio;
+            $value = 100 * $normalizedScore / $baseline;
+            $ri[$i] = (int) ($this->calculator->mround($value, 5) - 100);
         }
         return $ri;
     }

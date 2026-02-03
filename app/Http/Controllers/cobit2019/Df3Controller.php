@@ -85,7 +85,16 @@ class Df3Controller extends Controller
             ? $this->service->loadHistory($assessmentId, $id)
             : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor3 = $history['inputs'] ? (object) array_merge(['df_id' => $id], $history['inputs']) : null;
+        if ($history['inputs']) {
+            $designFactor3a = (object) array_merge(['df_id' => $id], $history['inputs']);
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $designFactor3a->{'s_df3_' . ($idx + 1)} = $val;
+                }
+            }
+        } else {
+            $designFactor3a = null;
+        }
 
         $designFactorRelativeImportance = null;
         if ($history['relativeImportance']) {
@@ -96,7 +105,7 @@ class Df3Controller extends Controller
             $designFactorRelativeImportance = $ri;
         }
 
-        return view('cobit2019.df3.df3_output', compact('designFactor3', 'designFactorRelativeImportance'));
+        return view('cobit2019.df3.df3_output', compact('designFactor3a', 'designFactorRelativeImportance'));
     }
 
     private function loadUsers(array $userIds): array

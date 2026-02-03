@@ -48,9 +48,14 @@
                   <h6 class="mb-0 fw-bold"><i class="bi bi-1-circle me-2"></i>Step 2: Initial Scope</h6>
                   <small class="opacity-75">Determine the Initial Scope of the Governance System</small>
                 </div>
-                <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step2Table" data-col="initial">
-                  <i class="bi bi-sort-down"></i> Sort
-                </button>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step2Table" data-col="initial">
+                    <i class="bi bi-sort-down"></i> Sort
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-light btn-reset">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                  </button>
+                </div>
               </div>
             </div>
             <div class="card-body p-0">
@@ -117,9 +122,14 @@
                   <h6 class="mb-0 fw-bold"><i class="bi bi-2-circle me-2"></i>Step 3: Refined Scope</h6>
                   <small class="opacity-75">Refine the Scope of the Governance System</small>
                 </div>
-                <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step3Table" data-col="refined">
-                  <i class="bi bi-sort-down"></i> Sort
-                </button>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step3Table" data-col="refined">
+                    <i class="bi bi-sort-down"></i> Sort
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-light btn-reset">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                  </button>
+                </div>
               </div>
             </div>
             <div class="card-body p-0">
@@ -191,9 +201,9 @@
             </div>
             <div class="btn-group">
               <button type="button" class="btn btn-sm btn-light btn-sort" data-table="step4Table" data-col="concluded">
-                <i class="bi bi-sort-down"></i> Sort by Priority
+                <i class="bi bi-sort-down"></i> Sort
               </button>
-              <button type="button" class="btn btn-sm btn-outline-light" id="resetSort">
+              <button type="button" class="btn btn-sm btn-outline-light btn-reset">
                 <i class="bi bi-arrow-counterclockwise"></i> Reset
               </button>
             </div>
@@ -457,7 +467,7 @@
       document.querySelectorAll('.btn-sort').forEach(btn => {
         btn.addEventListener('click', () => sortTable(btn.dataset.table, btn.dataset.col));
       });
-      document.getElementById('resetSort')?.addEventListener('click', resetSort);
+      document.querySelectorAll('.btn-reset').forEach(btn => btn.addEventListener('click', resetSort));
     });
   </script>
 

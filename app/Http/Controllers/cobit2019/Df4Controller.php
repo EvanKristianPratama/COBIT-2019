@@ -87,6 +87,11 @@ class Df4Controller extends Controller
             foreach ($history['inputs'] as $key => $val) {
                 $obj->{$key} = $val;
             }
+            if (!empty($history['scores'])) {
+                foreach ($history['scores'] as $idx => $val) {
+                    $obj->{'s_df4_' . ($idx + 1)} = $val;
+                }
+            }
             $designFactor4 = $obj;
         }
 
