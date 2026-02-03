@@ -448,6 +448,9 @@
                         </div>
 
                         <div class="tab-pane fade" id="roles-pane" role="tabpanel">
+                            <div class="mb-2 small text-muted">
+                                <i class="bi bi-info-circle"></i> Klik pada role untuk melihat GAMO mana saja yang role tersebut muncul beserta RACI-nya.
+                            </div>
                             <div class="table-responsive">
                                 <table id="masterRolesTable"
                                     class="table table-sm table-bordered table-hover table-striped mb-0">
@@ -460,6 +463,29 @@
                                     </thead>
                                     <tbody></tbody>
                                 </table>
+                            </div>
+                            <!-- Role GAMO Detail Panel -->
+                            <div id="roleGamoDetailPanel" class="mt-3" style="display:none;">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                                        <span id="roleGamoDetailTitle">Role Detail</span>
+                                        <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('roleGamoDetailPanel').style.display='none';">&times;</button>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table id="roleGamoDetailTable" class="table table-sm table-bordered table-striped mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="width:100px">GAMO</th>
+                                                        <th>Practice</th>
+                                                        <th style="width:80px" class="text-center">RACI</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -780,6 +806,71 @@
                     return rows;
                 },
 
+                // ----------------------------------------
+                // EXTRACT ROLE-GAMO MAPPINGS (NEW)
+                // ----------------------------------------
+                extractRoleGamoMappings(objectives) {
+                    // returns Map: roleName => [{ gamo, practice_id, practice_name, raci }]
+                    const roleGamoMap = new Map();
+                    (objectives || []).forEach(obj => {
+                        const gamo = String(obj.objective_id || '').toUpperCase();
+                        (obj.practices || []).forEach(practice => {
+                            const practiceId = practice.practice_id || '';
+                            const practiceName = practice.practice_name || '';
+                            const practiceLabel = `${practiceId} ${practiceName}`.trim();
+                            (practice.roles || []).forEach(role => {
+                                const roleName = role.role || '';
+                                const raci = role.pivot?.r_a || '';
+                                if (!roleName) return;
+                                if (!roleGamoMap.has(roleName)) {
+                                    roleGamoMap.set(roleName, []);
+                                }
+                                roleGamoMap.get(roleName).push({
+                                    gamo,
+                                    practice_id: practiceId,
+                                    practice_name: practiceName,
+                                    practice_label: practiceLabel,
+                                    raci: raci
+                                });
+                            });
+                        });
+                    });
+                    return roleGamoMap;
+                },
+
+                // Show role GAMO detail panel
+                showRoleGamoDetail(roleName, roleGamoMap) {
+                    const panel = document.getElementById('roleGamoDetailPanel');
+                    const title = document.getElementById('roleGamoDetailTitle');
+                    const tbody = document.querySelector('#roleGamoDetailTable tbody');
+                    if (!panel || !tbody) return;
+
+                    const data = roleGamoMap.get(roleName) || [];
+                    title.innerHTML = `<strong>${Utils.escapeHtml(roleName)}</strong> - Muncul di ${data.length} Practice`;
+
+                    if (!data.length) {
+                        tbody.innerHTML = '<tr><td colspan="3" class="text-muted text-center">Role ini tidak ditemukan di GAMO manapun.</td></tr>';
+                    } else {
+                        // Sort by GAMO then by practice_id
+                        data.sort((a, b) => {
+                            const gCmp = String(a.gamo).localeCompare(String(b.gamo));
+                            if (gCmp !== 0) return gCmp;
+                            return String(a.practice_id).localeCompare(String(b.practice_id));
+                        });
+
+                        tbody.innerHTML = data.map(d => `
+                            <tr>
+                                <td class="fw-semibold">${Utils.escapeHtml(d.gamo)}</td>
+                                <td>${Utils.escapeHtml(d.practice_label)}</td>
+                                <td class="text-center fw-bold">${Utils.escapeHtml(d.raci) || '-'}</td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    panel.style.display = 'block';
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                },
+
                 // populate cap prefix mini-tabs and attach handlers
                 renderCapPrefixTabs(capRows) {
                     const container = DOM.capPrefixTabs;
@@ -934,9 +1025,16 @@
                             capRows
                         } = await this.collectMasterData();
 
+                        // Fetch objectives for role-GAMO mapping
+                        const objectives = await DataService.fetchAllObjectives();
+                        const roleGamoMap = this.extractRoleGamoMappings(objectives);
+
                         this.populateMasterTable('masterEgTable', egList, ['id', 'description']);
                         this.populateMasterTable('masterAgTable', agList, ['id', 'description']);
-                        this.populateMasterTable('masterRolesTable', roles, ['id', 'role', 'description']);
+                        this.populateMasterTable('masterRolesTable', roles, ['id', 'role', 'description'], {
+                            isRolesTable: true,
+                            roleGamoMap: roleGamoMap
+                        });
 
                         // store all cap rows for future filtering
                         STATE.capAllRows = (capRows || []).map(r => ({
@@ -961,7 +1059,7 @@
                     }
                 },
 
-                populateMasterTable(tableId, data, columns) {
+                populateMasterTable(tableId, data, columns, options = {}) {
                     const tbody = document.querySelector(`#${tableId} tbody`);
                     if (!tbody) return;
 
@@ -969,6 +1067,18 @@
 
                     data.forEach(item => {
                         const tr = document.createElement('tr');
+
+                        // If this is the roles table, make row clickable
+                        if (options.isRolesTable && options.roleGamoMap) {
+                            tr.style.cursor = 'pointer';
+                            tr.classList.add('role-clickable-row');
+                            tr.addEventListener('click', () => {
+                                // Remove active class from other rows
+                                tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                                tr.classList.add('table-active');
+                                this.showRoleGamoDetail(item.role || item.id, options.roleGamoMap);
+                            });
+                        }
 
                         columns.forEach((col, idx) => {
                             const td = document.createElement('td');
