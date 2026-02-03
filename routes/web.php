@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\cobit2019\DesignToolkitController;
+use App\Http\Controllers\DesignToolkitController as VueDesignToolkitController;
 use App\Http\Controllers\AssessmentEval\ActivityReportController;
+
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
 use App\Http\Controllers\AssessmentEval\AssessmentListController;
 use App\Http\Controllers\AssessmentEval\AssessmentReportController;
@@ -146,10 +148,38 @@ Route::get('/profile', function () {
     return \Inertia\Inertia::render('Profile/Index');
 })->name('profile')->middleware('auth');
 
+// Vue-based Design Toolkit routes (DF1-DF10)
+Route::prefix('design-toolkit')
+    ->middleware('auth')
+    ->name('design-toolkit.')
+    ->group(function () {
+        Route::get('/', [VueDesignToolkitController::class, 'index'])
+            ->name('index');
+        Route::post('/join', [VueDesignToolkitController::class, 'join'])
+            ->name('join');
+        Route::get('/df{number}', [VueDesignToolkitController::class, 'show'])
+            ->name('show')
+            ->where('number', '[1-9]|10');
+        Route::post('/df{number}', [VueDesignToolkitController::class, 'store'])
+            ->name('store')
+            ->where('number', '[1-9]|10');
+
+        // Step 2 & 3 Summaries
+        Route::get('/summary-step2', [\App\Http\Controllers\DesignToolkitSummaryController::class, 'step2'])
+            ->name('step2.index');
+        Route::post('/summary-step2', [\App\Http\Controllers\DesignToolkitSummaryController::class, 'storeStep2'])
+            ->name('step2.store');
+        Route::get('/summary-step3', [\App\Http\Controllers\DesignToolkitSummaryController::class, 'step3'])
+            ->name('step3.index');
+        Route::post('/summary-step3', [\App\Http\Controllers\DesignToolkitSummaryController::class, 'storeStep3'])
+            ->name('step3.store');
+    });
+
 // Cobit Home view
 Route::get('/cobit2019/cobit_home', [DesignToolkitController::class, 'showJoinForm'])
     ->name('cobit.home')
     ->middleware('auth');
+
 
 // Target capability routes
 Route::middleware('auth')->group(function () {

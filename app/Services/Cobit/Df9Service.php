@@ -73,11 +73,12 @@ final class Df9Service
         DesignFactor9RelativeImportance::create($data);
     }
 
-    public function loadHistory(int $assessmentId): array
+    public function loadHistory(int $assessmentId, int $dfId): array
     {
         $history = ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
         $inputRecord = DesignFactor9::where('assessment_id', $assessmentId)
+            ->where('df_id', $dfId)
             ->where('id', Auth::id())->orderByDesc('created_at')->orderByDesc('id')->first();
 
         if ($inputRecord) {

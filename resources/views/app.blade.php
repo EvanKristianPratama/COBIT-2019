@@ -18,7 +18,11 @@
         <link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons" />
 
+        <!-- Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
         <!-- Scripts -->
+        
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @inertiaHead
     </head>

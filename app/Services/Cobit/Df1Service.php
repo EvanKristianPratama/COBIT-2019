@@ -117,11 +117,12 @@ final class Df1Service
         DesignFactor1RelativeImportance::create($data);
     }
 
-    public function loadHistory(int $assessmentId): array
+    public function loadHistory(int $assessmentId, int $dfId): array
     {
         $history = ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
         $inputRecord = DesignFactor1::where('assessment_id', $assessmentId)
+            ->where('df_id', $dfId)
             ->where('id', Auth::id())->orderByDesc('created_at')->first();
 
         if ($inputRecord) {

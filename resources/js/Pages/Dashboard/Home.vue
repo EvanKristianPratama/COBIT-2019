@@ -1,7 +1,9 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHeader from '@/Components/PageHeader.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { Head } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const tools = [
     {
@@ -21,6 +23,16 @@ const tools = [
         color: 'red',
     },
     {
+        key: 'design-toolkit',
+        name: 'Design Toolkit (Vue)',
+        description: 'Design Factors DF1-DF10 + Target',
+        url: '/design-toolkit',
+        icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z',
+        color: 'purple',
+        badge: 'DEV',
+        isDisabled: true,
+    },
+    {
         key: 'assessment',
         name: 'Assessment Maturity',
         description: 'Evaluasi tata kelola TI',
@@ -38,12 +50,14 @@ const tools = [
     },
 ];
 
+
 const getColorBgClass = (color) => {
     const map = {
         amber: 'bg-amber-500/10 dark:bg-amber-500/20',
         red: 'bg-red-500/10 dark:bg-red-500/20',
         blue: 'bg-blue-500/10 dark:bg-blue-500/20',
         emerald: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+        purple: 'bg-purple-500/10 dark:bg-purple-500/20',
     };
     return map[color] || 'bg-gray-500/10';
 };
@@ -54,6 +68,7 @@ const getTextColorClass = (color) => {
         red: 'text-red-500',
         blue: 'text-blue-500',
         emerald: 'text-emerald-500',
+        purple: 'text-purple-500',
     };
     return map[color] || 'text-gray-500';
 };
@@ -64,9 +79,26 @@ const getAccentClass = (color) => {
         red: 'bg-red-500',
         blue: 'bg-blue-500',
         emerald: 'bg-emerald-500',
+        purple: 'bg-purple-500',
     };
     return map[color] || 'bg-gray-500';
 };
+
+const handleToolClick = (tool) => {
+    if (tool.isDisabled) {
+        pendingUrl.value = tool.url;
+        showDevModal.value = true;
+    }
+};
+
+const gotoDevFeature = () => {
+    if (pendingUrl.value) {
+        window.location.href = pendingUrl.value;
+    }
+};
+
+const showDevModal = ref(false);
+const pendingUrl = ref(null);
 </script>
 
 <template>
@@ -80,11 +112,14 @@ const getAccentClass = (color) => {
 
             <!-- Tools Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <a
+            <component
+                :is="tool.isDisabled ? 'div' : 'a'"
                 v-for="tool in tools"
                 :key="tool.key"
-                :href="tool.url"
-                class="group relative bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-200/80 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-black/20 hover:-translate-y-0.5"
+                :href="tool.isDisabled ? undefined : tool.url"
+                @click="handleToolClick(tool)"
+                class="group relative bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-200/80 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-black/20"
+                :class="[tool.isDisabled ? 'cursor-default opacity-90' : 'cursor-pointer hover:-translate-y-0.5']"
             >
                 <!-- Color accent bar -->
                 <div 
@@ -121,14 +156,29 @@ const getAccentClass = (color) => {
 
                 <!-- Status badge -->
                 <div class="mt-4 flex items-center">
-                    <span class="inline-flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <span v-if="tool.badge" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase tracking-wider">
+                        {{ tool.badge }}
+                    </span>
+                    <span v-else class="inline-flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
                         Tersedia
                     </span>
                 </div>
-            </a>
+            </component>
         </div>
         </div>
+
+        <!-- Development Alert Modal -->
+        <ConfirmModal
+            :show="showDevModal"
+            title="Sedang Dikembangkan"
+            message="Fitur ini masih dalam tahap pengembangan dan mungkin belum stabil. Apakah Anda tetap ingin masuk?"
+            confirm-text="Ya, Tetap Masuk"
+            cancel-text="Batal"
+            type="warning"
+            @close="showDevModal = false"
+            @confirm="gotoDevFeature"
+        />
     </AuthenticatedLayout>
 </template>
 

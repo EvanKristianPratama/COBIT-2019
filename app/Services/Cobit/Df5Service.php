@@ -71,11 +71,12 @@ final class Df5Service
         DesignFactor5RelativeImportance::create($data);
     }
 
-    public function loadHistory(int $assessmentId): array
+    public function loadHistory(int $assessmentId, int $dfId): array
     {
         $history = ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
         $inputRecord = DesignFactor5::where('assessment_id', $assessmentId)
+            ->where('df_id', $dfId)
             ->where('id', Auth::id())->orderByDesc('created_at')->orderByDesc('id')->first();
 
         if ($inputRecord) {

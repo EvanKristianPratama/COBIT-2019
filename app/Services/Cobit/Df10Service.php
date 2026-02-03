@@ -135,7 +135,7 @@ final class Df10Service
      *
      * @return array{inputs: array|null, scores: array|null, relativeImportance: array|null}
      */
-    public function loadHistory(int $assessmentId): array
+    public function loadHistory(int $assessmentId, int $dfId): array
     {
         $history = [
             'inputs' => null,
@@ -145,6 +145,7 @@ final class Df10Service
 
         // Load inputs
         $inputRecord = DesignFactor10::where('assessment_id', $assessmentId)
+            ->where('df_id', $dfId)
             ->where('id', Auth::id())
             ->orderByDesc('created_at')
             ->orderByDesc('id')
