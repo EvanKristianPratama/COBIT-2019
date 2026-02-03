@@ -56,6 +56,8 @@ const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
 };
+
+const appVersion = __APP_VERSION__;
 </script>
 
 <template>
@@ -188,6 +190,9 @@ const getInitials = (name) => {
             <div class="pt-8 border-t border-gray-200/50 dark:border-white/5">
                 <p class="text-center text-sm text-gray-400 dark:text-gray-500">
                     © {{ new Date().getFullYear() }} COBIT 2019 Assessment System
+                    <span class="ml-2 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-xs font-mono text-gray-500 dark:text-gray-400">
+                        v{{ appVersion }}
+                    </span>
                 </p>
             </div>
         </div>

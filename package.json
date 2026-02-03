@@ -1,9 +1,11 @@
 {
+    "version": "2.0.0",
     "private": true,
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "bump": "npm version patch -m 'chore: bump version to %s' && git push && git push --tags"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",
