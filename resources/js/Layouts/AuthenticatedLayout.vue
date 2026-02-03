@@ -174,6 +174,12 @@ const getInitials = (name) => {
 
         <!-- Main Content -->
         <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+            <!-- Header Slot (for PageHeader with breadcrumbs) -->
+            <div v-if="$slots.header" class="mb-6">
+                <slot name="header" />
+            </div>
+            
+            <!-- Default Slot (main content) -->
             <slot />
         </main>
 

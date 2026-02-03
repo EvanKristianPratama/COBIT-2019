@@ -1,10 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHeader from '@/Components/PageHeader.vue';
 import MasterIndex from './Partials/Master/MasterIndex.vue';
-import GamoGrid from './Partials/ViewByGamo/GamoGrid.vue';
+import GamoNavigator from './Partials/ViewByGamo/GamoNavigator.vue';
 import ComponentSelector from './Partials/ViewByComponent/ComponentSelector.vue';
 
 // Tabs State
@@ -19,6 +19,7 @@ const props = defineProps({
     },
     componentData: Object, // Data for ViewByComponent
     selectedComponent: String,
+    selectedObjective: Object, // For ViewByGamo detail
 });
 
 const activeTab = ref(props.initialTab); // 'gamo' | 'component' | 'master'
@@ -32,6 +33,45 @@ const tabs = [
     { id: 'component', label: 'View by Component', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
     { id: 'master', label: 'Master Data', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' }
 ];
+const extraBreadcrumb = ref(null);
+
+const breadcrumbs = computed(() => {
+    const base = [
+        { label: 'Dashboard', url: '/dashboard' },
+        { label: 'Kamus Component', url: '/cobit-dictionary' },
+    ];
+
+    if (activeTab.value === 'gamo') {
+        base.push({ label: 'View by GAMO', url: null });
+        if (props.selectedObjective) {
+            base.push({ 
+                label: `${props.selectedObjective.objective_id}`, 
+                url: `/objectives/${props.selectedObjective.objective_id}` 
+            });
+        }
+    } else if (activeTab.value === 'component') {
+        base.push({ label: 'View by Component', url: null });
+        if (props.selectedComponent) {
+             // Capitalize first letter
+            const label = props.selectedComponent.charAt(0).toUpperCase() + props.selectedComponent.slice(1);
+            base.push({ label: label, url: null });
+        }
+        if (extraBreadcrumb.value) {
+            base.push({ label: extraBreadcrumb.value, url: null });
+        }
+    } else if (activeTab.value === 'master') {
+        base.push({ label: 'Master Data', url: null });
+    }
+
+    return base;
+});
+
+// Reset extra breadcrumb when tab changes
+watch(activeTab, () => extraBreadcrumb.value = null);
+
+function handleBreadcrumbUpdate(label) {
+    extraBreadcrumb.value = label;
+}
 </script>
 
 <template>
@@ -42,10 +82,7 @@ const tabs = [
             <PageHeader 
                 title="Kamus Component" 
                 subtitle="Dictionary of COBIT 2019 Objectives and Components"
-                :breadcrumbs="[
-                    { label: 'Dashboard', href: '/dashboard' },
-                    { label: 'Kamus Component', href: '/cobit-dictionary' },
-                ]"
+                :breadcrumbs="breadcrumbs"
             />
         </template>
 
@@ -68,39 +105,33 @@ const tabs = [
                 </button>
             </div>
 
-            <!-- Content Area -->
-            <transition
-                enter-active-class="transition ease-out duration-200"
-                enter-from-class="opacity-0 translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition ease-in duration-150"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 translate-y-2"
-                mode="out-in"
-            >
-                <!-- View by GAMO -->
-                <div v-if="activeTab === 'gamo'" key="gamo">
-                     <GamoGrid :objectives="objectives" />
-                </div>
+            <!-- View by GAMO -->
+            <div v-if="activeTab === 'gamo'" key="gamo">
+                    <GamoNavigator 
+                    :objectives="objectives" 
+                    :selectedObjective="selectedObjective"
+                    :masterRoles="masterRoles"    
+                />
+            </div>
 
-                <!-- View by Component -->
-                <div v-else-if="activeTab === 'component'" key="component">
-                     <ComponentSelector 
-                        :selectedComponent="selectedComponent"
-                        :componentData="componentData"
-                        :masterRoles="masterRoles"
-                     />
-                </div>
-
-                <!-- Master Data -->
-                <div v-else-if="activeTab === 'master'" key="master">
-                    <MasterIndex 
-                        :masterEnterGoals="masterEnterGoals"
-                        :masterAlignGoals="masterAlignGoals"
-                        :masterRoles="masterRoles"
+            <!-- View by Component -->
+            <div v-else-if="activeTab === 'component'" key="component">
+                    <ComponentSelector 
+                    :selectedComponent="selectedComponent"
+                    :componentData="componentData"
+                    :masterRoles="masterRoles"
+                    @update-breadcrumb="handleBreadcrumbUpdate"
                     />
-                </div>
-            </transition>
+            </div>
+
+            <!-- Master Data -->
+            <div v-else-if="activeTab === 'master'" key="master">
+                <MasterIndex 
+                    :masterEnterGoals="masterEnterGoals"
+                    :masterAlignGoals="masterAlignGoals"
+                    :masterRoles="masterRoles"
+                />
+            </div>
         </div>
     </AuthenticatedLayout>
 </template>

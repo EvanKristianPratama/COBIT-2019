@@ -56,6 +56,37 @@ const props = defineProps({
                 <!-- G. Services -->
                 <ServicesTable v-else-if="type === 'services'" :services="item.s_i_a" />
 
+                <!-- Overview -->
+                <div v-else-if="type === 'overview'">
+                    <div class="mb-4">
+                        <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">Description</h4>
+                        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ item.description || 'No description available.' }}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">Purpose</h4>
+                        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ item.purpose || 'No purpose statement available.' }}</p>
+                    </div>
+                </div>
+                
+                <!-- Goals --> <!-- Wait, Goals Cascade logic needs to be verified against data structure -->
+                <!-- controller returns entergoals and aligngoals array -->
+                 <div v-else-if="type === 'goals'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-[#0f2b5c] border-b border-[#0f2b5c] pb-1">Enterprise Goals</h4>
+                        <ul v-if="item.entergoals?.length" class="space-y-1 list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
+                            <li v-for="g in item.entergoals" :key="g.entergoals_id">{{ g.description }}</li>
+                        </ul>
+                         <p v-else class="text-sm italic text-gray-400">No Enterprise Goals mapped.</p>
+                    </div>
+                     <div class="space-y-2">
+                        <h4 class="font-bold text-[#0f2b5c] border-b border-[#0f2b5c] pb-1">Alignment Goals</h4>
+                        <ul v-if="item.aligngoals?.length" class="space-y-1 list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
+                             <li v-for="g in item.aligngoals" :key="g.aligngoals_id">{{ g.description }}</li>
+                        </ul>
+                        <p v-else class="text-sm italic text-gray-400">No Alignment Goals mapped.</p>
+                    </div>
+                 </div>
+
                 <!-- Fallback/Overview -->
                 <div v-else class="text-sm text-gray-600 dark:text-gray-400">
                     <div v-if="item[type]?.length">

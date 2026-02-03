@@ -90,9 +90,15 @@ class MstObjectiveController extends Controller
         $objective = MstObjective::with($relations)->findOrFail($id);
         $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
 
-        return \Inertia\Inertia::render('CobitComponents/Partials/ViewByGamo/GamoDetail', [
-            'objective' => $objective,
+        return \Inertia\Inertia::render('CobitComponents/Index', [
+            'initialTab' => 'gamo',
+            'objectives' => \App\Models\MstObjective::select('objective_id', 'objective', 'objective_description')
+                ->orderByRaw("CASE WHEN UPPER(objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, objective_id")
+                ->get(),
+            'selectedObjective' => $objective,
             'masterRoles' => $masterRoles,
+            'masterEnterGoals' => MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get(),
+            'masterAlignGoals' => MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get(),
         ]);
     }
 

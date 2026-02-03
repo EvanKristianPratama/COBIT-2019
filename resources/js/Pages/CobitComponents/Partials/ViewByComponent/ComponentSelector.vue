@@ -1,90 +1,105 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
+import DomainObjectiveNav from '../../Components/DomainObjectiveNav.vue';
 import ComponentDetail from './ComponentDetail.vue';
 
 const props = defineProps({
     selectedComponent: String,
-    componentData: Object, // Collection/Array from backend
+    componentData: Object,
     masterRoles: Array,
 });
-// ... 
-// (Wait I cannot target split blocks without multi_replace. Let's do multi_replace if lines are far apart inside the file, or just one replace if I can target the whole block. 
-// Props definition is at line 6. ComponentDetail usage is at line 73. I should use multi_replace or two replaces. I'll use multi_replace.)
+
+const emit = defineEmits(['update-breadcrumb']);
 
 const components = [
     { id: 'overview', label: 'Overview' },
-    { id: 'practices', label: 'A. Component: Process (Practices)' },
-    { id: 'organizational', label: 'B. Component: Organizational Structures' },
-    { id: 'infoflows', label: 'C. Component: Information Flows and Items' },
-    { id: 'skills', label: 'D. Component: People, Skills and Competencies' },
-    { id: 'policies', label: 'E. Component: Policies and Procedures' },
-    { id: 'culture', label: 'F. Component: Culture, Ethics and Behavior' },
-    { id: 'services', label: 'G. Component: Services, Infrastructure and Applications' },
+    { id: 'practices', label: 'Process' },
+    { id: 'organizational', label: 'Org Structures' },
+    { id: 'infoflows', label: 'Info Flows' },
+    { id: 'skills', label: 'Skills' },
+    { id: 'policies', label: 'Policies' },
+    { id: 'culture', label: 'Culture' },
+    { id: 'services', label: 'Services' },
 ];
 
-const selected = ref(props.selectedComponent || '');
+const selected = ref(props.selectedComponent || 'overview');
+const activeObjectiveId = ref(null);
+
+const objectivesForNav = computed(() => props.componentData ? Array.from(props.componentData) : []);
+const filteredData = computed(() => {
+    if (!activeObjectiveId.value || !props.componentData) return [];
+    return props.componentData.filter(o => o.objective_id === activeObjectiveId.value);
+});
+
+watch(activeObjectiveId, (val) => emit('update-breadcrumb', val));
 
 function onSelectChange() {
     if (selected.value) {
         router.get(`/objectives/component/${selected.value}`, {}, {
             preserveState: true,
             preserveScroll: true,
-            only: ['componentData', 'selectedComponent', 'initialTab']
+            only: ['componentData', 'selectedComponent', 'initialTab'],
         });
     }
 }
+
+onMounted(() => {
+    if (!props.componentData && selected.value) onSelectChange();
+});
+
+watch(() => props.componentData, (val) => {
+    if (val?.length > 0 && !val.find(o => o.objective_id === activeObjectiveId.value)) {
+        activeObjectiveId.value = val[0]?.objective_id;
+    }
+}, { immediate: true });
 </script>
 
 <template>
-    <div class="space-y-6">
-        <!-- Selector Card -->
-        <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-200/80 dark:border-white/5 shadow-sm flex items-center gap-4">
-            <div class="flex-grow max-w-xl">
-                <label for="component-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Select Component Type
-                </label>
-                <select 
-                    id="component-select"
-                    v-model="selected"
-                    @change="onSelectChange"
-                    class="w-full rounded-xl border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white focus:border-[#0f2b5c] focus:ring-[#0f2b5c] shadow-sm"
+    <div class="space-y-4">
+        <!-- Component Type Underline Tabs -->
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/80 dark:border-white/5 shadow-sm">
+            <div class="flex border-b border-gray-200 dark:border-white/10 overflow-x-auto">
+                <button 
+                    v-for="c in components" 
+                    :key="c.id"
+                    @click="() => { selected = c.id; onSelectChange(); }"
+                    class="px-5 py-3 text-sm font-medium transition-all relative whitespace-nowrap"
+                    :class="selected === c.id 
+                        ? 'text-slate-900 dark:text-white' 
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
                 >
-                    <option value="" disabled>-- Choose a component to view --</option>
-                    <option v-for="c in components" :key="c.id" :value="c.id">
-                        {{ c.label }}
-                    </option>
-                </select>
-            </div>
-            <div class="hidden md:block text-sm text-gray-500 pt-6">
-                <span v-if="selected">Viewing: <strong>{{ components.find(c => c.id === selected)?.label }}</strong></span>
-                <span v-else>Please select a component from the list.</span>
+                    {{ c.label }}
+                    <span 
+                        v-if="selected === c.id"
+                        class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-white"
+                    ></span>
+                </button>
             </div>
         </div>
 
-        <!-- Detail View -->
-         <transition
-            enter-active-class="transition ease-out duration-200"
-            enter-from-class="opacity-0 translate-y-2"
-            enter-to-class="opacity-100 translate-y-0"
-            leave-active-class="transition ease-in duration-150"
-            leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 translate-y-2"
-            mode="out-in"
-        >
+        <!-- Domain + Objective Navigation -->
+        <template v-if="componentData">
+            <DomainObjectiveNav 
+                :objectives="objectivesForNav"
+                :selectedObjectiveId="activeObjectiveId"
+                :useLinks="false"
+                @select-objective="activeObjectiveId = $event"
+            />
+
             <ComponentDetail 
-                v-if="selected && componentData" 
-                :data="componentData" 
+                v-if="selected && filteredData.length" 
+                :data="filteredData" 
                 :type="selected"
                 :masterRoles="masterRoles"
-                :key="selected"
+                :key="selected + activeObjectiveId"
             />
-             <div v-else-if="!selected" class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-12 text-center border border-gray-200/80 dark:border-white/5 text-gray-400">
-                <div class="inline-flex p-4 rounded-full bg-gray-50 dark:bg-white/5 mb-4">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                </div>
-                <p>Select a component above to see aggregated data across all objectives.</p>
-            </div>
-        </transition>
+        </template>
+
+        <!-- Loading -->
+        <div v-else class="text-center py-12 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/80 dark:border-white/5">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mx-auto mb-3"></div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Loading...</p>
+        </div>
     </div>
 </template>
