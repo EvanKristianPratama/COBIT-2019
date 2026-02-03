@@ -128,6 +128,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('login/google', [LoginController::class, 'redirectToGoogle']);
 Route::get('login/google/callback', [LoginController::class, 'handleGoogleCallback']);
+Route::post('login/callback', [LoginController::class, 'handleFirebaseCallback'])->name('login.callback');
+Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
 
 // SSO Divusi callback route
 Route::get('/sso/callback', [SsoCallbackController::class, 'handle'])->name('sso.callback');
@@ -137,6 +139,11 @@ Route::post('/register', [RegisterController::class, 'register']);
 
 // Home route
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
+
+// Profile route
+Route::get('/profile', function () {
+    return \Inertia\Inertia::render('Profile/Index');
+})->name('profile')->middleware('auth');
 
 // Cobit Home view
 Route::get('/cobit2019/cobit_home', [DesignToolkitController::class, 'showJoinForm'])

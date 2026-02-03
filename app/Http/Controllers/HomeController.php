@@ -9,7 +9,18 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $user = Auth::user(); // Get the currently authenticated user
-        return view('home', ['user' => $user]); // Send user data to the view
+        $user = Auth::user();
+        // Mock apps for dashboard
+        $apps = [
+            ['key' => 'cobit', 'name' => 'COBIT 2019', 'description' => 'Governance Framework & Toolkits', 'sso_url' => '/cobit2019/cobit_home'],
+            ['key' => 'finance', 'name' => 'Finance App', 'description' => 'Financial planning and reports', 'sso_url' => '#'],
+            ['key' => 'hr', 'name' => 'HR Portal', 'description' => 'Employee management system', 'sso_url' => '#'],
+            ['key' => 'pmo', 'name' => 'Project Management', 'description' => 'Track project progress', 'sso_url' => '#'],
+        ];
+
+        return \Inertia\Inertia::render('Dashboard/Home', [
+            'user' => $user,
+            'apps' => $apps
+        ]);
     }
 }

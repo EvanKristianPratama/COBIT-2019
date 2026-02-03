@@ -18,12 +18,14 @@ class SpreadsheetController extends Controller
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        return view('spreadsheet.index', compact('spreadsheets'));
+        return \Inertia\Inertia::render('Spreadsheet/Index', [
+            'spreadsheets' => $spreadsheets
+        ]);
     }
 
     public function create()
     {
-        return view('spreadsheet.create');
+        return \Inertia\Inertia::render('Spreadsheet/Create');
     }
 
     public function store(Request $request)
@@ -47,7 +49,9 @@ class SpreadsheetController extends Controller
     {
         $spreadsheet = Spreadsheet::where('user_id', Auth::id())->findOrFail($id);
         
-        return view('spreadsheet.show', compact('spreadsheet'));
+        return \Inertia\Inertia::render('Spreadsheet/Show', [
+            'spreadsheet' => $spreadsheet
+        ]);
     }
 
     public function saveData(Request $request, $id)
