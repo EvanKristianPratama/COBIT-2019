@@ -45,9 +45,30 @@ class MstObjectiveController extends Controller
     ];
 
     /**
-     * Display a listing of objectives (JSON).
+     * Display the main COBIT Dictionary wrapper (Vue/Inertia).
      */
     public function index()
+    {
+        // load master goal lists for MASTER view
+        $masterEnterGoals = MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get();
+        $masterAlignGoals = MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
+        // load master roles
+        $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
+
+        return \Inertia\Inertia::render('CobitComponents/Index', [
+            'masterEnterGoals' => $masterEnterGoals,
+            'masterAlignGoals' => $masterAlignGoals,
+            'masterRoles' => $masterRoles,
+            'objectives' => \App\Models\MstObjective::select('objective_id', 'objective', 'objective_description')
+                ->orderByRaw("CASE WHEN UPPER(objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, objective_id")
+                ->get()
+        ]);
+    }
+
+    /**
+     * Display a listing of objectives (JSON API).
+     */
+    public function apiIndex()
     {
         $preferredOrderSql = "CASE WHEN UPPER(objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, objective_id";
 
@@ -66,21 +87,13 @@ class MstObjectiveController extends Controller
     public function show($id)
     {
         $relations = array_merge($this->commonRelations, $this->showExtraRelations);
-
         $objective = MstObjective::with($relations)->findOrFail($id);
-
-        $allObjectives = MstObjective::select('objective_id', 'objective')->get();
-
-        // allow an optional ?component=... query param so the show view can preselect a component
-        $component = request()->query('component', '');
-
-        // load master goal lists for MASTER view
-        $masterEnterGoals = MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get();
-        $masterAlignGoals = MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
-        // load master roles
         $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
 
-        return view('cobit2019.objectives.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles'));
+        return \Inertia\Inertia::render('CobitComponents/Partials/ViewByGamo/GamoDetail', [
+            'objective' => $objective,
+            'masterRoles' => $masterRoles,
+        ]);
     }
 
     /**
@@ -171,7 +184,7 @@ class MstObjectiveController extends Controller
                     break;
 
                 case 'infoflows':
-                    $payload['infoflows'] = $this->extractInfoflows($o);
+                    $payload['practices'] = $o->practices ?? [];
                     break;
 
                 case 'policies':
@@ -194,13 +207,17 @@ class MstObjectiveController extends Controller
             return $payload;
         });
 
-        $masterEnterGoals = \App\Models\MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get();
-        $masterAlignGoals = \App\Models\MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
+        // Create Master Data loader helper to avoid duplication (inline here for now or refactor later)
+        $masterEnterGoals = MstEntergoals::with('entergoalsmetr')->orderBy('entergoals_id')->get();
+        $masterAlignGoals = MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
         $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
 
-        return view('cobit2019.objectives.show', [
-            'component' => $component,
-            'items' => $items,
+        return \Inertia\Inertia::render('CobitComponents/Index', [
+            'initialTab' => 'component',
+            'selectedComponent' => $component,
+            'componentData' => $items,
+             // We also need basic objectives list for the GAMO tab if user switches
+            'objectives' => MstObjective::select('objective_id', 'objective', 'objective_description')->orderByRaw($preferredOrderSql)->get(),
             'masterEnterGoals' => $masterEnterGoals,
             'masterAlignGoals' => $masterAlignGoals,
             'masterRoles' => $masterRoles,

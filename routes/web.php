@@ -65,11 +65,12 @@ Route::post('/assessment/request', [DesignToolkitController::class, 'requestAsse
     ->middleware('auth')
     ->name('assessment.request');
 
-Route::get('/objectives', [MstObjectiveController::class, 'index']);
-// Route::get('/objectives/{id}', [MstObjectiveController::class, 'show']);
+// COBIT Dictionary (Refactored to Vue)
+Route::get('/cobit-dictionary', [MstObjectiveController::class, 'index'])->name('cobit.dictionary.index');
+Route::get('/objectives', [MstObjectiveController::class, 'apiIndex']); // Renamed for API compatibility
 Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('cobit2019.objectives.show');
 
-// View aggregated data per component (server-side)
+// View aggregated data per component (server-side - kept for backward compat or API)
 Route::get('/objectives/component/{component}', [MstObjectiveController::class, 'byComponent'])
     ->name('cobit2019.objectives.bycomponent');
 
