@@ -23,6 +23,7 @@ use App\Http\Controllers\cobit2019\Df8Controller;
 use App\Http\Controllers\cobit2019\Df9Controller;
 use App\Http\Controllers\cobit2019\DfController;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
+use App\Http\Controllers\cobit2019\RoadmapController;
 use App\Http\Controllers\cobit2019\Step2Controller;
 use App\Http\Controllers\cobit2019\Step3Controller;
 use App\Http\Controllers\cobit2019\Step4Controller;
@@ -261,6 +262,17 @@ Route::get('/akses-df/toggle', function () {
 
     return back();
 })->name('akses-df.toggle');
+
+// Roadmap Capability Routes
+Route::prefix('cobit2019/roadmap')
+    ->middleware('auth')
+    ->name('roadmap.')
+    ->group(function () {
+        Route::get('/', [RoadmapController::class, 'index'])->name('index');
+        Route::get('/report', [RoadmapController::class, 'report'])->name('report');
+        Route::post('/store', [RoadmapController::class, 'store'])->name('store');
+        Route::post('/add-year', [RoadmapController::class, 'addYear'])->name('add-year');
+    });
 
 // Assessment Evaluation routes
 Route::get('/assessment-eval', [AssessmentEvalController::class, 'index'])

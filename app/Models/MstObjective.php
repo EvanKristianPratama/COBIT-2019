@@ -107,4 +107,9 @@ class MstObjective extends Model
     {
         return $this->hasMany(MstEval::class, 'objective_id', 'objective_id');
     }
+
+    public function roadmaps()
+    {
+        return $this->hasMany(TrsRoadmap::class, 'objective_id', 'objective_id');
+    }
 }

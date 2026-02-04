@@ -24,6 +24,9 @@
             <a href="{{ route('target-maturity.index') }}" class="btn btn-outline-primary">
               Target Maturity
             </a>
+            <a href="{{ route('roadmap.index') }}" class="btn btn-outline-primary">
+              Roadmap Capability
+            </a>
           </div>
         </div>
 
