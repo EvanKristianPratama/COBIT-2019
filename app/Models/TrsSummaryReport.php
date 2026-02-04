@@ -11,5 +11,15 @@ class TrsSummaryReport extends Model
 
     protected $table = 'trs_summaryreport';
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'eval_id',
+        'objective_id',
+        'kesimpulan',
+        'rekomendasi',
+        'roadmap_rekomendasi',
+    ];
+
+    protected $casts = [
+        'roadmap_rekomendasi' => 'array',
+    ];
 }

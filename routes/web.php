@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Admin\UserAdminController;
-use App\Http\Controllers\cobit2019\DesignToolkitController;
 use App\Http\Controllers\AssessmentEval\ActivityReportController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
 use App\Http\Controllers\AssessmentEval\AssessmentListController;
@@ -12,6 +11,7 @@ use App\Http\Controllers\AssessmentEval\EvidenceController;
 use App\Http\Controllers\AssessmentEval\TargetMaturityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\cobit2019\DesignToolkitController;
 use App\Http\Controllers\cobit2019\Df10Controller;
 use App\Http\Controllers\cobit2019\Df2Controller;
 use App\Http\Controllers\cobit2019\Df3Controller;
@@ -343,6 +343,10 @@ Route::get('/assessment-eval/{evalId}/report', [AssessmentReportController::clas
     ->name('assessment-eval.report')
     ->middleware('auth');
 
+Route::get('/assessment-eval/{evalId}/summary', [AssessmentSummaryController::class, 'getNote'])
+    ->name('assessment-eval.note')
+    ->middleware('auth');
+
 Route::get('/assessment-eval/{evalId}/summary/{objectiveId?}', [AssessmentSummaryController::class, 'summary'])
     ->name('assessment-eval.summary')
     ->middleware('auth');
@@ -357,6 +361,10 @@ Route::get('/assessment-eval/cleanup-evidence/{secret_key}', [AssessmentSummaryC
 
 Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryPdf'])
     ->name('assessment-eval.summary-pdf')
+    ->middleware('auth');
+
+Route::get('/assessment-eval/{evalId}/summary-detail-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryDetailPdf'])
+    ->name('assessment-eval.summary-detail-pdf')
     ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [ActivityReportController::class, 'show'])

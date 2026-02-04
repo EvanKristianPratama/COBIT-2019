@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Report Summary PDF</title>
+    <title>Report Summary Detail PDF</title>
     <style>
         body {
             font-family: sans-serif;
@@ -88,6 +88,12 @@
         .objective-container {
             page-break-inside: avoid;
             margin-bottom: 20px;
+        }
+
+        .practice-header {
+            background-color: #e8e8e8;
+            font-weight: bold;
+            font-size: 9pt;
         }
     </style>
 </head>
@@ -185,95 +191,64 @@
                 </tr>
             </table>
 
-            {{-- Management Practices List --}}
-            <div style="margin-top: 5px; margin-bottom: 5px;">
-                <div
-                    style="background-color: #0f2b5c; color: white; text-align: center; padding: 5px; font-weight: bold; font-size: 10pt;">
-                    Management Practices List
-                </div>
-                <div style="border: 1px solid #dee2e6; padding: 5px; background-color: white;">
-                    @php
-                        $practices = $objective->practices;
-                        $chunks = $practices->chunk(ceil($practices->count() / 3));
-                    @endphp
-                    <table style="width: 100%; border: none;">
-                        <tr style="border: none;">
-                            @foreach ($chunks as $chunk)
-                                <td style="width: 33%; vertical-align: top; border: none; padding: 0 5px;">
-                                    @foreach ($chunk as $practice)
-                                        <div style="margin-bottom: 3px;">
-                                            <span
-                                                style="font-size: 0.75rem; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
-                                            <span
-                                                style="color: black; font-size: 0.75rem;">{{ str_replace('"', '', $practice->practice_name) }}</span>
-                                        </div>
-                                    @endforeach
-                                </td>
-                            @endforeach
-                            @for ($i = $chunks->count(); $i < 3; $i++)
-                                <td style="width: 33%; border: none;"></td>
-                            @endfor
-                        </tr>
-                    </table>
-                </div>
-            </div>
-
-            {{-- Detailed Table Section --}}
+            {{-- Evidence Table Per Practice --}}
             <div style="margin-top: 5px;">
                 <table class="table" style="border: 1px solid #000;">
                     <thead>
                         <tr>
                             <th
-                                style="width: 50%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
-                                Kebijakan Pedoman /
-                                Prosedur</th>
+                                style="width: 20%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                Practice ID
+                            </th>
                             <th
-                                style="width: 50%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
-                                Evidences / Bukti
-                                Pelaksanaan</th>
+                                style="width: 40%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                Kebijakan Pedoman / Prosedur
+                            </th>
+                            <th
+                                style="width: 40%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                Evidences / Bukti Pelaksanaan
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if ($objective->has_evidence)
+                        @foreach ($objective->practices as $practice)
                             <tr>
-                                <td style="vertical-align: middle;">
-                                    @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
+                                <td style="vertical-align: top; font-weight: bold; font-size: 9pt;">
+                                    {{ str_replace('"', '', $practice->practice_id) }}
+                                    <div style="font-weight: normal; font-size: 8pt; color: #666;">
+                                        {{ str_replace('"', '', $practice->practice_name) }}
+                                    </div>
+                                </td>
+                                <td style="vertical-align: top;">
+                                    @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
                                         <div style="font-size: 9pt;">
-                                            @foreach ($objective->policy_list as $line)
+                                            @foreach ($practice->policy_list as $line)
                                                 <div style="margin-bottom: 1px;">• {{ $line }}</div>
                                             @endforeach
                                         </div>
                                     @else
                                         <div
                                             style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                            Belum ada Kebijakan / Prosedur
+                                            -
                                         </div>
                                     @endif
                                 </td>
-
-                                <td style="vertical-align: middle;">
-                                    @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
+                                <td style="vertical-align: top;">
+                                    @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
                                         <div style="font-size: 9pt;">
-                                            @foreach ($objective->execution_list as $line)
+                                            @foreach ($practice->execution_list as $line)
                                                 <div style="margin-bottom: 1px;">• {{ $line }}</div>
                                             @endforeach
                                         </div>
                                     @else
                                         <div
                                             style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                            Belum ada Evidences / Bukti Pelaksanaan
+                                            -
                                         </div>
                                     @endif
                                 </td>
                             </tr>
-                        @else
-                            <tr>
-                                <td colspan="2"
-                                    style="text-align: center; font-style: italic; color: #6c757d; font-size: 9pt;">
-                                    Belum ada Kebijakan & Bukti Pelaksanaan
-                                </td>
-                            </tr>
-                        @endif
+                        @endforeach
                     </tbody>
                 </table>
             </div>

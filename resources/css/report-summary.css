@@ -1,0 +1,130 @@
+.sticky-action-group {
+    position: fixed;
+    right: 25px;
+    bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.45rem;
+    z-index: 1050;
+}
+
+.sticky-action-btn {
+    border-radius: 999px;
+    padding: 0;
+    font-weight: 600;
+    font-size: 0 !important;
+    /* Hide text completely in collapsed mode */
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Center the icon perfectly */
+    box-shadow: 0 10px 24px rgba(15, 106, 217, 0.18);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sticky-action-btn:hover {
+    width: 160px;
+    padding: 0 1.25rem;
+    justify-content: flex-start;
+    font-size: 0.85rem !important;
+    /* Restore text size on hover */
+}
+
+.sticky-action-btn i {
+    font-size: 1.2rem !important;
+    /* Ensure icon stays visible */
+    margin-right: 0 !important;
+    transition: margin 0.3s ease;
+}
+
+.sticky-action-btn:hover i {
+    margin-right: 0.5rem !important;
+}
+
+.sticky-action-btn.btn-danger {
+    background: linear-gradient(120deg, #dc3545, #c82333);
+    border: none;
+    color: #fff;
+}
+
+.sticky-action-btn.btn-primary {
+    background: linear-gradient(120deg, #0f6ad9, #0c4fb5);
+    border: none;
+    color: #fff;
+}
+
+.sticky-action-btn.btn-light {
+    background: #fff;
+    color: #0f2b5c;
+    border: 1px solid rgba(15, 43, 92, 0.15);
+}
+
+@media (max-width: 768px) {
+    .sticky-action-group {
+        right: 15px;
+        bottom: 15px;
+    }
+}
+
+/* JSpreadsheet Roadmap Styles */
+.jss {
+    font-family: 'Nunito', 'Arial', sans-serif;
+}
+
+.jtoolbar {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 8px 12px !important;
+}
+
+.jtoolbar-item {
+    color: #5f6368 !important;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.jtoolbar-item:hover {
+    background-color: #e8eaed !important;
+    color: #202124 !important;
+}
+
+.jtoolbar-item.selected {
+    background-color: #e8f0fe !important;
+    color: #1a73e8 !important;
+}
+
+.jss td {
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+}
+
+.jss thead td {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #5f6368;
+}
+
+/* Spreadsheet Container Scroll */
+[id^="roadmap-rekomendasi-container-"] {
+    overflow: hidden !important;
+    border: 1px solid #ddd !important;
+    height: 400px !important;
+    width: 100% !important;
+    display: block !important;
+    position: relative;
+}
+
+[id^="roadmap-rekomendasi-container-"] .jss {
+    width: 100% !important;
+}
+
+[id^="roadmap-rekomendasi-container-"] .jss_content {
+    width: 100% !important;
+}
