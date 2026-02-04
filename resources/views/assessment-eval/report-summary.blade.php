@@ -176,7 +176,7 @@
 
                         {{-- Rekomendasi Perbaikan --}}
                         <div class="text-white px-2 py-1" style="background-color: #0f2b5c;">
-                            <div class="fw-bold small">Rekomendasi Perbaikan</div>
+                            <div class="fw-bold small">Kesimpulan</div>
                         </div>
                         <div class="p-2 bg-white border">
                             <textarea name="rekomendasi" class="form-control border-0" rows="3"
@@ -185,7 +185,7 @@
 
                         {{-- Catatan --}}
                         <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
-                            <div class="fw-bold small">Catatan</div>
+                            <div class="fw-bold small">Rekomendasi</div>
                         </div>
                         <div class="p-2 bg-white border">
                             <textarea name="catatan" class="form-control border-0" rows="3"
