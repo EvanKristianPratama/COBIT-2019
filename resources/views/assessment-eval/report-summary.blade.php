@@ -1,7 +1,39 @@
 @extends('layouts.app')
 
 @section('content')
+    <!-- JSpreadsheet v5 CDN -->
+    <script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
+    <script src="https://jsuites.net/v5/jsuites.js"></script>
+    <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.css" type="text/css" />
+    <link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
+
+    <!-- Material Icons (Required for Toolbar) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons" />
+
     <div class="container">
+        {{-- Navigation Breadcrumb --}}
+        <div class="card shadow-sm border-0 mb-4 d-print-none sticky-nav"
+            style="position: sticky; top: 135px; z-index: 1000; transition: top 0.3s;">
+            <div class="card-header bg-white py-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}"
+                                class="text-decoration-none text-muted" style="color: #0f2b5c !important;">
+                                <i class="fas fa-file-alt me-1"></i> Assessment Recapitulation Report
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('assessment-eval.note', $evaluation->eval_id) }}"
+                                class="text-decoration-none text-muted" style="color: #0f2b5c !important;">
+                                <i class="fas fa-clipboard-list me-1"></i> Summary Report
+                            </a>
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
         @foreach ($objectives as $objective)
             <div class="mb-5">
                 {{-- 1. Header Bar --}}
@@ -116,56 +148,134 @@
                     </div>
                 </div>
 
-                {{-- Detailed Table Section --}}
-                <div class="mt-2">
-                    <table class="table table-bordered align-middle mb-0" style="border-color: #000; border-width: 2px;">
-                        <thead>
-                            <tr class="text-center">
-                                <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Kebijakan Pedoman /
-                                    Prosedur</th>
-                                <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Evidences / Bukti
-                                    Pelaksanaan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if ($objective->has_evidence)
-                                <tr>
-                                    {{-- Column 1: Kebijakan / Prosedur (Design) --}}
-                                    <td class="align-middle">
-                                        @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
-                                            <div class="small text-break">
-                                                @foreach ($objective->policy_list as $line)
-                                                    <div class="mb-1">• {{ $line }}</div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <div class="text-muted small fst-italic text-center">Belum ada Kebijakan
-                                                / Prosedur</div>
-                                        @endif
-                                    </td>
 
-                                    {{-- Column 2: Evidence / Bukti Pelaksanaan (Execution) --}}
-                                    <td class="align-middle">
-                                        @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
-                                            <div class="small text-break">
-                                                @foreach ($objective->execution_list as $line)
-                                                    <div class="mb-1">• {{ $line }}</div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <div class="text-muted small fst-italic text-center">Belum ada Evidences
-                                                / Bukti Pelaksanaan</div>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @else
-                                <tr>
-                                    <td colspan="2" class="text-center fst-italic text-muted small">Belum ada
-                                        Kebijakan & Bukti Pelaksanaan</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
+                {{-- Detailed Table Sections with Tabs --}}
+                <div class="mt-2">
+                    {{-- Toggle View Buttons (matching report-activity.blade.php style) --}}
+                    <div class="btn-group mb-2 shadow-sm w-100" role="group" aria-label="View toggle">
+                        <button type="button" class="btn btn-outline-primary px-4 py-2 active" data-view="gamo"
+                            data-target="{{ $loop->index }}">
+                            <i class="fas fa-layer-group me-2"></i>View by GAMO
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2" data-view="practice"
+                            data-target="{{ $loop->index }}">
+                            <i class="fas fa-list me-2"></i>View by Practice
+                        </button>
+                    </div>
+
+                    {{-- View Content Sections --}}
+                    <div class="view-sections" id="viewSections-{{ $loop->index }}">
+                        {{-- View 1: Per GAMO (Aggregated) --}}
+                        <div class="view-section-gamo" id="view-gamo-{{ $loop->index }}">
+                            <table class="table table-bordered align-middle mb-0"
+                                style="border-color: #000; border-width: 2px;">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Kebijakan
+                                            Pedoman /
+                                            Prosedur</th>
+                                        <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Evidences /
+                                            Bukti
+                                            Pelaksanaan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if ($objective->has_evidence)
+                                        <tr>
+                                            {{-- Column 1: Kebijakan / Prosedur (Design) --}}
+                                            <td class="align-middle">
+                                                @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
+                                                    <div class="small text-break">
+                                                        @foreach ($objective->policy_list as $line)
+                                                            <div class="mb-1">• {{ $line }}</div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <div class="text-muted small fst-italic text-center">Belum ada
+                                                        Kebijakan
+                                                        / Prosedur</div>
+                                                @endif
+                                            </td>
+
+                                            {{-- Column 2: Evidence / Bukti Pelaksanaan (Execution) --}}
+                                            <td class="align-middle">
+                                                @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
+                                                    <div class="small text-break">
+                                                        @foreach ($objective->execution_list as $line)
+                                                            <div class="mb-1">• {{ $line }}</div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <div class="text-muted small fst-italic text-center">Belum ada
+                                                        Evidences
+                                                        / Bukti Pelaksanaan</div>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @else
+                                        <tr>
+                                            <td colspan="2" class="text-center fst-italic text-muted small">Belum ada
+                                                Kebijakan & Bukti Pelaksanaan</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- View 2: Per Practice (Detailed) --}}
+                        <div class="view-section-practice" id="view-practice-{{ $loop->index }}"
+                            style="display: none;">
+                            <table class="table table-bordered align-middle mb-0"
+                                style="border-color: #000; border-width: 2px;">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th class="text-white" style="width: 10%; background-color: #0f2b5c;">Practice
+                                        </th>
+                                        <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Kebijakan
+                                            Pedoman /
+                                            Prosedur</th>
+                                        <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Evidences /
+                                            Bukti
+                                            Pelaksanaan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($objective->practices as $practice)
+                                        <tr>
+                                            <td class="align-middle">
+                                                <div class="fw-bold small">
+                                                    {{ str_replace('"', '', $practice->practice_id) }}</div>
+                                                <div class="text-muted small">
+                                                    {{ str_replace('"', '', $practice->practice_name) }}</div>
+                                            </td>
+                                            <td class="align-middle">
+                                                @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
+                                                    <div class="small text-break">
+                                                        @foreach ($practice->policy_list as $line)
+                                                            <div class="mb-1">• {{ $line }}</div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <div class="text-muted small fst-italic text-center">-</div>
+                                                @endif
+                                            </td>
+                                            <td class="align-middle">
+                                                @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
+                                                    <div class="small text-break">
+                                                        @foreach ($practice->execution_list as $line)
+                                                            <div class="mb-1">• {{ $line }}</div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <div class="text-muted small fst-italic text-center">-</div>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-2">
@@ -191,6 +301,25 @@
                             <textarea name="rekomendasi" class="form-control border-0" rows="3"
                                 placeholder="Masukkan rekomendasi untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '' }}</textarea>
                         </div>
+
+                        {{-- Roadmap Rekomendasi --}}
+                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
+                            <div class="fw-bold small">Roadmap Rekomendasi</div>
+                        </div>
+                        <div id="roadmap-rekomendasi-container-{{ $objective->objective_id }}"
+                            style="overflow: auto; max-height: 350px; border: 1px solid #ddd; border-radius: 4px;"></div>
+                        <input type="hidden" name="roadmap_rekomendasi"
+                            id="roadmap-rekomendasi-data-{{ $objective->objective_id }}"
+                            value="{{ is_array($objective->saved_note) && isset($objective->saved_note['roadmap_rekomendasi']) ? json_encode($objective->saved_note['roadmap_rekomendasi']) : '' }}">
+
+
+                        {{-- Roadmap Target Capability --}}
+                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
+                            <div class="fw-bold small">Roadmap Target Capability</div>
+                        </div>
+                        <div class="p-2 bg-white border">
+                            <textarea class="form-control border-0" rows="3"></textarea>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -198,11 +327,17 @@
             {{-- Floating Action Buttons --}}
             <div class="sticky-action-group">
                 <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
-                    class="btn btn-danger sticky-action-btn" target="_blank" title="Export PDF">
+                    class="btn btn-danger sticky-action-btn" target="_blank" title="Export PDF Per GAMO">
                     <i class="fas fa-file-pdf"></i>
-                    <span>Export PDF</span>
+                    <span>PDF Per GAMO</span>
                 </a>
-                <button type="button" class="btn btn-primary sticky-action-btn" id="saveAllNotesBtn" title="Simpan Semua">
+                <a href="{{ route('assessment-eval.summary-detail-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
+                    class="btn btn-warning sticky-action-btn" target="_blank" title="Export PDF Per Practice">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>PDF Per Practice</span>
+                </a>
+                <button type="button" class="btn btn-primary sticky-action-btn" id="saveAllNotesBtn"
+                    title="Simpan Semua">
                     <i class="fas fa-save"></i>
                     <span>Simpan Semua</span>
                 </button>
@@ -213,172 +348,13 @@
 @endsection
 
 @push('scripts')
-    <style>
-        .sticky-action-group {
-            position: fixed;
-            right: 25px;
-            bottom: 25px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 0.45rem;
-            z-index: 1050;
-        }
+    @vite(['resources/js/report-summary.js', 'resources/css/report-summary.css'])
 
-        .sticky-action-btn {
-            border-radius: 999px;
-            padding: 0;
-            font-weight: 600;
-            font-size: 0 !important;
-            /* Hide text completely in collapsed mode */
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* Center the icon perfectly */
-            box-shadow: 0 10px 24px rgba(15, 106, 217, 0.18);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .sticky-action-btn:hover {
-            width: 160px;
-            padding: 0 1.25rem;
-            justify-content: flex-start;
-            font-size: 0.85rem !important;
-            /* Restore text size on hover */
-        }
-
-        .sticky-action-btn i {
-            font-size: 1.2rem !important;
-            /* Ensure icon stays visible */
-            margin-right: 0 !important;
-            transition: margin 0.3s ease;
-        }
-
-        .sticky-action-btn:hover i {
-            margin-right: 0.5rem !important;
-        }
-
-        .sticky-action-btn.btn-danger {
-            background: linear-gradient(120deg, #dc3545, #c82333);
-            border: none;
-            color: #fff;
-        }
-
-        .sticky-action-btn.btn-primary {
-            background: linear-gradient(120deg, #0f6ad9, #0c4fb5);
-            border: none;
-            color: #fff;
-        }
-
-        .sticky-action-btn.btn-light {
-            background: #fff;
-            color: #0f2b5c;
-            border: 1px solid rgba(15, 43, 92, 0.15);
-        }
-
-        @media (max-width: 768px) {
-            .sticky-action-group {
-                right: 15px;
-                bottom: 15px;
-            }
-        }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            @if (session('success'))
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil',
-                    text: '{{ session('success') }}',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            @endif
-
-            @if (session('error'))
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal',
-                    text: '{{ session('error') }}'
-                });
-            @endif
-
-            // Save All Notes functionality
-            const saveAllBtn = document.getElementById('saveAllNotesBtn');
-            if (saveAllBtn) {
-                saveAllBtn.addEventListener('click', function() {
-                    // Get all forms on the page
-                    const forms = document.querySelectorAll('form[action*="save-note"]');
-
-                    if (forms.length === 0) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Tidak Ada Form',
-                            text: 'Tidak ada catatan untuk disimpan.'
-                        });
-                        return;
-                    }
-
-                    // Collect all form data
-                    let savePromises = [];
-                    let savedCount = 0;
-
-                    Swal.fire({
-                        title: 'Menyimpan...',
-                        text: 'Sedang menyimpan semua catatan',
-                        icon: 'info',
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    forms.forEach(form => {
-                        const formData = new FormData(form);
-                        const actionUrl = form.getAttribute('action');
-
-                        const promise = fetch(actionUrl, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        }).then(response => {
-                            if (response.ok) {
-                                savedCount++;
-                            }
-                            return response;
-                        });
-
-                        savePromises.push(promise);
-                    });
-
-                    Promise.all(savePromises)
-                        .then(() => {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil!',
-                                text: `${savedCount} catatan berhasil disimpan.`,
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: 'Terjadi kesalahan saat menyimpan catatan.'
-                            });
-                        });
-                });
-            }
-        });
-    </script>
+    {{-- Hidden Flash Messages for JS to read --}}
+    @if (session('success'))
+        <div id="flash-success" data-message="{{ session('success') }}" style="display:none;"></div>
+    @endif
+    @if (session('error'))
+        <div id="flash-error" data-message="{{ session('error') }}" style="display:none;"></div>
+    @endif
 @endpush

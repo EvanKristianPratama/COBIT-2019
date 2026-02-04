@@ -35,6 +35,18 @@ class AssessmentSummaryController extends Controller
         return $pdf->stream($filename);
     }
 
+    public function summaryDetailPdf($evalId, $objectiveId = null)
+    {
+        $data = $this->getSummary($evalId, $objectiveId);
+
+        $pdf = PDF::loadView('assessment-eval.report-summary-detail-pdf', $data);
+        $pdf->setPaper('a4', 'landscape');
+
+        $filename = 'Summary-Detail-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
+
+        return $pdf->stream($filename);
+    }
+
     private function getSummary($evalId, $objectiveId = null)
     {
         // 1. Eval ID (and object for context)
@@ -62,7 +74,7 @@ class AssessmentSummaryController extends Controller
 
         $objectiveScores = $scoresQuery->pluck('level', 'objective_id')->toArray();
 
-        // Pre-fetch Saved Notes (kesimpulan & rekomendasi)
+        // Pre-fetch Saved Notes (kesimpulan & rekomendasi & roadmap_rekomendasi)
         $savedNotesQuery = TrsSummaryReport::where('eval_id', $evalId)
             ->when($objectiveId, fn ($q) => $q->where('objective_id', $objectiveId))
             ->get();
@@ -72,6 +84,7 @@ class AssessmentSummaryController extends Controller
             $savedNotes[$note->objective_id] = [
                 'kesimpulan' => $note->kesimpulan ?? '',
                 'rekomendasi' => $note->rekomendasi ?? '',
+                'roadmap_rekomendasi' => $note->roadmap_rekomendasi ?? null,
             ];
         }
 
@@ -127,6 +140,10 @@ class AssessmentSummaryController extends Controller
             $objectiveExecutionList = [];
 
             foreach ($obj->practices as $practice) {
+                // Initialize practice-level evidence lists
+                $practicePolicyList = [];
+                $practiceExecutionList = [];
+                
                 foreach ($practice->activities as $activity) {
                     // Ambil item pertama dari relasi hasMany (karena 1 activity hanya punya 1 nilai per eval_id ini)
                     $evalData = $activity->evaluations->first();
@@ -143,15 +160,22 @@ class AssessmentSummaryController extends Controller
                                 continue;
                             }
 
-                            // Deduplicate within GAMO/objective (not practice)
+                            // Get evidence type (from relation or 'Execution' default)
+                            $tipe = $mappedItem->evidence_type;
+
+                            // Add to practice-level lists (allow duplicates at practice level)
+                            if ($tipe && (stripos($tipe, 'Design') !== false || stripos($tipe, 'Procedure') !== false)) {
+                                $practicePolicyList[] = $evidenceName;
+                            } else {
+                                $practiceExecutionList[] = $evidenceName;
+                            }
+
+                            // Deduplicate within GAMO/objective (not practice) for aggregated view
                             $normalizedName = strtolower(trim($evidenceName));
                             if (in_array($normalizedName, $daftarEvidenceUnikGamo)) {
                                 continue;
                             }
                             $daftarEvidenceUnikGamo[] = $normalizedName;
-
-                            // Get evidence type (from relation or 'Execution' default)
-                            $tipe = $mappedItem->evidence_type;
 
                             // Filter Logic: Kebijakan (Design/Procedure) vs Pelaksanaan (Execution/Report)
                             if ($tipe && (stripos($tipe, 'Design') !== false || stripos($tipe, 'Procedure') !== false)) {
@@ -165,6 +189,11 @@ class AssessmentSummaryController extends Controller
                     // Hapus relasi asli agar JSON bersih
                     $activity->unsetRelation('evaluations');
                 }
+                
+                // Inject practice-level evidence (deduplicated within practice)
+                $practice->policy_list = array_unique($practicePolicyList);
+                $practice->execution_list = array_unique($practiceExecutionList);
+                $practice->has_evidence = !empty($practicePolicyList) || !empty($practiceExecutionList);
             }
 
             // Inject evidence lists at OBJECTIVE/GAMO level
@@ -193,11 +222,22 @@ class AssessmentSummaryController extends Controller
             'objective_id' => 'required|string',
             'kesimpulan' => 'nullable|string',
             'rekomendasi' => 'nullable|string',
+            'roadmap_rekomendasi' => 'nullable|string', // Comes as JSON string from frontend
         ]);
 
         $objectiveId = $request->input('objective_id');
         $kesimpulan = $request->input('kesimpulan');
         $rekomendasi = $request->input('rekomendasi');
+        
+        // Decode roadmap_rekomendasi JSON string to array
+        $roadmapRekomendasi = null;
+        $roadmapInput = $request->input('roadmap_rekomendasi');
+        if ($roadmapInput) {
+            $decoded = json_decode($roadmapInput, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $roadmapRekomendasi = $decoded;
+            }
+        }
 
         // 1. Save or Update Summary Report
         $summaryReport = TrsSummaryReport::updateOrCreate(
@@ -205,10 +245,34 @@ class AssessmentSummaryController extends Controller
             [
                 'kesimpulan' => $kesimpulan,
                 'rekomendasi' => $rekomendasi,
+                'roadmap_rekomendasi' => $roadmapRekomendasi,
             ]
         );
 
         return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
+    }
+
+    public function getNote(Request $request, $evalId)
+    {
+        // Define COBIT domain order: EDM → APO → BAI → DSS → MEA
+        $reports = TrsSummaryReport::where('eval_id', $evalId)
+            ->orderByRaw("
+                CASE 
+                    WHEN objective_id LIKE 'EDM%' THEN 1
+                    WHEN objective_id LIKE 'APO%' THEN 2
+                    WHEN objective_id LIKE 'BAI%' THEN 3
+                    WHEN objective_id LIKE 'DSS%' THEN 4
+                    WHEN objective_id LIKE 'MEA%' THEN 5
+                    ELSE 6
+                END,
+                objective_id
+            ")
+            ->get();
+            
+        $objectives = MstObjective::pluck('objective', 'objective_id');
+        $evaluation = MstEval::findOrFail($evalId);
+
+        return view('assessment-eval.summary', compact('reports', 'objectives', 'evalId', 'evaluation'));
     }
 
     private function calculateRatingString($obj, $finalLevel, $ratingMap, $evalId)
