@@ -34,8 +34,25 @@
 
         {{-- Report Result Section --}}
         <div class="card shadow-sm border-0 mb-4" id="report-result-card">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-primary">Assessment Recapitulation Report</h5>
+            <div class="card-header bg-white py-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('assessment-eval.report', $evalId) }}"
+                                class="text-decoration-none {{ Route::currentRouteName() == 'assessment-eval.report' ? 'active-tab text-primary fw-bold' : '' }}"
+                                style="{{ Route::currentRouteName() != 'assessment-eval.report' ? 'color: #0f2b5c;' : '' }}">
+                                <i class="fas fa-file-alt me-1"></i> Assessment Recapitulation Report
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('assessment-eval.note', $evalId) }}"
+                                class="text-decoration-none {{ Route::currentRouteName() == 'assessment-eval.note' ? 'active-tab text-primary fw-bold' : '' }}"
+                                style="{{ Route::currentRouteName() != 'assessment-eval.note' ? 'color: #0f2b5c;' : '' }}">
+                                <i class="fas fa-clipboard-list me-1"></i> Summary
+                            </a>
+                        </li>
+                    </ol>
+                </nav>
             </div>
             <div class="card-body p-0" id="report-container">
                 <div class="table-responsive">
