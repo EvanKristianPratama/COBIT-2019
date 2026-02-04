@@ -12,8 +12,10 @@ class RoadmapController extends Controller
 {
     public function index(Request $request)
     {
-        // Get all objectives ordered by ID (EDM01, EDM02, etc.)
-        $objectives = MstObjective::orderBy('objective_id')->get();
+        // Get all objectives ordered by domain (EDM, APO, BAI, DSS, MEA)
+        $objectives = MstObjective::orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
+            ->orderBy('objective_id')
+            ->get();
 
         // Get all roadmap entries grouped by objective and year
         $roadmaps = TrsRoadmap::all();
@@ -56,7 +58,9 @@ class RoadmapController extends Controller
 
     public function report()
     {
-        $objectives = MstObjective::orderBy('objective_id')->get();
+        $objectives = MstObjective::orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
+            ->orderBy('objective_id')
+            ->get();
         $roadmaps = TrsRoadmap::all();
         
         $mappedRoadmaps = [];

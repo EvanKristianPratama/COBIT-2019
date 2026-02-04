@@ -24,7 +24,7 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive table-wrapper-scroll-y">
-                <table class="table table-sm table-bordered roadmap-table align-middle mb-0">
+                <table class="table table-sm table-bordered table-striped table-hover roadmap-table align-middle mb-0">
                     <thead class="text-center">
                         <tr>
                             <th rowspan="2" class="sticky-col" style="width: 100px;">GAMO</th>
@@ -58,7 +58,7 @@
                                 </td>
                                 <td class="text-center {{ $data['rating'] ? 'bg-light' : '' }}">
                                     @if($data['rating'])
-                                        <span class="badge bg-primary text-white">{{ $data['rating'] }}</span>
+                                        {{ $data['rating'] }}
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -79,33 +79,49 @@
         overflow: auto;
     }
 
-    .roadmap-table, .roadmap-table th, .roadmap-table td {
-        border: 1px solid #000 !important;
-        font-size: 11px;
+    /* Support sticky headers with Bootstrap table-bordered */
+    .roadmap-table {
+        border-collapse: separate !important;
+        border-spacing: 0;
     }
 
     .roadmap-table thead th {
-        background-color: #f0f0f0 !important;
         position: sticky;
         top: 0;
-        z-index: 20;
+        z-index: 40 !important;
+        background-color: #f8f9fa !important;
+        border: 1px solid #dee2e6 !important;
+    }
+
+    /* Secondary header row */
+    .roadmap-table thead tr:nth-child(2) th {
+        top: 33px;
+        z-index: 40 !important;
     }
 
     .sticky-col {
         position: sticky;
         left: 0;
-        z-index: 10;
+        z-index: 20;
         background-color: #fff !important;
-        border-right: 1px solid #000 !important;
+        border-right: 1px solid #dee2e6 !important;
     }
 
     thead th.sticky-col {
-        z-index: 30 !important;
+        z-index: 50 !important;
+        top: 0;
+    }
+    
+    thead tr:nth-child(2) th.sticky-col {
+        top: 33px;
+    }
+    
+    .year-header {
+        font-weight: bold;
     }
 
-    .year-header {
-        background-color: #e9ecef !important;
-        font-weight: bold;
+    .badge {
+        padding: 0.4em 0.8em;
     }
 </style>
 @endsection

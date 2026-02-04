@@ -39,7 +39,7 @@
                 </div>
 
                 <div class="table-responsive table-wrapper-scroll-y">
-                    <table class="table table-sm table-bordered roadmap-table align-middle mb-0" id="roadmap-table">
+                    <table class="table table-sm table-bordered table-striped table-hover roadmap-table align-middle mb-0" id="roadmap-table">
                         <thead class="text-center">
                             <tr>
                                 <th rowspan="2" class="sticky-col" style="width: 100px;">GAMO</th>
@@ -90,12 +90,6 @@
                         </tbody>
                     </table>
                 </div>
-                
-                <div class="p-3 text-end bg-light border-top">
-                    <button type="submit" class="btn btn-success rounded-pill px-5">
-                        <i class="fas fa-save me-2"></i>Save All Changes
-                    </button>
-                </div>
             </form>
         </div>
     </div>
@@ -129,34 +123,46 @@
         overflow: auto;
     }
 
-    .roadmap-table, .roadmap-table th, .roadmap-table td {
-        border: 1px solid #000 !important;
-        font-size: 11px;
+    /* Support sticky headers with Bootstrap table-bordered */
+    .roadmap-table {
+        border-collapse: separate !important;
+        border-spacing: 0;
     }
 
     .roadmap-table thead th {
-        background-color: #f0f0f0 !important;
         position: sticky;
         top: 0;
-        z-index: 20;
+        z-index: 40 !important;
+        background-color: #f8f9fa !important;
+        border: 1px solid #dee2e6 !important;
+    }
+
+    /* Secondary header row (Level/Rating) */
+    .roadmap-table thead tr:nth-child(2) th {
+        top: 33px; /* Default height for small table header */
+        z-index: 40 !important;
     }
 
     .sticky-col {
         position: sticky;
         left: 0;
-        z-index: 10;
+        z-index: 20;
         background-color: #fff !important;
-        border-right: 1px solid #000 !important;
+        border-right: 1px solid #dee2e6 !important;
     }
 
     thead th.sticky-col {
-        z-index: 30 !important;
+        z-index: 50 !important;
+        top: 0;
+    }
+    
+    thead tr:nth-child(2) th.sticky-col {
+        top: 33px;
     }
 
     .form-control-sm, .form-select-sm {
         font-size: 11px;
-        padding: 0.25rem;
-        height: 100%;
+        padding: 0.2rem;
         border-radius: 0;
     }
 
@@ -167,13 +173,7 @@
     }
 
     .year-header {
-        background-color: #e9ecef !important;
         font-weight: bold;
-    }
-
-    .btn-warning {
-        background-color: #ffc107;
-        border-color: #ffc107;
     }
 </style>
 
