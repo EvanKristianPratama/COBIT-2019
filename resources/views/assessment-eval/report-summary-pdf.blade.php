@@ -107,41 +107,41 @@
                         <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
                             <thead>
                                 {{-- Header Row --}}
-                                <tr style="background-color: #9b59b6; color: #fff;">
+                                <tr style="background-color: #9b59b6; color: #fff; height: 30px;">
                                     <th
-                                        style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 2px;">
+                                        style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                         Capability Level
                                     </th>
                                     <th
-                                        style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 2px;">
+                                        style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                         Max Level
                                     </th>
                                     <th
-                                        style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 2px;">
+                                        style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                         Rating
                                     </th>
                                     <th
-                                        style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 2px;">
+                                        style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                         Capability Target {{ $evaluation->tahun ?? '2025' }}
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr style="height: 35px;">
+                                <tr>
                                     <td
-                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000; padding: 5px;">
+                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                         {{ $objective->current_score }}
                                     </td>
                                     <td
-                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000; padding: 5px;">
+                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                         {{ $objective->max_level }}
                                     </td>
                                     <td
-                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000; padding: 5px;">
+                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                         {{ $objective->rating_string }}
                                     </td>
                                     <td
-                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000; padding: 5px;">
+                                        style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                         {{ $objective->target_level == 0 ? '-' : $objective->target_level }}
                                     </td>
                                 </tr>
@@ -160,7 +160,7 @@
                                     <div style="font-weight: bold; font-size: 0.55rem;">Description</div>
                                 </td>
                                 <td style="background-color: white; padding: 5px; vertical-align: middle;">
-                                    <p style="margin: 0; color: #6c757d; font-size: 0.65rem; text-align: justify;">
+                                    <p style="margin: 0; color: #000; font-size: 0.65rem; text-align: justify;">
                                         {{ $objective->objective_description ?? 'No description available.' }}
                                     </p>
                                 </td>
@@ -175,7 +175,7 @@
                                     <div style="font-weight: bold; font-size: 0.55rem;">Purpose</div>
                                 </td>
                                 <td style="background-color: white; padding: 5px; vertical-align: middle;">
-                                    <p style="margin: 0; color: #6c757d; font-size: 0.65rem; text-align: justify;">
+                                    <p style="margin: 0; color: #000; font-size: 0.65rem; text-align: justify;">
                                         {{ $objective->objective_purpose ?? 'No description available.' }}
                                     </p>
                                 </td>
@@ -188,7 +188,7 @@
             {{-- Management Practices List --}}
             <div style="margin-top: 5px; margin-bottom: 5px;">
                 <div
-                    style="background-color: #0f2b5c; color: white; text-align: center; padding: 3px; font-weight: bold; font-size: 9pt;">
+                    style="background-color: #0f2b5c; color: white; text-align: center; padding: 5px; font-weight: bold; font-size: 10pt;">
                     Management Practices List
                 </div>
                 <div style="border: 1px solid #dee2e6; padding: 5px; background-color: white;">
@@ -203,9 +203,9 @@
                                     @foreach ($chunk as $practice)
                                         <div style="margin-bottom: 3px;">
                                             <span
-                                                style="font-weight: bold; font-size: 8pt; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                                style="font-size: 0.75rem; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
                                             <span
-                                                style="color: #6c757d; font-size: 8pt;">{{ str_replace('"', '', $practice->practice_name) }}</span>
+                                                style="color: black; font-size: 0.75rem;">{{ str_replace('"', '', $practice->practice_name) }}</span>
                                         </div>
                                     @endforeach
                                 </td>
@@ -223,9 +223,13 @@
                 <table class="table" style="border: 1px solid #000;">
                     <thead>
                         <tr>
-                            <th style="width: 50%; background-color: #0f2b5c; color: white;">Kebijakan Pedoman /
+                            <th
+                                style="width: 50%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                Kebijakan Pedoman /
                                 Prosedur</th>
-                            <th style="width: 50%; background-color: #0f2b5c; color: white;">Evidences / Bukti
+                            <th
+                                style="width: 50%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                Evidences / Bukti
                                 Pelaksanaan</th>
                         </tr>
                     </thead>
@@ -274,45 +278,49 @@
                 </table>
             </div>
 
-            {{-- Rekomendasi Perbaikan Section --}}
+            {{-- Kesimpulan Section --}}
             <div style="margin-top: 5px; border: 1px solid #dee2e6;">
                 <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
-                    Rekomendasi Perbaikan
+                    Kesimpulan
                 </div>
                 <div style="padding: 10px; background-color: white;">
-                    <p style="margin: 0; font-size: 10pt; color: #000;">
-                        @php
-                            $rekomendasi = is_array($objective->saved_note)
-                                ? $objective->saved_note['rekomendasi']
-                                : '';
-                            $rekomendasi = trim($rekomendasi);
-                        @endphp
-                        @if (empty($rekomendasi) || $rekomendasi === '-')
-                            <span style="color: #6c757d; font-style: italic;">Belum ada rekomendasi perbaikan</span>
-                        @else
-                            {{ $rekomendasi }}
-                        @endif
-                    </p>
+                    @php
+                        $kesimpulan = is_array($objective->saved_note) ? $objective->saved_note['kesimpulan'] : '';
+                        $kesimpulan = trim($kesimpulan);
+                        // Split by newlines and filter empty lines
+                        $kesimpulanLines = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $kesimpulan)));
+                    @endphp
+                    @if (empty($kesimpulan) || $kesimpulan === '-')
+                        <p style="margin: 0; font-size: 10pt; color: #6c757d; font-style: italic;">Belum ada kesimpulan
+                        </p>
+                    @else
+                        @foreach ($kesimpulanLines as $line)
+                            <div style="margin-bottom: 5px; font-size: 10pt; color: #000;">{{ $line }}</div>
+                        @endforeach
+                    @endif
                 </div>
             </div>
 
-            {{-- Catatan Section --}}
+            {{-- Rekomendasi Section --}}
             <div style="margin-top: 5px; border: 1px solid #dee2e6;">
                 <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
-                    Catatan
+                    Rekomendasi
                 </div>
                 <div style="padding: 10px; background-color: white;">
-                    <p style="margin: 0; font-size: 10pt; color: #000;">
-                        @php
-                            $catatan = is_array($objective->saved_note) ? $objective->saved_note['catatan'] : '';
-                            $catatan = trim($catatan);
-                        @endphp
-                        @if (empty($catatan) || $catatan === '-')
-                            <span style="color: #6c757d; font-style: italic;">Belum ada catatan</span>
-                        @else
-                            {{ $catatan }}
-                        @endif
-                    </p>
+                    @php
+                        $rekomendasi = is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '';
+                        $rekomendasi = trim($rekomendasi);
+                        // Split by newlines and filter empty lines
+                        $rekomendasiLines = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $rekomendasi)));
+                    @endphp
+                    @if (empty($rekomendasi) || $rekomendasi === '-')
+                        <p style="margin: 0; font-size: 10pt; color: #6c757d; font-style: italic;">Belum ada rekomendasi
+                        </p>
+                    @else
+                        @foreach ($rekomendasiLines as $line)
+                            <div style="margin-bottom: 5px; font-size: 10pt; color: #000;">{{ $line }}</div>
+                        @endforeach
+                    @endif
                 </div>
             </div>
 
