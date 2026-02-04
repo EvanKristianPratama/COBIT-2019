@@ -7,7 +7,7 @@
                 {{-- 1. Header Bar --}}
                 <div class="d-flex align-items-center mb-2 px-3 py-2 text-white justify-content-between"
                     style="background-color: #0f2b5c;">
-                    <div class="fw-bold fs-5">
+                    <div class="fw-bold">
                         {{ $objective->objective_id }} - {{ $objective->objective }}
                     </div>
                 </div>
@@ -20,41 +20,41 @@
                                 style="border: 1px solid #000; border-collapse: collapse; width: 100%;">
                                 <thead>
                                     {{-- Header Row --}}
-                                    <tr style="background-color: #9b59b6; color: #fff;">
+                                    <tr style="background-color: #9b59b6; color: #fff; height: 30px;">
                                         <th
-                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                             Capability Level
                                         </th>
                                         <th
-                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                             Max Level
                                         </th>
                                         <th
-                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                             Rating
                                         </th>
                                         <th
-                                            style="width: 25%; border: 1px solid #fff; font-size: 0.65rem; font-style: italic; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff;">
+                                            style="width: 25%; border: 1px solid #fff; font-size: 0.61rem; text-align: center; vertical-align: middle; background-color: #9b59b6; color: #fff; padding: 4px;">
                                             Capability Target {{ $evaluation->tahun ?? '2025' }}
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr style="height: 35px;">
+                                    <tr style="height: 30px;">
                                         <td
-                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                             {{ $objective->current_score }}
                                         </td>
                                         <td
-                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                             {{ $objective->max_level }}
                                         </td>
                                         <td
-                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                             {{ $objective->rating_string }}
                                         </td>
                                         <td
-                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 1rem; border: 1px solid #000;">
+                                            style="background-color: #fff; color: #000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 10pt; border: 1px solid #000; padding: 5px;">
                                             {{ $objective->target_level == 0 ? '-' : $objective->target_level }}
                                         </td>
                                     </tr>
@@ -70,11 +70,11 @@
                             {{-- Icon Box --}}
                             <div class="d-flex flex-column align-items-center justify-content-center text-white p-2"
                                 style="background-color: #0f2b5c; width: 70px; flex-shrink: 0;">
-                                <div class="fw-bold" style="font-size: 0.55rem;">Description</div>
+                                <div class="fw-bold" style="font-size: 0.70rem;">Description</div>
                             </div>
                             {{-- Text --}}
                             <div class="p-2 bg-white flex-grow-1 d-flex align-items-center">
-                                <p class="m-0 text-secondary" style="font-size: 0.65rem; text-align: justify;">
+                                <p class="m-0 text-dark" style="font-size: 0.70rem; text-align: justify;">
                                     {{ $objective->objective_description ?? 'No description available.' }}
                                 </p>
                             </div>
@@ -83,34 +83,35 @@
                             {{-- Icon Box --}}
                             <div class="d-flex flex-column align-items-center justify-content-center text-white p-2"
                                 style="background-color: #0f2b5c; width: 70px; flex-shrink: 0;">
-                                <div class="fw-bold" style="font-size: 0.55rem;">Purpose</div>
+                                <div class="fw-bold" style="font-size: 0.70rem;">Purpose</div>
                             </div>
                             {{-- Text --}}
                             <div class="p-2 bg-white flex-grow-1 d-flex align-items-center">
-                                <p class="m-0 text-secondary" style="font-size: 0.65rem; text-align: justify;">
+                                <p class="m-0 text-dark" style="font-size: 0.70rem; text-align: justify;">
                                     {{ $objective->objective_purpose ?? 'No description available.' }}
                                 </p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {{-- Management Practice Section --}}
-                    <div class="col-12 mt-2">
-                        <div class="text-center py-1 fw-bold small text-white" style="background-color: #0f2b5c;">
-                            Management Practices List
-                        </div>
-                        <div class="border border-top-0 p-2 bg-white">
-                            <div style="column-count: 3; ">
-                                @foreach ($objective->practices as $practice)
-                                    <div class="d-flex align-items-center mb-2" style="break-inside: avoid;">
-                                        <span class="fw-bold me-2 text-dark text-nowrap"
-                                            style="font-size: 0.75rem; line-height: 1.2;">{{ str_replace('"', '', $practice->practice_id) }}</span>
-                                        <span class="text-secondary" style="font-size: 0.75rem; line-height: 1.2;">
-                                            {{ str_replace('"', '', $practice->practice_name) }}
-                                        </span>
-                                    </div>
-                                @endforeach
-                            </div>
+                {{-- Management Practice Section --}}
+                <div class="mt-2">
+                    <div class="text-center fw-bold text-white d-flex align-items-center justify-content-center"
+                        style="background-color: #0f2b5c; height: 39px;">
+                        Management Practices List
+                    </div>
+                    <div class="border border-top-0 p-2 bg-white">
+                        <div style="column-count: 3; ">
+                            @foreach ($objective->practices as $practice)
+                                <div class="d-flex align-items-center mb-2" style="break-inside: avoid;">
+                                    <span class="me-2 text-dark text-nowrap"
+                                        style="font-size: 0.75rem; line-height: 1.2;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                    <span class="text-dark text-secondary" style="font-size: 0.75rem; line-height: 1.2;">
+                                        {{ str_replace('"', '', $practice->practice_name) }}
+                                    </span>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -167,29 +168,28 @@
                     </table>
                 </div>
 
-                {{-- Rekomendasi & Catatan Section --}}
                 <div class="mt-2">
                     <form action="{{ route('assessment-eval.summary.save-note', ['evalId' => $evaluation->eval_id]) }}"
                         method="POST">
                         @csrf
                         <input type="hidden" name="objective_id" value="{{ $objective->objective_id }}">
 
-                        {{-- Rekomendasi Perbaikan --}}
+                        {{-- Kesimpulan --}}
                         <div class="text-white px-2 py-1" style="background-color: #0f2b5c;">
                             <div class="fw-bold small">Rekomendasi Perbaikan</div>
                         </div>
                         <div class="p-2 bg-white border">
-                            <textarea name="rekomendasi" class="form-control border-0" rows="3"
-                                placeholder="Masukkan rekomendasi perbaikan untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '' }}</textarea>
+                            <textarea name="kesimpulan" class="form-control border-0" rows="3"
+                                placeholder="Masukkan kesimpulan untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['kesimpulan'] : '' }}</textarea>
                         </div>
 
-                        {{-- Catatan --}}
+                        {{-- Rekomendasi --}}
                         <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
                             <div class="fw-bold small">Catatan</div>
                         </div>
                         <div class="p-2 bg-white border">
-                            <textarea name="catatan" class="form-control border-0" rows="3"
-                                placeholder="Masukkan catatan untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['catatan'] : '' }}</textarea>
+                            <textarea name="rekomendasi" class="form-control border-0" rows="3"
+                                placeholder="Masukkan rekomendasi untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '' }}</textarea>
                         </div>
                     </form>
                 </div>

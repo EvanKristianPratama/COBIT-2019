@@ -62,7 +62,7 @@ class AssessmentSummaryController extends Controller
 
         $objectiveScores = $scoresQuery->pluck('level', 'objective_id')->toArray();
 
-        // Pre-fetch Saved Notes (rekomendasi & catatan)
+        // Pre-fetch Saved Notes (kesimpulan & rekomendasi)
         $savedNotesQuery = TrsSummaryReport::where('eval_id', $evalId)
             ->when($objectiveId, fn ($q) => $q->where('objective_id', $objectiveId))
             ->get();
@@ -70,8 +70,8 @@ class AssessmentSummaryController extends Controller
         $savedNotes = [];
         foreach ($savedNotesQuery as $note) {
             $savedNotes[$note->objective_id] = [
+                'kesimpulan' => $note->kesimpulan ?? '',
                 'rekomendasi' => $note->rekomendasi ?? '',
-                'catatan' => $note->catatan ?? '',
             ];
         }
 
@@ -111,7 +111,7 @@ class AssessmentSummaryController extends Controller
             $currentLevel = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->current_score = $currentLevel;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
-            $obj->saved_note = $savedNotes[$obj->objective_id] ?? ['rekomendasi' => '', 'catatan' => ''];
+            $obj->saved_note = $savedNotes[$obj->objective_id] ?? ['kesimpulan' => '', 'rekomendasi' => ''];
 
             // Calculate Rating String (e.g., 4F)
             $obj->rating_string = $this->calculateRatingString($obj, $currentLevel, $ratingMap, $evalId);
@@ -191,20 +191,20 @@ class AssessmentSummaryController extends Controller
     {
         $request->validate([
             'objective_id' => 'required|string',
+            'kesimpulan' => 'nullable|string',
             'rekomendasi' => 'nullable|string',
-            'catatan' => 'nullable|string',
         ]);
 
         $objectiveId = $request->input('objective_id');
+        $kesimpulan = $request->input('kesimpulan');
         $rekomendasi = $request->input('rekomendasi');
-        $catatan = $request->input('catatan');
 
         // 1. Save or Update Summary Report
         $summaryReport = TrsSummaryReport::updateOrCreate(
             ['eval_id' => $evalId, 'objective_id' => $objectiveId],
             [
+                'kesimpulan' => $kesimpulan,
                 'rekomendasi' => $rekomendasi,
-                'catatan' => $catatan,
             ]
         );
 
