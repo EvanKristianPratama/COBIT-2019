@@ -1,0 +1,29 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-D1DnNaoK.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/report-summary.css": {
+    "file": "assets/report-summary-Bdg0MKPE.css",
+    "src": "resources/css/report-summary.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CrG75o6_.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/report-summary.js": {
+    "file": "assets/report-summary-DsT3IohD.js",
+    "name": "report-summary",
+    "src": "resources/js/report-summary.js",
+    "isEntry": true
+  },
+  "resources/sass/app.scss": {
+    "file": "assets/app-y_TJrqHG.css",
+    "src": "resources/sass/app.scss",
+    "isEntry": true
+  }
+}
