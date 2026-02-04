@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Route middleware
         $middleware->alias([
             'jabatan.df' => \App\Http\Middleware\JabatanDFMiddleware::class,
+            'ensure.approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

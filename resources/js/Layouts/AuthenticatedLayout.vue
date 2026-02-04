@@ -58,6 +58,13 @@ const getInitials = (name) => {
 };
 
 const appVersion = __APP_VERSION__;
+
+// Debugging Admin Role
+watch(authUser, (newVal) => {
+    console.log('Current User Debug:', newVal);
+    console.log('Role:', newVal?.role);
+    console.log('Is Admin?:', ['admin', 'pic'].includes(newVal?.role));
+}, { immediate: true });
 </script>
 
 <template>

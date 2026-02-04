@@ -39,6 +39,8 @@ const tools = [
         url: '/assessment-eval',
         icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
         color: 'blue',
+        badge: 'DEV',
+        isDisabled: true,
     },
     {
         key: 'spreadsheet',
@@ -47,6 +49,14 @@ const tools = [
         url: '/spreadsheet',
         icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
         color: 'emerald',
+    },
+    {
+        key: 'reporting',
+        name: 'Reporting',
+        description: 'Laporan hasil assessment & roadmap capability',
+        url: '/reporting',
+        icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+        color: 'teal',
     },
 ];
 
@@ -58,6 +68,7 @@ const getColorBgClass = (color) => {
         blue: 'bg-blue-500/10 dark:bg-blue-500/20',
         emerald: 'bg-emerald-500/10 dark:bg-emerald-500/20',
         purple: 'bg-purple-500/10 dark:bg-purple-500/20',
+        teal: 'bg-teal-500/10 dark:bg-teal-500/20',
     };
     return map[color] || 'bg-gray-500/10';
 };
@@ -69,6 +80,7 @@ const getTextColorClass = (color) => {
         blue: 'text-blue-500',
         emerald: 'text-emerald-500',
         purple: 'text-purple-500',
+        teal: 'text-teal-500',
     };
     return map[color] || 'text-gray-500';
 };
@@ -80,6 +92,7 @@ const getAccentClass = (color) => {
         blue: 'bg-blue-500',
         emerald: 'bg-emerald-500',
         purple: 'bg-purple-500',
+        teal: 'bg-teal-500',
     };
     return map[color] || 'bg-gray-500';
 };

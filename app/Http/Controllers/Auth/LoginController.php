@@ -76,13 +76,19 @@ class LoginController extends Controller
     /**
      * After login: check role and redirect accordingly
      */
+    /**
+     * After login: check role and redirect accordingly
+     */
     protected function authenticated(Request $request, $user)
     {
         if (!$user->isActivated) {
             Auth::logout();
-
             return redirect()->route('login')
                 ->withErrors(['email' => 'Akun Anda telah dinonaktifkan. Silakan hubungi admin.']);
+        }
+
+        if ($user->approval_status !== 'approved') {
+            return redirect()->route('approval.notice');
         }
 
         return redirect()->intended('/dashboard');
@@ -111,6 +117,7 @@ class LoginController extends Controller
         }
 
         $user = User::where('email', $googleUser->getEmail())->first();
+        $isNewUser = false;
 
         if (!$user) {
              // Create user logic
@@ -119,13 +126,34 @@ class LoginController extends Controller
                 'email' => $googleUser->getEmail(),
                 'password' => bcrypt(str()->random(24)),
                 'role' => 'user',
-                'isActivated' => true
+                'isActivated' => true,
+                'approval_status' => 'pending' // Default pending via Google
              ]);
+             $isNewUser = true;
+             
+             // Optionally assign default 'user' role from Spatie
+             // $user->assignRole('user');
         }
 
+        // If user is deactivated, show modal on login page
         if (!$user->isActivated) {
             return redirect()->route('login')
-                ->withErrors(['email' => 'Akun Anda telah dinonaktifkan. Silakan hubungi admin.']);
+                ->with('status', 'deactivated')
+                ->with('status_user', [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ]);
+        }
+
+        // If user is pending or rejected, show modal on login page
+        if ($user->approval_status !== 'approved') {
+            $status = $user->approval_status === 'rejected' ? 'rejected' : 'pending';
+            return redirect()->route('login')
+                ->with('status', $status)
+                ->with('status_user', [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ]);
         }
 
         Auth::login($user);

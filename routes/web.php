@@ -32,6 +32,7 @@ use App\Http\Controllers\cobit2019\TargetCapabilityController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\SsoCallbackController;
+use App\Http\Controllers\ReportingController;
 use App\Http\Controllers\Spreadsheet\SpreadsheetController;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
@@ -78,43 +79,48 @@ Route::get('/objectives/component/{component}', [MstObjectiveController::class, 
 
 // Admin routes (auth + role check di controller)
 Route::prefix('admin')
-    ->middleware('auth')
+    ->middleware(['auth', 'ensure.approved']) // Ensure admin is also approved
     ->name('admin.')
     ->group(function () {
 
-        // Dashboard (alias assessments.index)
-        Route::get('dashboard', [AdminAssessment::class, 'index'])
+        // Dashboard
+        Route::get('dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
             ->name('dashboard');
-        Route::get('assessments', [AdminAssessment::class, 'index'])
-            ->name('assessments.index');
+        
+        // Roles Resource
+        Route::resource('roles', App\Http\Controllers\Admin\RoleController::class);
 
-        // Page users
-        Route::get('users', [UserAdminController::class, 'index'])
-            ->name('users.index');
+        // User Management
+        Route::get('users', [UserAdminController::class, 'index'])->name('users.index');
+        Route::get('users/create', [UserAdminController::class, 'create'])->name('users.create');
+        Route::post('users', [UserAdminController::class, 'store'])->name('users.store');
         Route::put('users/{id}', [UserAdminController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
         Route::put('users/{user}/deactivate', [UserAdminController::class, 'deactivate'])->name('users.deactivate');
         Route::put('users/{user}/activate', [UserAdminController::class, 'activate'])->name('users.activate');
+        
+        // Approval Actions
+        Route::put('users/{user}/approve', [UserAdminController::class, 'approve'])->name('users.approve');
+        Route::put('users/{user}/reject', [UserAdminController::class, 'reject'])->name('users.reject');
+        Route::post('users/bulk-approve', [UserAdminController::class, 'bulkApprove'])->name('users.bulk-approve');
+        Route::post('users/bulk-reject', [UserAdminController::class, 'bulkReject'])->name('users.bulk-reject');
 
-        // CRUD Assessment
-        Route::post('assessments', [AdminAssessment::class, 'store'])
-            ->name('assessments.store');
-        Route::get('assessments/{assessment_id}', [AdminAssessment::class, 'show'])
-            ->name('assessments.show');
-        Route::delete('assessments/{assessment_id}', [AdminAssessment::class, 'destroy'])
-            ->name('assessments.destroy');
+        // Organization Management (Dummy)
+        Route::resource('organizations', App\Http\Controllers\Admin\OrganizationController::class);
 
-        // Tampilkan semua pending requests
-        Route::get('requests', [AdminAssessment::class, 'pendingRequests'])
-            ->name('requests');
+        // Access Management
+        Route::get('access', [App\Http\Controllers\Admin\AccessManagementController::class, 'index'])->name('access.index');
+        Route::get('access/{id}/edit', [App\Http\Controllers\Admin\AccessManagementController::class, 'edit'])->name('access.edit');
+        Route::put('access/{id}', [App\Http\Controllers\Admin\AccessManagementController::class, 'update'])->name('access.update');
+        Route::post('access/bulk-update', [App\Http\Controllers\Admin\AccessManagementController::class, 'bulkUpdate'])->name('access.bulk-update');
 
-        // **Request–Approve** routes
-        // Tampilkan semua pending requests
-        Route::get('requests', [AdminAssessment::class, 'pendingRequests'])
-            ->name('requests');
-
-        // Approve satu request berdasar index di JSON
-        Route::post('requests/{idx}/approve', [AdminAssessment::class, 'approveRequest'])
-            ->name('requests.approve');
+        // Existing Assessment Routes (Keep or Refactor later? Keeping for now)
+        Route::get('assessments', [AdminAssessment::class, 'index'])->name('assessments.index');
+        Route::post('assessments', [AdminAssessment::class, 'store'])->name('assessments.store');
+        Route::get('assessments/{assessment_id}', [AdminAssessment::class, 'show'])->name('assessments.show');
+        Route::delete('assessments/{assessment_id}', [AdminAssessment::class, 'destroy'])->name('assessments.destroy');
+        Route::get('requests', [AdminAssessment::class, 'pendingRequests'])->name('requests');
+        Route::post('requests/{idx}/approve', [AdminAssessment::class, 'approveRequest'])->name('requests.approve');
     });
 
 // Redirect ke halaman login
@@ -129,10 +135,23 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::get('/approval-status', function () {
+    return Inertia\Inertia::render('Auth/ApprovalStatus', [
+        'status' => auth()->user()->approval_status ?? 'pending'
+    ]);
+})->name('approval.notice')->middleware('auth');
+
 Route::get('login/google', [LoginController::class, 'redirectToGoogle']);
 Route::get('login/google/callback', [LoginController::class, 'handleGoogleCallback']);
 Route::post('login/callback', [LoginController::class, 'handleFirebaseCallback'])->name('login.callback');
 Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
+
+// Reporting Routes
+Route::middleware(['auth', 'ensure.approved'])->prefix('reporting')->name('reporting.')->group(function () {
+    Route::get('/', [ReportingController::class, 'index'])->name('index');
+    Route::get('/capability', [ReportingController::class, 'capability'])->name('capability');
+    Route::get('/roadmap', [ReportingController::class, 'roadmap'])->name('roadmap');
+});
 
 // SSO Divusi callback route
 Route::get('/sso/callback', [SsoCallbackController::class, 'handle'])->name('sso.callback');
@@ -453,3 +472,5 @@ Route::get('/test-api-token', function () {
            'Run this command in terminal:<br>' .
            '<code>curl -H "Authorization: Bearer ' . $token . '" -H "Accept: application/json" http://localhost:8000/api/v1/assessments/1</code>';
 })->middleware('web');
+
+

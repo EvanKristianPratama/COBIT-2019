@@ -4,18 +4,18 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+// use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable; //, HasRoles;
 
     protected $fillable = [
         'id', 'sso_user_id', 'name', 'email', 'password', 'organisasi', 'jabatan', 'role',
     ];
 
     protected $hidden = [
-        'password', 'remember_token','role'
+        'password', 'remember_token',
     ];
 
     /**

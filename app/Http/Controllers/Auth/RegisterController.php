@@ -32,12 +32,26 @@ class RegisterController extends Controller
 
     protected function create(array $data)
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'jabatan' => $data['jabatan'],
             'organisasi' => $data['organisasi'],
+            'approval_status' => 'pending', // Explicit pending
         ]);
+
+        // $user->assignRole('user'); // Optional default role
+        
+        return $user;
+    }
+    
+    /**
+     * The user has been registered.
+     */
+    protected function registered(\Illuminate\Http\Request $request, $user)
+    {
+        // Redirect to approval notice instead of home
+        return redirect()->route('approval.notice');
     }
 }

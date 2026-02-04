@@ -22,7 +22,7 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <!-- Scripts -->
-        
+        @routes 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @inertiaHead
     </head>
