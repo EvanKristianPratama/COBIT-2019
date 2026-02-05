@@ -236,7 +236,8 @@
                     <tbody>
                         @if ($objective->has_evidence)
                             <tr>
-                                <td style="vertical-align: middle;">
+                                <td
+                                    style="vertical-align: {{ isset($objective->policy_list) && count($objective->policy_list) > 0 ? 'top' : 'middle' }};">
                                     @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
                                         <div style="font-size: 9pt;">
                                             @foreach ($objective->policy_list as $line)
@@ -251,7 +252,8 @@
                                     @endif
                                 </td>
 
-                                <td style="vertical-align: middle;">
+                                <td
+                                    style="vertical-align: {{ isset($objective->execution_list) && count($objective->execution_list) > 0 ? 'top' : 'middle' }};">
                                     @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
                                         <div style="font-size: 9pt;">
                                             @foreach ($objective->execution_list as $line)

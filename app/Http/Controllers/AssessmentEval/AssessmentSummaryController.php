@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MstEval;
 use App\Models\MstObjective;
 use App\Models\TrsObjectiveScore;
+use App\Models\TrsRoadmap;
 use App\Models\TrsSummaryActivity;
 use App\Models\TrsSummaryReport;
 use App\Services\EvaluationService;
@@ -18,33 +19,10 @@ class AssessmentSummaryController extends Controller
     public function summary($evalId, $objectiveId = null)
     {
         $data = $this->getSummary($evalId, $objectiveId);
+        $roadmap = $this->getRoadmapTargetCapability();
 
-        // return response()->json($data);
-        return view('assessment-eval.report-summary', $data);
-    }
-
-    public function summaryPdf($evalId, $objectiveId = null)
-    {
-        $data = $this->getSummary($evalId, $objectiveId);
-
-        $pdf = PDF::loadView('assessment-eval.report-summary-pdf', $data);
-        $pdf->setPaper('a4', 'landscape');
-
-        $filename = 'Summary-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
-
-        return $pdf->stream($filename);
-    }
-
-    public function summaryDetailPdf($evalId, $objectiveId = null)
-    {
-        $data = $this->getSummary($evalId, $objectiveId);
-
-        $pdf = PDF::loadView('assessment-eval.report-summary-detail-pdf', $data);
-        $pdf->setPaper('a4', 'landscape');
-
-        $filename = 'Summary-Detail-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
-
-        return $pdf->stream($filename);
+        // return response()->json(compact('data', 'roadmap'));
+        return view('assessment-eval.report-summary', array_merge($data, compact('roadmap')));
     }
 
     private function getSummary($evalId, $objectiveId = null)
@@ -143,7 +121,7 @@ class AssessmentSummaryController extends Controller
                 // Initialize practice-level evidence lists
                 $practicePolicyList = [];
                 $practiceExecutionList = [];
-                
+
                 foreach ($practice->activities as $activity) {
                     // Ambil item pertama dari relasi hasMany (karena 1 activity hanya punya 1 nilai per eval_id ini)
                     $evalData = $activity->evaluations->first();
@@ -189,11 +167,11 @@ class AssessmentSummaryController extends Controller
                     // Hapus relasi asli agar JSON bersih
                     $activity->unsetRelation('evaluations');
                 }
-                
+
                 // Inject practice-level evidence (deduplicated within practice)
                 $practice->policy_list = array_unique($practicePolicyList);
                 $practice->execution_list = array_unique($practiceExecutionList);
-                $practice->has_evidence = !empty($practicePolicyList) || !empty($practiceExecutionList);
+                $practice->has_evidence = ! empty($practicePolicyList) || ! empty($practiceExecutionList);
             }
 
             // Inject evidence lists at OBJECTIVE/GAMO level
@@ -214,65 +192,6 @@ class AssessmentSummaryController extends Controller
         });
 
         return compact('evaluation', 'objectives', 'targetCapabilityMap');
-    }
-
-    public function saveNote(Request $request, $evalId)
-    {
-        $request->validate([
-            'objective_id' => 'required|string',
-            'kesimpulan' => 'nullable|string',
-            'rekomendasi' => 'nullable|string',
-            'roadmap_rekomendasi' => 'nullable|string', // Comes as JSON string from frontend
-        ]);
-
-        $objectiveId = $request->input('objective_id');
-        $kesimpulan = $request->input('kesimpulan');
-        $rekomendasi = $request->input('rekomendasi');
-        
-        // Decode roadmap_rekomendasi JSON string to array
-        $roadmapRekomendasi = null;
-        $roadmapInput = $request->input('roadmap_rekomendasi');
-        if ($roadmapInput) {
-            $decoded = json_decode($roadmapInput, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $roadmapRekomendasi = $decoded;
-            }
-        }
-
-        // 1. Save or Update Summary Report
-        $summaryReport = TrsSummaryReport::updateOrCreate(
-            ['eval_id' => $evalId, 'objective_id' => $objectiveId],
-            [
-                'kesimpulan' => $kesimpulan,
-                'rekomendasi' => $rekomendasi,
-                'roadmap_rekomendasi' => $roadmapRekomendasi,
-            ]
-        );
-
-        return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
-    }
-
-    public function getNote(Request $request, $evalId)
-    {
-        // Define COBIT domain order: EDM → APO → BAI → DSS → MEA
-        $reports = TrsSummaryReport::where('eval_id', $evalId)
-            ->orderByRaw("
-                CASE 
-                    WHEN objective_id LIKE 'EDM%' THEN 1
-                    WHEN objective_id LIKE 'APO%' THEN 2
-                    WHEN objective_id LIKE 'BAI%' THEN 3
-                    WHEN objective_id LIKE 'DSS%' THEN 4
-                    WHEN objective_id LIKE 'MEA%' THEN 5
-                    ELSE 6
-                END,
-                objective_id
-            ")
-            ->get();
-            
-        $objectives = MstObjective::pluck('objective', 'objective_id');
-        $evaluation = MstEval::findOrFail($evalId);
-
-        return view('assessment-eval.summary', compact('reports', 'objectives', 'evalId', 'evaluation'));
     }
 
     private function calculateRatingString($obj, $finalLevel, $ratingMap, $evalId)
@@ -319,6 +238,118 @@ class AssessmentSummaryController extends Controller
         }
 
         return $finalLevel.$letter;
+    }
+
+    private function getRoadmapTargetCapability()
+    {
+        $objectives = MstObjective::orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
+            ->orderBy('objective_id')
+            ->get();
+        $roadmaps = TrsRoadmap::all();
+
+        $mappedRoadmaps = [];
+        $availableYears = [];
+
+        foreach ($roadmaps as $r) {
+            $mappedRoadmaps[$r->objective_id][$r->year] = [
+                'level' => $r->level,
+                'rating' => $r->rating,
+            ];
+            $availableYears[] = (int) $r->year;
+        }
+
+        $years = array_unique($availableYears);
+        sort($years);
+
+        // Attach mapped roadmaps to objectives for easier view access
+        foreach ($objectives as $obj) {
+            $obj->roadmap_values = $mappedRoadmaps[$obj->objective_id] ?? [];
+        }
+
+        return compact('objectives', 'years');
+    }
+
+    public function saveNote(Request $request, $evalId)
+    {
+        $request->validate([
+            'objective_id' => 'required|string',
+            'kesimpulan' => 'nullable|string',
+            'rekomendasi' => 'nullable|string',
+            'roadmap_rekomendasi' => 'nullable|string', // Comes as JSON string from frontend
+        ]);
+
+        $objectiveId = $request->input('objective_id');
+        $kesimpulan = $request->input('kesimpulan');
+        $rekomendasi = $request->input('rekomendasi');
+
+        // Decode roadmap_rekomendasi JSON string to array
+        $roadmapRekomendasi = null;
+        $roadmapInput = $request->input('roadmap_rekomendasi');
+        if ($roadmapInput) {
+            $decoded = json_decode($roadmapInput, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $roadmapRekomendasi = $decoded;
+            }
+        }
+
+        // 1. Save or Update Summary Report
+        $summaryReport = TrsSummaryReport::updateOrCreate(
+            ['eval_id' => $evalId, 'objective_id' => $objectiveId],
+            [
+                'kesimpulan' => $kesimpulan,
+                'rekomendasi' => $rekomendasi,
+                'roadmap_rekomendasi' => $roadmapRekomendasi,
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
+    }
+
+    public function getNote(Request $request, $evalId)
+    {
+        // Define COBIT domain order: EDM → APO → BAI → DSS → MEA
+        $reports = TrsSummaryReport::where('eval_id', $evalId)
+            ->orderByRaw("
+                CASE 
+                    WHEN objective_id LIKE 'EDM%' THEN 1
+                    WHEN objective_id LIKE 'APO%' THEN 2
+                    WHEN objective_id LIKE 'BAI%' THEN 3
+                    WHEN objective_id LIKE 'DSS%' THEN 4
+                    WHEN objective_id LIKE 'MEA%' THEN 5
+                    ELSE 6
+                END,
+                objective_id
+            ")
+            ->get();
+
+        $objectives = MstObjective::pluck('objective', 'objective_id');
+        $evaluation = MstEval::findOrFail($evalId);
+
+        return view('assessment-eval.summary', compact('reports', 'objectives', 'evalId', 'evaluation'));
+    }
+
+    public function summaryPdf($evalId, $objectiveId = null)
+    {
+        $data = $this->getSummary($evalId, $objectiveId);
+
+        $pdf = PDF::loadView('assessment-eval.report-summary-pdf', $data);
+        $pdf->setPaper('a4', 'landscape');
+
+        $filename = 'Summary-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    public function summaryDetailPdf($evalId, $objectiveId = null)
+    {
+        $data = $this->getSummary($evalId, $objectiveId);
+
+        $pdf = PDF::loadView('assessment-eval.report-summary-detail-pdf', $data);
+        $pdf->setPaper('a4', 'landscape');
+
+        $filename = 'Summary-Detail-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
+
+        return $pdf->stream($filename);
     }
 
     public function cleanupEvidence($secret_key)  // ❌ Hapus parameter $evalId di sini

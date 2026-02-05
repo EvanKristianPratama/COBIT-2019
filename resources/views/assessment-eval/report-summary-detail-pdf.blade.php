@@ -197,15 +197,15 @@
                     <thead>
                         <tr>
                             <th
-                                style="width: 20%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                style="width: 10%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
                                 Practice ID
                             </th>
                             <th
-                                style="width: 40%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                style="width: 45%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
                                 Kebijakan Pedoman / Prosedur
                             </th>
                             <th
-                                style="width: 40%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                style="width: 45%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
                                 Evidences / Bukti Pelaksanaan
                             </th>
                         </tr>
@@ -213,40 +213,49 @@
                     <tbody>
                         @foreach ($objective->practices as $practice)
                             <tr>
-                                <td style="vertical-align: top; font-weight: bold; font-size: 9pt;">
+                                <td
+                                    style="text-align: center; vertical-align: middle; font-weight: bold; font-size: 9pt;">
                                     {{ str_replace('"', '', $practice->practice_id) }}
-                                    <div style="font-weight: normal; font-size: 8pt; color: #666;">
-                                        {{ str_replace('"', '', $practice->practice_name) }}
-                                    </div>
                                 </td>
-                                <td style="vertical-align: top;">
-                                    @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
-                                        <div style="font-size: 9pt;">
-                                            @foreach ($practice->policy_list as $line)
-                                                <div style="margin-bottom: 1px;">• {{ $line }}</div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <div
-                                            style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                            -
-                                        </div>
-                                    @endif
-                                </td>
-                                <td style="vertical-align: top;">
-                                    @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
-                                        <div style="font-size: 9pt;">
-                                            @foreach ($practice->execution_list as $line)
-                                                <div style="margin-bottom: 1px;">• {{ $line }}</div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <div
-                                            style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                            -
-                                        </div>
-                                    @endif
-                                </td>
+                                @if (
+                                    (!isset($practice->policy_list) || count($practice->policy_list) == 0) &&
+                                        (!isset($practice->execution_list) || count($practice->execution_list) == 0))
+                                    <td colspan="2"
+                                        style="text-align: center; vertical-align: middle; font-style: italic; color: #6c757d; font-size: 9pt;">
+                                        Belum ada Kebijakan & Bukti Pelaksanaan
+                                    </td>
+                                @else
+                                    <td
+                                        style="vertical-align: {{ isset($practice->policy_list) && count($practice->policy_list) > 0 ? 'top' : 'middle' }};">
+                                        @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
+                                            <div style="font-size: 9pt;">
+                                                @foreach ($practice->policy_list as $line)
+                                                    <div style="margin-bottom: 1px;">• {{ $line }}</div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div
+                                                style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
+                                                Belum ada Kebijakan / Prosedur
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td
+                                        style="vertical-align: {{ isset($practice->execution_list) && count($practice->execution_list) > 0 ? 'top' : 'middle' }};">
+                                        @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
+                                            <div style="font-size: 9pt;">
+                                                @foreach ($practice->execution_list as $line)
+                                                    <div style="margin-bottom: 1px;">• {{ $line }}</div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div
+                                                style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
+                                                Belum ada Evidence / Bukti Pelaksanaan
+                                            </div>
+                                        @endif
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>

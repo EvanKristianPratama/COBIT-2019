@@ -183,7 +183,8 @@
                                     @if ($objective->has_evidence)
                                         <tr>
                                             {{-- Column 1: Kebijakan / Prosedur (Design) --}}
-                                            <td class="align-middle">
+                                            <td
+                                                class="{{ isset($objective->policy_list) && count($objective->policy_list) > 0 ? 'align-top' : 'align-middle' }}">
                                                 @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
                                                     <div class="small text-break">
                                                         @foreach ($objective->policy_list as $line)
@@ -191,14 +192,14 @@
                                                         @endforeach
                                                     </div>
                                                 @else
-                                                    <div class="text-muted small fst-italic text-center">Belum ada
-                                                        Kebijakan
+                                                    <div class="text-muted small fst-italic text-center">Belum ada Kebijakan
                                                         / Prosedur</div>
                                                 @endif
                                             </td>
 
                                             {{-- Column 2: Evidence / Bukti Pelaksanaan (Execution) --}}
-                                            <td class="align-middle">
+                                            <td
+                                                class="{{ isset($objective->execution_list) && count($objective->execution_list) > 0 ? 'align-top' : 'align-middle' }}">
                                                 @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
                                                     <div class="small text-break">
                                                         @foreach ($objective->execution_list as $line)
@@ -207,8 +208,7 @@
                                                     </div>
                                                 @else
                                                     <div class="text-muted small fst-italic text-center">Belum ada
-                                                        Evidences
-                                                        / Bukti Pelaksanaan</div>
+                                                        Evidences / Bukti Pelaksanaan</div>
                                                 @endif
                                             </td>
                                         </tr>
@@ -232,23 +232,20 @@
                                         <th class="text-white" style="width: 10%; background-color: #0f2b5c;">Practice
                                         </th>
                                         <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Kebijakan
-                                            Pedoman /
-                                            Prosedur</th>
+                                            Pedoman / Prosedur</th>
                                         <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Evidences /
-                                            Bukti
-                                            Pelaksanaan</th>
+                                            Bukti Pelaksanaan</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($objective->practices as $practice)
                                         <tr>
-                                            <td class="align-middle">
+                                            <td class="align-middle text-center">
                                                 <div class="fw-bold small">
                                                     {{ str_replace('"', '', $practice->practice_id) }}</div>
-                                                <div class="text-muted small">
-                                                    {{ str_replace('"', '', $practice->practice_name) }}</div>
                                             </td>
-                                            <td class="align-middle">
+                                            <td
+                                                class="{{ isset($practice->policy_list) && count($practice->policy_list) > 0 ? 'align-top' : 'align-middle' }}">
                                                 @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
                                                     <div class="small text-break">
                                                         @foreach ($practice->policy_list as $line)
@@ -256,10 +253,12 @@
                                                         @endforeach
                                                     </div>
                                                 @else
-                                                    <div class="text-muted small fst-italic text-center">-</div>
+                                                    <div class="text-muted small fst-italic text-center">Belum ada
+                                                        Kebijakan / Prosedur</div>
                                                 @endif
                                             </td>
-                                            <td class="align-middle">
+                                            <td
+                                                class="{{ isset($practice->execution_list) && count($practice->execution_list) > 0 ? 'align-top' : 'align-middle' }}">
                                                 @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
                                                     <div class="small text-break">
                                                         @foreach ($practice->execution_list as $line)
@@ -267,7 +266,8 @@
                                                         @endforeach
                                                     </div>
                                                 @else
-                                                    <div class="text-muted small fst-italic text-center">-</div>
+                                                    <div class="text-muted small fst-italic text-center">Belum ada
+                                                        Evidences / Bukti Pelaksanaan</div>
                                                 @endif
                                             </td>
                                         </tr>
@@ -318,7 +318,61 @@
                             <div class="fw-bold small">Roadmap Target Capability</div>
                         </div>
                         <div class="p-2 bg-white border">
-                            <textarea class="form-control border-0" rows="3"></textarea>
+                            @if (isset($roadmap) && isset($roadmap['objectives']) && $roadmap['objectives']->isNotEmpty())
+                                <div class="table-responsive" style="max-height: 300px; overflow: auto;">
+                                    <table class="table table-bordered table-sm table-striped text-center align-middle">
+                                        <thead class="sticky-top">
+                                            <tr>
+                                                <th rowspan="2" class="align-middle"
+                                                    style="min-width: 80px; border: 2px solid #dee2e6; background-color: white;">
+                                                    Objective
+                                                    ID</th>
+                                                <th rowspan="2" class="align-middle"
+                                                    style="min-width: 200px; border: 2px solid #dee2e6; background-color: white;">
+                                                    Objective Name</th>
+                                                @foreach ($roadmap['years'] as $year)
+                                                    <th colspan="2" class="align-middle border-bottom"
+                                                        style="border: 2px solid #dee2e6; background-color: white;">
+                                                        {{ $year }}
+                                                    </th>
+                                                @endforeach
+                                            </tr>
+                                            <tr>
+                                                @foreach ($roadmap['years'] as $year)
+                                                    <th class="small font-weight-bold"
+                                                        style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
+                                                        Level</th>
+                                                    <th class="small font-weight-bold"
+                                                        style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
+                                                        Rating
+                                                    </th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($roadmap['objectives'] as $obj)
+                                                <tr>
+                                                    <td class="fw-bold small">
+                                                        {{ str_replace('"', '', $obj->objective_id) }}</td>
+                                                    <td class="text-start small">
+                                                        {{ str_replace('"', '', $obj->objective) }}
+                                                    </td>
+                                                    @foreach ($roadmap['years'] as $year)
+                                                        <td class="small">
+                                                            {{ data_get($obj->roadmap_values, "$year.level") ?? '-' }}
+                                                        </td>
+                                                        <td class="small">
+                                                            {{ data_get($obj->roadmap_values, "$year.rating") ?? '-' }}
+                                                        </td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <div class="text-center text-muted fst-italic">Belum ada data roadmap</div>
+                            @endif
                         </div>
                     </form>
                 </div>
