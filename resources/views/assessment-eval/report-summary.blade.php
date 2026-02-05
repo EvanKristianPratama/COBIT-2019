@@ -35,7 +35,7 @@
         </div>
 
         @foreach ($objectives as $objective)
-            <div class="mb-5">
+            <div class="">
                 {{-- 1. Header Bar --}}
                 <div class="d-flex align-items-center mb-2 px-3 py-2 text-white justify-content-between"
                     style="background-color: #0f2b5c;">
@@ -94,309 +94,340 @@
                             </table>
                         </div>
                     </div>
+                    <div class="col-md-8 d-flex align-items-center">
+                        <div class="row w-100 ps-3">
+                            <div class="col-auto mb-0 me-5 ps-3 border-start border-4 border-primary py-2"
+                                style="border-color: #0f2b5c !important;">
 
-                    {{-- 4. Right Column: Details --}}
-                    <div class="col-md-8">
-                        {{-- Tujuan / Purpose Section --}}
-                        <div class="d-flex mb-2 border">
-                            {{-- Icon Box --}}
-                            <div class="d-flex flex-column align-items-center justify-content-center text-white p-2"
-                                style="background-color: #0f2b5c; width: 70px; flex-shrink: 0;">
-                                <div class="fw-bold" style="font-size: 0.70rem;">Description</div>
-                            </div>
-                            {{-- Text --}}
-                            <div class="p-2 bg-white flex-grow-1 d-flex align-items-center">
-                                <p class="m-0 text-dark" style="font-size: 0.70rem; text-align: justify;">
-                                    {{ $objective->objective_description ?? 'No description available.' }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="d-flex border">
-                            {{-- Icon Box --}}
-                            <div class="d-flex flex-column align-items-center justify-content-center text-white p-2"
-                                style="background-color: #0f2b5c; width: 70px; flex-shrink: 0;">
-                                <div class="fw-bold" style="font-size: 0.70rem;">Purpose</div>
-                            </div>
-                            {{-- Text --}}
-                            <div class="p-2 bg-white flex-grow-1 d-flex align-items-center">
-                                <p class="m-0 text-dark" style="font-size: 0.70rem; text-align: justify;">
-                                    {{ $objective->objective_purpose ?? 'No description available.' }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Management Practice Section --}}
-                <div class="mt-2">
-                    <div class="text-center fw-bold text-white d-flex align-items-center justify-content-center"
-                        style="background-color: #0f2b5c; height: 39px;">
-                        Management Practices List
-                    </div>
-                    <div class="border border-top-0 p-2 bg-white">
-                        <div style="column-count: 3; ">
-                            @foreach ($objective->practices as $practice)
-                                <div class="d-flex align-items-center mb-2" style="break-inside: avoid;">
-                                    <span class="me-2 text-dark text-nowrap"
-                                        style="font-size: 0.75rem; line-height: 1.2;">{{ str_replace('"', '', $practice->practice_id) }}</span>
-                                    <span class="text-dark text-secondary" style="font-size: 0.75rem; line-height: 1.2;">
-                                        {{ str_replace('"', '', $practice->practice_name) }}
-                                    </span>
+                                <div class="text-uppercase fw-semibold text-muted"
+                                    style="font-size: 0.75rem; letter-spacing: 0.08em; line-height: 1.3; margin-bottom: 4px;">
+                                    Assessment Year
                                 </div>
-                            @endforeach
+
+                                <div class="fw-bold text-dark" style="font-size: 1.2rem; line-height: 1.25;">
+                                    {{ $evaluation->year ?? ($evaluation->assessment_year ?? ($evaluation->tahun ?? 'N/A')) }}
+                                </div>
+                            </div>
+
+                            <div class="col-auto mb-0 me-5 ps-3 border-start border-4 border-primary py-2"
+                                style="border-color: #0f2b5c !important;">
+
+                                <div class="text-uppercase fw-semibold text-muted"
+                                    style="font-size: 0.75rem; letter-spacing: 0.08em; line-height: 1.3; margin-bottom: 4px;">
+                                    Organization
+                                </div>
+
+                                <div class="fw-bold text-dark" style="font-size: 1.2rem; line-height: 1.25;">
+                                    {{ $evaluation->user->organisasi ?? 'N/A' }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+            </div>
 
-                {{-- Detailed Table Sections with Tabs --}}
-                <div class="mt-2">
-                    {{-- Toggle View Buttons (matching report-activity.blade.php style) --}}
-                    <div class="btn-group mb-2 shadow-sm w-100" role="group" aria-label="View toggle">
-                        <button type="button" class="btn btn-outline-primary px-4 py-2 active" data-view="gamo"
-                            data-target="{{ $loop->index }}">
-                            <i class="fas fa-layer-group me-2"></i>View by GAMO
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary px-4 py-2" data-view="practice"
-                            data-target="{{ $loop->index }}">
-                            <i class="fas fa-list me-2"></i>View by Practice
-                        </button>
-                    </div>
+            {{-- Description --}}
+            <div class="mt-2" style="border: 1px solid #000;">
+                <div class="d-flex align-items-center text-white fw-bold px-2 py-1"
+                    style="background-color: #0f2b5c; height: 39px;">
+                    Description
+                </div>
+                <div class="p-2 bg-white" style="overflow: auto; height: 40px; max-height: 125px; resize: vertical;">
+                    <p class="m-0 text-dark" style="text-align: justify;">
+                        {{ $objective->objective_description ?? 'No description available.' }}
+                    </p>
+                </div>
+            </div>
 
-                    {{-- View Content Sections --}}
-                    <div class="view-sections" id="viewSections-{{ $loop->index }}">
-                        {{-- View 1: Per GAMO (Aggregated) --}}
-                        <div class="view-section-gamo" id="view-gamo-{{ $loop->index }}">
-                            <table class="table table-bordered align-middle mb-0"
-                                style="border-color: #000; border-width: 2px;">
-                                <thead>
-                                    <tr class="text-center">
-                                        <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Kebijakan
-                                            Pedoman /
-                                            Prosedur</th>
-                                        <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Evidences /
-                                            Bukti
-                                            Pelaksanaan</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if ($objective->has_evidence)
-                                        <tr>
-                                            {{-- Column 1: Kebijakan / Prosedur (Design) --}}
-                                            <td
-                                                class="{{ isset($objective->policy_list) && count($objective->policy_list) > 0 ? 'align-top' : 'align-middle' }}">
-                                                @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
-                                                    <div class="small text-break">
-                                                        @foreach ($objective->policy_list as $line)
-                                                            <div class="mb-1">• {{ $line }}</div>
-                                                        @endforeach
-                                                    </div>
-                                                @else
-                                                    <div class="text-muted small fst-italic text-center">Belum ada Kebijakan
-                                                        / Prosedur</div>
-                                                @endif
-                                            </td>
+            {{-- Purpose --}}
+            <div class="mt-2" style="border: 1px solid #000;">
+                <div class="d-flex align-items-center text-white fw-bold px-2 py-1"
+                    style="background-color: #0f2b5c; height: 39px;">
+                    Purpose
+                </div>
+                <div class="p-2 bg-white" style="overflow: auto; height: 40px; max-height: 120px; resize: vertical;">
+                    <p class="m-0 text-dark" style="text-align: justify;">
+                        {{ $objective->objective_purpose ?? 'No description available.' }}
+                    </p>
+                </div>
+            </div>
 
-                                            {{-- Column 2: Evidence / Bukti Pelaksanaan (Execution) --}}
-                                            <td
-                                                class="{{ isset($objective->execution_list) && count($objective->execution_list) > 0 ? 'align-top' : 'align-middle' }}">
-                                                @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
-                                                    <div class="small text-break">
-                                                        @foreach ($objective->execution_list as $line)
-                                                            <div class="mb-1">• {{ $line }}</div>
-                                                        @endforeach
-                                                    </div>
-                                                @else
-                                                    <div class="text-muted small fst-italic text-center">Belum ada
-                                                        Evidences / Bukti Pelaksanaan</div>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @else
-                                        <tr>
-                                            <td colspan="2" class="text-center fst-italic text-muted small">Belum ada
-                                                Kebijakan & Bukti Pelaksanaan</td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {{-- View 2: Per Practice (Detailed) --}}
-                        <div class="view-section-practice" id="view-practice-{{ $loop->index }}"
-                            style="display: none;">
-                            <table class="table table-bordered align-middle mb-0"
-                                style="border-color: #000; border-width: 2px;">
-                                <thead>
-                                    <tr class="text-center">
-                                        <th class="text-white" style="width: 10%; background-color: #0f2b5c;">Practice
-                                        </th>
-                                        <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Kebijakan
-                                            Pedoman / Prosedur</th>
-                                        <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Evidences /
-                                            Bukti Pelaksanaan</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($objective->practices as $practice)
-                                        <tr>
-                                            <td class="align-middle text-center">
-                                                <div class="fw-bold small">
-                                                    {{ str_replace('"', '', $practice->practice_id) }}</div>
-                                            </td>
-                                            <td
-                                                class="{{ isset($practice->policy_list) && count($practice->policy_list) > 0 ? 'align-top' : 'align-middle' }}">
-                                                @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
-                                                    <div class="small text-break">
-                                                        @foreach ($practice->policy_list as $line)
-                                                            <div class="mb-1">• {{ $line }}</div>
-                                                        @endforeach
-                                                    </div>
-                                                @else
-                                                    <div class="text-muted small fst-italic text-center">Belum ada
-                                                        Kebijakan / Prosedur</div>
-                                                @endif
-                                            </td>
-                                            <td
-                                                class="{{ isset($practice->execution_list) && count($practice->execution_list) > 0 ? 'align-top' : 'align-middle' }}">
-                                                @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
-                                                    <div class="small text-break">
-                                                        @foreach ($practice->execution_list as $line)
-                                                            <div class="mb-1">• {{ $line }}</div>
-                                                        @endforeach
-                                                    </div>
-                                                @else
-                                                    <div class="text-muted small fst-italic text-center">Belum ada
-                                                        Evidences / Bukti Pelaksanaan</div>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+            {{-- Management Practice Section --}}
+            <div class="mt-2">
+                <div class="text-center fw-bold text-white d-flex align-items-center justify-content-center"
+                    style="background-color: #0f2b5c; height: 39px;">
+                    Management Practices List
+                </div>
+                <div class="p-2 bg-white" style="border: 1px solid #000; border-top: none;">
+                    <div style="column-count: 3; ">
+                        @foreach ($objective->practices as $practice)
+                            <div class="d-flex align-items-center mb-2" style="break-inside: avoid;">
+                                <span class="me-2 text-dark text-nowrap"
+                                    style=" line-height: 1.2;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                <span class="text-dark text-secondary" style=" line-height: 1.2;">
+                                    {{ str_replace('"', '', $practice->practice_name) }}
+                                </span>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
+            </div>
 
-                <div class="mt-2">
-                    <form action="{{ route('assessment-eval.summary.save-note', ['evalId' => $evaluation->eval_id]) }}"
-                        method="POST">
-                        @csrf
-                        <input type="hidden" name="objective_id" value="{{ $objective->objective_id }}">
 
-                        {{-- Kesimpulan --}}
+            {{-- Detailed Table Sections with Tabs --}}
+            <div class="mt-2">
+                {{-- Toggle View Buttons (matching report-activity.blade.php style) --}}
+                <div class="btn-group mb-2 shadow-sm w-100" role="group" aria-label="View toggle">
+                    <button type="button" class="btn btn-outline-primary px-4 py-2 active" data-view="gamo"
+                        data-target="{{ $loop->index }}">
+                        <i class="fas fa-layer-group me-2"></i>View by GAMO
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary px-4 py-2" data-view="practice"
+                        data-target="{{ $loop->index }}">
+                        <i class="fas fa-list me-2"></i>View by Practice
+                    </button>
+                </div>
+
+                {{-- View Content Sections --}}
+                <div class="view-sections" id="viewSections-{{ $loop->index }}">
+                    {{-- View 1: Per GAMO (Aggregated) --}}
+                    <div class="view-section-gamo" id="view-gamo-{{ $loop->index }}">
+                        <table class="table table-bordered align-middle mb-0"
+                            style="border-color: #000; border-width: 2px;">
+                            <thead>
+                                <tr class="text-center">
+                                    <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Kebijakan
+                                        Pedoman /
+                                        Prosedur</th>
+                                    <th class="text-white" style="width: 50%; background-color: #0f2b5c;">Evidences /
+                                        Bukti
+                                        Pelaksanaan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if ($objective->has_evidence)
+                                    <tr>
+                                        {{-- Column 1: Kebijakan / Prosedur (Design) --}}
+                                        <td
+                                            class="{{ isset($objective->policy_list) && count($objective->policy_list) > 0 ? 'align-top' : 'align-middle' }}">
+                                            @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
+                                                <div class="small text-break">
+                                                    @foreach ($objective->policy_list as $line)
+                                                        <div class="mb-1">• {{ $line }}</div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="text-muted small fst-italic text-center">Belum ada
+                                                    Kebijakan
+                                                    / Prosedur</div>
+                                            @endif
+                                        </td>
+
+                                        {{-- Column 2: Evidence / Bukti Pelaksanaan (Execution) --}}
+                                        <td
+                                            class="{{ isset($objective->execution_list) && count($objective->execution_list) > 0 ? 'align-top' : 'align-middle' }}">
+                                            @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
+                                                <div class="small text-break">
+                                                    @foreach ($objective->execution_list as $line)
+                                                        <div class="mb-1">• {{ $line }}</div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="text-muted small fst-italic text-center">Belum ada
+                                                    Evidences / Bukti Pelaksanaan</div>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @else
+                                    <tr>
+                                        <td colspan="2" class="text-center fst-italic text-muted small">Belum ada
+                                            Kebijakan & Bukti Pelaksanaan</td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- View 2: Per Practice (Detailed) --}}
+                    <div class="view-section-practice" id="view-practice-{{ $loop->index }}" style="display: none;">
+                        <table class="table table-bordered align-middle mb-0"
+                            style="border-color: #000; border-width: 2px;">
+                            <thead>
+                                <tr class="text-center">
+                                    <th class="text-white" style="width: 10%; background-color: #0f2b5c;">Practice
+                                    </th>
+                                    <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Kebijakan
+                                        Pedoman / Prosedur</th>
+                                    <th class="text-white" style="width: 45%; background-color: #0f2b5c;">Evidences /
+                                        Bukti Pelaksanaan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($objective->practices as $practice)
+                                    <tr>
+                                        <td class="align-middle text-center">
+                                            <div class="fw-bold small">
+                                                {{ str_replace('"', '', $practice->practice_id) }}</div>
+                                        </td>
+                                        <td
+                                            class="{{ isset($practice->policy_list) && count($practice->policy_list) > 0 ? 'align-top' : 'align-middle' }}">
+                                            @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
+                                                <div class="small text-break">
+                                                    @foreach ($practice->policy_list as $line)
+                                                        <div class="mb-1">• {{ $line }}</div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="text-muted small fst-italic text-center">Belum ada
+                                                    Kebijakan / Prosedur</div>
+                                            @endif
+                                        </td>
+                                        <td
+                                            class="{{ isset($practice->execution_list) && count($practice->execution_list) > 0 ? 'align-top' : 'align-middle' }}">
+                                            @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
+                                                <div class="small text-break">
+                                                    @foreach ($practice->execution_list as $line)
+                                                        <div class="mb-1">• {{ $line }}</div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="text-muted small fst-italic text-center">Belum ada
+                                                    Evidences / Bukti Pelaksanaan</div>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-2">
+                <form action="{{ route('assessment-eval.summary.save-note', ['evalId' => $evaluation->eval_id]) }}"
+                    method="POST">
+                    @csrf
+                    <input type="hidden" name="objective_id" value="{{ $objective->objective_id }}">
+
+                    {{-- Kesimpulan --}}
+                    <div class="mt-2" style="border: 1px solid #000;">
                         <div class="text-white px-2 py-1" style="background-color: #0f2b5c;">
                             <div class="fw-bold small">Kesimpulan</div>
                         </div>
-                        <div class="p-2 bg-white border">
+                        <div class="p-2 bg-white">
                             <textarea name="kesimpulan" class="form-control border-0" rows="3"
                                 placeholder="Masukkan kesimpulan untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['kesimpulan'] : '' }}</textarea>
                         </div>
+                    </div>
 
-                        {{-- Rekomendasi --}}
-                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
+                    {{-- Rekomendasi --}}
+                    <div class="mt-2" style="border: 1px solid #000;">
+                        <div class="text-white px-2 py-1" style="background-color: #0f2b5c;">
                             <div class="fw-bold small">Rekomendasi</div>
                         </div>
-                        <div class="p-2 bg-white border">
+                        <div class="p-2 bg-white">
                             <textarea name="rekomendasi" class="form-control border-0" rows="3"
                                 placeholder="Masukkan rekomendasi untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '' }}</textarea>
                         </div>
+                    </div>
 
-                        {{-- Roadmap Rekomendasi --}}
-                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
-                            <div class="fw-bold small">Roadmap Rekomendasi</div>
-                        </div>
-                        <div id="roadmap-rekomendasi-container-{{ $objective->objective_id }}"
-                            style="overflow: auto; max-height: 350px; border: 1px solid #ddd; border-radius: 4px;"></div>
+                    {{-- Roadmap Rekomendasi --}}
+                    <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
+                        <div class="fw-bold small">Roadmap Rekomendasi</div>
+                    </div>
+                    <div id="roadmap-rekomendasi-container-{{ $objective->objective_id }}"
+                        style="overflow: auto; max-height: 350px; border: 1px solid #000; border-radius: 4px;">
+
                         <input type="hidden" name="roadmap_rekomendasi"
                             id="roadmap-rekomendasi-data-{{ $objective->objective_id }}"
                             value="{{ is_array($objective->saved_note) && isset($objective->saved_note['roadmap_rekomendasi']) ? json_encode($objective->saved_note['roadmap_rekomendasi']) : '' }}">
+                    </div>
 
 
-                        {{-- Roadmap Target Capability --}}
-                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
-                            <div class="fw-bold small">Roadmap Target Capability</div>
-                        </div>
-                        <div class="p-2 bg-white border">
-                            @if (isset($roadmap) && isset($roadmap['objectives']) && $roadmap['objectives']->isNotEmpty())
-                                <div class="table-responsive" style="max-height: 300px; overflow: auto;">
-                                    <table class="table table-bordered table-sm table-striped text-center align-middle">
-                                        <thead class="sticky-top">
-                                            <tr>
-                                                <th rowspan="2" class="align-middle"
-                                                    style="min-width: 80px; border: 2px solid #dee2e6; background-color: white;">
-                                                    Objective
-                                                    ID</th>
-                                                <th rowspan="2" class="align-middle"
-                                                    style="min-width: 200px; border: 2px solid #dee2e6; background-color: white;">
-                                                    Objective Name</th>
-                                                @foreach ($roadmap['years'] as $year)
-                                                    <th colspan="2" class="align-middle border-bottom"
-                                                        style="border: 2px solid #dee2e6; background-color: white;">
-                                                        {{ $year }}
-                                                    </th>
-                                                @endforeach
-                                            </tr>
-                                            <tr>
-                                                @foreach ($roadmap['years'] as $year)
-                                                    <th class="small font-weight-bold"
-                                                        style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
-                                                        Level</th>
-                                                    <th class="small font-weight-bold"
-                                                        style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
-                                                        Rating
-                                                    </th>
-                                                @endforeach
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($roadmap['objectives'] as $obj)
-                                                <tr>
-                                                    <td class="fw-bold small">
-                                                        {{ str_replace('"', '', $obj->objective_id) }}</td>
-                                                    <td class="text-start small">
-                                                        {{ str_replace('"', '', $obj->objective) }}
-                                                    </td>
-                                                    @foreach ($roadmap['years'] as $year)
-                                                        <td class="small">
-                                                            {{ data_get($obj->roadmap_values, "$year.level") ?? '-' }}
-                                                        </td>
-                                                        <td class="small">
-                                                            {{ data_get($obj->roadmap_values, "$year.rating") ?? '-' }}
-                                                        </td>
-                                                    @endforeach
-                                                </tr>
+                    {{-- Roadmap Target Capability --}}
+                    <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
+                        <div class="fw-bold small">Roadmap Target Capability</div>
+                    </div>
+                    <div class="p-2 bg-white" style="border: 1px solid #000;">
+                        @if (isset($roadmap) && isset($roadmap['objectives']) && $roadmap['objectives']->isNotEmpty())
+                            <div class="table-responsive" style="max-height: 300px; overflow: auto;">
+                                <table class="table table-bordered table-sm table-striped text-center align-middle">
+                                    <thead class="sticky-top">
+                                        <tr>
+                                            <th rowspan="2" class="align-middle"
+                                                style="min-width: 80px; border: 2px solid #dee2e6; background-color: white;">
+                                                Objective
+                                                ID</th>
+                                            <th rowspan="2" class="align-middle"
+                                                style="min-width: 200px; border: 2px solid #dee2e6; background-color: white;">
+                                                Objective Name</th>
+                                            @foreach ($roadmap['years'] as $year)
+                                                <th colspan="2" class="align-middle border-bottom"
+                                                    style="border: 2px solid #dee2e6; background-color: white;">
+                                                    {{ $year }}
+                                                </th>
                                             @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @else
-                                <div class="text-center text-muted fst-italic">Belum ada data roadmap</div>
-                            @endif
-                        </div>
-                    </form>
-                </div>
+                                        </tr>
+                                        <tr>
+                                            @foreach ($roadmap['years'] as $year)
+                                                <th class="small font-weight-bold"
+                                                    style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
+                                                    Level</th>
+                                                <th class="small font-weight-bold"
+                                                    style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
+                                                    Rating
+                                                </th>
+                                            @endforeach
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($roadmap['objectives'] as $obj)
+                                            <tr>
+                                                <td class="fw-bold small">
+                                                    {{ str_replace('"', '', $obj->objective_id) }}</td>
+                                                <td class="text-start small">
+                                                    {{ str_replace('"', '', $obj->objective) }}
+                                                </td>
+                                                @foreach ($roadmap['years'] as $year)
+                                                    <td class="small">
+                                                        {{ data_get($obj->roadmap_values, "$year.level") ?? '-' }}
+                                                    </td>
+                                                    <td class="small">
+                                                        {{ data_get($obj->roadmap_values, "$year.rating") ?? '-' }}
+                                                    </td>
+                                                @endforeach
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center text-muted fst-italic">Belum ada data roadmap</div>
+                        @endif
+                    </div>
+                </form>
             </div>
+    </div>
 
-            {{-- Floating Action Buttons --}}
-            <div class="sticky-action-group">
-                <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
-                    class="btn btn-danger sticky-action-btn" target="_blank" title="Export PDF Per GAMO">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>PDF Per GAMO</span>
-                </a>
-                <a href="{{ route('assessment-eval.summary-detail-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
-                    class="btn btn-warning sticky-action-btn" target="_blank" title="Export PDF Per Practice">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>PDF Per Practice</span>
-                </a>
-                <button type="button" class="btn btn-primary sticky-action-btn" id="saveAllNotesBtn"
-                    title="Simpan Semua">
-                    <i class="fas fa-save"></i>
-                    <span>Simpan Semua</span>
-                </button>
-            </div>
-        @endforeach
+    {{-- Floating Action Buttons --}}
+    <div class="sticky-action-group">
+        <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
+            class="btn btn-danger sticky-action-btn" target="_blank" title="Export PDF Per GAMO">
+            <i class="fas fa-file-pdf"></i>
+            <span>PDF Per GAMO</span>
+        </a>
+        <a href="{{ route('assessment-eval.summary-detail-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
+            class="btn btn-warning sticky-action-btn" target="_blank" title="Export PDF Per Practice">
+            <i class="fas fa-file-pdf"></i>
+            <span>PDF Per Practice</span>
+        </a>
+        <button type="button" class="btn btn-primary sticky-action-btn" id="saveAllNotesBtn" title="Simpan Semua">
+            <i class="fas fa-save"></i>
+            <span>Simpan Semua</span>
+        </button>
+    </div>
+    @endforeach
 
     </div>
 @endsection

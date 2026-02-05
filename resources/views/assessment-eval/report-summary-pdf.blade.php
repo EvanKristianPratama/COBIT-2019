@@ -59,6 +59,15 @@
             page-break-inside: auto;
         }
 
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
         th,
         td {
             border: 1px solid #000;
@@ -149,35 +158,29 @@
                         </table>
                     </td>
 
-                    {{-- 4. Right Column: Details --}}
-                    <td style="width: 65%; border: none; padding: 0; vertical-align: top;">
-                        {{-- Deskripsi --}}
-                        <table
-                            style="width: 100%; border-collapse: collapse; border: 1px solid #dee2e6; margin-bottom: 5px;">
-                            <tr>
+                    {{-- 4. Right Column: Assessment Info --}}
+                    <td style="width: 65%; border: none; padding: 0; padding-left: 10px; vertical-align: middle;">
+                        <table style="width: 100%; border: none;">
+                            <tr style="border: none;">
                                 <td
-                                    style="background-color: #0f2b5c; width: 70px; color: white; text-align: center; vertical-align: middle; padding: 5px;">
-                                    <div style="font-weight: bold; font-size: 0.55rem;">Description</div>
+                                    style="border: none; border-left: 4px solid #0f2b5c; padding-left: 10px; padding-top: 8px; padding-bottom: 8px; vertical-align: middle;">
+                                    <div
+                                        style="font-size: 0.75rem; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.08em; line-height: 1.3; margin-bottom: 4px;">
+                                        Assessment Year
+                                    </div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #000; line-height: 1.25;">
+                                        {{ $evaluation->year ?? ($evaluation->assessment_year ?? ($evaluation->tahun ?? 'N/A')) }}
+                                    </div>
                                 </td>
-                                <td style="background-color: white; padding: 5px; vertical-align: middle;">
-                                    <p style="margin: 0; color: #000; font-size: 0.65rem; text-align: justify;">
-                                        {{ $objective->objective_description ?? 'No description available.' }}
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-
-                        {{-- Tujuan --}}
-                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #dee2e6;">
-                            <tr>
                                 <td
-                                    style="background-color: #0f2b5c; width: 70px; color: white; text-align: center; vertical-align: middle; padding: 5px;">
-                                    <div style="font-weight: bold; font-size: 0.55rem;">Purpose</div>
-                                </td>
-                                <td style="background-color: white; padding: 5px; vertical-align: middle;">
-                                    <p style="margin: 0; color: #000; font-size: 0.65rem; text-align: justify;">
-                                        {{ $objective->objective_purpose ?? 'No description available.' }}
-                                    </p>
+                                    style="border: none; border-left: 4px solid #0f2b5c; padding-left: 10px; padding-top: 8px; padding-bottom: 8px; vertical-align: middle;">
+                                    <div
+                                        style="font-size: 0.75rem; font-weight: bold; color: #666; text-transform: uppercase; letter-spacing: 0.08em; line-height: 1.3; margin-bottom: 4px;">
+                                        Organization
+                                    </div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #000; line-height: 1.25;">
+                                        {{ $evaluation->user->organisasi ?? 'N/A' }}
+                                    </div>
                                 </td>
                             </tr>
                         </table>
@@ -185,27 +188,51 @@
                 </tr>
             </table>
 
+            {{-- Description --}}
+            <div style="border: 1px solid #000; margin-top: 8px;">
+                <div style="background-color: #0f2b5c; color: white; padding: 10px; font-weight: bold;">
+                    Description
+                </div>
+                <div style="padding: 8px; background-color: white;">
+                    <p style="margin: 0; color: #000; text-align: justify;">
+                        {{ $objective->objective_description ?? 'No description available.' }}
+                    </p>
+                </div>
+            </div>
+
+            {{-- Purpose --}}
+            <div style="border: 1px solid #000; margin-top: 8px;">
+                <div style="background-color: #0f2b5c; color: white; padding: 10px; font-weight: bold;">
+                    Purpose
+                </div>
+                <div style="padding: 8px; background-color: white;">
+                    <p style="margin: 0; color: #000; text-align: justify;">
+                        {{ $objective->objective_purpose ?? 'No description available.' }}
+                    </p>
+                </div>
+            </div>
+
             {{-- Management Practices List --}}
-            <div style="margin-top: 5px; margin-bottom: 5px;">
+            <div style="margin-top: 5px; margin-bottom: 5px; border: 1px solid #000;">
                 <div
-                    style="background-color: #0f2b5c; color: white; text-align: center; padding: 5px; font-weight: bold; font-size: 10pt;">
+                    style="background-color: #0f2b5c; color: white; text-align: center; padding: 10px; font-weight: bold;">
                     Management Practices List
                 </div>
-                <div style="border: 1px solid #dee2e6; padding: 5px; background-color: white;">
+                <div style="padding: 8px; background-color: white;">
                     @php
                         $practices = $objective->practices;
                         $chunks = $practices->chunk(ceil($practices->count() / 3));
                     @endphp
-                    <table style="width: 100%; border: none;">
-                        <tr style="border: none;">
+                    <table style="width: 100%; border: none; border-collapse: collapse;">
+                        <tr>
                             @foreach ($chunks as $chunk)
                                 <td style="width: 33%; vertical-align: top; border: none; padding: 0 5px;">
                                     @foreach ($chunk as $practice)
-                                        <div style="margin-bottom: 3px;">
+                                        <div style="margin-bottom: 4px; font-size: 9pt;">
                                             <span
-                                                style="font-size: 0.75rem; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                                style="font-weight: bold; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
                                             <span
-                                                style="color: black; font-size: 0.75rem;">{{ str_replace('"', '', $practice->practice_name) }}</span>
+                                                style="color: #333;">{{ str_replace('"', '', $practice->practice_name) }}</span>
                                         </div>
                                     @endforeach
                                 </td>
@@ -281,7 +308,7 @@
             </div>
 
             {{-- Kesimpulan Section --}}
-            <div style="margin-top: 5px; border: 1px solid #dee2e6;">
+            <div style="margin-top: 5px; border: 1px solid #000;">
                 <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
                     Kesimpulan
                 </div>
@@ -302,7 +329,7 @@
             </div>
 
             {{-- Rekomendasi Section --}}
-            <div style="margin-top: 5px; border: 1px solid #dee2e6;">
+            <div style="margin-top: 5px; border: 1px solid #000;">
                 <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
                     Rekomendasi
                 </div>
