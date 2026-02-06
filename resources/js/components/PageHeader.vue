@@ -9,17 +9,17 @@ defineProps({
 </script>
 
 <template>
-    <div class="space-y-2">
+    <div class="space-y-0.5">
         <Breadcrumbs v-if="breadcrumbs" :items="breadcrumbs" />
         
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ title }}</h1>
-                <p v-if="subtitle" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <h1 class="text-lg font-bold text-gray-900 dark:text-white">{{ title }}</h1>
+                <p v-if="subtitle" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     {{ subtitle }}
                 </p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-2">
                 <slot name="actions" />
             </div>
         </div>

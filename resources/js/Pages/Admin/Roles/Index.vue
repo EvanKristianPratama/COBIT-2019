@@ -1,6 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
+import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
 defineProps({
     roles: Array
@@ -24,9 +25,7 @@ const deleteRole = (id) => {
                     <p class="text-gray-500 dark:text-gray-400">Manage user roles and access rights</p>
                 </div>
                 <Link :href="route('admin.roles.create')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-sm font-medium transition-colors flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
+                    <PlusIcon class="w-5 h-5 mr-2" />
                     Create Role
                 </Link>
             </div>
@@ -58,8 +57,23 @@ const deleteRole = (id) => {
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <Link :href="route('admin.roles.edit', role.id)" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4">Edit</Link>
-                                <button v-if="role.name !== 'admin'" @click="deleteRole(role.id)" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                                <div class="flex items-center justify-end gap-2">
+                                    <Link
+                                        :href="route('admin.roles.edit', role.id)"
+                                        class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                        title="Edit"
+                                    >
+                                        <PencilSquareIcon class="w-5 h-5" />
+                                    </Link>
+                                    <button
+                                        v-if="role.name !== 'admin'"
+                                        @click="deleteRole(role.id)"
+                                        class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                        title="Delete"
+                                    >
+                                        <TrashIcon class="w-5 h-5" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         <tr v-if="!roles.length">

@@ -22,6 +22,10 @@ class TargetMaturity extends Model
         'target_maturity'
     ];
 
+    protected $casts = [
+        'target_maturity' => 'float'
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

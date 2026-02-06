@@ -190,6 +190,7 @@ class EvaluationService
 
             foreach ($levelScores as $objectiveId => $levels) {
                 foreach ($levels as $level => $levelData) {
+                    $contextKey = "{$objectiveId}_{$level}";
                     if (isset($levelData['activities'])) {
                         foreach ($levelData['activities'] as $activityId => $score) {
                             $levelAchieved = $this->scoreToLetter($score);
@@ -197,9 +198,9 @@ class EvaluationService
                             $activityEvaluations[] = [
                                 'activity_id' => $activityId,
                                 'level_achieved' => $levelAchieved,
-                                'evidence' => $evidence[$activityId] ?? null,
-                                'evidence_names' => $evidenceNames[$activityId] ?? null,
-                                'notes' => $notes[$activityId] ?? null,
+                                'evidence' => $evidence[$contextKey][$activityId] ?? null,
+                                'evidence_names' => $evidenceNames[$contextKey][$activityId] ?? null,
+                                'notes' => $notes[$contextKey][$activityId] ?? null,
                             ];
                             $processedActivityIds[$activityId] = true;
                         }
@@ -207,17 +208,26 @@ class EvaluationService
                 }
             }
 
-            // check for activities with notes/evidence but no rating
-            $otherIds = array_unique(array_merge(array_keys($notes), array_keys($evidence)));
-            foreach ($otherIds as $actId) {
-                if (! isset($processedActivityIds[$actId])) {
-                    $activityEvaluations[] = [
-                        'activity_id' => $actId,
-                        'level_achieved' => null, // Allow null for unrated activities
-                        'evidence' => $evidence[$actId] ?? null,
-                        'evidence_names' => $evidenceNames[$actId] ?? null,
-                        'notes' => $notes[$actId] ?? null,
-                    ];
+            // Check for activities with notes/evidence but no rating
+            // Iterate through the nested structure of notes and evidence
+            $contextKeys = array_unique(array_merge(array_keys($notes), array_keys($evidence)));
+            foreach ($contextKeys as $contextKey) {
+                $allActIdsInContext = array_unique(array_merge(
+                    array_keys($notes[$contextKey] ?? []),
+                    array_keys($evidence[$contextKey] ?? [])
+                ));
+
+                foreach ($allActIdsInContext as $actId) {
+                    if (! isset($processedActivityIds[$actId])) {
+                        $activityEvaluations[] = [
+                            'activity_id' => $actId,
+                            'level_achieved' => null, // Allow null for unrated activities
+                            'evidence' => $evidence[$contextKey][$actId] ?? null,
+                            'evidence_names' => $evidenceNames[$contextKey][$actId] ?? null,
+                            'notes' => $notes[$contextKey][$actId] ?? null,
+                        ];
+                        $processedActivityIds[$actId] = true;
+                    }
                 }
             }
         } else {
@@ -226,8 +236,6 @@ class EvaluationService
                     foreach ($levelData['activities'] as $activityId => $score) {
                         $levelAchieved = $this->scoreToLetter($score);
 
-                        // Include all activities, even those rated as 'N'
-                        // This preserves evidence and notes when levels are changed
                         $activityEvaluations[] = [
                             'activity_id' => $activityId,
                             'level_achieved' => $levelAchieved,

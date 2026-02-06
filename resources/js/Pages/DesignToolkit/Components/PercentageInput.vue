@@ -86,47 +86,47 @@ const getBarColor = (index) => {
 <template>
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         <!-- Header with total -->
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <div class="px-4 py-3 border-b border-slate-700 bg-slate-900 text-white flex items-center justify-between">
             <div>
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <h3 class="text-sm font-semibold text-white">
                     Percentage Distribution
                 </h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p class="text-[11px] text-slate-300 mt-0.5">
                     Values must sum to 100%
                 </p>
             </div>
             <div 
                 :class="[
-                    'px-4 py-2 rounded-lg font-semibold',
+                    'px-3 py-1.5 rounded-md font-semibold text-[11px]',
                     getTotalClass
                 ]"
             >
                 Total: {{ total.toFixed(0) }}%
-                <span v-if="!isValid" class="ml-2 text-xs">({{ total < 100 ? 'Need more' : 'Too much' }})</span>
+                <span v-if="!isValid" class="ml-1 text-[10px]">({{ total < 100 ? 'Need more' : 'Too much' }})</span>
             </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
             <!-- Left Column: Inputs -->
-            <div class="space-y-6">
+            <div class="space-y-4">
                 <div 
                     v-for="(label, index) in labels" 
                     :key="index"
-                    class="space-y-2 p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700"
+                    class="space-y-2 p-3 rounded-md bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700"
                 >
                     <!-- Label and Input Row -->
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex-1">
-                            <label class="block text-sm font-medium text-slate-900 dark:text-white">
+                            <label class="block text-[11px] font-semibold text-slate-900 dark:text-white">
                                 {{ label }}
                             </label>
-                            <p v-if="descriptions[index]" class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <p v-if="descriptions[index]" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                                 {{ descriptions[index] }}
                             </p>
                         </div>
                         
                         <!-- Input with % suffix -->
-                        <div class="relative w-28">
+                        <div class="relative w-24">
                             <input
                                 type="number"
                                 :value="modelValue[index]"
@@ -134,14 +134,14 @@ const getBarColor = (index) => {
                                 min="0"
                                 max="100"
                                 step="1"
-                                class="w-full px-3 py-2 pr-8 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right font-semibold"
+                                class="w-full px-2 py-1.5 pr-7 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-[11px] text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-right font-semibold"
                             />
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">%</span>
+                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] font-medium">%</span>
                         </div>
                     </div>
                     
                     <!-- Baseline Compare -->
-                    <div class="flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center justify-between text-[10px] text-slate-500">
                         <span>Baseline Ref:</span>
                         <span class="font-medium text-slate-700 dark:text-slate-300">{{ baseline[index] ?? 50 }}%</span>
                     </div>
@@ -149,8 +149,8 @@ const getBarColor = (index) => {
             </div>
             
             <!-- Right Column: Pie Chart -->
-            <div class="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-900/30 rounded-xl border border-dotted border-slate-300 dark:border-slate-700">
-                <h4 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Input Visualization</h4>
+            <div class="flex flex-col items-center justify-center p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h4 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Input Visualization</h4>
                 <div class="w-full max-w-xs">
                     <PieChart :labels="labels" :data="modelValue" height="250px" />
                 </div>

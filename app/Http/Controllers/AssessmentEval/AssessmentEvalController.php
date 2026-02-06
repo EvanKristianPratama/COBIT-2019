@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class AssessmentEvalController extends Controller
 {
@@ -172,11 +173,79 @@ class AssessmentEvalController extends Controller
                 ]];
             });
 
-            return view('assessment-eval.show', compact(
-                'objectives', 'allObjectives', 'evalId', 'evaluation',
-                'isOwner', 'evidences', 'targetCapabilityMap',
-                'allScopes', 'activeScope', 'scopeDetails'
-            ));
+            // Transform objectives with practices grouped by level for Vue component
+            $selectedDomainsData = $objectives->map(function ($obj) {
+                return [
+                    'objective_id' => $obj->objective_id,
+                    'objective_name' => $obj->objective_name,
+                    'domain' => preg_replace('/[0-9]+/', '', $obj->objective_id),
+                    'description' => $obj->description ?? null,
+                    'purpose' => $obj->purpose ?? null,
+                ];
+            })->values();
+
+            // Build practices by objective and level
+            $practicesByObjective = [];
+            foreach ($objectives as $obj) {
+                $practicesByObjective[$obj->objective_id] = [];
+                foreach ($obj->practices as $practice) {
+                    $level = $practice->practice_level ?? 2;
+                    if (!isset($practicesByObjective[$obj->objective_id][$level])) {
+                        $practicesByObjective[$obj->objective_id][$level] = [];
+                    }
+                    $practicesByObjective[$obj->objective_id][$level][] = [
+                        'practice' => [
+                            'practice_id' => $practice->practice_id,
+                            'practice_name' => $practice->practice_name,
+                        ],
+                        'activities' => $practice->activities->map(function ($act) {
+                            return [
+                                'activity_id' => $act->activity_id,
+                                'activity_name' => $act->activity_name ?? $act->description,
+                                'description' => $act->description,
+                            ];
+                        })->values()->toArray(),
+                    ];
+                }
+            }
+
+            // Transform scopes for Vue
+            $scopesData = $allScopes->map(function ($scope) {
+                return [
+                    'id' => $scope->id,
+                    'name' => $scope->nama_scope,
+                ];
+            })->values();
+
+            return Inertia::render('AssessmentEval/Show/Index', [
+                'evalId' => $evalId,
+                'evaluation' => [
+                    'id' => $evaluation->eval_id,
+                    'name' => $evaluation->nama_eval ?? 'COBIT Assessment',
+                    'year' => $evaluation->tahun ?? date('Y'),
+                    'status' => $evaluation->status ?? 'draft',
+                    'created_by_name' => $owner->name ?? 'Unknown',
+                    'description' => $evaluation->description ?? null,
+                    'purpose' => $evaluation->purpose ?? null,
+                ],
+                'isOwner' => $isOwner,
+                'selectedDomains' => $selectedDomainsData,
+                'practices' => $practicesByObjective,
+                'evidences' => $evidences->map(function ($e) {
+                    return [
+                        'id' => $e->id,
+                        'judul_dokumen' => $e->judul_dokumen,
+                        'no_dokumen' => $e->no_dokumen,
+                        'grup' => $e->grup,
+                        'tipe' => $e->tipe,
+                        'description' => $e->summary,
+                        'file_type' => $e->file_type ?? null,
+                    ];
+                })->values(),
+                'targetCapabilityMap' => $targetCapabilityMap,
+                'scopes' => $scopesData,
+                'currentScopeId' => $activeScope?->id,
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to load assessment', [

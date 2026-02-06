@@ -106,6 +106,10 @@ const breadcrumbs = [
                                 <span class="bg-white/20 w-6 h-6 flex items-center justify-center rounded-md text-xs">3</span>
                                 Refined Scope
                             </a>
+                            <a :href="routes.summaryStep4" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/20 hover:bg-white/30 border border-white/20 rounded-xl transition-all font-bold">
+                                <span class="bg-white/20 w-6 h-6 flex items-center justify-center rounded-md text-xs">4</span>
+                                Concluded Scope
+                            </a>
                         </div>
                     </div>
                     <div class="hidden lg:block">

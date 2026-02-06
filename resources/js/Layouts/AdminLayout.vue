@@ -106,7 +106,7 @@ const navItems = [
                 <!-- Logo -->
                 <div class="flex items-center justify-between h-16 border-b border-gray-200/80 dark:border-white/5 px-4">
                     <a href="/admin/dashboard" class="flex items-center space-x-3">
-                        <img src="/images/cobitColour.png" alt="Logo" class="h-8 w-auto">
+                        <img src="/images/cobitColour.png" alt="Logo" class="h-8 w-auto dark:invert dark:brightness-0">
                         <span class="font-bold text-gray-900 dark:text-white">Admin</span>
                     </a>
                     <button @click="sidebarOpen = false" class="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5">

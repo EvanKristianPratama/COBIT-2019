@@ -29,3 +29,20 @@ body {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 1500ms;
 }
+
+:root {
+    --dark-primary-bg: #0f0f0f;
+    --dark-surface-bg: #1a1a1a;
+}
+
+.dark [class*="bg-slate-900"] {
+    background-color: var(--dark-primary-bg) !important;
+}
+
+.dark [class*="bg-slate-800"] {
+    background-color: var(--dark-surface-bg) !important;
+}
+
+.dark [class*="bg-slate-700"] {
+    background-color: var(--dark-surface-bg) !important;
+}

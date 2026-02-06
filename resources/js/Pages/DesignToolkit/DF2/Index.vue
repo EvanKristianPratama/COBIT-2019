@@ -11,6 +11,7 @@ import PageHeader from '@/Components/PageHeader.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DesignFactorPagination from '../Components/DesignFactorPagination.vue';
 import InputTable from '../Components/InputTable.vue';
+import InputBarChart from '../Components/InputBarChart.vue';
 import ChartCard from '../Components/ChartCard.vue';
 import SpiderChart from '../Components/SpiderChart.vue';
 import BarChart from '../Components/BarChart.vue';
@@ -50,40 +51,49 @@ const mround = (value, multiple) => {
 };
 
 // Step 1: Calculate Transition Scores using MAP_1
+// Service logic: intermediate[j] = Σ input[i] * MAP_1[i][j]
 const transitionScores = computed(() => {
-    // MAP_1 rows correspond to intermediate objectives
-    return props.map1.map((row) => {
-        let score = 0;
-        for (let j = 0; j < props.inputCount; j++) {
-            score += row[j] * (inputs.value[j] || 0);
-        }
-        return score;
+    const intermediateCount = props.map1?.[0]?.length ?? 0;
+    const intermediate = new Array(intermediateCount).fill(0);
+
+    inputs.value.forEach((inputValue, i) => {
+        const row = props.map1[i] || [];
+        row.forEach((coefficient, j) => {
+            intermediate[j] += (inputValue || 0) * coefficient;
+        });
     });
+
+    return intermediate;
 });
 
 // Step 2: Calculate Final Scores using MAP_2
+// Service logic: score[j] = Σ intermediate[i] * MAP_2[i][j]
 const scores = computed(() => {
-    // MAP_2 rows correspond to final governance objectives (40)
-    return props.map2.map((row) => {
-        let score = 0;
-        for (let j = 0; j < transitionScores.value.length; j++) {
-            score += row[j] * transitionScores.value[j];
-        }
-        return score;
+    const objectiveCount = props.map2?.[0]?.length ?? 0;
+    const results = new Array(objectiveCount).fill(0);
+
+    transitionScores.value.forEach((value, i) => {
+        const row = props.map2[i] || [];
+        row.forEach((coefficient, j) => {
+            results[j] += value * coefficient;
+        });
     });
+
+    return results;
 });
 
 // Calculate E14 (baseline ratio)
 const e14 = computed(() => {
     const inputAvg = inputs.value.reduce((a, b) => a + b, 0) / inputs.value.length;
     const baselineAvg = props.baselineInputs.reduce((a, b) => a + b, 0) / props.baselineInputs.length;
-    return inputAvg > 0 ? baselineAvg / inputAvg : 1;
+    return inputAvg !== 0 ? baselineAvg / inputAvg : 0;
 });
 
 // Calculate Relative Importance
 const relativeImportance = computed(() => {
     return scores.value.map((score, i) => {
-        const baseline = props.baselineScores[i] || 1;
+        const baseline = props.baselineScores[i] ?? 0;
+        if (baseline === 0) return 0;
         const result = (e14.value * 100 * score) / baseline;
         return mround(result, 5) - 100;
     });
@@ -99,6 +109,18 @@ const submit = () => {
 const handleInputUpdate = (newInputs) => {
     inputs.value = newInputs;
 };
+
+// Input chart helpers
+const inputChartLabels = computed(() => {
+    return props.fields.map((field, i) => field.label || field.name || `Item ${i + 1}`);
+});
+
+const inputChartValues = computed(() => inputs.value.map((v) => v || 0));
+
+const inputChartHeight = computed(() => {
+    const rows = props.inputCount || inputChartLabels.value.length;
+    return `${Math.max(260, rows * 26)}px`;
+});
 </script>
 
 <template>
@@ -115,7 +137,7 @@ const handleInputUpdate = (newInputs) => {
             />
         </template>
         
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <DesignFactorPagination :current-df="dfNumber" :routes="routes" position="top" />
             <form @submit.prevent="submit">
                 <!-- Input Section -->
@@ -128,12 +150,24 @@ const handleInputUpdate = (newInputs) => {
                         <strong class="text-amber-600">Guidance:</strong> Typical enterprises prioritize 3–5 goals (score 5) and rate remaining goals lower (score 1–4).
                     </p>
                     
-                    <InputTable
-                        :fields="fields"
-                        :model-value="inputs"
-                        :baseline="baselineInputs"
-                        @update:model-value="handleInputUpdate"
-                    />
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <InputTable
+                                :fields="fields"
+                                :model-value="inputs"
+                                :baseline="baselineInputs"
+                                @update:model-value="handleInputUpdate"
+                            />
+                        </div>
+                        <ChartCard title="Input Overview" subtitle="Current selections (1–5)" :flush="true" :height="inputChartHeight">
+                            <InputBarChart
+                                :labels="inputChartLabels"
+                                :data="inputChartValues"
+                                :max="5"
+                                :height="inputChartHeight"
+                            />
+                        </ChartCard>
+                    </div>
                 </section>
                 
                 <!-- Charts Section -->

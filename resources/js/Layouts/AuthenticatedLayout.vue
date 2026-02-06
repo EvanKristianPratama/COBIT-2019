@@ -77,7 +77,7 @@ watch(authUser, (newVal) => {
                 <div class="flex items-center justify-between h-16">
                     <!-- Logo -->
                     <a href="/dashboard" class="flex items-center space-x-3">
-                        <img src="/images/cobitColour.png" alt="COBIT 2019" class="h-8 w-auto object-contain" />
+                        <img src="/images/cobitColour.png" alt="COBIT 2019" class="h-8 w-auto object-contain dark:invert dark:brightness-0" />
                     </a>
 
                     <!-- Right -->

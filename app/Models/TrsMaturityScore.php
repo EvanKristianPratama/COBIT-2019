@@ -16,6 +16,10 @@ class TrsMaturityScore extends Model
         'score'
     ];
 
+    protected $casts = [
+        'score' => 'float'
+    ];
+
     public function evaluation()
     {
         return $this->belongsTo(MstEval::class, 'eval_id', 'eval_id');

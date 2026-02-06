@@ -51,47 +51,26 @@ const mround = (value, multiple) => {
     return Math.round(value / multiple) * multiple;
 };
 
-// Calculate scores using MAP matrix (interpreting percentage as 0-1 or 0-100?)
-// Usually mapping expects 0-1 range if multipliers are large, or input is 0-100?
-// Let's check DF5Data or Blade. 
-// Standard in COBIT tools: Map * (Input / 100) or Map * Input?
-// DF5Data Map values: ~3.0. 
-// If input is 100, score is 300.
-// Baseline inputs are e.g. [50, 50].
-// Let's assume standard multiplication.
+// Calculate scores using MAP matrix (inputs are percentages -> normalize to 0-1)
+// Matches DesignFactorCalculator::calculateScores (rounded to 2 decimals).
 const scores = computed(() => {
+    const normalizedInputs = inputs.value.map(value => (value || 0) / 100);
     return props.map.map((row) => {
         let score = 0;
         for (let j = 0; j < props.inputCount; j++) {
-            score += row[j] * (inputs.value[j] || 0);
+            score += row[j] * (normalizedInputs[j] || 0);
         }
-        return score;
+        return Math.round(score * 100) / 100;
     });
-});
-
-// Calculate E14 (baseline ratio)
-// For percentage inputs, usually sum is 100.
-// Average is 100 / count.
-// So E14 is usually 1 if sum is strictly 100.
-// Let's implement generic formula anyway.
-const e14 = computed(() => {
-    const inputSum = inputs.value.reduce((a, b) => a + b, 0);
-    const baselineSum = props.baselineInputs.reduce((a, b) => a + b, 0);
-    
-    // Avoid division by zero
-    if (inputSum === 0) return 1;
-    
-    // Logic: (BaselineAvg / InputAvg) -> (BaselineSum / n) / (InputSum / n) -> BaselineSum / InputSum
-    // If both sum to 100, E14 = 1.
-    return baselineSum / inputSum;
 });
 
 // Calculate Relative Importance
 const relativeImportance = computed(() => {
     return scores.value.map((score, i) => {
-        const baseline = props.baselineScores[i] || 1;
-        const result = (e14.value * 100 * score) / baseline;
-        return mround(result, 5) - 100;
+        const baseline = props.baselineScores[i] ?? 0;
+        if (baseline === 0) return 0;
+        const percentage = (score / baseline) * 100;
+        return mround(percentage, 5) - 100;
     });
 });
 
@@ -121,7 +100,7 @@ const handleInputUpdate = (newInputs) => {
             />
         </template>
         
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <DesignFactorPagination :current-df="dfNumber" :routes="routes" position="top" />
             <form @submit.prevent="submit">
                 <!-- Input Section -->

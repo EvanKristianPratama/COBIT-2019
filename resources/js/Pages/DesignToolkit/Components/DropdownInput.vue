@@ -94,35 +94,35 @@ const getIssueLabel = (value) => {
 <template>
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         <!-- Legend -->
-        <div class="px-6 py-3 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-            <div v-if="mode === 'df3'" class="flex items-center gap-6 text-xs">
-                <span class="font-medium text-slate-700 dark:text-slate-300">Risk Rating:</span>
+        <div class="px-4 py-2 bg-slate-900 text-white border-b border-slate-700">
+            <div v-if="mode === 'df3'" class="flex flex-wrap items-center gap-4 text-[11px]">
+                <span class="font-semibold text-white">Risk Rating:</span>
                 <div class="flex items-center gap-2">
                     <span class="w-3 h-3 rounded bg-green-500"></span>
-                    <span class="text-slate-600 dark:text-slate-400">Low (1-6)</span>
+                    <span class="text-slate-200">Low (1-6)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-3 h-3 rounded bg-yellow-500"></span>
-                    <span class="text-slate-600 dark:text-slate-400">Medium (7-12)</span>
+                    <span class="text-slate-200">Medium (7-12)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-3 h-3 rounded bg-red-500"></span>
-                    <span class="text-slate-600 dark:text-slate-400">High (>12)</span>
+                    <span class="text-slate-200">High (&gt;12)</span>
                 </div>
             </div>
-            <div v-else class="flex items-center gap-6 text-xs">
-                <span class="font-medium text-slate-700 dark:text-slate-300">Issue Level:</span>
+            <div v-else class="flex flex-wrap items-center gap-4 text-[11px]">
+                <span class="font-semibold text-white">Issue Level:</span>
                 <div class="flex items-center gap-2">
                     <span class="w-3 h-3 rounded bg-green-500"></span>
-                    <span class="text-slate-600 dark:text-slate-400">No Issue (1)</span>
+                    <span class="text-slate-200">No Issue (1)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-3 h-3 rounded bg-yellow-500"></span>
-                    <span class="text-slate-600 dark:text-slate-400">Issue (2)</span>
+                    <span class="text-slate-200">Issue (2)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-3 h-3 rounded bg-red-500"></span>
-                    <span class="text-slate-600 dark:text-slate-400">Serious Issue (3)</span>
+                    <span class="text-slate-200">Serious Issue (3)</span>
                 </div>
             </div>
         </div>
@@ -130,36 +130,36 @@ const getIssueLabel = (value) => {
         <!-- Table -->
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-slate-50 dark:bg-slate-700">
+                <thead class="bg-slate-900 text-white">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-16">
+                        <th class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider w-12">
                             #
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <th class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider">
                             {{ mode === 'df3' ? 'Risk Category' : 'IT-Related Issue' }}
                         </th>
                         
                         <!-- DF3: Impact + Likelihood + Risk Rating -->
                         <template v-if="mode === 'df3'">
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">
+                            <th class="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider w-28">
                                 Impact (1-5)
                             </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">
+                            <th class="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider w-28">
                                 Likelihood (1-5)
                             </th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">
+                            <th class="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider w-28">
                                 Risk Rating
                             </th>
                         </template>
                         
                         <!-- DF4: Single dropdown -->
                         <template v-else>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">
+                            <th class="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider w-36">
                                 Importance (1-3)
                             </th>
                         </template>
                         
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-24">
+                        <th class="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider w-20">
                             Baseline
                         </th>
                     </tr>
@@ -171,13 +171,13 @@ const getIssueLabel = (value) => {
                         class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                     >
                         <!-- Index -->
-                        <td class="px-4 py-4 text-sm font-medium text-blue-600 dark:text-blue-400">
+                        <td class="px-3 py-2 text-[11px] font-medium text-blue-600 dark:text-blue-400">
                             {{ index + 1 }}
                         </td>
                         
                         <!-- Description -->
-                        <td class="px-4 py-4">
-                            <div class="text-sm text-slate-900 dark:text-white">
+                        <td class="px-3 py-2">
+                            <div class="text-[11px] text-slate-900 dark:text-white">
                                 {{ field.description }}
                             </div>
                         </td>
@@ -185,11 +185,11 @@ const getIssueLabel = (value) => {
                         <!-- DF3: Impact + Likelihood + Risk Rating -->
                         <template v-if="mode === 'df3'">
                             <!-- Impact Dropdown -->
-                            <td class="px-4 py-4">
+                            <td class="px-3 py-2">
                                 <select
                                     :value="modelValue[index]?.impact || ''"
                                     @change="updateImpact(index, $event.target.value)"
-                                    class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-full px-2 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-[11px] text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="" disabled>Select</option>
                                     <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
@@ -197,11 +197,11 @@ const getIssueLabel = (value) => {
                             </td>
                             
                             <!-- Likelihood Dropdown -->
-                            <td class="px-4 py-4">
+                            <td class="px-3 py-2">
                                 <select
                                     :value="modelValue[index]?.likelihood || ''"
                                     @change="updateLikelihood(index, $event.target.value)"
-                                    class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-full px-2 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-[11px] text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="" disabled>Select</option>
                                     <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
@@ -209,10 +209,10 @@ const getIssueLabel = (value) => {
                             </td>
                             
                             <!-- Risk Rating (calculated) -->
-                            <td class="px-4 py-4 text-center">
+                            <td class="px-3 py-2 text-center">
                                 <span 
                                     :class="[
-                                        'inline-flex items-center justify-center w-12 h-10 rounded-lg font-semibold',
+                                        'inline-flex items-center justify-center w-10 h-8 rounded-md font-semibold text-[11px]',
                                         getRiskColorClass(getRiskRating(index))
                                     ]"
                                 >
@@ -223,12 +223,12 @@ const getIssueLabel = (value) => {
                         
                         <!-- DF4: Single dropdown -->
                         <template v-else>
-                            <td class="px-4 py-4">
+                            <td class="px-3 py-2">
                                 <select
                                     :value="modelValue[index] || ''"
                                     @change="updateValue(index, $event.target.value)"
                                     :class="[
-                                        'w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                                        'w-full px-2 py-1.5 rounded-md border focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-[11px]',
                                         getIssueColorClass(modelValue[index])
                                     ]"
                                 >
@@ -241,8 +241,8 @@ const getIssueLabel = (value) => {
                         </template>
                         
                         <!-- Baseline -->
-                        <td class="px-4 py-4 text-center">
-                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-semibold">
+                        <td class="px-3 py-2 text-center">
+                            <span class="inline-flex items-center justify-center w-9 h-8 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-semibold text-[11px]">
                                 {{ baseline[index] ?? (mode === 'df3' ? 9 : 2) }}
                             </span>
                         </td>

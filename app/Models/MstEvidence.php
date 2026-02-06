@@ -14,6 +14,7 @@ class MstEvidence extends Model
 
     protected $fillable = [
         'eval_id',
+        'user_id',
         'judul_dokumen',
         'no_dokumen',
         'tahun_terbit',
@@ -39,5 +40,10 @@ class MstEvidence extends Model
     public function evaluation()
     {
         return $this->belongsTo(MstEval::class, 'eval_id', 'eval_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

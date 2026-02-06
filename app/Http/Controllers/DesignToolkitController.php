@@ -79,6 +79,7 @@ class DesignToolkitController extends Controller
                 'show' => $dfRoutes,
                 'summaryStep2' => route('design-toolkit.step2.index'),
                 'summaryStep3' => route('design-toolkit.step3.index'),
+                'summaryStep4' => route('design-toolkit.step4.index'),
             ],
         ]);
     }
@@ -386,6 +387,7 @@ class DesignToolkitController extends Controller
                 'show' => $dfRoutes,
                 'summaryStep2' => route('design-toolkit.step2.index'),
                 'summaryStep3' => route('design-toolkit.step3.index'),
+                'summaryStep4' => route('design-toolkit.step4.index'),
             ],
         ];
 

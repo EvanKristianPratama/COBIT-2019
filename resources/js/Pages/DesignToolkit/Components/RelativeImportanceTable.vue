@@ -60,11 +60,11 @@ const formatRI = (ri) => {
 <template>
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         <!-- Header -->
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <div class="px-6 py-4 border-b border-slate-700 bg-slate-900 text-white">
+            <h3 class="text-lg font-semibold text-white">
                 Relative Importance Table
             </h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p class="text-sm text-slate-300 mt-1">
                 40 Governance Objectives with calculated scores
             </p>
         </div>
@@ -72,18 +72,18 @@ const formatRI = (ri) => {
         <!-- Table Container with scroll -->
         <div :style="{ maxHeight }" class="overflow-y-auto">
             <table class="w-full">
-                <thead class="bg-slate-50 dark:bg-slate-700 sticky top-0">
+                <thead class="bg-slate-900 text-white sticky top-0">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                             #
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                             Objective
                         </th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
                             Score
                         </th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
                             Relative Importance
                         </th>
                     </tr>

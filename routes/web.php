@@ -192,6 +192,10 @@ Route::prefix('design-toolkit')
             ->name('step3.index');
         Route::post('/summary-step3', [\App\Http\Controllers\DesignToolkitSummaryController::class, 'storeStep3'])
             ->name('step3.store');
+        Route::get('/summary-step4', [\App\Http\Controllers\DesignToolkitSummaryController::class, 'step4'])
+            ->name('step4.index');
+        Route::post('/summary-step4', [\App\Http\Controllers\DesignToolkitSummaryController::class, 'storeStep4'])
+            ->name('step4.store');
     });
 
 // Cobit Home view
@@ -388,6 +392,10 @@ Route::post('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 's
     ->name('assessment-eval.evidence.store')
     ->middleware('auth');
 
+Route::get('/evidence/library', [EvidenceController::class, 'indexMaster'])
+    ->name('assessment-eval.evidence.library')
+    ->middleware('auth');
+
 Route::get('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 'index'])
     ->name('assessment-eval.evidence.index')
     ->middleware('auth');
@@ -398,6 +406,14 @@ Route::get('/assessment-eval/{evalId}/evidence/previous', [EvidenceController::c
 
 Route::put('/assessment-eval/evidence/{evidenceId}', [EvidenceController::class, 'update'])
     ->name('assessment-eval.evidence.update')
+    ->middleware('auth');
+
+Route::delete('/assessment-eval/evidence/{evidenceId}', [EvidenceController::class, 'destroy'])
+    ->name('assessment-eval.evidence.destroy')
+    ->middleware('auth');
+
+Route::post('/assessment-eval/evidence/map', [EvidenceController::class, 'mapToAssessment'])
+    ->name('assessment-eval.evidence.map')
     ->middleware('auth');
 
 Route::get('/assessment-eval/{evalId}/report', [AssessmentReportController::class, 'show'])
@@ -472,5 +488,4 @@ Route::get('/test-api-token', function () {
            'Run this command in terminal:<br>' .
            '<code>curl -H "Authorization: Bearer ' . $token . '" -H "Accept: application/json" http://localhost:8000/api/v1/assessments/1</code>';
 })->middleware('web');
-
 

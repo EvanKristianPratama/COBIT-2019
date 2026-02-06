@@ -5,6 +5,10 @@ import StatsGrid from './Partials/StatsGrid.vue';
 import QuickActions from './Partials/QuickActions.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
+import {
+    CheckCircleIcon,
+    XCircleIcon
+} from '@heroicons/vue/24/outline';
 
 
 const props = defineProps({
@@ -162,24 +166,41 @@ const toggleActivation = (user) => {
                                         <span class="w-2 h-2 rounded-full bg-red-600"></span> Inactive
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right space-x-2">
+                                <td class="px-6 py-4 text-right">
                                     <!-- Approval Actions -->
                                     <template v-if="user.approval_status === 'pending'">
-                                        <button @click="approve(user)" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold uppercase tracking-wider">Approve</button>
-                                        <span class="text-gray-300">|</span>
-                                        <button @click="reject(user)" class="text-red-600 hover:text-red-800 text-xs font-bold uppercase tracking-wider">Reject</button>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button
+                                                @click="approve(user)"
+                                                class="p-2 text-emerald-600 hover:text-emerald-700 rounded-lg transition-colors"
+                                                title="Approve"
+                                            >
+                                                <CheckCircleIcon class="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                @click="reject(user)"
+                                                class="p-2 text-red-600 hover:text-red-700 rounded-lg transition-colors"
+                                                title="Reject"
+                                            >
+                                                <XCircleIcon class="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </template>
                                     
                                     <template v-else>
                                         <!-- Edit / Manage Actions -->
                                         <!-- <button class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</button> -->
-                                        <button 
-                                            @click="toggleActivation(user)" 
-                                            class="text-xs font-bold uppercase tracking-wider"
-                                            :class="user.isActivated ? 'text-amber-600 hover:text-amber-800' : 'text-emerald-600 hover:text-emerald-800'"
-                                        >
-                                            {{ user.isActivated ? 'Deactivate' : 'Activate' }}
-                                        </button>
+                                        <div class="flex items-center justify-end">
+                                            <button
+                                                @click="toggleActivation(user)"
+                                                class="p-2 rounded-lg transition-colors"
+                                                :class="user.isActivated ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'"
+                                                :title="user.isActivated ? 'Deactivate' : 'Activate'"
+                                            >
+                                                <XCircleIcon v-if="user.isActivated" class="w-5 h-5" />
+                                                <CheckCircleIcon v-else class="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </template>
                                 </td>
                             </tr>

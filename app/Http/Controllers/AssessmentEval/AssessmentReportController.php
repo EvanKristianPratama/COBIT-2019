@@ -13,6 +13,7 @@ use App\Services\EvaluationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Inertia\Inertia;
 
 class AssessmentReportController extends Controller
 {
@@ -77,12 +78,27 @@ class AssessmentReportController extends Controller
                 $targetMaturity = $tmQuery->value('target_maturity');
             }
 
-            return view('assessment-eval.report', compact(
-                'objectives', 'evalId', 'evaluation',
-                'isOwner', 'targetCapabilityMap',
-                'allScopes', 'scopeMaturityData', 'targetMaturity'
-            ));
-
+            return Inertia::render('AssessmentEval/Report/Index', [
+                'evalId' => $evalId,
+                'evaluation' => [
+                    'id' => $evaluation->eval_id,
+                    'name' => $evaluation->nama_eval ?? 'COBIT Assessment',
+                    'year' => $evaluation->tahun ?? $evaluation->year ?? date('Y'),
+                    'status' => $evaluation->status ?? 'draft',
+                ],
+                'isOwner' => $isOwner,
+                'objectives' => $objectives->map(fn($obj) => [
+                    'objective_id' => $obj->objective_id,
+                    'objective' => $obj->objective_name ?? $obj->objective,
+                ]),
+                'allScopes' => $allScopes->map(fn($s) => [
+                    'id' => $s->id,
+                    'nama_scope' => $s->nama_scope,
+                ]),
+                'scopeMaturityData' => (object) $scopeMaturityData,
+                'targetMaturity' => $targetMaturity !== null ? (float) $targetMaturity : null,
+                'targetCapabilityMap' => $targetCapabilityMap,
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to load report', ['eval_id' => $evalId, 'error' => $e->getMessage()]);
 
@@ -95,13 +111,20 @@ class AssessmentReportController extends Controller
         try {
             $data = $this->getReportData();
             if (isset($data['error'])) {
-                return view('assessment-eval.report-all', [
-                    'objectives' => [], 'assessments' => [],
-                    'scopeMaturityData' => [], 'error' => $data['error'],
+                return Inertia::render('AssessmentEval/Report/All', [
+                    'objectives' => [],
+                    'processedData' => [],
+                    'error' => $data['error'],
                 ]);
             }
 
-            return view('assessment-eval.report-all', $data);
+            return Inertia::render('AssessmentEval/Report/All', [
+                'objectives' => $data['objectives']->map(fn($obj) => [
+                    'objective_id' => $obj->objective_id,
+                    'objective' => $obj->objective_name ?? $obj->objective,
+                ]),
+                'processedData' => $data['processedData'],
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to load all-years report', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);

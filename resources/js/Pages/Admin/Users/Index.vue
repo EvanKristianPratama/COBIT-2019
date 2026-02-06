@@ -4,6 +4,18 @@ import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
+import {
+    CheckCircleIcon,
+    ExclamationCircleIcon,
+    PlusIcon,
+    MagnifyingGlassIcon,
+    ClockIcon,
+    XCircleIcon,
+    CheckIcon,
+    XMarkIcon,
+    UsersIcon,
+    PencilSquareIcon
+} from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     activatedUsers: Array,
@@ -265,15 +277,11 @@ const tabs = [
 
         <!-- Flash Messages -->
         <div v-if="flash?.success" class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center">
-            <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <CheckCircleIcon class="w-5 h-5 mr-3 flex-shrink-0" />
             {{ flash.success }}
         </div>
         <div v-if="flash?.error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl flex items-center">
-            <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ExclamationCircleIcon class="w-5 h-5 mr-3 flex-shrink-0" />
             {{ flash.error }}
         </div>
 
@@ -289,16 +297,12 @@ const tabs = [
                         :href="route('admin.users.create')"
                         class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-emerald-500/25"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
+                        <PlusIcon class="w-5 h-5" />
                         Tambah User
                     </Link>
                     <div class="w-full md:w-64">
                         <div class="relative">
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input 
                                 v-model="searchTerm"
                                 type="text" 
@@ -320,9 +324,7 @@ const tabs = [
                         <p class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ (pendingUsers || []).length }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <ClockIcon class="w-6 h-6 text-amber-600 dark:text-amber-400" />
                     </div>
                 </div>
             </div>
@@ -333,9 +335,7 @@ const tabs = [
                         <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ (activatedUsers || []).length }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <CheckCircleIcon class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                     </div>
                 </div>
             </div>
@@ -346,9 +346,7 @@ const tabs = [
                         <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ (deactivatedUsers || []).length }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
+                        <XCircleIcon class="w-6 h-6 text-red-600 dark:text-red-400" />
                     </div>
                 </div>
             </div>
@@ -370,15 +368,9 @@ const tabs = [
                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                         ]"
                     >
-                        <svg v-if="tab.icon === 'clock'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <svg v-else-if="tab.icon === 'check-circle'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <ClockIcon v-if="tab.icon === 'clock'" class="w-4 h-4" />
+                        <CheckCircleIcon v-else-if="tab.icon === 'check-circle'" class="w-4 h-4" />
+                        <XCircleIcon v-else class="w-4 h-4" />
                         {{ tab.label }}
                         <span 
                             v-if="tab.id === 'pending' && (pendingUsers || []).length > 0"
@@ -399,15 +391,11 @@ const tabs = [
                     </p>
                     <div class="flex gap-2">
                         <button @click="bulkApproveUsers" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
+                            <CheckIcon class="w-4 h-4" />
                             Setujui Semua
                         </button>
                         <button @click="bulkRejectUsers" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <XMarkIcon class="w-4 h-4" />
                             Tolak Semua
                         </button>
                     </div>
@@ -415,9 +403,7 @@ const tabs = [
 
                 <div v-if="filteredPendingUsers.length === 0" class="py-16 text-center">
                     <div class="w-16 h-16 mx-auto rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <CheckCircleIcon class="w-8 h-8 text-gray-400" />
                     </div>
                     <p class="text-gray-500 dark:text-gray-400">Tidak ada user yang menunggu persetujuan</p>
                 </div>
@@ -467,14 +453,10 @@ const tabs = [
                                 <td class="px-4 py-4">
                                     <div class="flex justify-center gap-2">
                                         <button @click="approveUser(user)" class="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="Setujui">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
+                                            <CheckCircleIcon class="w-5 h-5" />
                                         </button>
                                         <button @click="rejectUser(user)" class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Tolak">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
+                                            <XCircleIcon class="w-5 h-5" />
                                         </button>
                                     </div>
                                 </td>
@@ -488,9 +470,7 @@ const tabs = [
             <div v-show="activeTab === 'active'" class="p-6">
                 <div v-if="filteredActivatedUsers.length === 0" class="py-16 text-center">
                     <div class="w-16 h-16 mx-auto rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
+                        <UsersIcon class="w-8 h-8 text-gray-400" />
                     </div>
                     <p class="text-gray-500 dark:text-gray-400">Belum ada user aktif</p>
                 </div>
@@ -531,14 +511,10 @@ const tabs = [
                                 <td class="px-4 py-4">
                                     <div class="flex justify-center gap-2">
                                         <button @click="openEditModal(user)" class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Edit">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
+                                            <PencilSquareIcon class="w-5 h-5" />
                                         </button>
                                         <button @click="deactivateUser(user)" class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Nonaktifkan">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                            </svg>
+                                            <XCircleIcon class="w-5 h-5" />
                                         </button>
                                     </div>
                                 </td>
@@ -552,9 +528,7 @@ const tabs = [
             <div v-show="activeTab === 'inactive'" class="p-6">
                 <div v-if="filteredDeactivatedUsers.length === 0" class="py-16 text-center">
                     <div class="w-16 h-16 mx-auto rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
+                        <XCircleIcon class="w-8 h-8 text-gray-400" />
                     </div>
                     <p class="text-gray-500 dark:text-gray-400">Tidak ada user nonaktif</p>
                 </div>
@@ -595,9 +569,7 @@ const tabs = [
                                 <td class="px-4 py-4">
                                     <div class="flex justify-center">
                                         <button @click="activateUser(user)" class="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="Aktifkan">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                            <CheckCircleIcon class="w-5 h-5" />
                                         </button>
                                     </div>
                                 </td>

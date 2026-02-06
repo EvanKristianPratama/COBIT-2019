@@ -12,6 +12,7 @@ import PageHeader from '@/Components/PageHeader.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DesignFactorPagination from '../Components/DesignFactorPagination.vue';
 import DropdownInput from '../Components/DropdownInput.vue';
+import InputBarChart from '../Components/InputBarChart.vue';
 import ChartCard from '../Components/ChartCard.vue';
 import SpiderChart from '../Components/SpiderChart.vue';
 import BarChart from '../Components/BarChart.vue';
@@ -78,13 +79,14 @@ const e14 = computed(() => {
     const inputAvg = inputSum / props.inputCount;
     // const baselineAvg = BASELINE_VALUE; // Average of [9,9,...] is 9
     
-    return inputAvg > 0 ? BASELINE_VALUE / inputAvg : 1;
+    return inputAvg !== 0 ? BASELINE_VALUE / inputAvg : 0;
 });
 
 // Calculate Relative Importance
 const relativeImportance = computed(() => {
     return scores.value.map((score, i) => {
-        const baseline = props.baselineScores[i] || 1;
+        const baseline = props.baselineScores[i] ?? 0;
+        if (baseline === 0) return 0;
         const result = (e14.value * 100 * score) / baseline;
         return mround(result, 5) - 100;
     });
@@ -100,6 +102,18 @@ const submit = () => {
 const handleInputUpdate = (newInputs) => {
     inputs.value = newInputs;
 };
+
+// Input chart helpers
+const inputChartLabels = computed(() => {
+    return props.fields.map((field, i) => field.label || field.name || `Item ${i + 1}`);
+});
+
+const inputChartValues = computed(() => riskRatings.value.map((v) => v || 0));
+
+const inputChartHeight = computed(() => {
+    const rows = props.inputCount || inputChartLabels.value.length;
+    return `${Math.max(260, rows * 26)}px`;
+});
 </script>
 
 <template>
@@ -116,7 +130,7 @@ const handleInputUpdate = (newInputs) => {
             />
         </template>
         
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <DesignFactorPagination :current-df="dfNumber" :routes="routes" position="top" />
             <form @submit.prevent="submit">
                 <!-- Input Section -->
@@ -131,12 +145,24 @@ const handleInputUpdate = (newInputs) => {
                         <span class="text-xs text-slate-500">Risk Rating = Impact × Likelihood</span>
                     </p>
                     
-                    <DropdownInput
-                        mode="df3"
-                        :fields="fields"
-                        :model-value="inputs"
-                        @update:model-value="handleInputUpdate"
-                    />
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <DropdownInput
+                                mode="df3"
+                                :fields="fields"
+                                :model-value="inputs"
+                                @update:model-value="handleInputUpdate"
+                            />
+                        </div>
+                        <ChartCard title="Input Risk Rating" subtitle="Impact × Likelihood (1–25)" :flush="true" :height="inputChartHeight">
+                            <InputBarChart
+                                :labels="inputChartLabels"
+                                :data="inputChartValues"
+                                :max="25"
+                                :height="inputChartHeight"
+                            />
+                        </ChartCard>
+                    </div>
                 </section>
                 
                 <!-- Charts Section -->

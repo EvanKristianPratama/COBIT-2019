@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 
 class ActivityReportController extends Controller
 {
@@ -40,7 +41,11 @@ class ActivityReportController extends Controller
             return $data;
         }
         
-        return view('assessment-eval.report-activity', $data);
+        return Inertia::render('AssessmentEval/Report/Activity', array_merge($data, [
+            'evalId' => $evalId,
+            'objectiveId' => $objectiveId,
+            'filterLevelQuery' => $filterLevel,
+        ]));
     }
 
     /**

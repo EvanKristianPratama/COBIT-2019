@@ -11,6 +11,7 @@ import PageHeader from '@/Components/PageHeader.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DesignFactorPagination from '../Components/DesignFactorPagination.vue';
 import InputTable from '../Components/InputTable.vue';
+import InputBarChart from '../Components/InputBarChart.vue';
 import ChartCard from '../Components/ChartCard.vue';
 import SpiderChart from '../Components/SpiderChart.vue';
 import BarChart from '../Components/BarChart.vue';
@@ -60,7 +61,7 @@ const scores = computed(() => {
         for (let j = 0; j < props.inputCount; j++) {
             score += row[j] * (inputs.value[j] || 0);
         }
-        return score;
+        return Math.round(score * 100) / 100;
     });
 });
 
@@ -69,13 +70,14 @@ const e14 = computed(() => {
     const inputAvg = inputs.value.reduce((a, b) => a + b, 0) / inputs.value.length;
     const baselineAvg = baselineData.value.reduce((a, b) => a + b, 0) / baselineData.value.length;
     // Calculate ratio: Baseline / Input
-    return inputAvg > 0 ? baselineAvg / inputAvg : 1;
+    return baselineAvg / inputAvg;
 });
 
 // Calculate Relative Importance
 const relativeImportance = computed(() => {
     return scores.value.map((score, i) => {
-        const baseline = props.baselineScores[i] || 1;
+        const baseline = props.baselineScores[i] ?? 0;
+        if (baseline === 0) return 0;
         const result = (e14.value * 100 * score) / baseline;
         return mround(result, 5) - 100;
     });
@@ -91,6 +93,18 @@ const submit = () => {
 const handleInputUpdate = (newInputs) => {
     inputs.value = newInputs;
 };
+
+// Input chart helpers
+const inputChartLabels = computed(() => {
+    return props.fields.map((field, i) => field.label || field.name || `Item ${i + 1}`);
+});
+
+const inputChartValues = computed(() => inputs.value.map((v) => v || 0));
+
+const inputChartHeight = computed(() => {
+    const rows = props.inputCount || inputChartLabels.value.length;
+    return `${Math.max(220, rows * 28)}px`;
+});
 </script>
 
 <template>
@@ -107,7 +121,7 @@ const handleInputUpdate = (newInputs) => {
             />
         </template>
         
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <DesignFactorPagination :current-df="dfNumber" :routes="routes" position="top" />
             <form @submit.prevent="submit">
                 <!-- Input Section -->
@@ -119,12 +133,24 @@ const handleInputUpdate = (newInputs) => {
                         Rate the importance of each role of IT (1 = Low, 5 = High).
                     </p>
                     
-                    <InputTable
-                        :fields="fields"
-                        :model-value="inputs"
-                        :baseline="baselineData"
-                        @update:model-value="handleInputUpdate"
-                    />
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <InputTable
+                                :fields="fields"
+                                :model-value="inputs"
+                                :baseline="baselineData"
+                                @update:model-value="handleInputUpdate"
+                            />
+                        </div>
+                        <ChartCard title="Input Overview" subtitle="Current selections (1–5)" :flush="true" :height="inputChartHeight">
+                            <InputBarChart
+                                :labels="inputChartLabels"
+                                :data="inputChartValues"
+                                :max="5"
+                                :height="inputChartHeight"
+                            />
+                        </ChartCard>
+                    </div>
                 </section>
                 
                 <!-- Charts Section -->

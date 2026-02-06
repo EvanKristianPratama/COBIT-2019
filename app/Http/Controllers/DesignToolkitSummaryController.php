@@ -8,6 +8,7 @@ use App\Models\DfStep2;
 use App\Models\DfStep3;
 use App\Models\TrsStep2;
 use App\Models\TrsStep3;
+use App\Services\Cobit\Step4Service;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -132,6 +133,81 @@ class DesignToolkitSummaryController extends Controller
         $this->saveTrsStep3($assessmentId, $userId, $request);
 
         return redirect()->back()->with('success', 'Data Step 3 berhasil disimpan.');
+    }
+
+    /**
+     * Display Step 4 (Concluded Scope)
+     */
+    public function step4(Request $request)
+    {
+        $assessmentId = session('assessment_id');
+        if (!$assessmentId) {
+            return redirect()->route('design-toolkit.index')->with('error', 'Silakan pilih assessment terlebih dahulu.');
+        }
+
+        $assessment = Assessment::where('assessment_id', $assessmentId)->first();
+        if (!$assessment) {
+            return redirect()->route('design-toolkit.index')->with('error', 'Data assessment tidak ditemukan.');
+        }
+
+        $userId = Auth::id();
+        $weights2 = $this->getSavedWeights($assessmentId, 2);
+        $weights3 = $this->getSavedWeights($assessmentId, 3);
+
+        $stepData = $this->getStep4Data($assessmentId, $userId);
+        $step4Session = $this->getStep4Session();
+
+        return Inertia::render('DesignToolkit/Step4/Index', [
+            'assessment' => $assessment,
+            'dfNumber' => 13,
+            'weights2' => $weights2,
+            'weights3' => $weights3,
+            'step2Totals' => $stepData['step2Totals'],
+            'combinedTotals' => $stepData['combinedTotals'],
+            'allRelImps' => $stepData['allRelImps'],
+            'initialScopes' => $stepData['initialScopes'],
+            'refinedScopes' => $stepData['refinedScopes'],
+            'adjustments' => $step4Session['adjustment'],
+            'reasonAdjust' => $step4Session['reason_adjust'],
+            'reasonTarget' => $step4Session['reason_target'],
+            'objectiveLabels' => $this->getObjectiveLabels(),
+            'routes' => $this->getRoutes(4),
+        ]);
+    }
+
+    /**
+     * Store Step 4 data (adjustments + reasons)
+     */
+    public function storeStep4(Request $request, Step4Service $step4Service)
+    {
+        $assessmentId = session('assessment_id');
+        $userId = Auth::id();
+
+        $assessment = Assessment::where('assessment_id', $assessmentId)->first();
+        if (!$assessment) {
+            return redirect()->back()->with('error', 'Assessment not found.');
+        }
+
+        $this->updateWeightsIfProvided($request, $assessmentId, $userId);
+
+        // Save adjustment & reasons to session for UI state
+        session([
+            'step4.adjustment' => $request->input('adjustment', []),
+            'step4.reason_adjust' => $request->input('reason_adjust', []),
+            'step4.reason_target' => $request->input('reason_target', []),
+        ]);
+
+        $stepData = $this->getStep4Data($assessmentId, $userId);
+        $step4Adjustments = $request->input('adjustment', []);
+
+        $step4Service->saveTargetCapability(
+            $assessment,
+            $stepData['initialScopes'],
+            $stepData['refinedScopes'],
+            $step4Adjustments
+        );
+
+        return redirect()->back()->with('success', 'Data Step 4 berhasil disimpan.');
     }
 
     // --- Helpers ---
@@ -271,8 +347,106 @@ class DesignToolkitSummaryController extends Controller
             'dashboard' => route('dashboard'),
             'index' => route('design-toolkit.index'),
             'show' => $dfRoutes,
-            'store' => $step === 2 ? route('design-toolkit.step2.store') : route('design-toolkit.step3.store'),
+            'store' => match ($step) {
+                2 => route('design-toolkit.step2.store'),
+                3 => route('design-toolkit.step3.store'),
+                4 => route('design-toolkit.step4.store'),
+                default => route('design-toolkit.step2.store'),
+            },
+            'summaryStep2' => route('design-toolkit.step2.index'),
+            'summaryStep3' => route('design-toolkit.step3.index'),
+            'summaryStep4' => route('design-toolkit.step4.index'),
         ];
+    }
+
+    private function getStep4Data(int $assessmentId, int $userId): array
+    {
+        $step2Records = TrsStep2::where('assessment_id', $assessmentId)
+            ->where('user_id', $userId)
+            ->orderBy('objective_code')
+            ->get()
+            ->keyBy('objective_code');
+
+        $step3Records = TrsStep3::where('assessment_id', $assessmentId)
+            ->where('user_id', $userId)
+            ->orderBy('objective_code')
+            ->get()
+            ->keyBy('objective_code');
+
+        $allRelImps = [];
+        $step2Totals = [];
+        $combinedTotals = [];
+        $initialScopes = [];
+        $refinedScopes = [];
+
+        for ($code = 1; $code <= 40; $code++) {
+            $s2 = $step2Records->get($code);
+            $s3 = $step3Records->get($code);
+
+            $allRelImps[$code] = [
+                (float) ($s2->rel_imp_df1 ?? 0),
+                (float) ($s2->rel_imp_df2 ?? 0),
+                (float) ($s2->rel_imp_df3 ?? 0),
+                (float) ($s2->rel_imp_df4 ?? 0),
+                (float) ($s3->rel_imp_df5 ?? 0),
+                (float) ($s3->rel_imp_df6 ?? 0),
+                (float) ($s3->rel_imp_df7 ?? 0),
+                (float) ($s3->rel_imp_df8 ?? 0),
+                (float) ($s3->rel_imp_df9 ?? 0),
+                (float) ($s3->rel_imp_df10 ?? 0),
+            ];
+
+            $step2Totals[$code] = (float) ($s2->total_objective ?? 0);
+            $combinedTotals[$code] = (float) ($s3->total_combined ?? 0);
+            $initialScopes[$code] = (float) ($s2->initial_scope_score ?? 0);
+            $refinedScopes[$code] = (float) ($s3->refined_scope_score ?? 0);
+        }
+
+        return [
+            'allRelImps' => $allRelImps,
+            'step2Totals' => $step2Totals,
+            'combinedTotals' => $combinedTotals,
+            'initialScopes' => $initialScopes,
+            'refinedScopes' => $refinedScopes,
+        ];
+    }
+
+    private function getStep4Session(): array
+    {
+        return [
+            'adjustment' => session('step4.adjustment', []),
+            'reason_adjust' => session('step4.reason_adjust', []),
+            'reason_target' => session('step4.reason_target', []),
+        ];
+    }
+
+    private function updateWeightsIfProvided(Request $request, int $assessmentId, int $userId): void
+    {
+        if ($request->has('weights2')) {
+            $w2 = $this->sanitizeWeights($request->input('weights2'));
+            DfStep2::updateOrCreate(
+                ['assessment_id' => $assessmentId, 'user_id' => $userId],
+                ['weights' => $w2]
+            );
+            session(['step2.weights' => $w2]);
+        }
+
+        if ($request->has('weights3')) {
+            $w3 = $this->sanitizeWeights($request->input('weights3'));
+            DfStep3::updateOrCreate(
+                ['assessment_id' => $assessmentId, 'user_id' => $userId],
+                ['weights' => $w3]
+            );
+            session(['step3.weights' => $w3]);
+        }
+    }
+
+    private function sanitizeWeights(mixed $input): array
+    {
+        return array_values(array_map(
+            fn($v) => is_numeric($v) ? (float) $v : 0,
+            (array) $input
+        ));
     }
 
     private function getObjectiveLabels(): array

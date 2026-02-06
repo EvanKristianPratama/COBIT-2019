@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { router } from '@inertiajs/vue3';
+import { CheckCircleIcon } from '@heroicons/vue/24/outline';
 
 defineProps({
     title: String,
@@ -74,9 +75,10 @@ const approve = (user) => {
                     <button 
                         v-if="user.approval_status === 'pending'"
                         @click="approve(user)"
-                        class="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                        class="p-2 text-emerald-600 hover:text-emerald-700 rounded-lg transition-colors"
+                        title="Approve"
                     >
-                        Approve
+                        <CheckCircleIcon class="w-5 h-5" />
                     </button>
                 </div>
             </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MstEval;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AssessmentListController extends Controller
 {
@@ -123,7 +124,18 @@ class AssessmentListController extends Controller
             $finishedAssessments = (clone $statsQuery)->where('status', 'finished')->count();
             $draftAssessments = max(0, $totalAssessments - $finishedAssessments);
 
-            return view('assessment-eval.list', compact('myAssessments', 'otherAssessments', 'totalAssessments', 'finishedAssessments', 'draftAssessments'));
+            return Inertia::render('AssessmentEval/Index', [
+                'myAssessments' => $myAssessments,
+                'otherAssessments' => $otherAssessments,
+                'totalAssessments' => $totalAssessments,
+                'finishedAssessments' => $finishedAssessments,
+                'draftAssessments' => $draftAssessments,
+                'routes' => [
+                    'create' => route('assessment-eval.create'),
+                    'reportAll' => route('assessment-eval.report.all'),
+                    'home' => url('/'),
+                ],
+            ]);
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to load assessments: ' . $e->getMessage()]);
         }
