@@ -272,6 +272,9 @@ Route::prefix('cobit2019/roadmap')
         Route::get('/report', [RoadmapController::class, 'report'])->name('report');
         Route::post('/store', [RoadmapController::class, 'store'])->name('store');
         Route::post('/add-year', [RoadmapController::class, 'addYear'])->name('add-year');
+        Route::get('/step4-scope', [RoadmapController::class, 'step4Scope'])->name('step4-scope');
+        Route::get('/scopes', [RoadmapController::class, 'scopingOptions'])->name('scopes');
+        Route::post('/delete-year', [RoadmapController::class, 'deleteYear'])->name('delete-year');
     });
 
 // Assessment Evaluation routes

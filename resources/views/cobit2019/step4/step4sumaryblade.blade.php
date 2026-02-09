@@ -17,6 +17,8 @@
     $combinedTotals = $combinedTotals ?? [];
     $refinedScopes = $refinedScopes ?? [];
     $initialScopes = $initialScopes ?? [];
+    $step4Selected = $step4Selected ?? [];
+    $step4Agreed = $step4Agreed ?? [];
   @endphp
 
   <form action="{{ route('step4.store') }}" method="POST" id="step4Form">
@@ -205,6 +207,7 @@
               <thead class="bg-light sticky-top">
                 <tr>
                   <th class="text-center text-muted small fw-semibold" style="width:80px;">GAMO</th>
+                  <th class="text-center text-muted small fw-semibold" style="width:70px;">Save</th>
                   <th class="text-center text-muted small fw-semibold" style="width:100px;">Adjustment</th>
                   <th class="text-muted small fw-semibold" style="min-width:180px;">Reason (Adjustment)</th>
                   <th class="text-center small fw-semibold text-white" style="width:150px; background:#4B0082;">
@@ -222,6 +225,11 @@
                   @php $refinedScore = $refinedScopes[$code] ?? 0; @endphp
                   <tr class="objective-row" data-code="{{ $code }}" data-refined="{{ $refinedScore }}">
                     <td class="text-center fw-semibold text-primary">{{ $cobitCodes[$code] ?? '' }}</td>
+                    <td class="text-center">
+                      <input type="checkbox" name="selected[{{ $code }}]" value="1"
+                        class="form-check-input"
+                        {{ old("selected.$code", $step4Selected[$code] ?? 0) ? 'checked' : '' }}>
+                    </td>
                     <td class="text-center p-1">
                       <input type="number" name="adjustment[{{ $code }}]"
                         class="form-control form-control-sm text-center adjust-input mx-auto"
@@ -235,9 +243,29 @@
                         placeholder="Reason..."
                         value="{{ old("reason_adjust.$code", $step4ReasonAdj[$code] ?? '') }}">
                     </td>
-                    <td class="text-center concluded-scope-cell" data-refined="{{ $refinedScore }}"></td>
-                    <td class="text-center suggested-cell"></td>
-                    <td class="text-center agreed-cell"></td>
+                    <td class="text-center concluded-scope-cell" data-refined="{{ $refinedScore }}">
+                      <input type="hidden" name="concluded_priority[{{ $code }}]" class="concluded-input" value="0">
+                    </td>
+                    <td class="text-center suggested-cell">
+                      <input type="hidden" name="suggested_level[{{ $code }}]" class="suggested-input" value="1">
+                    </td>
+                    <td class="text-center agreed-cell">
+                      @php
+                        $agreedVal = old("agreed_level.$code", $step4Agreed[$code] ?? null);
+                        $agreedVal = is_numeric($agreedVal) && (int) $agreedVal > 0 ? (int) $agreedVal : null;
+                      @endphp
+                      <select name="agreed_level[{{ $code }}]"
+                        class="form-select form-select-sm agreed-select mx-auto"
+                        style="width:70px;"
+                        data-manual="0"
+                        data-initial="{{ $agreedVal !== null ? $agreedVal : '' }}">
+                        @for ($lvl = 1; $lvl <= 5; $lvl++)
+                          <option value="{{ $lvl }}" {{ (string) $agreedVal === (string) $lvl ? 'selected' : '' }}>
+                            {{ $lvl }}
+                          </option>
+                        @endfor
+                      </select>
+                    </td>
                     <td class="p-1">
                       <input type="text" name="reason_target[{{ $code }}]" 
                         class="form-control form-control-sm border-0 bg-light"
@@ -345,25 +373,43 @@
 
       function renderStep4() {
         const rows4 = document.querySelectorAll('#step4Table tbody tr.objective-row');
-        const rows3 = document.querySelectorAll('#step3Table tbody tr.objective-row');
-        rows4.forEach((row, i) => {
-          const refinedPct = parseFloat(rows3[i]?.querySelector('.refined-scope-cell3')?.dataset.scope || 0);
+        rows4.forEach((row) => {
+          const code = row.dataset.code;
+          const row3 = document.querySelector(`#step3Table tbody tr.objective-row[data-code="${code}"]`);
+          const refinedPct = parseFloat(row3?.querySelector('.refined-scope-cell3')?.dataset.scope || 0);
           const adj = parseFloat(row.querySelector('.adjust-input').value) || 0;
           const concluded = roundTo5(refinedPct + adj);
           
           const cc = row.querySelector('.concluded-scope-cell');
+          const concludedInput = row.querySelector('.concluded-input');
           cc.innerHTML = '';
           cc.appendChild(createVBar(concluded));
+          if (concludedInput) {
+            concludedInput.value = concluded;
+            cc.appendChild(concludedInput);
+          }
           cc.dataset.scope = concluded;
 
           const lvl = getSuggestedLevel(concluded);
           const sc = row.querySelector('.suggested-cell');
+          const suggestedInput = row.querySelector('.suggested-input');
           sc.innerHTML = '';
           sc.appendChild(createLevelBar(lvl, '#007bff'));
+          if (suggestedInput) {
+            suggestedInput.value = lvl;
+            sc.appendChild(suggestedInput);
+          }
           
-          const ac = row.querySelector('.agreed-cell');
-          ac.innerHTML = '';
-          ac.appendChild(createLevelBar(lvl, '#6f42c1'));
+          const agreedSelect = row.querySelector('.agreed-select');
+          if (agreedSelect) {
+            const initial = agreedSelect.dataset.initial || '';
+            if (initial !== '' && initial !== String(lvl)) {
+              agreedSelect.value = initial;
+              agreedSelect.dataset.manual = '1';
+            } else if (agreedSelect.dataset.manual !== '1') {
+              agreedSelect.value = String(lvl);
+            }
+          }
         });
         updateChart();
       }
@@ -420,8 +466,8 @@
         const rows = Array.from(document.querySelectorAll('#step4Table tbody tr.objective-row'));
         const labels = rows.map(r => r.querySelector('td').textContent.trim());
         const data = rows.map(r => {
-          const ac = r.querySelector('.agreed-cell span');
-          return ac ? parseInt(ac.textContent) || 0 : 0;
+          const select = r.querySelector('.agreed-select');
+          return select ? parseInt(select.value) || 0 : 0;
         });
         const maxCap = [4,5,4,4,4,5,4,5,4,5,5,4,5,4,5,5,5,5,5,5,4,4,5,5,4,5,5,5,5,4,5,5,5,5,4,5,5,5,5,4];
 
@@ -454,6 +500,12 @@
       renderStep4();
 
       document.querySelectorAll('.adjust-input').forEach(i => i.addEventListener('input', renderStep4));
+      document.querySelectorAll('.agreed-select').forEach(select => {
+        select.addEventListener('change', () => {
+          select.dataset.manual = '1';
+          updateChart();
+        });
+      });
       document.querySelectorAll('.btn-sort').forEach(btn => {
         btn.addEventListener('click', () => sortTable(btn.dataset.table, btn.dataset.col));
       });
