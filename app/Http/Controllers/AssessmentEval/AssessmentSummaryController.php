@@ -19,7 +19,7 @@ class AssessmentSummaryController extends Controller
     public function summary($evalId, $objectiveId = null)
     {
         $data = $this->getSummary($evalId, $objectiveId);
-        $roadmap = $this->getRoadmapTargetCapability();
+        $roadmap = $this->getRoadmapTargetCapability($objectiveId);
 
         // return response()->json(compact('data', 'roadmap'));
         return view('assessment-eval.report-summary', array_merge($data, compact('roadmap')));
@@ -240,12 +240,24 @@ class AssessmentSummaryController extends Controller
         return $finalLevel.$letter;
     }
 
-    private function getRoadmapTargetCapability()
+    private function getRoadmapTargetCapability($objectiveId = null)
     {
-        $objectives = MstObjective::orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
-            ->orderBy('objective_id')
-            ->get();
-        $roadmaps = TrsRoadmap::all();
+        $objectivesQuery = MstObjective::orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
+            ->orderBy('objective_id');
+
+        // Filter by objective_id if provided
+        if ($objectiveId) {
+            $objectivesQuery->where('objective_id', $objectiveId);
+        }
+
+        $objectives = $objectivesQuery->get();
+
+        // Filter roadmaps by objective_id if provided
+        $roadmapsQuery = TrsRoadmap::query();
+        if ($objectiveId) {
+            $roadmapsQuery->where('objective_id', $objectiveId);
+        }
+        $roadmaps = $roadmapsQuery->get();
 
         $mappedRoadmaps = [];
         $availableYears = [];

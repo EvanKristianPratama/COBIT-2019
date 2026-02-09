@@ -18,9 +18,9 @@
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('assessment-eval.report', $evaluation->eval_id) }}"
+                            <a href="{{ route('assessment-eval.report-activity', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objectives->first()->objective_id]) }}"
                                 class="text-decoration-none text-muted" style="color: #0f2b5c !important;">
-                                <i class="fas fa-file-alt me-1"></i> Assessment Recapitulation Report
+                                <i class="fas fa-file-alt me-1"></i>Detail Recapitulation Report
                             </a>
                         </li>
                         <li class="breadcrumb-item">
