@@ -2,6 +2,12 @@
 
 @section('content')
 <div class="container-fluid p-4">
+    @php
+        $assessments = $assessments ?? collect();
+        $evals = $evals ?? collect();
+        $selectedAssessmentId = $selectedAssessmentId ?? null;
+    @endphp
+
     {{-- Hero Header --}}
     <div class="card shadow-sm mb-4 hero-card" style="border:none;box-shadow:0 22px 45px rgba(14,33,70,0.15);">
         <div class="card-header hero-header py-4" style="background:linear-gradient(135deg,#081a3d,#0f2b5c);color:#fff;border:none;">
@@ -27,15 +33,76 @@
                     <a href="{{ route('roadmap.report') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                         <i class="fas fa-file-alt me-2"></i>View Report
                     </a>
-                    <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 text-dark font-weight-bold" id="bumnTargetBtn">
-                        <i class="fas fa-bullseye me-2"></i>Add BUMN Target
-                    </button>
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addYearModal">
                         <i class="fas fa-plus me-2"></i>Add Year
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" id="deleteYearBtn">
+                        <i class="fas fa-trash me-2"></i>Delete Year
                     </button>
                     <button type="submit" class="btn btn-success btn-sm rounded-pill px-4">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
+                </div>
+
+                <div class="p-3 border-bottom bg-white">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1">Tahun Target</label>
+                            <select id="targetYearSelect" class="form-select form-select-sm">
+                                @foreach($years as $year)
+                                    <option value="{{ $year }}">{{ $year }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1">Sumber Target</label>
+                            <select id="targetSourceSelect" class="form-select form-select-sm">
+                                <option value="step4">1. Design Factor / Step 4</option>
+                                <option value="scope">2. Scope Assessment</option>
+                                <option value="bumn">3. BUMN</option>
+                                <option value="manual">4. Manual Input</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 source-step4">
+                            <label class="form-label small mb-1">Assessment (Step 4)</label>
+                            <select id="step4AssessmentSelect" class="form-select form-select-sm">
+                                <option value="">Pilih assessment</option>
+                                @foreach($assessments as $assess)
+                                    <option value="{{ $assess->assessment_id }}"
+                                        {{ (string) $selectedAssessmentId === (string) $assess->assessment_id ? 'selected' : '' }}>
+                                        {{ $assess->kode_assessment ?? ('ID ' . $assess->assessment_id) }}
+                                        {{ $assess->instansi ? ' - ' . $assess->instansi : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3 source-scope d-none">
+                            <label class="form-label small mb-1">Assessment Eval</label>
+                            <select id="evalSelect" class="form-select form-select-sm">
+                                <option value="">Pilih eval</option>
+                                @foreach($evals as $eval)
+                                    <option value="{{ $eval->eval_id }}">
+                                        Eval {{ $eval->eval_id }}{{ $eval->tahun ? ' - ' . $eval->tahun : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3 source-scope d-none">
+                            <label class="form-label small mb-1">Scope</label>
+                            <select id="scopeSelect" class="form-select form-select-sm">
+                                <option value="">Pilih scope</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="applySourceBtn">
+                                Terapkan
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="clearScopeFilterBtn">
+                                Tampilkan Semua
+                            </button>
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-2" id="sourceInfo"></div>
                 </div>
 
                 <div class="table-responsive table-wrapper-scroll-y">
@@ -59,7 +126,7 @@
                         </thead>
                         <tbody>
                             @foreach($objectives as $idx => $obj)
-                            <tr>
+                            <tr data-objective-id="{{ $obj->objective_id }}">
                                 <td class="sticky-col text-center font-weight-bold bg-white">{{ $obj->objective_id }}</td>
                                 <td class="sticky-col bg-white small text-muted" style="left: 100px;">
                                     {{ $obj->objective }}
@@ -74,6 +141,8 @@
                                         <input type="number" 
                                                name="roadmap[{{ $idx }}][{{ $year }}][level]" 
                                                class="form-control form-control-sm text-center border-0 bg-transparent level-input" 
+                                               data-year="{{ $year }}"
+                                               placeholder="-"
                                                value="{{ $data['level'] }}"
                                                min="0" max="5">
                                     </td>
@@ -81,7 +150,7 @@
                                         <select name="roadmap[{{ $idx }}][{{ $year }}][rating]" 
                                                 class="form-select form-select-sm text-center border-0 bg-transparent rating-select"
                                                 data-initial="{{ $data['rating'] }}">
-                                            <option value=""></option>
+                                            <option value="">-</option>
                                         </select>
                                     </td>
                                 @endforeach
@@ -94,6 +163,11 @@
         </div>
     </div>
 </div>
+
+<form id="deleteYearForm" action="{{ route('roadmap.delete-year') }}" method="POST" style="display:none;">
+    @csrf
+    <input type="hidden" name="year" id="deleteYearInput">
+</form>
 
 {{-- Add Year Modal --}}
 <div class="modal fade" id="addYearModal" tabindex="-1">
@@ -175,6 +249,10 @@
     .year-header {
         font-weight: bold;
     }
+
+    .scope-hidden {
+        display: none;
+    }
 </style>
 
 <script>
@@ -195,17 +273,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = url.toString();
     });
 
-    // BUMN Target Logic
-    document.getElementById('bumnTargetBtn').addEventListener('click', function() {
-        const levelInputs = document.querySelectorAll('.level-input');
-        levelInputs.forEach(input => {
-            input.value = 3;
-            // Trigger change event to update ratings
-            const event = new Event('change');
-            input.dispatchEvent(event);
-        });
-    });
-
     // Dynamic Rating Logic
     function updateRatings(levelInput) {
         const level = parseInt(levelInput.value);
@@ -215,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentValue = ratingSelect.value || initialValue;
 
         // Clear existing options
-        ratingSelect.innerHTML = '<option value=""></option>';
+        ratingSelect.innerHTML = '<option value="">-</option>';
 
         if (!isNaN(level)) {
             const options = [];
@@ -244,6 +311,172 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initial load
         updateRatings(input);
     });
+
+    // Target Source Logic
+    const step4Url = "{{ route('roadmap.step4-scope') }}";
+    const scopeUrl = "{{ route('roadmap.scopes') }}";
+    const applyBtn = document.getElementById('applySourceBtn');
+    const clearScopeBtn = document.getElementById('clearScopeFilterBtn');
+    const infoEl = document.getElementById('sourceInfo');
+    const sourceSelect = document.getElementById('targetSourceSelect');
+    const step4Wrap = document.querySelectorAll('.source-step4');
+    const scopeWrap = document.querySelectorAll('.source-scope');
+
+    const BUMN_GAMOS = [
+        'EDM01', 'EDM02', 'APO01', 'APO02', 'APO03', 'APO05', 'APO06', 'APO09',
+        'APO10', 'APO12', 'APO13', 'APO14', 'BAI02', 'BAI03', 'BAI04', 'BAI06',
+        'BAI07', 'BAI09', 'BAI11', 'DSS01', 'DSS02', 'DSS04', 'DSS05', 'MEA01'
+    ];
+
+    const scopeCache = {};
+
+    function toggleSourceFields() {
+        const source = sourceSelect.value;
+        step4Wrap.forEach(el => el.classList.toggle('d-none', source !== 'step4'));
+        scopeWrap.forEach(el => el.classList.toggle('d-none', source !== 'scope'));
+    }
+
+    async function loadScopes(evalId) {
+        if (!evalId) return;
+        if (scopeCache[evalId]) return scopeCache[evalId];
+        const res = await fetch(`${scopeUrl}?eval_id=${evalId}`);
+        const data = await res.json();
+        scopeCache[evalId] = data.scopes || [];
+        return scopeCache[evalId];
+    }
+
+    function setScopeFilter(objectiveIds, year, clearNonScope) {
+        const scopeSet = new Set(objectiveIds || []);
+        document.querySelectorAll('#roadmap-table tbody tr').forEach(row => {
+            const objId = row.dataset.objectiveId;
+            const inScope = scopeSet.has(objId);
+            row.classList.toggle('scope-hidden', !inScope);
+            if (!inScope && clearNonScope && year) {
+                const input = row.querySelector(`.level-input[data-year="${year}"]`);
+                if (input) {
+                    input.value = '';
+                    input.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+    }
+
+    function clearScopeFilter() {
+        document.querySelectorAll('#roadmap-table tbody tr').forEach(row => {
+            row.classList.remove('scope-hidden');
+        });
+    }
+
+    function setLevelForObjectives(objectiveLevelMap, year) {
+        Object.entries(objectiveLevelMap || {}).forEach(([objectiveId, level]) => {
+            const row = document.querySelector(`#roadmap-table tbody tr[data-objective-id="${objectiveId}"]`);
+            if (!row) return;
+            const input = row.querySelector(`.level-input[data-year="${year}"]`);
+            if (!input) return;
+            input.value = level || '';
+            input.dispatchEvent(new Event('change'));
+        });
+    }
+
+    async function applySource() {
+        const source = sourceSelect.value;
+        const year = document.getElementById('targetYearSelect')?.value;
+        if (!year) {
+            alert('Pilih tahun terlebih dahulu.');
+            return;
+        }
+
+        if (infoEl) infoEl.textContent = '';
+
+        if (source === 'step4') {
+            const assessmentId = document.getElementById('step4AssessmentSelect')?.value;
+            if (!assessmentId) {
+                alert('Pilih assessment Step 4.');
+                return;
+            }
+            if (infoEl) infoEl.textContent = 'Memuat Step 4...';
+            const res = await fetch(`${step4Url}?assessment_id=${assessmentId}`);
+            const data = await res.json();
+            const objectives = data.objectives || [];
+            if (!objectives.length) {
+                if (infoEl) infoEl.textContent = 'Scope Step 4 kosong.';
+                return;
+            }
+            const ids = objectives.map(o => o.objective_id);
+            setScopeFilter(ids, year, true);
+            const levelMap = {};
+            objectives.forEach(o => levelMap[o.objective_id] = o.agreed_level || '');
+            setLevelForObjectives(levelMap, year);
+            if (infoEl) infoEl.textContent = `Step 4 diterapkan: ${ids.length} GAMO untuk tahun ${year}.`;
+            return;
+        }
+
+        if (source === 'scope') {
+            const evalId = document.getElementById('evalSelect')?.value;
+            const scopeId = document.getElementById('scopeSelect')?.value;
+            if (!evalId || !scopeId) {
+                alert('Pilih eval dan scope.');
+                return;
+            }
+            const scopes = await loadScopes(evalId);
+            const scope = scopes.find(s => String(s.id) === String(scopeId));
+            const objectives = scope?.objectives || [];
+            if (!objectives.length) {
+                if (infoEl) infoEl.textContent = 'Scope kosong.';
+                return;
+            }
+            setScopeFilter(objectives, year, true);
+            if (infoEl) infoEl.textContent = `Scope assessment diterapkan: ${objectives.length} GAMO.`;
+            return;
+        }
+
+        if (source === 'bumn') {
+            setScopeFilter(BUMN_GAMOS, year, true);
+            const levelMap = {};
+            BUMN_GAMOS.forEach(id => levelMap[id] = 3);
+            setLevelForObjectives(levelMap, year);
+            if (infoEl) infoEl.textContent = `BUMN diterapkan: ${BUMN_GAMOS.length} GAMO level 3 untuk tahun ${year}.`;
+            return;
+        }
+
+        // manual
+        clearScopeFilter();
+        if (infoEl) infoEl.textContent = 'Manual input aktif.';
+    }
+
+    sourceSelect?.addEventListener('change', () => {
+        toggleSourceFields();
+    });
+
+    document.getElementById('evalSelect')?.addEventListener('change', async (e) => {
+        const evalId = e.target.value;
+        const scopes = await loadScopes(evalId);
+        const scopeSelect = document.getElementById('scopeSelect');
+        if (!scopeSelect) return;
+        scopeSelect.innerHTML = '<option value="">Pilih scope</option>';
+        scopes.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name || `Scope ${s.id}`;
+            scopeSelect.appendChild(opt);
+        });
+    });
+
+    applyBtn?.addEventListener('click', applySource);
+    clearScopeBtn?.addEventListener('click', clearScopeFilter);
+    document.getElementById('deleteYearBtn')?.addEventListener('click', () => {
+        const year = document.getElementById('targetYearSelect')?.value;
+        if (!year) {
+            alert('Pilih tahun terlebih dahulu.');
+            return;
+        }
+        if (confirm(`Hapus semua roadmap untuk tahun ${year}?`)) {
+            const input = document.getElementById('deleteYearInput');
+            if (input) input.value = year;
+            document.getElementById('deleteYearForm')?.submit();
+        }
+    });
+    toggleSourceFields();
 });
 </script>
 @endsection
