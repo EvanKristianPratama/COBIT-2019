@@ -337,6 +337,10 @@
                                                 <th rowspan="2" class="align-middle"
                                                     style="min-width: 200px; border: 2px solid #dee2e6; background-color: white;">
                                                     Objective Name</th>
+                                                <th colspan="2" class="align-middle border-bottom"
+                                                    style="border: 2px solid #dee2e6; background-color: white;">
+                                                    Hasil Assessment {{ $evaluation->tahun ?? '2025' }}
+                                                </th>
                                                 @foreach ($roadmap['years'] as $year)
                                                     <th colspan="2" class="align-middle border-bottom"
                                                         style="border: 2px solid #dee2e6; background-color: white;">
@@ -345,6 +349,13 @@
                                                 @endforeach
                                             </tr>
                                             <tr>
+                                                <th class="small font-weight-bold"
+                                                    style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
+                                                    Level</th>
+                                                <th class="small font-weight-bold"
+                                                    style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
+                                                    Rating
+                                                </th>
                                                 @foreach ($roadmap['years'] as $year)
                                                     <th class="small font-weight-bold"
                                                         style="min-width: 50px; border: 2px solid #dee2e6; background-color: white;">
@@ -363,6 +374,20 @@
                                                         {{ str_replace('"', '', $obj->objective_id) }}</td>
                                                     <td class="text-start small">
                                                         {{ str_replace('"', '', $obj->objective) }}
+                                                    </td>
+                                                    {{-- Current Year Assessment Results from Scorecard --}}
+                                                    <td class="small">
+                                                        @php
+                                                            // Find matching objective from $objectives to get scorecard data
+                                                            $scorecardObj = $objectives->firstWhere(
+                                                                'objective_id',
+                                                                $obj->objective_id,
+                                                            );
+                                                        @endphp
+                                                        {{ $scorecardObj->current_score ?? '-' }}
+                                                    </td>
+                                                    <td class="small">
+                                                        {{ $scorecardObj->rating_string ?? '-' }}
                                                     </td>
                                                     @foreach ($roadmap['years'] as $year)
                                                         <td class="small">
@@ -396,6 +421,11 @@
                     class="btn btn-warning sticky-action-btn" target="_blank" title="Export PDF Per Practice">
                     <i class="fas fa-file-pdf"></i>
                     <span>PDF Per Practice</span>
+                </a>
+                <a href="{{ url('cobit2019/roadmap') }}" class="btn btn-success sticky-action-btn"
+                    title="Add Roadmap Target">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Roadmap</span>
                 </a>
                 <button type="button" class="btn btn-primary sticky-action-btn" id="saveAllNotesBtn"
                     title="Simpan Semua">

@@ -315,11 +315,15 @@
                             <thead>
                                 <tr>
                                     <th rowspan="2"
-                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle; width: 60px;">
                                         Objective ID</th>
                                     <th rowspan="2"
-                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle; width: 150px;">
                                         Objective Name</th>
+                                    <th colspan="2"
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                        Hasil Assessment {{ $evaluation->tahun ?? '2025' }}
+                                    </th>
                                     @foreach ($roadmap['years'] as $year)
                                         <th colspan="2"
                                             style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
@@ -328,12 +332,18 @@
                                     @endforeach
                                 </tr>
                                 <tr>
+                                    <th
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
+                                        Level</th>
+                                    <th
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
+                                        Rating</th>
                                     @foreach ($roadmap['years'] as $year)
                                         <th
-                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 40px;">
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
                                             Level</th>
                                         <th
-                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 40px;">
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
                                             Rating</th>
                                     @endforeach
                                 </tr>
@@ -341,10 +351,22 @@
                             <tbody>
                                 @foreach ($roadmap['objectives'] as $obj)
                                     <tr>
-                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: center; font-weight: bold;">
+                                        <td
+                                            style="border: 1px solid #000; font-size: 8pt; text-align: center; font-weight: bold;">
                                             {{ str_replace('"', '', $obj->objective_id) }}</td>
                                         <td style="border: 1px solid #000; font-size: 8pt; text-align: left;">
                                             {{ str_replace('"', '', $obj->objective) }}
+                                        </td>
+                                        {{-- Current Year Assessment Results from Scorecard --}}
+                                        @php
+                                            // Find matching objective from $objectives to get scorecard data
+                                            $scorecardObj = $objectives->firstWhere('objective_id', $obj->objective_id);
+                                        @endphp
+                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
+                                            {{ $scorecardObj->current_score ?? '-' }}
+                                        </td>
+                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
+                                            {{ $scorecardObj->rating_string ?? '-' }}
                                         </td>
                                         @foreach ($roadmap['years'] as $year)
                                             <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
