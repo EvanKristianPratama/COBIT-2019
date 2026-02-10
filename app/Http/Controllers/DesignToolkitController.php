@@ -25,6 +25,7 @@ use App\Services\Cobit\Df10Service;
 use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
 /**
@@ -49,19 +50,22 @@ class DesignToolkitController extends Controller
             $sort = $request->input('sort', 'terbaru');
             $orderDir = $sort === 'terlama' ? 'asc' : 'desc';
 
-            if ($this->isAdmin($user)) {
-                $results = $this->getAdminAssessments($user, $request, $orderDir);
-                $assessmentsSame = $results['assessments_same'];
-                $assessmentsOther = $results['assessments_other'];
-            } else {
-                $assessmentsSame = $this->getUserAssessments($user, $request, $orderDir);
-            }
+            $assessmentsSame = $this->getUserAssessments($user, $request, $orderDir);
         }
 
         $dfRoutes = [];
         for ($i = 1; $i <= 10; $i++) {
             $dfRoutes[$i] = route('design-toolkit.show', ['number' => $i]);
         }
+
+        $assessmentsSame = $assessmentsSame->map(function (Assessment $assessment) use ($user) {
+            $data = $assessment->toArray();
+            $data['can_delete'] = $this->canDeleteAssessment($user, $assessment);
+            $data['scope_type'] = 'internal';
+            return $data;
+        });
+
+        $assessmentsOther = collect();
 
         return Inertia::render('DesignToolkit/Index', [
             'auth' => [
@@ -80,6 +84,8 @@ class DesignToolkitController extends Controller
                 'summaryStep2' => route('design-toolkit.step2.index'),
                 'summaryStep3' => route('design-toolkit.step3.index'),
                 'summaryStep4' => route('design-toolkit.step4.index'),
+                'roadmap' => route('roadmap.index'),
+                'destroy' => route('design-toolkit.destroy', ['assessment' => 0]),
             ],
         ]);
     }
@@ -149,6 +155,25 @@ class DesignToolkitController extends Controller
         return redirect()->route('design-toolkit.show', ['number' => 1])
             ->with('success', "New assessment created: {$newCode}");
     }
+
+    /**
+     * Delete an assessment (owner or admin only)
+     */
+    public function destroy(Request $request, Assessment $assessment)
+    {
+        $user = Auth::user();
+        if (!$this->canDeleteAssessment($user, $assessment)) {
+            abort(403);
+        }
+
+        if ((int) session('assessment_id') === (int) $assessment->assessment_id) {
+            session()->forget(['assessment_id', 'instansi', 'tahun', 'is_guest']);
+        }
+
+        $assessment->delete();
+
+        return Redirect::back()->with('success', 'Assessment deleted.');
+    }
     private function isGuestUser($user): bool
     {
         if (!$user) return false;
@@ -159,6 +184,13 @@ class DesignToolkitController extends Controller
     private function isAdmin($user): bool
     {
         return !empty($user->role) && strtolower($user->role) === 'admin';
+    }
+
+    private function canDeleteAssessment($user, Assessment $assessment): bool
+    {
+        if (!$user) return false;
+        if ($this->isAdmin($user)) return true;
+        return (int) $assessment->user_id === (int) $user->id;
     }
 
     private function getAdminAssessments($user, Request $request, string $orderDir): array

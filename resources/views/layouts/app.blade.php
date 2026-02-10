@@ -8,6 +8,11 @@
     <title>COBIT 2019</title>
 
     <link rel="icon" href="{{ asset('images/cobit.png') }}" type="image/png">
+    <link rel="shortcut icon" href="{{ asset('images/cobit.png') }}" type="image/png">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/cobit.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/cobit.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/cobit.png') }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">

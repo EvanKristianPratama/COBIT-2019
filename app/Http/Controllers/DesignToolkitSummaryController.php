@@ -8,6 +8,7 @@ use App\Models\DfStep2;
 use App\Models\DfStep3;
 use App\Models\TrsStep2;
 use App\Models\TrsStep3;
+use App\Models\TrsStep4;
 use App\Services\Cobit\Step4Service;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -155,7 +156,7 @@ class DesignToolkitSummaryController extends Controller
         $weights3 = $this->getSavedWeights($assessmentId, 3);
 
         $stepData = $this->getStep4Data($assessmentId, $userId);
-        $step4Session = $this->getStep4Session();
+        $step4Session = $this->getStep4Session($assessmentId, $userId);
 
         return Inertia::render('DesignToolkit/Step4/Index', [
             'assessment' => $assessment,
@@ -170,6 +171,8 @@ class DesignToolkitSummaryController extends Controller
             'adjustments' => $step4Session['adjustment'],
             'reasonAdjust' => $step4Session['reason_adjust'],
             'reasonTarget' => $step4Session['reason_target'],
+            'agreedLevels' => $step4Session['agreed_level'],
+            'selectedObjectives' => $step4Session['selected'],
             'objectiveLabels' => $this->getObjectiveLabels(),
             'routes' => $this->getRoutes(4),
         ]);
@@ -190,21 +193,32 @@ class DesignToolkitSummaryController extends Controller
 
         $this->updateWeightsIfProvided($request, $assessmentId, $userId);
 
-        // Save adjustment & reasons to session for UI state
-        session([
-            'step4.adjustment' => $request->input('adjustment', []),
-            'step4.reason_adjust' => $request->input('reason_adjust', []),
-            'step4.reason_target' => $request->input('reason_target', []),
-        ]);
-
         $stepData = $this->getStep4Data($assessmentId, $userId);
         $step4Adjustments = $request->input('adjustment', []);
+        $step4ReasonAdjust = $request->input('reason_adjust', []);
+        $step4ReasonTarget = $request->input('reason_target', []);
+        $step4Selected = $request->input('selected', []);
+        $step4Agreed = $request->input('agreed_level', []);
 
         $step4Service->saveTargetCapability(
             $assessment,
             $stepData['initialScopes'],
             $stepData['refinedScopes'],
             $step4Adjustments
+        );
+
+        // Save data only to database (TrsStep4), not to session
+        $this->saveTrsStep4(
+            $assessmentId,
+            $userId,
+            $this->getObjectiveLabels(),
+            $stepData['step2Totals'],
+            $stepData['combinedTotals'],
+            $step4Adjustments,
+            $step4ReasonAdjust,
+            $step4ReasonTarget,
+            $step4Selected,
+            $step4Agreed
         );
 
         return redirect()->back()->with('success', 'Data Step 4 berhasil disimpan.');
@@ -336,6 +350,49 @@ class DesignToolkitSummaryController extends Controller
         }
     }
 
+    private function saveTrsStep4(
+        int $assessmentId,
+        int $userId,
+        array $objectiveLabels,
+        array $step2Totals,
+        array $combinedTotals,
+        array $adjustments,
+        array $reasonAdjust,
+        array $reasonTarget,
+        array $selected,
+        array $agreedLevels
+    ): void {
+        $initialScopeScores = $this->normalizeScopeScores($step2Totals);
+        $refinedScopeScores = $this->normalizeScopeScores($combinedTotals);
+
+        for ($code = 1; $code <= 40; $code++) {
+            $index = $code - 1;
+            $adjustment = isset($adjustments[$code]) ? (float) $adjustments[$code] : 0.0;
+            $concluded = $this->roundTo5(($refinedScopeScores[$code] ?? 0) + $adjustment);
+            $suggested = $this->suggestedLevel($concluded);
+            $agreed = $this->sanitizeLevel($agreedLevels, $code, $suggested);
+            $selectedFlag = $this->normalizeSelected($selected, $code);
+
+            TrsStep4::updateOrCreate(
+                [
+                    'assessment_id' => $assessmentId,
+                    'user_id' => $userId,
+                    'objective_code' => $code,
+                ],
+                [
+                    'objective_id' => $objectiveLabels[$index] ?? (string) $code,
+                    'adjustment' => (int) $adjustment,
+                    'reason_adjust' => $reasonAdjust[$code] ?? null,
+                    'concluded_priority' => $concluded,
+                    'suggested_level' => $suggested,
+                    'agreed_level' => $agreed,
+                    'reason_target' => $reasonTarget[$code] ?? null,
+                    'is_selected' => $selectedFlag ? 1 : 0,
+                ]
+            );
+        }
+    }
+
     private function getRoutes(int $step): array
     {
         $dfRoutes = [];
@@ -411,12 +468,36 @@ class DesignToolkitSummaryController extends Controller
         ];
     }
 
-    private function getStep4Session(): array
+    private function getStep4Session(int $assessmentId, int $userId): array
     {
+        // Fetch data exclusively from database (TrsStep4 table)
+        $records = TrsStep4::where('assessment_id', $assessmentId)
+            ->where('user_id', $userId)
+            ->orderBy('objective_code')
+            ->get()
+            ->keyBy('objective_code');
+
+        $adjustments = [];
+        $reasonAdjust = [];
+        $reasonTarget = [];
+        $selected = [];
+        $agreed = [];
+
+        for ($code = 1; $code <= 40; $code++) {
+            $rec = $records->get($code);
+            $adjustments[$code] = $rec ? (int) $rec->adjustment : 0;
+            $reasonAdjust[$code] = $rec ? ($rec->reason_adjust ?? '') : '';
+            $reasonTarget[$code] = $rec ? ($rec->reason_target ?? '') : '';
+            $selected[$code] = $rec ? (int) ($rec->is_selected ?? 0) : 0;
+            $agreed[$code] = $rec ? (int) ($rec->agreed_level ?? 1) : 1;
+        }
+
         return [
-            'adjustment' => session('step4.adjustment', []),
-            'reason_adjust' => session('step4.reason_adjust', []),
-            'reason_target' => session('step4.reason_target', []),
+            'adjustment' => $adjustments,
+            'reason_adjust' => $reasonAdjust,
+            'reason_target' => $reasonTarget,
+            'selected' => $selected,
+            'agreed_level' => $agreed,
         ];
     }
 
@@ -447,6 +528,59 @@ class DesignToolkitSummaryController extends Controller
             fn($v) => is_numeric($v) ? (float) $v : 0,
             (array) $input
         ));
+    }
+
+    private function roundTo5(float $value): float
+    {
+        return round($value / 5) * 5;
+    }
+
+    private function normalizeScopeScores(array $totals): array
+    {
+        $scores = [];
+        $maxT = 1;
+        if (!empty($totals)) {
+            $maxT = max(array_map(fn($v) => abs((float) $v), $totals));
+            if ($maxT <= 0) {
+                $maxT = 1;
+            }
+        }
+
+        foreach ($totals as $code => $total) {
+            $t = (float) $total;
+            $pct = $maxT ? (int) (($t / $maxT) * 100) : 0;
+            $scores[$code] = $t >= 0
+                ? $this->roundTo5($pct)
+                : -$this->roundTo5(abs($pct));
+        }
+
+        return $scores;
+    }
+
+    private function suggestedLevel(float $concluded): int
+    {
+        if ($concluded >= 75) return 4;
+        if ($concluded >= 50) return 3;
+        if ($concluded >= 25) return 2;
+        return 1;
+    }
+
+    private function sanitizeLevel(array $agreedLevels, int $code, int $fallback): int
+    {
+        $raw = array_key_exists($code, $agreedLevels) ? $agreedLevels[$code] : null;
+        $val = is_numeric($raw) ? (int) $raw : $fallback;
+        if ($val < 1) return 1;
+        if ($val > 5) return 5;
+        return $val;
+    }
+
+    private function normalizeSelected(array $selected, int $code): bool
+    {
+        if (array_key_exists($code, $selected)) {
+            return (bool) $selected[$code];
+        }
+
+        return in_array($code, $selected, true);
     }
 
     private function getObjectiveLabels(): array

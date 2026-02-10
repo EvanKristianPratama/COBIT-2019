@@ -200,6 +200,10 @@ watch(authUser, (newVal) => {
                     <span class="ml-2 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-xs font-mono text-gray-500 dark:text-gray-400">
                         v{{ appVersion }}
                     </span>
+                    <span class="mx-2 text-gray-300 dark:text-gray-600">•</span>
+                    <a href="/contributors" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                        Contributors
+                    </a>
                 </p>
             </div>
         </div>

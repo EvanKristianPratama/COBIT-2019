@@ -81,7 +81,7 @@ const getTrendHeight = (score) => {
                                 Detail Capability
                             </Link>
                             <Link
-                                :href="route('reporting.roadmap')"
+                                :href="route('roadmap.index')"
                                 class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-lg shadow-emerald-500/25"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,7 +292,7 @@ const getTrendHeight = (score) => {
                         <div class="p-6 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Capability Roadmap</h3>
                             <Link 
-                                :href="route('reporting.roadmap')"
+                                :href="route('roadmap.index')"
                                 class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
                             >
                                 Lihat Semua →

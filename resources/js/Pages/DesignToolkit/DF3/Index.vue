@@ -114,6 +114,11 @@ const inputChartHeight = computed(() => {
     const rows = props.inputCount || inputChartLabels.value.length;
     return `${Math.max(260, rows * 26)}px`;
 });
+const barChartHeight = computed(() => {
+    const rows = props.objectiveLabels?.length || 40;
+    return `${Math.max(900, rows * 24)}px`;
+});
+
 </script>
 
 <template>
@@ -165,6 +170,17 @@ const inputChartHeight = computed(() => {
                     </div>
                 </section>
                 
+                <!-- Submit Button -->
+                <div class="flex justify-end gap-4 mb-8">
+                    <button 
+                        type="submit"
+                        :disabled="form.processing"
+                        class="px-4 py-2 rounded-md bg-[#1f4e79] text-white text-sm font-semibold hover:bg-[#163a59] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        {{ form.processing ? 'Saving...' : 'Save Assessment' }}
+                    </button>
+                </div>
+
                 <!-- Charts Section -->
                 <section class="mb-8">
                     <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
@@ -190,31 +206,16 @@ const inputChartHeight = computed(() => {
                     </div>
                     
                     <!-- Bar Chart (Full Width) -->
-                    <ChartCard title="Relative Importance (Bar Chart)" subtitle="Horizontal visualization of 40 objectives">
+                    <ChartCard title="Relative Importance (Bar Chart)" subtitle="Horizontal visualization of 40 objectives" :height="barChartHeight">
                         <BarChart
                             :labels="objectiveLabels"
                             :data="relativeImportance"
-                            height="800px"
+                            :height="barChartHeight"
                         />
                     </ChartCard>
                 </section>
                 
-                <!-- Submit Button -->
-                <div class="flex justify-end gap-4">
-                    <a 
-                        :href="routes.index"
-                        class="px-6 py-3 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                    >
-                        Cancel
-                    </a>
-                    <button 
-                        type="submit"
-                        :disabled="form.processing"
-                        class="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        {{ form.processing ? 'Saving...' : 'Save Assessment' }}
-                    </button>
-                </div>
+                
 
             </form>
         </div>

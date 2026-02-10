@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ReportingController extends Controller
@@ -207,46 +205,4 @@ class ReportingController extends Controller
         ]);
     }
 
-    /**
-     * Show roadmap detail view.
-     */
-    public function roadmap()
-    {
-        $roadmapItems = [
-            [
-                'quarter' => 'Q1 2026',
-                'items' => [
-                    ['domain' => 'EDM01', 'title' => 'Define Governance Principles', 'status' => 'completed', 'current' => 1, 'target' => 2],
-                    ['domain' => 'APO01', 'title' => 'Establish I&T Management Structure', 'status' => 'completed', 'current' => 2, 'target' => 3],
-                ],
-            ],
-            [
-                'quarter' => 'Q2 2026',
-                'items' => [
-                    ['domain' => 'APO12', 'title' => 'Enhance IT Risk Management', 'status' => 'in_progress', 'current' => 2, 'target' => 3],
-                    ['domain' => 'DSS05', 'title' => 'Implement Security Operations Center', 'status' => 'in_progress', 'current' => 3, 'target' => 4],
-                    ['domain' => 'BAI06', 'title' => 'Standardize Change Management', 'status' => 'planned', 'current' => 2, 'target' => 3],
-                ],
-            ],
-            [
-                'quarter' => 'Q3 2026',
-                'items' => [
-                    ['domain' => 'APO02', 'title' => 'Strategic IT Planning', 'status' => 'planned', 'current' => 2, 'target' => 4],
-                    ['domain' => 'BAI03', 'title' => 'Solution Development Framework', 'status' => 'planned', 'current' => 3, 'target' => 4],
-                ],
-            ],
-            [
-                'quarter' => 'Q4 2026',
-                'items' => [
-                    ['domain' => 'EDM01', 'title' => 'Governance Framework Maturity', 'status' => 'planned', 'current' => 2, 'target' => 3],
-                    ['domain' => 'MEA01', 'title' => 'Performance Monitoring System', 'status' => 'planned', 'current' => 2, 'target' => 4],
-                    ['domain' => 'DSS04', 'title' => 'Business Continuity Enhancement', 'status' => 'planned', 'current' => 2, 'target' => 4],
-                ],
-            ],
-        ];
-
-        return Inertia::render('Reporting/Roadmap', [
-            'roadmapItems' => $roadmapItems,
-        ]);
-    }
 }

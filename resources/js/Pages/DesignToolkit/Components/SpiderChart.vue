@@ -16,12 +16,37 @@ const props = defineProps({
     /** Array of data values (relative importance -100 to +100) */
     data: {
         type: Array,
-        required: true,
+        default: () => [],
+    },
+    /** Optional multiple datasets (overrides data) */
+    datasets: {
+        type: Array,
+        default: null,
     },
     /** Chart height */
     height: {
         type: String,
         default: '400px',
+    },
+    /** Min value for radial scale */
+    min: {
+        type: Number,
+        default: -100,
+    },
+    /** Max value for radial scale */
+    max: {
+        type: Number,
+        default: 100,
+    },
+    /** Step size for ticks */
+    stepSize: {
+        type: Number,
+        default: 25,
+    },
+    /** Dataset label */
+    datasetLabel: {
+        type: String,
+        default: 'Relative Importance',
     },
     /** Whether to reverse the labels (for visual consistency) */
     reverseLabels: {
@@ -47,38 +72,82 @@ const getPointColors = (data) => {
     );
 };
 
+const toRgba = (color, alpha = 0.2) => {
+    if (!color) return `rgba(54, 162, 235, ${alpha})`;
+    if (color.startsWith('rgba')) return color.replace(/rgba\(([^)]+)\)/, (match, inner) => {
+        const parts = inner.split(',').map(v => v.trim());
+        if (parts.length === 4) {
+            return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+        }
+        return `rgba(${inner}, ${alpha})`;
+    });
+    if (color.startsWith('rgb')) return color.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+    if (color.startsWith('#')) {
+        const hex = color.replace('#', '');
+        const bigint = parseInt(hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex, 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    return `rgba(54, 162, 235, ${alpha})`;
+};
+
 const createChart = () => {
     if (!canvasRef.value || typeof Chart === 'undefined') return;
     
-    const displayData = props.reverseLabels ? [...props.data].reverse() : props.data;
-    const displayLabels = props.reverseLabels ? [...props.labels].reverse() : props.labels;
+    const safeLabels = Array.isArray(props.labels) ? props.labels : [];
+    const safeData = Array.isArray(props.data) ? props.data : [];
+
+    const displayLabels = props.reverseLabels ? [...safeLabels].reverse() : safeLabels;
+    const displayData = props.reverseLabels ? [...safeData].reverse() : safeData;
+
+    const hasDatasets = Array.isArray(props.datasets) && props.datasets.length > 0;
+    const datasets = hasDatasets
+        ? props.datasets.map((ds) => {
+            const color = ds.color || '#2563eb';
+            const dsData = props.reverseLabels ? [...(ds.data || [])].reverse() : (ds.data || []);
+            return {
+                label: ds.label || props.datasetLabel,
+                data: dsData,
+                backgroundColor: toRgba(color, 0.12),
+                borderColor: color,
+                borderWidth: 2,
+                pointBackgroundColor: color,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: color,
+                tension: 0.4,
+            };
+        })
+        : [{
+            label: props.datasetLabel,
+            data: displayData,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: getBorderColors(displayData),
+            borderWidth: 2,
+            pointBackgroundColor: getPointColors(displayData),
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: getPointColors(displayData),
+            tension: 0.4,
+        }];
     
     chartInstance = new Chart(canvasRef.value, {
         type: 'radar',
         data: {
             labels: displayLabels,
-            datasets: [{
-                label: 'Relative Importance',
-                data: displayData,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: getBorderColors(displayData),
-                borderWidth: 2,
-                pointBackgroundColor: getPointColors(displayData),
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: getPointColors(displayData),
-                tension: 0.4,
-            }],
+            datasets,
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
                 r: {
-                    suggestedMin: -100,
-                    suggestedMax: 100,
+                    suggestedMin: props.min,
+                    suggestedMax: props.max,
                     ticks: { 
-                        stepSize: 25,
+                        stepSize: props.stepSize,
                         font: { size: 10 },
                     },
                     pointLabels: { 
@@ -99,7 +168,7 @@ const createChart = () => {
                         label: (ctx) => {
                             const value = ctx.raw;
                             const prefix = value >= 0 ? '+' : '';
-                            return `Relative Importance: ${prefix}${value}`;
+                            return `${props.datasetLabel}: ${prefix}${value}`;
                         },
                     },
                 },
@@ -111,12 +180,37 @@ const createChart = () => {
 const updateChart = () => {
     if (!chartInstance) return;
     
-    const displayData = props.reverseLabels ? [...props.data].reverse() : props.data;
-    
-    chartInstance.data.datasets[0].data = displayData;
-    chartInstance.data.datasets[0].borderColor = getBorderColors(displayData);
-    chartInstance.data.datasets[0].pointBackgroundColor = getPointColors(displayData);
-    chartInstance.data.datasets[0].pointHoverBorderColor = getPointColors(displayData);
+    const safeLabels = Array.isArray(props.labels) ? props.labels : [];
+    const safeData = Array.isArray(props.data) ? props.data : [];
+    const displayLabels = props.reverseLabels ? [...safeLabels].reverse() : safeLabels;
+    const displayData = props.reverseLabels ? [...safeData].reverse() : safeData;
+
+    const hasDatasets = Array.isArray(props.datasets) && props.datasets.length > 0;
+    if (hasDatasets) {
+        chartInstance.data.labels = displayLabels;
+        chartInstance.data.datasets = props.datasets.map((ds) => {
+            const color = ds.color || '#2563eb';
+            const dsData = props.reverseLabels ? [...(ds.data || [])].reverse() : (ds.data || []);
+            return {
+                label: ds.label || props.datasetLabel,
+                data: dsData,
+                backgroundColor: toRgba(color, 0.12),
+                borderColor: color,
+                borderWidth: 2,
+                pointBackgroundColor: color,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: color,
+                tension: 0.4,
+            };
+        });
+    } else {
+        chartInstance.data.labels = displayLabels;
+        chartInstance.data.datasets[0].data = displayData;
+        chartInstance.data.datasets[0].borderColor = getBorderColors(displayData);
+        chartInstance.data.datasets[0].pointBackgroundColor = getPointColors(displayData);
+        chartInstance.data.datasets[0].pointHoverBorderColor = getPointColors(displayData);
+    }
     chartInstance.update();
 };
 
@@ -130,7 +224,7 @@ onMounted(() => {
     }
 });
 
-watch(() => props.data, updateChart, { deep: true });
+watch(() => [props.data, props.labels, props.datasets], updateChart, { deep: true });
 
 onUnmounted(() => {
     if (chartInstance) {

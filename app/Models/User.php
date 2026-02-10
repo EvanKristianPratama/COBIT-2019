@@ -11,7 +11,11 @@ class User extends Authenticatable
     use Notifiable; //, HasRoles;
 
     protected $fillable = [
-        'id', 'sso_user_id', 'name', 'email', 'password', 'organisasi', 'jabatan', 'role',
+        'id', 'sso_user_id', 'name', 'email', 'password', 'organisasi', 'jabatan', 'role', 'isActivated', 'approval_status',
+    ];
+
+    protected $casts = [
+        'isActivated' => 'boolean',
     ];
 
     protected $hidden = [

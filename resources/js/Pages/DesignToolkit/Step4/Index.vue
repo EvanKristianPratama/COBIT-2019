@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHeader from '@/Components/PageHeader.vue';
@@ -29,6 +29,8 @@ const props = defineProps({
     adjustments: Object,
     reasonAdjust: Object,
     reasonTarget: Object,
+    agreedLevels: Object,
+    selectedObjectives: Object,
     objectiveLabels: Array,
     routes: Object,
 });
@@ -50,6 +52,15 @@ const toStringArray = (source) => {
         const key = i + 1;
         const raw = (source && (source[key] ?? source[i])) ?? '';
         return raw ?? '';
+    });
+};
+
+const toBooleanArray = (source, fallback = false) => {
+    return props.objectiveLabels.map((_, i) => {
+        const key = i + 1;
+        const raw = source && (source[key] ?? source[i]);
+        if (raw === undefined || raw === null) return fallback;
+        return Boolean(Number(raw));
     });
 };
 
@@ -94,7 +105,41 @@ const suggestedLevels = computed(() => {
     });
 });
 
-const agreedLevels = computed(() => [...suggestedLevels.value]);
+const agreedLevels = ref([]);
+const agreedTouched = ref([]);
+const selected = ref(toBooleanArray(props.selectedObjectives, false));
+
+const clampLevel = (val, fallback) => {
+    const num = parseInt(val, 10);
+    if (!Number.isFinite(num)) return fallback;
+    if (num < 1) return 1;
+    if (num > 5) return 5;
+    return num;
+};
+
+const setAgreedLevel = (idx, value) => {
+    agreedLevels.value[idx] = clampLevel(value, suggestedLevels.value[idx] ?? 1);
+    agreedTouched.value[idx] = true;
+};
+
+watch(
+    suggestedLevels,
+    (next) => {
+        if (!agreedLevels.value.length) {
+            const fromProps = toNumberArray(props.agreedLevels, null);
+            agreedLevels.value = next.map((val, i) => clampLevel(fromProps[i], val));
+            agreedTouched.value = next.map((_, i) => Number.isFinite(parseInt(fromProps[i], 10)));
+            return;
+        }
+
+        next.forEach((val, i) => {
+            if (!agreedTouched.value[i]) {
+                agreedLevels.value[i] = val;
+            }
+        });
+    },
+    { immediate: true }
+);
 
 const maxCapabilityLevels = [
     4, 5, 4, 4, 4,
@@ -188,17 +233,23 @@ const form = useForm({
     adjustment: {},
     reason_adjust: {},
     reason_target: {},
+    selected: {},
+    agreed_level: {},
 });
 
 const save = () => {
     const adjustmentMap = {};
     const reasonAdjustMap = {};
     const reasonTargetMap = {};
+    const selectedMap = {};
+    const agreedMap = {};
     props.objectiveLabels.forEach((_, i) => {
         const key = i + 1;
         adjustmentMap[key] = adjustments.value[i] ?? 0;
         reasonAdjustMap[key] = reasonsAdjust.value[i] ?? '';
         reasonTargetMap[key] = reasonsTarget.value[i] ?? '';
+        selectedMap[key] = selected.value[i] ? 1 : 0;
+        agreedMap[key] = agreedLevels.value[i] ?? suggestedLevels.value[i] ?? 1;
     });
 
     form.weights2 = weightsStep2.value;
@@ -206,6 +257,8 @@ const save = () => {
     form.adjustment = adjustmentMap;
     form.reason_adjust = reasonAdjustMap;
     form.reason_target = reasonTargetMap;
+    form.selected = selectedMap;
+    form.agreed_level = agreedMap;
     form.post(props.routes.store, {
         preserveScroll: true,
     });
@@ -459,6 +512,7 @@ const save = () => {
                     <table class="w-full text-[11px] text-left compact-table">
                         <thead class="text-[10px] uppercase tracking-wider">
                             <tr class="bg-slate-900 text-white">
+                                <th class="px-3 py-2 border-b border-slate-700 w-12 text-center">Save</th>
                                 <th class="px-4 py-2 border-b border-slate-700 w-20">GAMO</th>
                                 <th class="px-3 py-2 border-b border-slate-700 text-center w-24">Adjustment</th>
                                 <th class="px-3 py-2 border-b border-slate-700 w-56">Reason (Adjustment)</th>
@@ -470,6 +524,13 @@ const save = () => {
                         </thead>
                         <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                             <tr v-for="idx in sortedStep4Indices" :key="idx" class="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
+                                <td class="px-3 py-2 text-center">
+                                    <input
+                                        type="checkbox"
+                                        v-model="selected[idx]"
+                                        class="h-3 w-3 rounded border-slate-300 text-slate-700 focus:ring-2 focus:ring-slate-400 dark:border-slate-600 dark:bg-slate-900 dark:checked:bg-slate-200 dark:checked:border-slate-200"
+                                    />
+                                </td>
                                 <td class="px-4 py-2 font-semibold text-slate-900 dark:text-slate-100 uppercase">
                                     {{ objectiveLabels[idx] }}
                                 </td>
@@ -516,16 +577,14 @@ const save = () => {
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-2">
-                                    <div class="relative h-4 w-16 bg-slate-100 dark:bg-slate-700 rounded overflow-hidden mx-auto border border-slate-200 dark:border-slate-600">
-                                        <div 
-                                            class="absolute top-0.5 bottom-0.5 left-0 rounded-sm transition-all"
-                                            :style="getLevelStyles(agreedLevels[idx], '#7c3aed')"
-                                        ></div>
-                                        <div class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-900 dark:text-slate-100">
-                                            {{ agreedLevels[idx] }}
-                                        </div>
-                                    </div>
+                                <td class="px-4 py-2 text-center">
+                                    <select
+                                        :value="agreedLevels[idx]"
+                                        @change="setAgreedLevel(idx, $event.target.value)"
+                                        class="w-16 px-1.5 py-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-[10px] font-semibold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+                                    >
+                                        <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+                                    </select>
                                 </td>
                                 <td class="px-3 py-2">
                                     <input

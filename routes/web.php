@@ -14,6 +14,7 @@ use App\Http\Controllers\AssessmentEval\EvidenceController;
 use App\Http\Controllers\AssessmentEval\TargetMaturityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ContributorsController;
 use App\Http\Controllers\cobit2019\Df10Controller;
 use App\Http\Controllers\cobit2019\Df2Controller;
 use App\Http\Controllers\cobit2019\Df3Controller;
@@ -145,12 +146,21 @@ Route::get('login/google', [LoginController::class, 'redirectToGoogle']);
 Route::get('login/google/callback', [LoginController::class, 'handleGoogleCallback']);
 Route::post('login/callback', [LoginController::class, 'handleFirebaseCallback'])->name('login.callback');
 Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
+Route::get('/contributors', [ContributorsController::class, 'index'])->name('contributors.index')->middleware('auth');
 
 // Reporting Routes
 Route::middleware(['auth', 'ensure.approved'])->prefix('reporting')->name('reporting.')->group(function () {
     Route::get('/', [ReportingController::class, 'index'])->name('index');
     Route::get('/capability', [ReportingController::class, 'capability'])->name('capability');
-    Route::get('/roadmap', [ReportingController::class, 'roadmap'])->name('roadmap');
+});
+
+// Roadmap Module (Standalone)
+Route::middleware(['auth', 'ensure.approved'])->prefix('roadmap')->name('roadmap.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\RoadmapController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\RoadmapController::class, 'store'])->name('store');
+    Route::post('/delete-year', [\App\Http\Controllers\RoadmapController::class, 'deleteYear'])->name('delete-year');
+    Route::get('/step4-scope', [\App\Http\Controllers\RoadmapController::class, 'step4Scope'])->name('step4-scope');
+    Route::get('/scopes', [\App\Http\Controllers\RoadmapController::class, 'scopes'])->name('scopes');
 });
 
 // SSO Divusi callback route
@@ -176,6 +186,8 @@ Route::prefix('design-toolkit')
             ->name('index');
         Route::post('/join', [VueDesignToolkitController::class, 'join'])
             ->name('join');
+        Route::delete('/assessment/{assessment}', [VueDesignToolkitController::class, 'destroy'])
+            ->name('destroy');
         Route::get('/df{number}', [VueDesignToolkitController::class, 'show'])
             ->name('show')
             ->where('number', '[1-9]|10');
@@ -488,4 +500,3 @@ Route::get('/test-api-token', function () {
            'Run this command in terminal:<br>' .
            '<code>curl -H "Authorization: Bearer ' . $token . '" -H "Accept: application/json" http://localhost:8000/api/v1/assessments/1</code>';
 })->middleware('web');
-
