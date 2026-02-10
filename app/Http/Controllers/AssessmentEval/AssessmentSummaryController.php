@@ -102,7 +102,7 @@ class AssessmentSummaryController extends Controller
             $currentLevel = $objectiveScores[$obj->objective_id] ?? 0;
             $obj->current_score = $currentLevel;
             $obj->max_level = $maxLevels[$obj->objective_id] ?? 0;
-            $obj->saved_note = $savedNotes[$obj->objective_id] ?? ['kesimpulan' => '', 'rekomendasi' => ''];
+            $obj->saved_note = $savedNotes[$obj->objective_id] ?? ['kesimpulan' => '', 'rekomendasi' => '', 'roadmap_rekomendasi' => null];
 
             // Calculate Rating String (e.g., 4F)
             $obj->rating_string = $this->calculateRatingString($obj, $currentLevel, $ratingMap, $evalId);
@@ -343,6 +343,8 @@ class AssessmentSummaryController extends Controller
     public function summaryPdf($evalId, $objectiveId = null)
     {
         $data = $this->getSummary($evalId, $objectiveId);
+        $roadmap = $this->getRoadmapTargetCapability($objectiveId);
+        $data = array_merge($data, compact('roadmap'));
 
         $pdf = PDF::loadView('assessment-eval.report-summary-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
@@ -355,6 +357,8 @@ class AssessmentSummaryController extends Controller
     public function summaryDetailPdf($evalId, $objectiveId = null)
     {
         $data = $this->getSummary($evalId, $objectiveId);
+        $roadmap = $this->getRoadmapTargetCapability($objectiveId);
+        $data = array_merge($data, compact('roadmap'));
 
         $pdf = PDF::loadView('assessment-eval.report-summary-detail-pdf', $data);
         $pdf->setPaper('a4', 'landscape');

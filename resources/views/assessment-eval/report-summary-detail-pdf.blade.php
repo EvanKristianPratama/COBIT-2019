@@ -304,6 +304,68 @@
                 </div>
             </div>
 
+            {{-- Roadmap Target Capability Section --}}
+            <div style="margin-top: 5px; border: 1px solid #dee2e6;">
+                <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
+                    Roadmap Target Capability
+                </div>
+                <div style="padding: 5px; background-color: white;">
+                    @if (isset($roadmap) && isset($roadmap['objectives']) && $roadmap['objectives']->isNotEmpty())
+                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2"
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                        Objective ID</th>
+                                    <th rowspan="2"
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                        Objective Name</th>
+                                    @foreach ($roadmap['years'] as $year)
+                                        <th colspan="2"
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                            {{ $year }}
+                                        </th>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    @foreach ($roadmap['years'] as $year)
+                                        <th
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 40px;">
+                                            Level</th>
+                                        <th
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 40px;">
+                                            Rating</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($roadmap['objectives'] as $obj)
+                                    <tr>
+                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: center; font-weight: bold;">
+                                            {{ str_replace('"', '', $obj->objective_id) }}</td>
+                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: left;">
+                                            {{ str_replace('"', '', $obj->objective) }}
+                                        </td>
+                                        @foreach ($roadmap['years'] as $year)
+                                            <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
+                                                {{ data_get($obj->roadmap_values, "$year.level") ?? '-' }}
+                                            </td>
+                                            <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
+                                                {{ data_get($obj->roadmap_values, "$year.rating") ?? '-' }}
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p style="margin: 0; font-size: 10pt; color: #6c757d; font-style: italic; text-align: center;">
+                            Belum ada data roadmap
+                        </p>
+                    @endif
+                </div>
+            </div>
+
         </div>
 
         @if (!$loop->last)
