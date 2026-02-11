@@ -38,7 +38,21 @@ class TrsSummaryActivity extends Model
      */
     public function getEvidenceNameAttribute()
     {
-        return $this->evidence?->judul_dokumen ?? $this->miss_evidence;
+        // If we have evidence from mst_evidence, use judul_dokumen as is
+        if ($this->evidence && $this->evidence->judul_dokumen) {
+            return $this->evidence->judul_dokumen;
+        }
+        
+        // If using miss_evidence (manually entered), format it nicely
+        if ($this->miss_evidence) {
+            // Replace underscores with spaces
+            $formatted = str_replace('_', ' ', $this->miss_evidence);
+            // Convert to title case for better readability
+            $formatted = ucwords(strtolower($formatted));
+            return $formatted;
+        }
+        
+        return null;
     }
 
     /**
