@@ -121,6 +121,9 @@ class AssessmentSummaryController extends Controller
                 // Initialize practice-level evidence lists
                 $practicePolicyList = [];
                 $practiceExecutionList = [];
+                
+                // Check if this practice has any activities
+                $practice->hasAnyActivity = $practice->activities->isNotEmpty();
 
                 foreach ($practice->activities as $activity) {
                     // Initialize activity-level evidence lists

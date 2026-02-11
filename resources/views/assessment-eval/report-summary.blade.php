@@ -304,14 +304,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
-                                        $hasAnyActivity = false;
-                                    @endphp
                                     @foreach ($objective->practices as $practice)
                                         @foreach ($practice->activities as $activity)
-                                            @php
-                                                $hasAnyActivity = true;
-                                            @endphp
                                             <tr>
                                                 <td class="align-middle text-center">
                                                     <div class="fw-bold small">
@@ -351,7 +345,7 @@
                                             </tr>
                                         @endforeach
                                     @endforeach
-                                    @if (!$hasAnyActivity)
+                                    @if (!$objective->practices->contains('hasAnyActivity', true))
                                         <tr>
                                             <td colspan="4" class="text-center fst-italic text-muted small">Belum ada
                                                 aktivitas</td>
@@ -444,17 +438,10 @@
                                                     </td>
                                                     {{-- Current Year Assessment Results from Scorecard --}}
                                                     <td class="small">
-                                                        @php
-                                                            // Find matching objective from $objectives to get scorecard data
-                                                            $scorecardObj = $objectives->firstWhere(
-                                                                'objective_id',
-                                                                $obj->objective_id,
-                                                            );
-                                                        @endphp
-                                                        {{ $scorecardObj->current_score ?? '-' }}
+                                                        {{ $objective->current_score ?? '-' }}
                                                     </td>
                                                     <td class="small">
-                                                        {{ $scorecardObj->rating_string ?? '-' }}
+                                                        {{ $objective->rating_string ?? '-' }}
                                                     </td>
                                                     @foreach ($roadmap['years'] as $year)
                                                         <td class="small">
