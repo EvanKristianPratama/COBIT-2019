@@ -282,11 +282,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // View Toggle for Evidence (GAMO vs Practice)
+    // View Toggle for Evidence (GAMO vs Practice vs Activity)
     const viewToggleButtons = document.querySelectorAll('.btn-group button[data-view]');
     viewToggleButtons.forEach(button => {
         button.addEventListener('click', function () {
-            const view = this.dataset.view; // 'gamo' or 'practice'
+            const view = this.dataset.view; // 'gamo', 'practice', or 'activity'
             const targetIndex = this.dataset.target;
 
             // Find sibling buttons in the same group and update active state
@@ -297,9 +297,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (btn.dataset.view === 'gamo') {
                     btn.classList.remove('btn-primary');
                     btn.classList.add('btn-outline-primary');
-                } else {
+                } else if (btn.dataset.view === 'practice') {
                     btn.classList.remove('btn-secondary');
                     btn.classList.add('btn-outline-secondary');
+                } else if (btn.dataset.view === 'activity') {
+                    btn.classList.remove('btn-info');
+                    btn.classList.add('btn-outline-info');
                 }
             });
 
@@ -308,21 +311,31 @@ document.addEventListener('DOMContentLoaded', function () {
             if (view === 'gamo') {
                 this.classList.remove('btn-outline-primary');
                 this.classList.add('btn-primary');
-            } else {
+            } else if (view === 'practice') {
                 this.classList.remove('btn-outline-secondary');
                 this.classList.add('btn-secondary');
+            } else if (view === 'activity') {
+                this.classList.remove('btn-outline-info');
+                this.classList.add('btn-info');
             }
 
             // Toggle view sections
             const gamoView = document.getElementById('view-gamo-' + targetIndex);
             const practiceView = document.getElementById('view-practice-' + targetIndex);
+            const activityView = document.getElementById('view-activity-' + targetIndex);
 
             if (view === 'gamo') {
                 if (gamoView) gamoView.style.display = 'block';
                 if (practiceView) practiceView.style.display = 'none';
-            } else {
+                if (activityView) activityView.style.display = 'none';
+            } else if (view === 'practice') {
                 if (gamoView) gamoView.style.display = 'none';
                 if (practiceView) practiceView.style.display = 'block';
+                if (activityView) activityView.style.display = 'none';
+            } else if (view === 'activity') {
+                if (gamoView) gamoView.style.display = 'none';
+                if (practiceView) practiceView.style.display = 'none';
+                if (activityView) activityView.style.display = 'block';
             }
         });
     });

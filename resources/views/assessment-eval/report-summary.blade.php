@@ -167,6 +167,10 @@
                             data-target="{{ $loop->index }}">
                             <i class="fas fa-list me-2"></i>View by Practice
                         </button>
+                        <button type="button" class="btn btn-outline-info px-4 py-2" data-view="activity"
+                            data-target="{{ $loop->index }}">
+                            <i class="fas fa-tasks me-2"></i>View by Activities
+                        </button>
                     </div>
 
                     {{-- View Content Sections --}}
@@ -282,6 +286,80 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        {{-- View 3: Per Activity (Most Detailed) --}}
+                        <div class="view-section-activity" id="view-activity-{{ $loop->index }}"
+                            style="display: none;">
+                            <table class="table table-bordered align-middle mb-0"
+                                style="border-color: #000; border-width: 2px;">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th class="text-white" style="width: 8%; background-color: #0f2b5c;">Practice</th>
+                                        <th class="text-white" style="width: 20%; background-color: #0f2b5c;">Activity
+                                            Description</th>
+                                        <th class="text-white" style="width: 36%; background-color: #0f2b5c;">Kebijakan
+                                            Pedoman / Prosedur</th>
+                                        <th class="text-white" style="width: 36%; background-color: #0f2b5c;">Evidences /
+                                            Bukti Pelaksanaan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $hasAnyActivity = false;
+                                    @endphp
+                                    @foreach ($objective->practices as $practice)
+                                        @foreach ($practice->activities as $activity)
+                                            @php
+                                                $hasAnyActivity = true;
+                                            @endphp
+                                            <tr>
+                                                <td class="align-middle text-center">
+                                                    <div class="fw-bold small">
+                                                        {{ str_replace('"', '', $practice->practice_id) }}</div>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <div class="small">
+                                                        {{ str_replace('"', '', $activity->description ?? 'No description') }}
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="{{ isset($activity->policy_list) && count($activity->policy_list) > 0 ? 'align-top' : 'align-middle' }}">
+                                                    @if (isset($activity->policy_list) && count($activity->policy_list) > 0)
+                                                        <div class="small text-break">
+                                                            @foreach ($activity->policy_list as $line)
+                                                                <div class="mb-1">• {{ $line }}</div>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <div class="text-muted small fst-italic text-center">Belum ada
+                                                            Kebijakan / Prosedur</div>
+                                                    @endif
+                                                </td>
+                                                <td
+                                                    class="{{ isset($activity->execution_list) && count($activity->execution_list) > 0 ? 'align-top' : 'align-middle' }}">
+                                                    @if (isset($activity->execution_list) && count($activity->execution_list) > 0)
+                                                        <div class="small text-break">
+                                                            @foreach ($activity->execution_list as $line)
+                                                                <div class="mb-1">• {{ $line }}</div>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <div class="text-muted small fst-italic text-center">Belum ada
+                                                            Evidences / Bukti Pelaksanaan</div>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                    @if (!$hasAnyActivity)
+                                        <tr>
+                                            <td colspan="4" class="text-center fst-italic text-muted small">Belum ada
+                                                aktivitas</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -308,17 +386,6 @@
                             <textarea name="rekomendasi" class="form-control border-0" rows="3"
                                 placeholder="Masukkan rekomendasi untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '' }}</textarea>
                         </div>
-
-                        {{-- Roadmap Rekomendasi --}}
-                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
-                            <div class="fw-bold small">Roadmap Rekomendasi</div>
-                        </div>
-                        <div id="roadmap-rekomendasi-container-{{ $objective->objective_id }}"
-                            style="overflow: auto; max-height: 350px; border: 1px solid #ddd; border-radius: 4px;"></div>
-                        <input type="hidden" name="roadmap_rekomendasi"
-                            id="roadmap-rekomendasi-data-{{ $objective->objective_id }}"
-                            value="{{ is_array($objective->saved_note) && isset($objective->saved_note['roadmap_rekomendasi']) ? json_encode($objective->saved_note['roadmap_rekomendasi']) : '' }}">
-
 
                         {{-- Roadmap Target Capability --}}
                         <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
@@ -406,6 +473,17 @@
                                 <div class="text-center text-muted fst-italic">Belum ada data roadmap</div>
                             @endif
                         </div>
+
+                        {{-- Lembar Kerja --}}
+                        <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
+                            <div class="fw-bold small">Lembar Kerja</div>
+                        </div>
+                        <div id="roadmap-rekomendasi-container-{{ $objective->objective_id }}"
+                            style="overflow: auto; max-height: 350px; border: 1px solid #ddd; border-radius: 4px;"></div>
+                        <input type="hidden" name="roadmap_rekomendasi"
+                            id="roadmap-rekomendasi-data-{{ $objective->objective_id }}"
+                            value="{{ is_array($objective->saved_note) && isset($objective->saved_note['roadmap_rekomendasi']) ? json_encode($objective->saved_note['roadmap_rekomendasi']) : '' }}">
+
                     </form>
                 </div>
             </div>

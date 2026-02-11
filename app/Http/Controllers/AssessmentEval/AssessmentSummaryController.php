@@ -123,6 +123,10 @@ class AssessmentSummaryController extends Controller
                 $practiceExecutionList = [];
 
                 foreach ($practice->activities as $activity) {
+                    // Initialize activity-level evidence lists
+                    $activityPolicyList = [];
+                    $activityExecutionList = [];
+
                     // Ambil item pertama dari relasi hasMany (karena 1 activity hanya punya 1 nilai per eval_id ini)
                     $evalData = $activity->evaluations->first();
 
@@ -140,6 +144,13 @@ class AssessmentSummaryController extends Controller
 
                             // Get evidence type (from relation or 'Execution' default)
                             $tipe = $mappedItem->evidence_type;
+
+                            // Add to activity-level lists (for activity view)
+                            if ($tipe && (stripos($tipe, 'Design') !== false || stripos($tipe, 'Procedure') !== false)) {
+                                $activityPolicyList[] = $evidenceName;
+                            } else {
+                                $activityExecutionList[] = $evidenceName;
+                            }
 
                             // Add to practice-level lists (allow duplicates at practice level)
                             if ($tipe && (stripos($tipe, 'Design') !== false || stripos($tipe, 'Procedure') !== false)) {
@@ -163,6 +174,11 @@ class AssessmentSummaryController extends Controller
                             }
                         }
                     }
+
+                    // Inject activity-level evidence
+                    $activity->policy_list = $activityPolicyList;
+                    $activity->execution_list = $activityExecutionList;
+                    $activity->has_evidence = ! empty($activityPolicyList) || ! empty($activityExecutionList);
 
                     // Hapus relasi asli agar JSON bersih
                     $activity->unsetRelation('evaluations');
