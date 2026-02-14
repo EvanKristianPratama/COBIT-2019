@@ -1,7 +1,18 @@
 <?php
 
 $baseAppVersion = env('APP_VERSION', '1.5.2');
-$gitShortHash = trim((string) @shell_exec('git rev-parse --short HEAD 2>/dev/null'));
+$gitShortHash = '';
+
+if (function_exists('shell_exec')) {
+    $gitOutput = @shell_exec('git rev-parse --short HEAD 2>/dev/null');
+    if (is_string($gitOutput)) {
+        $gitHash = trim($gitOutput);
+        if (preg_match('/^[0-9a-f]{7,40}$/i', $gitHash) === 1) {
+            $gitShortHash = $gitHash;
+        }
+    }
+}
+
 $resolvedAppVersion = $gitShortHash !== '' ? ($baseAppVersion . '+' . $gitShortHash) : $baseAppVersion;
 
 return [
