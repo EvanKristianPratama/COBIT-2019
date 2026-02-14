@@ -1,5 +1,9 @@
 <?php
 
+$baseAppVersion = env('APP_VERSION', '1.5.2');
+$gitShortHash = trim((string) @shell_exec('git rev-parse --short HEAD 2>/dev/null'));
+$resolvedAppVersion = $gitShortHash !== '' ? ($baseAppVersion . '+' . $gitShortHash) : $baseAppVersion;
+
 return [
 
     /*
@@ -14,6 +18,19 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | APP_VERSION sets the base version (example: 1.5.2).
+    | Current git short hash is appended automatically so version changes
+    | on each new commit/push (example: 1.5.2+abc1234).
+    |
+    */
+
+    'version' => $resolvedAppVersion,
 
     /*
     |--------------------------------------------------------------------------

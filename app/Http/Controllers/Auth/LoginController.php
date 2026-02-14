@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Laravel\Socialite\Facades\Socialite;
-use App\Models\User;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
 
 class LoginController extends Controller
 {
@@ -20,29 +20,24 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
-    /**
-     * After login: check role and redirect accordingly
-     */
+    public function showLoginForm()
+    {
+        return view('auth.login', [
+            'error' => session('error'),
+        ]);
+    }
+
     protected function authenticated(Request $request, $user)
     {
-        if (!$user->isActivated) {
-            Auth::logout();
-
-            return redirect()->route('login')
-                ->withErrors(['email' => 'Akun Anda telah dinonaktifkan. Silakan hubungi admin.']);
-        }
-
-        if ($user->role === 'admin' || $user->role === 'pic') {
-            return redirect()->route('home');
-        }
-
         return redirect()->route('home');
     }
 
     public function logout(Request $request)
     {
         Auth::logout();
-        $request->session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()->route('login');
     }
 
@@ -66,16 +61,11 @@ class LoginController extends Controller
             return view('auth.register-google', [
                 'name' => $googleUser->getName(),
                 'email' => $googleUser->getEmail(),
-                'password' => bcrypt(str()->random(24)), // Random because not used
+                'password' => bcrypt(str()->random(24)),
             ]);
         }
 
-        if (!$user->isActivated) {
-            return redirect()->route('login')
-                ->withErrors(['email' => 'Akun Anda telah dinonaktifkan. Silakan hubungi admin.']);
-        }
-
         Auth::login($user);
-        return redirect('/home');
+        return redirect()->route('home');
     }
 }

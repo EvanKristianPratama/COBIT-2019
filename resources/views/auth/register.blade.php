@@ -1,397 +1,326 @@
-@extends('layouts.app')
+@php
+    $errorMessage = $errors->any() ? $errors->first() : null;
+@endphp
+<!doctype html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
-@section('content')
-    <style>
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 1rem;
-        }
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Daftar Akun</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-        .auth-card {
-            border: none;
-            border-radius: 28px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(18px);
-        }
+<body class="bg-white">
+    <div class="min-h-screen flex">
+        <div class="flex-1 flex items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-md">
+                <div class="mb-10 flex flex-col items-center text-center">
+                    <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo" class="h-16 w-auto object-contain mb-4" />
+                    <p class="text-gray-400 font-medium tracking-widest text-xs uppercase">COBIT 2019 Assessment System</p>
+                </div>
 
-        .hero-panel {
-            position: relative;
-            color: #fff;
-            padding: 3rem;
-            background: linear-gradient(160deg, #0f2b5c, #0f6ad9 60%, #61dafb);
-            overflow: hidden;
-        }
+                <div class="mb-8 text-center">
+                    <h1 class="text-2xl font-bold text-gray-900">Buat Akun</h1>
+                    <p class="text-gray-500 mt-2">Lengkapi data berikut untuk mengakses COBIT 2019 tools.</p>
+                </div>
 
-        .hero-panel::before,
-        .hero-panel::after {
-            content: '';
-            position: absolute;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.15);
-        }
+                @if ($errorMessage)
+                    <div class="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
+                        <p class="text-sm text-red-600 flex items-center">
+                            <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ $errorMessage }}
+                        </p>
+                    </div>
+                @endif
 
-        .hero-panel::before {
-            width: 220px;
-            height: 220px;
-            top: -60px;
-            right: -80px;
-        }
+                <form id="registerForm" method="POST" action="{{ route('register') }}" class="space-y-4 mb-8">
+                    @csrf
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                        <input
+                            id="name"
+                            name="name"
+                            type="text"
+                            value="{{ old('name') }}"
+                            required
+                            autocomplete="name"
+                            autofocus
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            placeholder="Nama lengkap"
+                        />
+                        @error('name')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-        .hero-panel::after {
-            width: 180px;
-            height: 180px;
-            bottom: -70px;
-            left: -50px;
-        }
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value="{{ old('email') }}"
+                            required
+                            autocomplete="email"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            placeholder="admin@example.com"
+                        />
+                        @error('email')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            placeholder="Minimal 8 karakter"
+                        />
+                        @error('password')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-        .hero-content .badge {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            padding: 0.35rem 0.9rem;
-        }
+                    <div>
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
+                        <input
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            placeholder="Ulangi password"
+                        />
+                    </div>
 
-        .hero-content h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-top: 1rem;
-        }
+                    <div>
+                        <label for="organisasi" class="block text-sm font-medium text-gray-700 mb-1">Organisasi</label>
+                        <input
+                            id="organisasi"
+                            name="organisasi"
+                            type="text"
+                            value="{{ old('organisasi') }}"
+                            required
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            placeholder="Nama organisasi"
+                        />
+                        @error('organisasi')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-        .hero-content p {
-            opacity: 0.9;
-            margin: 1rem 0 1.25rem;
-            line-height: 1.7;
-        }
+                    <div>
+                        <label for="jabatan" class="block text-sm font-medium text-gray-700 mb-1">Jabatan</label>
+                        <select
+                            id="jabatan"
+                            name="jabatan"
+                            required
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white"
+                        >
+                            <option value="" disabled {{ old('jabatan') ? '' : 'selected' }}>Pilih jabatan</option>
+                            <option value="Board" {{ old('jabatan') === 'Board' ? 'selected' : '' }}>Board</option>
+                            <option value="Executive Management" {{ old('jabatan') === 'Executive Management' ? 'selected' : '' }}>Executive Management</option>
+                            <option value="Business Managers" {{ old('jabatan') === 'Business Managers' ? 'selected' : '' }}>Business Managers</option>
+                            <option value="IT Managers" {{ old('jabatan') === 'IT Managers' ? 'selected' : '' }}>IT Managers</option>
+                            <option value="Assurance Providers" {{ old('jabatan') === 'Assurance Providers' ? 'selected' : '' }}>Assurance Providers</option>
+                            <option value="Risk Management" {{ old('jabatan') === 'Risk Management' ? 'selected' : '' }}>Risk Management</option>
+                            <option value="Staff" {{ old('jabatan') === 'Staff' ? 'selected' : '' }}>Staff</option>
+                        </select>
+                        @error('jabatan')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-        .hero-content ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+                    <button
+                        id="registerBtn"
+                        type="submit"
+                        class="w-full bg-[#1a3d6b] hover:bg-[#0f2b5c] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center disabled:opacity-50"
+                    >
+                        <svg id="registerSpinner" class="hidden animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        <span id="registerLabel">Daftar</span>
+                    </button>
+                </form>
 
-        .hero-content li {
-            display: flex;
-            gap: 0.6rem;
-            margin-bottom: 0.85rem;
-            font-weight: 500;
-        }
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <p class="text-center text-sm text-gray-500">
+                        Sudah punya akun?
+                        <a href="{{ route('login') }}" class="font-semibold text-[#1a3d6b] hover:text-[#0f2b5c]">Masuk di sini</a>
+                    </p>
+                </div>
+            </div>
+        </div>
 
-        .hero-content li i {
-            color: #61dafb;
-            margin-top: 0.1rem;
-        }
+        <div class="hidden lg:block lg:w-1/2 relative bg-gray-900 overflow-hidden">
+            <div id="carouselBackgrounds" class="absolute inset-0"></div>
+            <div class="relative z-10 flex flex-col justify-between h-full p-12">
+                <div class="flex justify-between items-center p-4 rounded-2xl w-fit">
+                    <img src="{{ asset('images/logo-divusi.png') }}" alt="Divusi Logo" class="h-16 w-auto object-contain brightness-0 invert" />
+                </div>
 
-        .form-panel {
-            padding: 3rem;
-            background: #fff;
-        }
-
-        .form-heading h3 {
-            font-weight: 700;
-            color: #0f2b5c;
-            margin-bottom: 0.35rem;
-        }
-
-        .form-heading p {
-            color: #718096;
-            margin-bottom: 2rem;
-        }
-
-        .register-body {
-            max-height: 520px;
-            overflow-y: auto;
-            padding-right: 0.25rem;
-        }
-
-        .register-body::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .register-body::-webkit-scrollbar-track {
-            background: #edf2f7;
-            border-radius: 10px;
-        }
-
-        .register-body::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #0f2b5c, #0f6ad9);
-            border-radius: 10px;
-        }
-
-        .form-label {
-            color: #0f2b5c;
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 0.45rem;
-        }
-
-        .input-icon-wrapper {
-            position: relative;
-        }
-
-        .input-icon-wrapper i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #4a6fa5;
-            font-size: 1rem;
-        }
-
-        .input-icon-wrapper .form-control,
-        .input-icon-wrapper .form-select {
-            padding-left: 2.75rem;
-        }
-
-        .form-control,
-        .form-select {
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 0.85rem 1rem;
-            font-size: 0.95rem;
-            transition: all 0.25s ease;
-            background: #f8fafc;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #0f6ad9;
-            box-shadow: 0 0 0 4px rgba(15, 106, 217, 0.15);
-            background: #fff;
-            transform: translateY(-1px);
-        }
-
-        .form-control::placeholder {
-            color: #94a3b8;
-        }
-
-        .invalid-feedback {
-            font-size: 0.85rem;
-            margin-top: 0.35rem;
-        }
-
-        .is-invalid {
-            border-color: #dc3545 !important;
-            background: #fff5f5;
-        }
-
-        .btn-register {
-            background: linear-gradient(135deg, #0f2b5c, #0f6ad9);
-            border: none;
-            border-radius: 12px;
-            padding: 0.95rem;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            color: #fff;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-            box-shadow: 0 12px 30px rgba(15, 106, 217, 0.35);
-        }
-
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 40px rgba(15, 106, 217, 0.45);
-            background: linear-gradient(135deg, #0f6ad9, #0f2b5c);
-        }
-
-        .register-footer {
-            margin-top: 2rem;
-            text-align: center;
-            color: #6b7280;
-        }
-
-        .register-footer a {
-            color: #0f6ad9;
-            font-weight: 600;
-            text-decoration: none;
-            margin-left: 0.35rem;
-        }
-
-        .register-footer a:hover {
-            color: #0c4fb5;
-            text-decoration: underline;
-        }
-
-        @media (max-width: 991.98px) {
-            .form-panel {
-                padding: 2.25rem;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .form-panel {
-                padding: 2rem 1.5rem;
-            }
-        }
-    </style>
-
-    <div class="auth-container">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-11 col-xl-10">
-                    <div class="auth-card">
-                        <div class="row g-0 align-items-stretch">
-                            <div class="col-lg-5 d-none d-lg-flex hero-panel">
-                                <div class="hero-content">
-                                    <span class="badge text-uppercase">PT LAPI Divusi</span>
-                                    <h2>COBIT 2019</h2>
-                                    <p>
-                                        The latest global framework for the governance and management of enterprise
-                                        information and technology </p>
-                                    <ul class="ps-0">
-                                        <li><i class="fas fa-check-circle"></i>COBIT Component Dictionary</li>
-                                        <li><i class="fas fa-check-circle"></i>COBIT Design Toolkit</li>
-                                        <li><i class="fas fa-check-circle"></i>COBIT Assessment</li>
-                                    </ul>
-                                </div>
+                <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 transition-all duration-500">
+                    <div id="quoteWrapper" class="space-y-6 fade-text-enter">
+                        <p id="quoteText" class="text-white text-xl font-light leading-relaxed italic"></p>
+                        <div class="flex items-center">
+                            <div
+                                class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                                C
                             </div>
-                            <div class="col-lg-7 form-panel">
-                                <div class="form-heading">
-                                    <h3>Create an account</h3>
-                                    <p>Complete your profile to personalize the assessment.</p>
-                                </div>
-                                <div class="register-body">
-                                    <form method="POST" action="{{ route('register') }}">
-                                        @csrf
-
-                                        <div class="mb-3">
-                                            <label for="name" class="form-label">
-                                                <i class="fas fa-user me-1"></i>Full Name
-                                            </label>
-                                            <div class="input-icon-wrapper">
-                                                <i class="fas fa-user"></i>
-                                                <input id="name" type="text"
-                                                    class="form-control @error('name') is-invalid @enderror" name="name"
-                                                    value="{{ old('name') }}" required autocomplete="name" autofocus
-                                                    placeholder="Enter your full name">
-                                            </div>
-                                            @error('name')
-                                                <span class="invalid-feedback d-block" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="email" class="form-label">
-                                                <i class="fas fa-envelope me-1"></i>Email Address
-                                            </label>
-                                            <div class="input-icon-wrapper">
-                                                <i class="fas fa-envelope"></i>
-                                                <input id="email" type="email"
-                                                    class="form-control @error('email') is-invalid @enderror" name="email"
-                                                    value="{{ old('email') }}" required autocomplete="email"
-                                                    placeholder="your.email@example.com">
-                                            </div>
-                                            @error('email')
-                                                <span class="invalid-feedback d-block" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="password" class="form-label">
-                                                <i class="fas fa-lock me-1"></i>Password
-                                            </label>
-                                            <div class="input-icon-wrapper">
-                                                <i class="fas fa-lock"></i>
-                                                <input id="password" type="password"
-                                                    class="form-control @error('password') is-invalid @enderror"
-                                                    name="password" required autocomplete="new-password"
-                                                    placeholder="Create a strong password">
-                                            </div>
-                                            @error('password')
-                                                <span class="invalid-feedback d-block" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="password-confirm" class="form-label">
-                                                <i class="fas fa-lock me-1"></i>Confirm Password
-                                            </label>
-                                            <div class="input-icon-wrapper">
-                                                <i class="fas fa-lock"></i>
-                                                <input id="password-confirm" type="password" class="form-control"
-                                                    name="password_confirmation" required autocomplete="new-password"
-                                                    placeholder="Re-enter your password">
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="organisasi" class="form-label">
-                                                <i class="fas fa-building me-1"></i>Organization
-                                            </label>
-                                            <div class="input-icon-wrapper">
-                                                <i class="fas fa-building"></i>
-                                                <input id="organisasi" type="text"
-                                                    class="form-control @error('organisasi') is-invalid @enderror"
-                                                    name="organisasi" value="{{ old('organisasi') }}" required
-                                                    placeholder="Your organization name">
-                                            </div>
-                                            @error('organisasi')
-                                                <span class="invalid-feedback d-block" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-4">
-                                            <label for="jabatan" class="form-label">
-                                                <i class="fas fa-briefcase me-1"></i>Position
-                                            </label>
-                                            <div class="input-icon-wrapper">
-                                                <i class="fas fa-briefcase"></i>
-                                                <select id="jabatan" name="jabatan"
-                                                    class="form-select @error('jabatan') is-invalid @enderror" required>
-                                                    <option value="" disabled {{ old('jabatan') ? '' : 'selected' }}>--
-                                                        Select Your Position --</option>
-                                                    <option value="Board" {{ old('jabatan') === 'Board' ? 'selected' : '' }}>
-                                                        Board</option>
-                                                    <option value="Executive Management" {{ old('jabatan') === 'Executive Management' ? 'selected' : '' }}>Executive Management</option>
-                                                    <option value="Business Managers" {{ old('jabatan') === 'Business Managers' ? 'selected' : '' }}>Business Managers</option>
-                                                    <option value="IT Managers" {{ old('jabatan') === 'IT Managers' ? 'selected' : '' }}>IT Managers</option>
-                                                    <option value="Assurance Providers" {{ old('jabatan') === 'Assurance Providers' ? 'selected' : '' }}>Assurance Providers</option>
-                                                    <option value="Risk Management" {{ old('jabatan') === 'Risk Management' ? 'selected' : '' }}>Risk Management</option>
-                                                    <option value="Staff" {{ old('jabatan') === 'Staff' ? 'selected' : '' }}>
-                                                        Staff</option>
-                                                </select>
-                                            </div>
-                                            @error('jabatan')
-                                                <span class="invalid-feedback d-block" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-
-                                        <div class="d-grid">
-                                            <button type="submit" class="btn btn-register">
-                                                <i class="fas fa-user-plus me-2"></i>Create Account
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="register-footer">
-                                    <span class="text-muted">Already have an account?</span>
-                                    <a href="{{ route('login') }}">Sign in here</a>
-                                </div>
+                            <div class="ml-4">
+                                <p class="text-white font-semibold">COBIT 2019</p>
+                                <p id="quoteSubtext" class="text-blue-200 text-sm"></p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div id="carouselIndicators" class="flex justify-center space-x-2 mt-8"></div>
             </div>
         </div>
     </div>
-@endsection
+
+    <script>
+        const carouselImages = [{
+                url: 'https://images.unsplash.com/photo-1548783300-70b41bc84f56?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                text: '"Pusat kendali tata kelola TI perusahaan Anda. Lebih terukur, lebih patuh, lebih efisien."',
+                subtext: 'COBIT 2019 - Governance & Management'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1508385082359-f38ae991e8f2?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                text: '"Optimalkan nilai I&T bagi bisnis dengan framework berstandar internasional yang terintegrasi."',
+                subtext: 'Strategic Alignment - Business Value'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1506787497326-c2736dde1bef?q=80&w=784&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                text: '"Keamanan dan keberlangsungan operasional TI dalam satu platform penilaian yang komprehensif."',
+                subtext: 'Risk Management - Operational Excellence'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const registerForm = document.getElementById('registerForm');
+            const registerBtn = document.getElementById('registerBtn');
+            const registerSpinner = document.getElementById('registerSpinner');
+            const registerLabel = document.getElementById('registerLabel');
+
+            registerForm?.addEventListener('submit', () => {
+                registerBtn.disabled = true;
+                registerSpinner.classList.remove('hidden');
+                registerLabel.textContent = 'Memproses...';
+            });
+
+            const carouselBackgrounds = document.getElementById('carouselBackgrounds');
+            const quoteText = document.getElementById('quoteText');
+            const quoteSubtext = document.getElementById('quoteSubtext');
+            const indicators = document.getElementById('carouselIndicators');
+            const quoteWrapper = document.getElementById('quoteWrapper');
+            let currentImageIndex = 0;
+            let carouselInterval = null;
+
+            function buildSlides() {
+                carouselImages.forEach((image, index) => {
+                    const slide = document.createElement('div');
+                    slide.className =
+                        `absolute inset-0 transition-opacity duration-[1500ms] ease-in-out ${index === 0 ? 'opacity-100' : 'opacity-0'}`;
+                    slide.innerHTML = `
+                        <img src="${image.url}" alt="" class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-gradient-to-br from-[#0f2b5c]/90 via-[#0f2b5c]/60 to-[#1a3d6b]/90"></div>
+                    `;
+                    carouselBackgrounds?.appendChild(slide);
+
+                    const dot = document.createElement('button');
+                    dot.type = 'button';
+                    dot.className = `w-2 h-2 rounded-full transition-all duration-300 ${index === 0 ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}`;
+                    dot.addEventListener('click', () => {
+                        currentImageIndex = index;
+                        renderSlide();
+                        restartInterval();
+                    });
+                    indicators?.appendChild(dot);
+                });
+            }
+
+            function renderSlide() {
+                const slides = carouselBackgrounds?.children || [];
+                const dots = indicators?.children || [];
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].classList.toggle('opacity-100', i === currentImageIndex);
+                    slides[i].classList.toggle('opacity-0', i !== currentImageIndex);
+                }
+                for (let i = 0; i < dots.length; i++) {
+                    dots[i].className = `w-2 h-2 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}`;
+                }
+
+                quoteWrapper?.classList.remove('fade-text-enter');
+                void quoteWrapper?.offsetWidth;
+                quoteWrapper?.classList.add('fade-text-enter');
+
+                quoteText.textContent = carouselImages[currentImageIndex].text;
+                quoteSubtext.textContent = carouselImages[currentImageIndex].subtext;
+            }
+
+            function restartInterval() {
+                if (carouselInterval) {
+                    clearInterval(carouselInterval);
+                }
+                carouselInterval = setInterval(() => {
+                    currentImageIndex = (currentImageIndex + 1) % carouselImages.length;
+                    renderSlide();
+                }, 5000);
+            }
+
+            buildSlides();
+            renderSlide();
+            restartInterval();
+        });
+    </script>
+
+    <style>
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fade-text-enter {
+            animation: fadeTextEnter .5s ease;
+        }
+
+        @keyframes fadeTextEnter {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+
+</html>

@@ -1,292 +1,227 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-  <div class="row g-4">
-    <!-- Main Content -->
-    <div class="col-lg-8">
-      <div class="card home-hero-card border-0 rounded-3 overflow-hidden">
-        <!-- Card Header -->
-        <div class="card-header home-hero-header py-4 position-relative">
-          <div class="d-flex justify-content-between align-items-center">
+<div class="container-fluid home-clean-wrap">
+  <section class="home-clean-card home-main-card">
+    <header class="home-main-head">
+      <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo" class="home-brand-logo">
+      <div>
+        <h1 class="home-main-title">Selamat Datang</h1>
+        <p class="home-main-subtitle">Pilih modul COBIT 2019 yang ingin Anda gunakan.</p>
+      </div>
+    </header>
+
+    <div class="row g-3 home-tool-grid">
+      <div class="col-md-6 col-xl-3">
+        <a href="{{ route('cobit2019.objectives.show', 'APO01') }}" class="home-tool-link">
+          <article class="home-tool-item">
+            <span class="home-tool-icon bg-soft-amber"><i class="fas fa-puzzle-piece"></i></span>
             <div>
-              <div class="home-hero-title mb-1">{{ __('COBIT 2019') }}</div>
+              <h2>COBIT Components</h2>
+              <p>Kamus komponen COBIT.</p>
             </div>
-          </div>
-        </div>
+          </article>
+        </a>
+      </div>
 
-        <!-- Card Body -->
-        <div class="card-body p-4">
-          <!-- Tools Section -->
-          <div class="mb-5">
-            <h5 class="fw-bold text-primary text-center mb-4 home-section-title">Pilih Tools</h5>
-            <div class="row g-4 justify-content-center">
-              <!-- COBIT Component Card -->
-              <div class="col-md-6 col-xl-4">
-                <div class="card home-tool-card border-0 p-3 h-100">
-                  <a href="{{ route('cobit2019.objectives.show', 'APO01') }}" class="text-decoration-none">
-                    <div class="card-body text-center p-4">
-                      <div class="home-icon-circle bg-warning-light mb-3 mx-auto">
-                        <i class="fas fa-puzzle-piece fa-2x text-warning"></i>
-                      </div>
-                      <h6 class="card-title fw-bold mb-1">COBIT Components</h6>
-                      <p class="text-muted small mb-0">Kamus komponen COBIT</p>
-                    </div>
-                  </a>
-                </div>
-              </div>
-              <!-- COBIT Desain Toolkit Card -->
-              <div class="col-md-6 col-xl-4">
-                <div class="card home-tool-card border-0 p-3 h-100">
-                  <a href="{{ route('cobit.home') }}" class="text-decoration-none">
-                    <div class="card-body text-center p-4">
-                      <div class="home-icon-circle bg-danger-light mb-3 mx-auto">
-                        <i class="fas fa-cogs fa-2x text-danger"></i>
-                      </div>
-                      <h6 class="card-title fw-bold mb-1">Design I&T Tailored Governance System</h6>
-                      <p class="text-muted small mb-0">Manajemen tata kelola TI</p>
-                    </div>
-                  </a>
-                </div>
-              </div>
-              <!-- Assessment Card -->
-              <div class="col-md-6 col-xl-4">
-                <div class="card home-tool-card border-0 p-3 h-100">
-                  <a href="{{ route('assessment-eval.index') }}" class="text-decoration-none">
-                    <div class="card-body text-center p-4">
-                      <div class="home-icon-circle bg-info-light mb-3 mx-auto">
-                        <i class="fas fa-clipboard-check fa-2x text-info"></i>
-                      </div>
-                      <h6 class="card-title fw-bold mb-1">Assessment Maturity & Capability</h6>
-                      <p class="text-muted small mb-0">Evaluasi tata kelola TI</p>
-                    </div>
-                  </a>
-                </div>
-              </div>
+      <div class="col-md-6 col-xl-3">
+        <a href="{{ route('cobit.home') }}" class="home-tool-link">
+          <article class="home-tool-item">
+            <span class="home-tool-icon bg-soft-red"><i class="fas fa-cogs"></i></span>
+            <div>
+              <h2>Design I&T Tailored Governance System</h2>
+              <p>Perancangan tata kelola TI.</p>
             </div>
-            
-            <div class="row g-4 justify-content-center mt-2">
-                 <!-- Spreadsheet Tools Card -->
-                 <div class="col-md-6 col-xl-4">
-                  <div class="card home-tool-card border-0 p-3 h-100">
-                    <a href="{{ route('spreadsheet.index') }}" class="text-decoration-none">
-                      <div class="card-body text-center p-4">
-                        <div class="home-icon-circle bg-success-light mb-3 mx-auto">
-                          <i class="fas fa-table fa-2x text-success"></i>
-                        </div>
-                        <h6 class="card-title fw-bold mb-1">Spreadsheet Tools</h6>
-                        <p class="text-muted small mb-0">Tools untuk analisis data (Excel-like)</p>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-            </div>
-          </div>
-        </div>
+          </article>
+        </a>
+      </div>
 
-        <!-- Card Footer -->
-        <div class="card-footer bg-light text-center py-3">
-          <small class="text-muted d-block mb-2">Butuh bantuan? Hubungi kami melalui:</small>
-          <a href="https://wa.me/6287779511667?text=Halo%20saya%20ingin%20bertanya%20tentang%20COBIT2019"
-             target="_blank"
-             class="btn btn-success px-4">
-            <i class="fab fa-whatsapp me-2"></i>WhatsApp Support
-          </a>
-        </div>
+      <div class="col-md-6 col-xl-3">
+        <a href="{{ route('assessment-eval.index') }}" class="home-tool-link">
+          <article class="home-tool-item">
+            <span class="home-tool-icon bg-soft-blue"><i class="fas fa-clipboard-check"></i></span>
+            <div>
+              <h2>Assessment Maturity & Capability</h2>
+              <p>Evaluasi maturity dan capability.</p>
+            </div>
+          </article>
+        </a>
+      </div>
+
+      <div class="col-md-6 col-xl-3">
+        <a href="{{ route('spreadsheet.index') }}" class="home-tool-link">
+          <article class="home-tool-item">
+            <span class="home-tool-icon bg-soft-green"><i class="fas fa-table"></i></span>
+            <div>
+              <h2>Spreadsheet Tools</h2>
+              <p>Analisis data format spreadsheet.</p>
+            </div>
+          </article>
+        </a>
       </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="col-lg-4">
-      <!-- Jam & Tanggal Card -->
-      <div class="card home-sidebar-card border-0 rounded-3 mb-4">
-        <div class="card-header home-sidebar-header py-3">
-          <h5 class="mb-0 fw-semibold">Jam & Tanggal</h5>
-        </div>
-        <div class="card-body p-4 text-center">
-          <div class="datetime-container bg-light p-3 rounded-3 border">
-            <div class="display-4 fw-bold text-primary mb-0" id="current-time"></div>
-            <div class="h5 text-secondary mb-1" id="current-day"></div>
-            <div class="text-muted" id="current-date"></div>
-          </div>
-        </div>
-      </div>
-
-      {{-- Tindakan: hanya ditampilkan untuk admin atau pic --}}
-      @if(in_array(Auth::user()->role, ['admin','pic']))
-        <div class="card home-sidebar-card border-0 rounded-3 mb-4">
-          <div class="card-header home-sidebar-header py-3">
-            <h5 class="mb-0 fw-semibold">Admin</h5>
-          </div>
-          <div class="card-body text-center">
-            <div class="d-grid gap-3">
-              <a href="{{ route('admin.assessments.index') }}"
-               class="btn btn-outline-primary btn-lg w-100 home-admin-btn">
-              <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-              </a>
-
-              @if(Auth::user()->role === 'admin')
-              <a href="{{ route('admin.users.index') }}"
-                 class="btn btn-primary btn-lg w-100 home-admin-btn">
-                <i class="fas fa-users me-1"></i> Manage Users
-              </a>
-              @endif
-            </div>
-          </div>
-        </div>
-      @endif
-    </div>
-  </div>
+    <footer class="home-support-row">
+      <small>Butuh bantuan?</small>
+      <a href="https://wa.me/6287779511667?text=Halo%20saya%20ingin%20bertanya%20tentang%20COBIT2019" target="_blank" class="home-support-btn">
+        <i class="fab fa-whatsapp"></i>
+        WhatsApp Support
+      </a>
+    </footer>
+  </section>
 </div>
 
-<!-- Styles -->
 <style>
-  :root {
+  .home-clean-wrap {
     --home-primary: #0f2b5c;
-    --home-accent: #0f6ad9;
-    --home-soft: #eef2ff;
-    --home-muted: #8b92ab;
+    --home-border: #e5e7eb;
+    --home-text: #111827;
+    --home-muted: #6b7280;
+    --home-card-shadow: 0 14px 35px rgba(15, 43, 92, 0.08);
+    padding-top: 0.5rem;
+    padding-bottom: 1.5rem;
   }
 
-  .home-hero-card {
-    box-shadow: 0 25px 60px rgba(8, 26, 61, 0.18);
-    border: none;
+  .home-clean-card {
+    background: #fff;
+    border: 1px solid var(--home-border);
+    border-radius: 20px;
+    box-shadow: var(--home-card-shadow);
+  }
+
+  .home-main-card {
+    padding: 1.5rem;
+  }
+
+  .home-main-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--home-border);
+  }
+
+  .home-brand-logo {
+    height: 52px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .home-main-title {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--home-text);
+    letter-spacing: .01em;
+  }
+
+  .home-main-subtitle {
+    margin: 0.25rem 0 0;
+    color: var(--home-muted);
+    font-size: .95rem;
+  }
+
+  .home-tool-grid {
+    margin-bottom: 1.25rem;
+  }
+
+  .home-tool-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+  }
+
+  .home-tool-item {
+    height: 100%;
+    border: 1px solid var(--home-border);
+    border-radius: 16px;
+    padding: 1rem;
+    display: flex;
+    gap: .9rem;
+    align-items: flex-start;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
     background: #fff;
   }
 
-  .home-hero-header {
-    background: linear-gradient(135deg, #081a3d, #0f2b5c);
-    border: none;
-    color: #fff;
+  .home-tool-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(15, 43, 92, 0.1);
+    border-color: #cbd5e1;
   }
 
-  .home-hero-title {
-    font-size: 1.6rem;
+  .home-tool-item h2 {
+    font-size: .95rem;
+    line-height: 1.35;
+    margin: 0;
+    color: var(--home-text);
     font-weight: 700;
-    letter-spacing: 0.04em;
   }
 
-  .home-hero-subtitle {
-    font-size: 0.95rem;
-    color: rgba(255,255,255,0.75);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .home-tool-item p {
+    margin: .35rem 0 0;
+    color: var(--home-muted);
+    font-size: .84rem;
   }
 
-  .home-hero-cta {
-    border-radius: 999px;
-    font-weight: 600;
-    padding-inline: 1.4rem;
-  }
-
-  .home-section-title {
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .home-tool-card {
-    background: #fdfdff;
-    border-radius: 1rem;
-    border: 1px solid rgba(15,43,92,0.08);
-    box-shadow: 0 18px 40px rgba(15,43,92,0.08);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-  }
-
-  .home-tool-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 25px 55px rgba(15,43,92,0.12);
-  }
-
-  .home-icon-circle {
-    width: 70px;
-    height: 70px;
-    border-radius: 22px;
-    display: flex;
+  .home-tool-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+    font-size: 1rem;
+    flex: 0 0 auto;
+    color: #111827;
   }
 
-  .bg-warning-light { background-color: #fff3cd; }
-  .bg-danger-light { background-color: #fde2e4; }
-  .bg-info-light { background-color: #d7efff; }
-  .bg-success-light { background-color: #e8f5e9; }
+  .bg-soft-amber { background: #fef3c7; }
+  .bg-soft-red { background: #fee2e2; }
+  .bg-soft-blue { background: #dbeafe; }
+  .bg-soft-green { background: #dcfce7; }
 
-  .home-sidebar-card {
-    box-shadow: 0 20px 45px rgba(8, 26, 61, 0.08);
-    border: 1px solid rgba(15,43,92,0.06);
+  .home-support-row {
+    border-top: 1px solid var(--home-border);
+    padding-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+    color: var(--home-muted);
   }
 
-  .home-sidebar-header {
-    background: linear-gradient(120deg, #0f2b5c, #183d72);
+  .home-support-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    text-decoration: none;
+    background: #16a34a;
     color: #fff;
-    border: none;
-  }
-
-  .home-admin-btn {
-    border-radius: 0.65rem;
-    font-weight: 600;
-    padding-block: 0.85rem;
-  }
-
-  .datetime-container {
-    background: linear-gradient(135deg, #fdfdfd, #eef2ff);
-    border: 1px solid rgba(15,43,92,0.08);
-  }
-
-  .home-hero-card .card-footer {
-    border-top: 1px solid rgba(15,43,92,0.06);
-  }
-
-  .home-hero-card .btn-success {
     border-radius: 999px;
-    font-weight: 600;
-    padding-inline: 1.75rem;
+    padding: .55rem 1rem;
+    font-weight: 700;
+    font-size: .86rem;
   }
 
-  @media (max-width: 767px) {
-    .home-hero-header {
-      text-align: center;
+  .home-support-btn:hover {
+    background: #15803d;
+    color: #fff;
+  }
+
+  @media (max-width: 767.98px) {
+    .home-main-card {
+      padding: 1rem;
+      border-radius: 16px;
     }
 
-    .home-hero-cta {
-      margin-top: 1rem;
-      width: 100%;
+    .home-main-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .7rem;
     }
   }
 </style>
-
-<!-- Scripts -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Update time setiap detik
-    function updateTime() {
-      const now = new Date();
-      document.getElementById('current-time').textContent =
-        now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      document.getElementById('current-date').textContent =
-        now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-      document.getElementById('current-day').textContent =
-        now.toLocaleDateString('id-ID', { weekday: 'long' });
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    // SweetAlert2 untuk tombol Assessment
-    const assessBtn = document.getElementById('assessment-btn');
-    if (assessBtn) {
-      assessBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        Swal.fire({
-          icon: 'warning',
-          title: 'Under Construction!',
-          text: 'Fitur ini sedang dalam pengembangan 💻🔧',
-          confirmButtonText: 'OK'
-        });
-      });
-    }
-  });
-</script>
 @endsection

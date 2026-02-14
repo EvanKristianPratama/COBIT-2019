@@ -25,10 +25,9 @@
             --cobit-primary: #0f2b5c;
             --cobit-secondary: #1a3d6b;
             --cobit-accent: #0f6ad9;
-            --cobit-light: #f4f6f9;
+            --cobit-light: #f8fafc;
             --cobit-gradient: linear-gradient(135deg, #081a3d, #0f2b5c, #1a3d6b);
-            --navbar-height: 80px;
-            /* Variabel tinggi navbar */
+            --navbar-height: 68px;
         }
 
         body {
@@ -46,54 +45,93 @@
             flex-direction: column;
         }
 
-        /* --- Navbar Styling --- */
-        .navbar {
+        .app-navbar {
             background: var(--cobit-gradient) !important;
+            border-bottom: 0;
             box-shadow: 0 4px 20px rgba(15, 43, 92, 0.4);
             min-height: var(--navbar-height);
             z-index: 1030;
         }
 
-        .navbar-brand img {
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        .app-navbar .navbar-brand img {
+            height: 40px;
+            width: auto;
+            filter: brightness(0) invert(1);
             transition: transform 0.3s ease;
         }
 
-        .navbar-brand:hover img {
+        .app-navbar .navbar-brand:hover img {
             transform: scale(1.05);
         }
 
-        .nav-link {
-            color: rgba(255, 255, 255, 0.9) !important;
+        .app-navbar .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: none !important;
+        }
+
+        .app-navbar .navbar-toggler-icon {
+            filter: none;
+        }
+
+        .app-nav-link {
+            color: rgba(255, 255, 255, 0.92) !important;
             font-weight: 600;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
+            padding: 0.5rem 0.9rem;
+            border-radius: 10px;
             transition: all 0.2s ease;
         }
 
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-1px);
+        .app-nav-link:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff !important;
         }
 
-        /* Badge Styling */
-        .user-badge {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .top-user-trigger {
+            background: #fff;
+            border: 1px solid #dbe4ee;
+            border-radius: 999px;
+            padding: 0.2rem 0.5rem 0.2rem 0.28rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 4px 14px rgba(15, 43, 92, 0.08);
+            color: #1f2937;
+            transition: all 0.2s ease;
+        }
+
+        .top-user-trigger:hover {
+            border-color: #c0d1e5;
+            box-shadow: 0 6px 18px rgba(15, 43, 92, 0.14);
+        }
+
+        .top-user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a3d6b, #0f2b5c);
             color: #fff;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            backdrop-filter: blur(4px);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
         }
 
-        /* --- Breadcrumb Styling (Updated) --- */
+        .top-user-name {
+            color: #0f172a;
+            font-weight: 600;
+            line-height: 1;
+            font-size: 0.78rem;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .breadcrumb-wrapper {
-            background: #ffffff;
-            border-bottom: 1px solid #e9ecef;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-            padding: 12px 0;
+            background: transparent;
+            padding: 12px 0 0;
             position: sticky;
             top: var(--navbar-height);
             z-index: 1020;
@@ -101,7 +139,14 @@
 
         .breadcrumb {
             margin-bottom: 0;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.55rem 0.95rem;
+            box-shadow: 0 4px 14px rgba(15, 43, 92, 0.05);
+            overflow-x: auto;
+            white-space: nowrap;
         }
 
         .breadcrumb-item a {
@@ -121,11 +166,9 @@
 
         .breadcrumb-item+.breadcrumb-item::before {
             content: "/";
-            /* font-family: "Font Awesome 6 Free"; removed to use text slash */
             font-weight: 600;
             font-size: 0.9rem;
             color: #ccc;
-            /* padding-top: 3px; removed alignment tweak for icon */
         }
 
         .breadcrumb-item.active {
@@ -138,7 +181,6 @@
             font-weight: 700;
         }
 
-        /* --- Offcanvas --- */
         .offcanvas {
             background: var(--cobit-gradient);
             color: #fff;
@@ -148,42 +190,74 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .offcanvas .nav-link {
+            color: rgba(255, 255, 255, 0.95) !important;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
         .offcanvas .nav-link:hover {
             background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
+            transform: translateX(4px);
+        }
+
+        .sidebar-user-meta {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.6rem;
+        }
+
+        .sidebar-meta-badge {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 0.2rem 0.7rem;
+        }
+
+        .sidebar-section-label {
+            display: inline-block;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.4rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.7rem;
         }
 
         .offcanvas .logout-btn {
             color: #dc3545 !important;
         }
 
-        /* --- Main Content --- */
         .main-content {
             padding-top: 2rem;
-            padding-bottom: 3rem;
+            padding-bottom: 1.25rem;
             flex: 1;
         }
 
-        /* --- Login Page specific --- */
-        body.login {
-            background: var(--cobit-gradient);
+        .app-footer {
+            padding: 0.35rem 0 0.9rem;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
         }
-
-        body.login .breadcrumb-wrapper {
-            display: none;
-        }
-
-        /* Hide breadcrumb on login */
     </style>
 </head>
 
 <body class="{{ Route::is('login', 'register') ? 'login' : '' }}">
     <div id="app">
 
-        <nav class="navbar navbar-expand-md navbar-dark fixed-top">
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top app-navbar">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
-                    <img src="{{ asset('images/logo.png') }}" alt="COBIT Logo" style="height: 45px;">
+                    <img src="{{ asset('images/logo-divusi.png') }}" alt="Divusi Logo">
                 </a>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -197,31 +271,22 @@
                         @guest
                             @if (Route::has('login'))
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('login') }}"><i class="fas fa-sign-in-alt me-1"></i>
+                                    <a class="nav-link app-nav-link" href="{{ route('login') }}"><i class="fas fa-sign-in-alt me-1"></i>
                                         {{ __('Login') }}</a>
                                 </li>
                             @endif
                             @if (Route::has('register'))
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
+                                    <a class="nav-link app-nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
                                 </li>
                             @endif
                         @else
                             <li class="nav-item">
                                 <a class="nav-link p-0" href="#" role="button" data-bs-toggle="offcanvas"
                                     data-bs-target="#sidebarOffcanvas">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="d-flex flex-column text-end d-none d-lg-block"
-                                            style="line-height: 1.2;">
-                                            <small class="text-white-50" style="font-size: 0.75rem;">Selamat Datang,</small>
-                                            <span class="fw-bold">{{ Auth::user()->name }}</span>
-                                        </div>
-                                        <div class="d-flex gap-2">
-                                            <span class="user-badge">{{ Auth::user()->organisasi ?? 'Organisasi' }}</span>
-                                            <span
-                                                class="user-badge bg-warning text-dark border-0">{{ Auth::user()->jabatan ?? 'Jabatan' }}</span>
-                                        </div>
-                                        <i class="fas fa-bars ms-2 fs-5"></i>
+                                    <div class="top-user-trigger">
+                                        <span class="top-user-avatar">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                                        <span class="top-user-name d-none d-lg-inline">{{ Auth::user()->name }}</span>
                                     </div>
                                 </a>
                             </li>
@@ -276,6 +341,10 @@
             </div>
         </main>
 
+        <footer class="app-footer">
+            COBIT 2019 &middot; {{ config('app.version', '1.5.2') }}
+        </footer>
+
         @auth
             <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas"
                 aria-labelledby="sidebarOffcanvasLabel">
@@ -294,15 +363,61 @@
                         </div>
                         <h6 class="mb-0">{{ Auth::user()->name }}</h6>
                         <small class="text-white-50">{{ Auth::user()->email }}</small>
+                        <div class="sidebar-user-meta">
+                            <span class="sidebar-meta-badge">{{ Auth::user()->organisasi ?? 'Organisasi' }}</span>
+                            <span class="sidebar-meta-badge">{{ Auth::user()->jabatan ?? 'Jabatan' }}</span>
+                        </div>
                     </div>
                     <hr class="border-light">
-                    <ul class="nav flex-column">
+                    <ul class="nav flex-column gap-1">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-id-card me-2"></i> Profile Saya
+                            <span class="sidebar-section-label">Navigasi</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('home') }}">
+                                <i class="fas fa-home me-2"></i> Home
                             </a>
                         </li>
-                        <li class="nav-item mt-3">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('cobit2019.objectives.show', 'APO01') }}">
+                                <i class="fas fa-book me-2"></i> COBIT Components
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('cobit.home') }}">
+                                <i class="fas fa-tools me-2"></i> Design Factor
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('assessment-eval.index') }}">
+                                <i class="fas fa-clipboard-check me-2"></i> Assessment
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('spreadsheet.index') }}">
+                                <i class="fas fa-table me-2"></i> Spreadsheet Tools
+                            </a>
+                        </li>
+
+                        @if(in_array(Auth::user()->role, ['admin','pic']))
+                            <li class="nav-item mt-2">
+                                <span class="sidebar-section-label">Admin Menu</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.assessments.index') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            @if(Auth::user()->role === 'admin')
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('admin.users.index') }}">
+                                        <i class="fas fa-users me-2"></i> Manage Users
+                                    </a>
+                                </li>
+                            @endif
+                        @endif
+
+                        <li class="nav-item mt-2">
                             <a class="nav-link logout-btn text-danger bg-white rounded" href="{{ route('logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i> Logout
                             </a>
