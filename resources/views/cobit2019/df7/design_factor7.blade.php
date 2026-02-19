@@ -26,18 +26,37 @@
                   <thead class="table-success">
                     <tr>
                       <th scope="col">Value</th>
+                      <th scope="col">Explanation</th>
                       <th scope="col" class="text-center" style="width: 30%;">Importance (1–5)</th>
                       <th scope="col" class="text-center">Baseline</th>
                     </tr>
                   </thead>
                   <tbody>
                     @php
-                      $df7Items = ['Support', 'Factory', 'Turnaround', 'Strategic'];
+                      $df7Items = [
+                        [
+                          'label' => 'Support',
+                          'explanation' => 'IT is not crucial for the running and continuity of the business processes and services, nor for their innovation.',
+                        ],
+                        [
+                          'label' => 'Factory',
+                          'explanation' => 'When IT fails, there is an immediate impact on the running and continuity of the business processes and services. However, IT is not seen as a driver for innovating business processes and services.',
+                        ],
+                        [
+                          'label' => 'Turnaround',
+                          'explanation' => 'IT is seen as a driver for innovating business processes and services. At this moment, however, there is not a critical dependency on IT for the current running and continuity of the business processes and services.',
+                        ],
+                        [
+                          'label' => 'Strategic',
+                          'explanation' => 'IT is critical for both running and innovating the organization\'s business processes and services.',
+                        ],
+                      ];
                     @endphp
                     @foreach($df7Items as $index => $item)
                       <tr>
                         <!-- Kolom Value -->
-                        <td class="text-primary fw-bold">{{ $item }}</td>
+                        <td class="text-primary fw-bold align-top">{{ $item['label'] }}</td>
+                        <td class="align-top">{{ $item['explanation'] }}</td>
                         <!-- Kolom Input Score -->
                         <td class="text-center">
                           <div class="d-flex justify-content-center">
@@ -140,6 +159,14 @@
                   </div>
                 </div>
               </div>
+
+              @include('cobit2019.components.df-matrix-table', [
+                'id' => 'df7-matrix',
+                'dfCode' => 'DF7',
+                'columns' => ['Support', 'Factory', 'Turnaround', 'Strategic'],
+                'matrix' => \App\Data\Cobit\Df7Data::MAP,
+                'note' => 'Matriks DF7 memetakan peran IT (Support/Factory/Turnaround/Strategic) ke objective COBIT.',
+              ])
 
 
             </form>

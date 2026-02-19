@@ -141,6 +141,14 @@
                 </div>
               </div>
 
+              @include('cobit2019.components.df-matrix-table', [
+                'id' => 'df6-matrix',
+                'dfCode' => 'DF6',
+                'columns' => ['High', 'Normal', 'Low'],
+                'matrix' => \App\Data\Cobit\Df6Data::MAP,
+                'note' => 'Matriks DF6 memetakan komposisi High/Normal/Low ke objective COBIT.',
+              ])
+
 
             </form>
           </div>

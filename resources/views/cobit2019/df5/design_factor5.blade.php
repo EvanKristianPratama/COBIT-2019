@@ -124,7 +124,14 @@
                                 </div>
                             </div>
 
-                           
+                            @include('cobit2019.components.df-matrix-table', [
+                                'id' => 'df5-matrix',
+                                'dfCode' => 'DF5',
+                                'columns' => ['High', 'Normal'],
+                                'matrix' => \App\Data\Cobit\Df5Data::MAP,
+                                'note' => 'Matriks DF5 memetakan komposisi High/Normal ke objective COBIT.',
+                            ])
+
                         </form>
                     </div>
                     <!-- end card-body -->

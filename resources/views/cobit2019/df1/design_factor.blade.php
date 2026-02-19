@@ -249,7 +249,19 @@
                                 </div>
                             </div>
 
-                           
+                            @include('cobit2019.components.df-matrix-table', [
+                                'id' => 'df1-matrix',
+                                'dfCode' => 'DF1',
+                                'columns' => [
+                                    'Growth / Acquisition',
+                                    'Innovation / Differentiation',
+                                    'Cost Leadership',
+                                    'Client Service / Stability',
+                                ],
+                                'matrix' => \App\Data\Cobit\Df1Data::MAP,
+                                'note' => 'Matriks DF1 memetakan prioritas strategi enterprise ke 40 objective COBIT.',
+                            ])
+
                         </form>
                     </div>
                 </div>

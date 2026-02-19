@@ -140,6 +140,14 @@
                 </div>
               </div>
 
+              @include('cobit2019.components.df-matrix-table', [
+                'id' => 'df9-matrix',
+                'dfCode' => 'DF9',
+                'columns' => ['Agile', 'DevOps', 'Traditional'],
+                'matrix' => \App\Data\Cobit\Df9Data::MAP,
+                'note' => 'Matriks DF9 memetakan metode implementasi (Agile/DevOps/Traditional) ke objective COBIT.',
+              ])
+
             </form>
           </div>
           <!-- end card-body -->

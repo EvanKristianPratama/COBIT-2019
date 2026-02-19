@@ -140,7 +140,14 @@
                 </div>
               </div>
 
-            
+              @include('cobit2019.components.df-matrix-table', [
+                'id' => 'df10-matrix',
+                'dfCode' => 'DF10',
+                'columns' => ['First Mover', 'Follower', 'Slow Adopter'],
+                'matrix' => \App\Data\Cobit\Df10Data::MAP,
+                'note' => 'Matriks DF10 memetakan strategi adopsi teknologi ke objective COBIT.',
+              ])
+
             </form>
           </div>
           <!-- end card-body -->

@@ -136,7 +136,14 @@
               </div>
             </div>
 
-          
+            @include('cobit2019.components.df-matrix-table', [
+              'id' => 'df8-matrix',
+              'dfCode' => 'DF8',
+              'columns' => ['Outsourcing', 'Cloud', 'Insourced'],
+              'matrix' => \App\Data\Cobit\Df8Data::MAP,
+              'note' => 'Matriks DF8 memetakan model sourcing (Outsourcing/Cloud/Insourced) ke objective COBIT.',
+            ])
+
           </form>
         </div>
       </div>

@@ -193,6 +193,20 @@
                                 </div>
                             </div>
 
+                            @php
+                                $df4Columns = [];
+                                for ($i = 1; $i <= \App\Data\Cobit\Df4Data::INPUT_COUNT; $i++) {
+                                    $df4Columns[] = 'I' . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+                                }
+                            @endphp
+                            @include('cobit2019.components.df-matrix-table', [
+                                'id' => 'df4-matrix',
+                                'dfCode' => 'DF4',
+                                'columns' => $df4Columns,
+                                'matrix' => \App\Data\Cobit\Df4Data::MAP,
+                                'note' => 'Matriks DF4 memetakan 20 isu IT (I01-I20) ke objective COBIT.',
+                            ])
+
 
                         </form>
                     </div>

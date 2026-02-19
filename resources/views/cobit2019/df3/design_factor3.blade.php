@@ -222,6 +222,19 @@
                 </div>
               </div>
 
+              @php
+                $df3Columns = [];
+                for ($i = 1; $i <= \App\Data\Cobit\Df3Data::INPUT_COUNT; $i++) {
+                  $df3Columns[] = 'R' . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+                }
+              @endphp
+              @include('cobit2019.components.df-matrix-table', [
+                'id' => 'df3-matrix',
+                'dfCode' => 'DF3',
+                'columns' => $df3Columns,
+                'matrix' => \App\Data\Cobit\Df3Data::MAP,
+                'note' => 'Matriks DF3 memetakan 19 risk category (R01-R19) ke objective COBIT.',
+              ])
 
             </form>
           </div>

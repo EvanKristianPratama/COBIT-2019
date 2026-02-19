@@ -259,6 +259,29 @@
                 </div>
             </div>
 
+            @php
+              $df2ColumnsForView = [];
+              for ($i = 1; $i <= \App\Data\Cobit\Df2Data::INTERMEDIATE_COUNT; $i++) {
+                $df2ColumnsForView[] = 'M' . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+              }
+
+              $df2MatrixForView = [];
+              for ($objectiveIndex = 0; $objectiveIndex < \App\Data\Cobit\Df2Data::OBJECTIVE_COUNT; $objectiveIndex++) {
+                $row = [];
+                for ($intermediateIndex = 0; $intermediateIndex < \App\Data\Cobit\Df2Data::INTERMEDIATE_COUNT; $intermediateIndex++) {
+                  $row[] = \App\Data\Cobit\Df2Data::MAP_2[$intermediateIndex][$objectiveIndex] ?? 0;
+                }
+                $df2MatrixForView[] = $row;
+              }
+            @endphp
+            @include('cobit2019.components.df-matrix-table', [
+              'id' => 'df2-matrix',
+              'dfCode' => 'DF2',
+              'columns' => $df2ColumnsForView,
+              'matrix' => $df2MatrixForView,
+              'note' => 'DF2 menggunakan 2 tahap. Tabel ini menampilkan MAP_2 (M01-M13 ke objective COBIT).',
+            ])
+
             </form>
           </div>
         </div>
