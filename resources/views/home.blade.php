@@ -5,10 +5,6 @@
   <section class="home-clean-card home-main-card">
     <header class="home-main-head">
       <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo" class="home-brand-logo">
-      <div>
-        <h1 class="home-main-title">Selamat Datang</h1>
-        <p class="home-main-subtitle">Pilih modul COBIT 2019 yang ingin Anda gunakan.</p>
-      </div>
     </header>
 
     <div class="row g-3 home-tool-grid">
@@ -62,11 +58,10 @@
     </div>
 
     <footer class="home-support-row">
-      <small>Butuh bantuan?</small>
-      <a href="https://wa.me/6287779511667?text=Halo%20saya%20ingin%20bertanya%20tentang%20COBIT2019" target="_blank" class="home-support-btn">
-        <i class="fab fa-whatsapp"></i>
-        WhatsApp Support
-      </a>
+
+      <span class="text-muted fw-bold">
+        {{ Auth::user()->organisasi ?? 'Nama Organisasi' }}
+      </span>
     </footer>
   </section>
 </div>

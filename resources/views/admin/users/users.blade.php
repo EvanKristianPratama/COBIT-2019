@@ -189,15 +189,50 @@
 </style>
 
 <div class="container py-4">
+    <div class="mb-3">
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if($errors->createUser->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>Gagal menambahkan user. Periksa input form.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+    </div>
+
     <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
             <div class="mb-3 mb-md-0">
                 <h2 class="mb-1">Daftar Akun</h2>
                 <p class="text-muted mb-0">Kelola akun pengguna sistem</p>
             </div>
-            <div class="input-group" style="max-width: 300px;">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" placeholder="Cari akun..." id="searchInput">
+            <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
+                @if(auth()->user()->role === 'admin')
+                    <button
+                        type="button"
+                        class="btn btn-primary d-flex align-items-center justify-content-center"
+                        data-bs-toggle="modal"
+                        data-bs-target="#createUserModal"
+                    >
+                        <i class="fas fa-user-plus me-2"></i>Add User
+                    </button>
+                @endif
+                <div class="input-group" style="min-width: 280px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Cari akun..." id="searchInput">
+                </div>
             </div>
         </div>
     </div>
@@ -411,6 +446,10 @@
 </div>
 @endforeach
 
+@if(auth()->user()->role === 'admin')
+    @include('admin.users.partials.create-user-modal')
+@endif
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Fungsi pencarian
@@ -429,6 +468,14 @@
     
     // Animasi saat memuat halaman
     document.addEventListener('DOMContentLoaded', function() {
+        @if($errors->createUser->any())
+            const createUserModalElement = document.getElementById('createUserModal');
+            if (createUserModalElement) {
+                const createUserModal = new bootstrap.Modal(createUserModalElement);
+                createUserModal.show();
+            }
+        @endif
+
         const cards = document.querySelectorAll('.card');
         cards.forEach((card, index) => {
             setTimeout(() => {

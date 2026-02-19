@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\Admin\AssessmentController as AdminAssessment;
 use App\Http\Controllers\AssessmentEval\ActivityReportController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
 use App\Http\Controllers\AssessmentEval\AssessmentListController;
@@ -88,6 +89,7 @@ Route::prefix('admin')
         // Page users
         Route::get('users', [UserAdminController::class, 'index'])
             ->name('users.index');
+        Route::post('users', [UserAdminController::class, 'store'])->name('users.store');
         Route::put('users/{id}', [UserAdminController::class, 'update'])->name('users.update');
         Route::put('users/{user}/deactivate', [UserAdminController::class, 'deactivate'])->name('users.deactivate');
         Route::put('users/{user}/activate', [UserAdminController::class, 'activate'])->name('users.activate');

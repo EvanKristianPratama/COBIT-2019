@@ -129,6 +129,30 @@
             white-space: nowrap;
         }
 
+        .top-org-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0;
+            max-width: 240px;
+        }
+
+        .top-org-icon {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.68rem;
+            flex: 0 0 auto;
+        }
+
+        .top-org-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.74rem;
+            font-weight: 600;
+            line-height: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .breadcrumb-wrapper {
             background: transparent;
             padding: 12px 0 0;
@@ -259,7 +283,6 @@
                 <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
                     <img src="{{ asset('images/logo-divusi.png') }}" alt="Divusi Logo">
                 </a>
-
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
@@ -281,7 +304,11 @@
                                 </li>
                             @endif
                         @else
-                            <li class="nav-item">
+                            <li class="nav-item d-flex align-items-center gap-2">
+                                <span class="top-org-chip d-none d-lg-inline-flex" title="{{ Auth::user()->organisasi ?? 'Nama Organisasi' }}">
+                                    <i class="fas fa-building top-org-icon"></i>
+                                    <span class="top-org-text">{{ Auth::user()->organisasi ?? 'Nama Organisasi' }}</span>
+                                </span>
                                 <a class="nav-link p-0" href="#" role="button" data-bs-toggle="offcanvas"
                                     data-bs-target="#sidebarOffcanvas">
                                     <div class="top-user-trigger">
