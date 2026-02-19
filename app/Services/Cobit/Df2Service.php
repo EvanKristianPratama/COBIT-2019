@@ -109,8 +109,11 @@ final class Df2Service
                 $ri[$i] = 0;
                 continue;
             }
-            // Floor calculation as per original logic
-            $ri[$i] = (int) (floor(100 * $score / $baseline) - 100);
+            // Match frontend formula:
+            // MROUND((baselineAvg/inputAvg) * 100 * score / baseline, 5) - 100
+            $value = $ratio * 100 * $score / $baseline;
+            $relative = (int) ($this->calculator->mround($value, 5) - 100);
+            $ri[$i] = ($relative === -100) ? 0 : $relative;
         }
         return $ri;
     }
