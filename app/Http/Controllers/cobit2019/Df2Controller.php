@@ -83,23 +83,20 @@ class Df2Controller extends Controller
             ? $this->service->loadHistory($assessmentId, $id)
             : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor2 = null;
-        if ($history['inputs']) {
-            $obj = (object) ['df_id' => $id];
-            foreach ($history['inputs'] as $idx => $val) {
-                $obj->{"input" . ($idx + 1) . "df2"} = $val;
-            }
-            $designFactor2 = $obj;
+        $designFactor2Data = ['df_id' => $id];
+        for ($i = 1; $i <= Df2Data::INPUT_COUNT; $i++) {
+            $designFactor2Data["input{$i}df2"] = (int) ($history['inputs'][$i - 1] ?? 0);
         }
+        for ($i = 1; $i <= Df2Data::OBJECTIVE_COUNT; $i++) {
+            $designFactor2Data['s_df2_' . $i] = (float) ($history['scores'][$i - 1] ?? 0);
+        }
+        $designFactor2 = (object) $designFactor2Data;
 
-        $designFactorRelativeImportance = null;
-        if ($history['relativeImportance']) {
-            $ri = (object) [];
-            foreach ($history['relativeImportance'] as $idx => $val) {
-                $ri->{'r_df2_' . ($idx + 1)} = $val;
-            }
-            $designFactorRelativeImportance = $ri;
+        $designFactorRelativeImportanceData = [];
+        for ($i = 1; $i <= Df2Data::OBJECTIVE_COUNT; $i++) {
+            $designFactorRelativeImportanceData['r_df2_' . $i] = (float) ($history['relativeImportance'][$i - 1] ?? 0);
         }
+        $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
         return view('cobit2019.df2.df2_output', compact('designFactor2', 'designFactorRelativeImportance'));
     }

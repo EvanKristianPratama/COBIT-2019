@@ -85,16 +85,20 @@ class Df3Controller extends Controller
             ? $this->service->loadHistory($assessmentId, $id)
             : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor3 = $history['inputs'] ? (object) array_merge(['df_id' => $id], $history['inputs']) : null;
-
-        $designFactorRelativeImportance = null;
-        if ($history['relativeImportance']) {
-            $ri = (object) [];
-            foreach ($history['relativeImportance'] as $idx => $val) {
-                $ri->{'r_df3_' . ($idx + 1)} = $val;
-            }
-            $designFactorRelativeImportance = $ri;
+        $designFactor3Data = ['df_id' => $id];
+        for ($i = 1; $i <= Df3Data::INPUT_COUNT; $i++) {
+            $designFactor3Data["input{$i}df3"] = (int) ($history['inputs']["input{$i}df3"] ?? 0);
         }
+        for ($i = 1; $i <= Df3Data::OBJECTIVE_COUNT; $i++) {
+            $designFactor3Data['s_df3_' . $i] = (float) ($history['scores'][$i - 1] ?? 0);
+        }
+        $designFactor3 = (object) $designFactor3Data;
+
+        $designFactorRelativeImportanceData = [];
+        for ($i = 1; $i <= Df3Data::OBJECTIVE_COUNT; $i++) {
+            $designFactorRelativeImportanceData['r_df3_' . $i] = (float) ($history['relativeImportance'][$i - 1] ?? 0);
+        }
+        $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
         return view('cobit2019.df3.df3_output', compact('designFactor3', 'designFactorRelativeImportance'));
     }

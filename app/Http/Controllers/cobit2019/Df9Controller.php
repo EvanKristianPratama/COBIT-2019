@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\cobit2019;
 
+use App\Data\Cobit\Df9Data;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Cobit\Df9Service;
@@ -79,23 +80,26 @@ class Df9Controller extends Controller
     public function showOutput(int $id): View
     {
         $assessmentId = session('assessment_id');
-        $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
+        $history = $assessmentId
+            ? $this->service->loadHistory($assessmentId)
+            : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor9 = $history['inputs'] ? (object) [
+        $designFactor9Data = [
             'df_id' => $id,
-            'input1df9' => $history['inputs'][0] ?? 0,
-            'input2df9' => $history['inputs'][1] ?? 0,
-            'input3df9' => $history['inputs'][2] ?? 0,
-        ] : null;
-
-        $designFactorRelativeImportance = null;
-        if ($history['relativeImportance']) {
-            $ri = (object) [];
-            foreach ($history['relativeImportance'] as $idx => $val) {
-                $ri->{'r_df9_' . ($idx + 1)} = $val;
-            }
-            $designFactorRelativeImportance = $ri;
+            'input1df9' => (int) ($history['inputs'][0] ?? 0),
+            'input2df9' => (int) ($history['inputs'][1] ?? 0),
+            'input3df9' => (int) ($history['inputs'][2] ?? 0),
+        ];
+        for ($i = 1; $i <= Df9Data::OBJECTIVE_COUNT; $i++) {
+            $designFactor9Data['s_df9_' . $i] = (float) ($history['scores'][$i - 1] ?? 0);
         }
+        $designFactor9 = (object) $designFactor9Data;
+
+        $designFactorRelativeImportanceData = [];
+        for ($i = 1; $i <= Df9Data::OBJECTIVE_COUNT; $i++) {
+            $designFactorRelativeImportanceData['r_df9_' . $i] = (float) ($history['relativeImportance'][$i - 1] ?? 0);
+        }
+        $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
         return view('cobit2019.df9.df9_output', compact('designFactor9', 'designFactorRelativeImportance'));
     }

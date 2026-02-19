@@ -41,26 +41,26 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>{{ $designFactor3a->df_id }}</td>
-                                    <td>{{ $designFactor3a->input1df3 }}</td>
-                                    <td>{{ $designFactor3a->input2df3 }}</td>
-                                    <td>{{ $designFactor3a->input3df3 }}</td>
-                                    <td>{{ $designFactor3a->input4df3 }}</td>
-                                    <td>{{ $designFactor3a->input5df3 }}</td>
-                                    <td>{{ $designFactor3a->input6df3 }}</td>
-                                    <td>{{ $designFactor3a->input7df3 }}</td>
-                                    <td>{{ $designFactor3a->input8df3 }}</td>
-                                    <td>{{ $designFactor3a->input9df3 }}</td>
-                                    <td>{{ $designFactor3a->input10df3 }}</td>
-                                    <td>{{ $designFactor3a->input11df3 }}</td>
-                                    <td>{{ $designFactor3a->input12df3 }}</td>
-                                    <td>{{ $designFactor3a->input13df3 }}</td>
-                                    <td>{{ $designFactor3a->input14df3 }}</td>
-                                    <td>{{ $designFactor3a->input15df3 }}</td>
-                                    <td>{{ $designFactor3a->input16df3 }}</td>
-                                    <td>{{ $designFactor3a->input17df3 }}</td>
-                                    <td>{{ $designFactor3a->input18df3 }}</td>
-                                    <td>{{ $designFactor3a->input19df3 }}</td>
+                                    <td>{{ $designFactor3->df_id }}</td>
+                                    <td>{{ $designFactor3->input1df3 }}</td>
+                                    <td>{{ $designFactor3->input2df3 }}</td>
+                                    <td>{{ $designFactor3->input3df3 }}</td>
+                                    <td>{{ $designFactor3->input4df3 }}</td>
+                                    <td>{{ $designFactor3->input5df3 }}</td>
+                                    <td>{{ $designFactor3->input6df3 }}</td>
+                                    <td>{{ $designFactor3->input7df3 }}</td>
+                                    <td>{{ $designFactor3->input8df3 }}</td>
+                                    <td>{{ $designFactor3->input9df3 }}</td>
+                                    <td>{{ $designFactor3->input10df3 }}</td>
+                                    <td>{{ $designFactor3->input11df3 }}</td>
+                                    <td>{{ $designFactor3->input12df3 }}</td>
+                                    <td>{{ $designFactor3->input13df3 }}</td>
+                                    <td>{{ $designFactor3->input14df3 }}</td>
+                                    <td>{{ $designFactor3->input15df3 }}</td>
+                                    <td>{{ $designFactor3->input16df3 }}</td>
+                                    <td>{{ $designFactor3->input17df3 }}</td>
+                                    <td>{{ $designFactor3->input18df3 }}</td>
+                                    <td>{{ $designFactor3->input19df3 }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -104,7 +104,7 @@
                                             @foreach($labels as $index => $label)
                                                 @php
                                                     // Mengambil nilai score dan relative importance dari data DF3
-                                                    $score = $designFactor3a->{'s_df3_' . ($index + 1)};
+                                                    $score = $designFactor3->{'s_df3_' . ($index + 1)};
                                                     $relative = $designFactorRelativeImportance->{'r_df3_' . ($index + 1)};
                                                     // Menentukan kelas CSS berdasarkan nilai relative importance:
                                                     // - Positif: bg-primary-subtle

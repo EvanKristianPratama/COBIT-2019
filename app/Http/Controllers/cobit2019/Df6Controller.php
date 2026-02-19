@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\cobit2019;
 
+use App\Data\Cobit\Df6Data;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Cobit\Df6Service;
@@ -79,23 +80,26 @@ class Df6Controller extends Controller
     public function showOutput(int $id): View
     {
         $assessmentId = session('assessment_id');
-        $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
+        $history = $assessmentId
+            ? $this->service->loadHistory($assessmentId)
+            : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor6 = $history['inputs'] ? (object) [
+        $designFactor6Data = [
             'df_id' => $id,
-            'input1df6' => $history['inputs'][0] ?? 0,
-            'input2df6' => $history['inputs'][1] ?? 0,
-            'input3df6' => $history['inputs'][2] ?? 0,
-        ] : null;
-
-        $designFactorRelativeImportance = null;
-        if ($history['relativeImportance']) {
-            $ri = (object) [];
-            foreach ($history['relativeImportance'] as $idx => $val) {
-                $ri->{'r_df6_' . ($idx + 1)} = $val;
-            }
-            $designFactorRelativeImportance = $ri;
+            'input1df6' => (int) ($history['inputs'][0] ?? 0),
+            'input2df6' => (int) ($history['inputs'][1] ?? 0),
+            'input3df6' => (int) ($history['inputs'][2] ?? 0),
+        ];
+        for ($i = 1; $i <= Df6Data::OBJECTIVE_COUNT; $i++) {
+            $designFactor6Data['s_df6_' . $i] = (float) ($history['scores'][$i - 1] ?? 0);
         }
+        $designFactor6 = (object) $designFactor6Data;
+
+        $designFactorRelativeImportanceData = [];
+        for ($i = 1; $i <= Df6Data::OBJECTIVE_COUNT; $i++) {
+            $designFactorRelativeImportanceData['r_df6_' . $i] = (float) ($history['relativeImportance'][$i - 1] ?? 0);
+        }
+        $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
         return view('cobit2019.df6.df6_output', compact('designFactor6', 'designFactorRelativeImportance'));
     }

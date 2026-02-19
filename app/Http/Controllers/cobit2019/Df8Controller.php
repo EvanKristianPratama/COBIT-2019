@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\cobit2019;
 
+use App\Data\Cobit\Df8Data;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Cobit\Df8Service;
@@ -79,23 +80,26 @@ class Df8Controller extends Controller
     public function showOutput(int $id): View
     {
         $assessmentId = session('assessment_id');
-        $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
+        $history = $assessmentId
+            ? $this->service->loadHistory($assessmentId)
+            : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor8 = $history['inputs'] ? (object) [
+        $designFactor8Data = [
             'df_id' => $id,
-            'input1df8' => $history['inputs'][0] ?? 0,
-            'input2df8' => $history['inputs'][1] ?? 0,
-            'input3df8' => $history['inputs'][2] ?? 0,
-        ] : null;
-
-        $designFactorRelativeImportance = null;
-        if ($history['relativeImportance']) {
-            $ri = (object) [];
-            foreach ($history['relativeImportance'] as $idx => $val) {
-                $ri->{'r_df8_' . ($idx + 1)} = $val;
-            }
-            $designFactorRelativeImportance = $ri;
+            'input1df8' => (int) ($history['inputs'][0] ?? 0),
+            'input2df8' => (int) ($history['inputs'][1] ?? 0),
+            'input3df8' => (int) ($history['inputs'][2] ?? 0),
+        ];
+        for ($i = 1; $i <= Df8Data::OBJECTIVE_COUNT; $i++) {
+            $designFactor8Data['s_df8_' . $i] = (float) ($history['scores'][$i - 1] ?? 0);
         }
+        $designFactor8 = (object) $designFactor8Data;
+
+        $designFactorRelativeImportanceData = [];
+        for ($i = 1; $i <= Df8Data::OBJECTIVE_COUNT; $i++) {
+            $designFactorRelativeImportanceData['r_df8_' . $i] = (float) ($history['relativeImportance'][$i - 1] ?? 0);
+        }
+        $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
         return view('cobit2019.df8.df8_output', compact('designFactor8', 'designFactorRelativeImportance', 'id'));
     }

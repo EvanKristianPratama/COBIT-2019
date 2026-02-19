@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\cobit2019;
 
+use App\Data\Cobit\Df7Data;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Cobit\Df7Service;
@@ -80,24 +81,27 @@ class Df7Controller extends Controller
     public function showOutput(int $id): View
     {
         $assessmentId = session('assessment_id');
-        $history = $assessmentId ? $this->service->loadHistory($assessmentId) : ['inputs' => null, 'relativeImportance' => null];
+        $history = $assessmentId
+            ? $this->service->loadHistory($assessmentId)
+            : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        $designFactor7 = $history['inputs'] ? (object) [
+        $designFactor7Data = [
             'df_id' => $id,
-            'input1df7' => $history['inputs'][0] ?? 0,
-            'input2df7' => $history['inputs'][1] ?? 0,
-            'input3df7' => $history['inputs'][2] ?? 0,
-            'input4df7' => $history['inputs'][3] ?? 0,
-        ] : null;
-
-        $designFactorRelativeImportance = null;
-        if ($history['relativeImportance']) {
-            $ri = (object) [];
-            foreach ($history['relativeImportance'] as $idx => $val) {
-                $ri->{'r_df7_' . ($idx + 1)} = $val;
-            }
-            $designFactorRelativeImportance = $ri;
+            'input1df7' => (int) ($history['inputs'][0] ?? 0),
+            'input2df7' => (int) ($history['inputs'][1] ?? 0),
+            'input3df7' => (int) ($history['inputs'][2] ?? 0),
+            'input4df7' => (int) ($history['inputs'][3] ?? 0),
+        ];
+        for ($i = 1; $i <= Df7Data::OBJECTIVE_COUNT; $i++) {
+            $designFactor7Data['s_df7_' . $i] = (float) ($history['scores'][$i - 1] ?? 0);
         }
+        $designFactor7 = (object) $designFactor7Data;
+
+        $designFactorRelativeImportanceData = [];
+        for ($i = 1; $i <= Df7Data::OBJECTIVE_COUNT; $i++) {
+            $designFactorRelativeImportanceData['r_df7_' . $i] = (float) ($history['relativeImportance'][$i - 1] ?? 0);
+        }
+        $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
         return view('cobit2019.df7.df7_output', compact('designFactor7', 'designFactorRelativeImportance'));
     }

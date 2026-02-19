@@ -118,26 +118,22 @@ class Df10Controller extends Controller
             ? $this->service->loadHistory($assessmentId)
             : ['inputs' => null, 'scores' => null, 'relativeImportance' => null];
 
-        // Build DTO-like object for view compatibility
-        $designFactor10 = null;
-        $designFactorRelativeImportance = null;
-
-        if ($history['inputs']) {
-            $designFactor10 = (object) [
-                'df_id' => $id,
-                'input1df10' => $history['inputs'][0] ?? 0,
-                'input2df10' => $history['inputs'][1] ?? 0,
-                'input3df10' => $history['inputs'][2] ?? 0,
-            ];
+        $designFactor10Data = [
+            'df_id' => $id,
+            'input1df10' => (int) ($history['inputs'][0] ?? 0),
+            'input2df10' => (int) ($history['inputs'][1] ?? 0),
+            'input3df10' => (int) ($history['inputs'][2] ?? 0),
+        ];
+        for ($i = 1; $i <= Df10Data::OBJECTIVE_COUNT; $i++) {
+            $designFactor10Data['s_df10_' . $i] = (float) ($history['scores'][$i - 1] ?? 0);
         }
+        $designFactor10 = (object) $designFactor10Data;
 
-        if ($history['relativeImportance']) {
-            $ri = (object) [];
-            foreach ($history['relativeImportance'] as $idx => $val) {
-                $ri->{'r_df10_' . ($idx + 1)} = $val;
-            }
-            $designFactorRelativeImportance = $ri;
+        $designFactorRelativeImportanceData = [];
+        for ($i = 1; $i <= Df10Data::OBJECTIVE_COUNT; $i++) {
+            $designFactorRelativeImportanceData['r_df10_' . $i] = (float) ($history['relativeImportance'][$i - 1] ?? 0);
         }
+        $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
         return view('cobit2019.df10.df10_output', compact(
             'designFactor10',
