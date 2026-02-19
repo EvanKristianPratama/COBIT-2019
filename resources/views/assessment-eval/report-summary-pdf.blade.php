@@ -194,26 +194,36 @@
                 <div style="border: 1px solid #dee2e6; padding: 5px; background-color: white;">
                     @php
                         $practices = $objective->practices;
-                        $chunks = $practices->chunk(ceil($practices->count() / 3));
+                        $practiceCount = $practices->count();
+                        $chunkSize = max(1, (int) ceil($practiceCount / 3));
+                        $chunks = $practiceCount > 0 ? $practices->chunk($chunkSize) : collect();
                     @endphp
                     <table style="width: 100%; border: none;">
-                        <tr style="border: none;">
-                            @foreach ($chunks as $chunk)
-                                <td style="width: 33%; vertical-align: top; border: none; padding: 0 5px;">
-                                    @foreach ($chunk as $practice)
-                                        <div style="margin-bottom: 3px;">
-                                            <span
-                                                style="font-size: 0.75rem; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
-                                            <span
-                                                style="color: black; font-size: 0.75rem;">{{ str_replace('"', '', $practice->practice_name) }}</span>
-                                        </div>
-                                    @endforeach
+                        @if ($practiceCount === 0)
+                            <tr style="border: none;">
+                                <td colspan="3" style="border: none; text-align: center; font-size: 0.75rem; color: #6c757d; font-style: italic;">
+                                    No management practices available.
                                 </td>
-                            @endforeach
-                            @for ($i = $chunks->count(); $i < 3; $i++)
-                                <td style="width: 33%; border: none;"></td>
-                            @endfor
-                        </tr>
+                            </tr>
+                        @else
+                            <tr style="border: none;">
+                                @foreach ($chunks as $chunk)
+                                    <td style="width: 33%; vertical-align: top; border: none; padding: 0 5px;">
+                                        @foreach ($chunk as $practice)
+                                            <div style="margin-bottom: 3px;">
+                                                <span
+                                                    style="font-size: 0.75rem; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                                <span
+                                                    style="color: black; font-size: 0.75rem;">{{ str_replace('"', '', $practice->practice_name) }}</span>
+                                            </div>
+                                        @endforeach
+                                    </td>
+                                @endforeach
+                                @for ($i = $chunks->count(); $i < 3; $i++)
+                                    <td style="width: 33%; border: none;"></td>
+                                @endfor
+                            </tr>
+                        @endif
                     </table>
                 </div>
             </div>

@@ -75,6 +75,41 @@
             'DSS01' => 5, 'DSS02' => 5, 'DSS03' => 5, 'DSS04' => 4, 'DSS05' => 5, 'DSS06' => 5,
             'MEA01' => 5, 'MEA02' => 5, 'MEA03' => 5, 'MEA04' => 4
         ];
+
+        // Normalize selected scopes so summary section is safe even if payload is incomplete
+        $normalizedSelectedData = [];
+        foreach (($selectedData ?? []) as $row) {
+            $scoresRaw = (isset($row['maturity_scores']) && is_array($row['maturity_scores']))
+                ? $row['maturity_scores']
+                : [];
+
+            $scoreMap = [];
+            $validScores = [];
+            foreach ($scoresRaw as $objectiveId => $value) {
+                if (is_numeric($value)) {
+                    $numeric = (float) $value;
+                    $scoreMap[$objectiveId] = $numeric;
+                    $validScores[] = $numeric;
+                } else {
+                    $scoreMap[$objectiveId] = null;
+                }
+            }
+
+            $selectedCount = count($validScores);
+            $avgScore = $selectedCount > 0 ? (array_sum($validScores) / $selectedCount) : 0.0;
+
+            $effectiveTarget = (isset($row['effective_target']) && is_numeric($row['effective_target']))
+                ? (float) $row['effective_target']
+                : 0.0;
+
+            $normalizedSelectedData[] = array_merge($row, [
+                '_score_map' => $scoreMap,
+                '_selected_count' => $selectedCount,
+                '_avg_score' => $avgScore,
+                '_effective_target' => $effectiveTarget,
+                '_gap' => $avgScore - $effectiveTarget,
+            ]);
+        }
     @endphp
 
     <table>
@@ -83,10 +118,10 @@
                 <th style="width: 30px;">No</th>
                 <th style="width: 60px;">GAMO</th>
                 <th style="width: 150px;">Process Name</th>
-                @foreach($selectedData as $data)
+                @foreach($normalizedSelectedData as $data)
                     <th>
                         <div style="font-size: 11px;">{{ $data['year'] }}</div>
-                        <div style="font-weight: normal; font-size: 9px;">{{ $data['scope_name'] }}</div>
+                        <div style="font-weight: normal; font-size: 9px;">{{ $data['scope_name'] ?? '-' }}</div>
                     </th>
                 @endforeach
                 @if($showMaxLevel)
@@ -101,9 +136,9 @@
                     <td class="text-center"><strong>{{ $obj->objective_id }}</strong></td>
                     <td>{{ $obj->objective }}</td>
                     
-                    @foreach($selectedData as $data)
+                    @foreach($normalizedSelectedData as $data)
                         @php
-                            $score = $data['maturity_scores'][$obj->objective_id] ?? null;
+                            $score = $data['_score_map'][$obj->objective_id] ?? null;
                             $colorClass = $score !== null ? 'level-' . floor($score) : '';
                         @endphp
                         
@@ -126,11 +161,8 @@
             {{-- ROW 1: TOTAL GAMO --}}
             <tr class="footer-row bg-gray">
                 <td colspan="3" class="text-right">Total GAMO Selected</td>
-                @foreach($selectedData as $data)
-                    @php
-                        $count = count(array_filter($data['maturity_scores'], function($v) { return $v !== null; }));
-                    @endphp
-                    <td class="text-center">{{ $count }}</td>
+                @foreach($normalizedSelectedData as $data)
+                    <td class="text-center">{{ $data['_selected_count'] }}</td>
                 @endforeach
                 @if($showMaxLevel)
                     <td class="text-center" style="background-color: #6c757d; color: white;">-</td>
@@ -140,12 +172,8 @@
             {{-- ROW 2: AVG MATURITY --}}
             <tr class="footer-row">
                 <td colspan="3" class="text-right">I&T Maturity Score</td>
-                @foreach($selectedData as $data)
-                    @php
-                        $valid = array_filter($data['maturity_scores'], function($v) { return $v !== null; });
-                        $avg = count($valid) ? array_sum($valid) / count($valid) : 0;
-                    @endphp
-                    <td class="text-center">{{ number_format($avg, 2) }}</td>
+                @foreach($normalizedSelectedData as $data)
+                    <td class="text-center">{{ number_format($data['_avg_score'], 2) }}</td>
                 @endforeach
                 @if($showMaxLevel)
                     <td class="text-center" style="background-color: #6c757d; color: white;">-</td>
@@ -155,8 +183,10 @@
             {{-- ROW 3: TARGET --}}
             <tr class="footer-row">
                 <td colspan="3" class="text-right">I&T Target Maturity</td>
-                @foreach($selectedData as $data)
-                    <td class="text-center">{{ number_format($data['effective_target'], 2) }}</td>
+                @foreach($normalizedSelectedData as $data)
+                    <td class="text-center">
+                        {{ $data['_effective_target'] > 0 ? number_format($data['_effective_target'], 2) : '-' }}
+                    </td>
                 @endforeach
                 @if($showMaxLevel)
                     <td class="text-center" style="background-color: #6c757d; color: white;">-</td>
@@ -166,11 +196,9 @@
             {{-- ROW 4: GAP --}}
             <tr class="footer-row">
                 <td colspan="3" class="text-right">Gap Analysis</td>
-                @foreach($selectedData as $data)
+                @foreach($normalizedSelectedData as $data)
                     @php
-                        $valid = array_filter($data['maturity_scores'], function($v) { return $v !== null; });
-                        $avg = count($valid) ? array_sum($valid) / count($valid) : 0;
-                        $gap = $avg - $data['effective_target'];
+                        $gap = $data['_gap'];
                         $gapSign = $gap > 0 ? '+' : '';
                         $gapClass = $gap >= 0 ? 'gap-pos' : 'gap-neg';
                     @endphp

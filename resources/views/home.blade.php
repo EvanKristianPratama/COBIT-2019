@@ -13,8 +13,8 @@
           <article class="home-tool-item">
             <span class="home-tool-icon bg-soft-amber"><i class="fas fa-puzzle-piece"></i></span>
             <div>
-              <h2>COBIT Components</h2>
-              <p>Kamus komponen COBIT.</p>
+              <h2>Governance System Component</h2>
+              <p>Kamus Governance System Component.</p>
             </div>
           </article>
         </a>

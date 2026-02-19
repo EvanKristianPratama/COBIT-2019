@@ -132,21 +132,17 @@
         .top-org-chip {
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
-            padding: 0;
+            padding: 0.26rem 0.68rem;
             max-width: 240px;
-        }
-
-        .top-org-icon {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.68rem;
-            flex: 0 0 auto;
+            border-radius: 999px;
+            background: #f59e0b;
+            border: 1px solid #fbbf24;
         }
 
         .top-org-text {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.74rem;
-            font-weight: 600;
+            color: #3b1f00;
+            font-size: 0.73rem;
+            font-weight: 700;
             line-height: 1;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -186,6 +182,13 @@
         .breadcrumb-item a:hover {
             color: var(--cobit-accent);
             text-decoration: none;
+        }
+
+        .breadcrumb-item a.breadcrumb-link-disabled {
+            pointer-events: none;
+            cursor: default;
+            color: #94a3b8 !important;
+            opacity: 0.95;
         }
 
         .breadcrumb-item+.breadcrumb-item::before {
@@ -306,7 +309,6 @@
                         @else
                             <li class="nav-item d-flex align-items-center gap-2">
                                 <span class="top-org-chip d-none d-lg-inline-flex" title="{{ Auth::user()->organisasi ?? 'Nama Organisasi' }}">
-                                    <i class="fas fa-building top-org-icon"></i>
                                     <span class="top-org-text">{{ Auth::user()->organisasi ?? 'Nama Organisasi' }}</span>
                                 </span>
                                 <a class="nav-link p-0" href="#" role="button" data-bs-toggle="offcanvas"
@@ -324,35 +326,72 @@
         </nav>
 
         @auth
+            @php
+                $disableBreadcrumbClick = request()->routeIs(
+                    'df1.*',
+                    'df2.*',
+                    'df3.*',
+                    'df4.*',
+                    'df5.*',
+                    'df6.*',
+                    'df7.*',
+                    'df8.*',
+                    'df9.*',
+                    'df10.*',
+                    'step2.*',
+                    'step3.*',
+                    'step4.*',
+                    'target-capability.*',
+                    'target-maturity.*',
+                    'roadmap.*'
+                );
+            @endphp
             <div class="breadcrumb-wrapper">
                 <div class="container">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
-                                <a href="{{ route('home') }}" class="{{ Route::is('home') ? 'active' : '' }}">
+                                <a
+                                    href="{{ $disableBreadcrumbClick ? '#' : route('home') }}"
+                                    class="{{ Route::is('home') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                >
                                     <i class="fas fa-home"></i> Home
                                 </a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('cobit2019.objectives.show', 'APO01') }}"
-                                    class="{{ Route::is('cobit2019.*') ? 'active' : '' }}">
-                                    <i class="fas fa-book"></i> COBIT Components
+                                <a
+                                    href="{{ $disableBreadcrumbClick ? '#' : route('cobit2019.objectives.show', 'APO01') }}"
+                                    class="{{ Route::is('cobit2019.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                >
+                                    <i class="fas fa-book"></i> Governance System Component
                                 </a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('cobit.home') }}" class="{{ Route::is('cobit.*') ? 'active' : '' }}">
+                                <a
+                                    href="{{ $disableBreadcrumbClick ? '#' : route('cobit.home') }}"
+                                    class="{{ Route::is('cobit.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                >
                                     <i class="fas fa-tools"></i> Design I&T Tailored Governance System
                                 </a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('assessment-eval.index') }}"
-                                    class="{{ Route::is('assessment-eval.*') ? 'active' : '' }}">
+                                <a
+                                    href="{{ $disableBreadcrumbClick ? '#' : route('assessment-eval.index') }}"
+                                    class="{{ Route::is('assessment-eval.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                >
                                     <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
                                 </a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('spreadsheet.index') }}"
-                                    class="{{ Route::is('spreadsheet.*') ? 'active' : '' }}">
+                                <a
+                                    href="{{ $disableBreadcrumbClick ? '#' : route('spreadsheet.index') }}"
+                                    class="{{ Route::is('spreadsheet.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                >
                                     <i class="fas fa-table"></i> Spreadsheet Tools
                                 </a>
                             </li>
@@ -407,7 +446,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('cobit2019.objectives.show', 'APO01') }}">
-                                <i class="fas fa-book me-2"></i> COBIT Components
+                                <i class="fas fa-book me-2"></i> Governance System Component
                             </a>
                         </li>
                         <li class="nav-item">

@@ -132,19 +132,21 @@
           </div>
         @endif
 
-        {{-- Action Buttons --}}
-        <div class="d-flex gap-3 justify-content-end">
-          <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#joinModal">
-            Join dengan Kode
-          </button>
-          <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
-            @csrf
-            <input type="hidden" name="kode_assessment" value="new">
-            <button type="submit" class="btn btn-primary">
-              Buat Baru
+        @if(Auth::check() && !empty($user->role) && strtolower($user->role) === 'admin')
+          {{-- Action Buttons --}}
+          <div class="d-flex gap-3 justify-content-end">
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#joinModal">
+              Join dengan Kode
             </button>
-          </form>
-        </div>
+            <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
+              @csrf
+              <input type="hidden" name="kode_assessment" value="new">
+              <button type="submit" class="btn btn-primary">
+                Buat Baru
+              </button>
+            </form>
+          </div>
+        @endif
 
       </div>
     </div>
@@ -156,26 +158,28 @@
   </a>
 </div>
 
-{{-- Join Modal --}}
-<div class="modal fade" id="joinModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title">Join Assessment</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+@if(Auth::check() && !empty($user->role) && strtolower($user->role) === 'admin')
+  {{-- Join Modal --}}
+  <div class="modal fade" id="joinModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title">Join Assessment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{{ route('assessment.join.store') }}">
+          @csrf
+          <div class="modal-body">
+            <input type="text" name="kode_assessment" class="form-control form-control-lg" placeholder="Masukkan kode" required autofocus>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="submit" class="btn btn-primary w-100">Join</button>
+          </div>
+        </form>
       </div>
-      <form method="POST" action="{{ route('assessment.join.store') }}">
-        @csrf
-        <div class="modal-body">
-          <input type="text" name="kode_assessment" class="form-control form-control-lg" placeholder="Masukkan kode" required autofocus>
-        </div>
-        <div class="modal-footer border-0 pt-0">
-          <button type="submit" class="btn btn-primary w-100">Join</button>
-        </div>
-      </form>
     </div>
   </div>
-</div>
+@endif
 
 <style>
 .design-toolkit {

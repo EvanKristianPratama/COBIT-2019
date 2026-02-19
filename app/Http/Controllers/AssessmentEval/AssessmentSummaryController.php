@@ -365,7 +365,7 @@ class AssessmentSummaryController extends Controller
         $roadmap = $this->getRoadmapTargetCapability($objectiveId);
         $data = array_merge($data, compact('roadmap'));
 
-        $pdf = PDF::loadView('assessment-eval.report-summary-pdf', $data);
+        $pdf = Pdf::loadView('assessment-eval.report-summary-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
 
         $filename = 'Summary-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
@@ -379,7 +379,7 @@ class AssessmentSummaryController extends Controller
         $roadmap = $this->getRoadmapTargetCapability($objectiveId);
         $data = array_merge($data, compact('roadmap'));
 
-        $pdf = PDF::loadView('assessment-eval.report-summary-detail-pdf', $data);
+        $pdf = Pdf::loadView('assessment-eval.report-summary-detail-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
 
         $filename = 'Summary-Detail-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';

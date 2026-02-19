@@ -256,7 +256,8 @@ class AssessmentReportController extends Controller
 
             // Augment data with effective targets for PDF view simplicity
             foreach ($selectedData as &$data) {
-                $isBumn = stripos($data['scope_name'], 'bumn') !== false;
+                $scopeName = (string) ($data['scope_name'] ?? '');
+                $isBumn = stripos($scopeName, 'bumn') !== false;
                 $data['effective_target'] = $isBumn ? $targetBumnOverride : ($data['target_maturity'] ?? 0);
             }
             unset($data);
