@@ -20,7 +20,8 @@
         <div class="flex-1 min-h-0 flex items-center justify-center px-6 py-5 lg:px-8 bg-white">
             <div class="w-full max-w-md">
                 <div class="mb-6 flex flex-col items-center text-center">
-                    <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo" class="h-16 w-auto object-contain mb-4" />
+                    <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo"
+                        class="h-16 w-auto object-contain mb-4" />
                 </div>
 
                 <div class="mb-6 text-center">
@@ -31,7 +32,8 @@
                 @if ($errorMessage)
                     <div class="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl">
                         <p class="text-sm text-red-600 flex items-center">
-                            <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -44,44 +46,49 @@
                     @csrf
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                            value="{{ old('email') }}"
-                            type="email"
-                            id="email"
-                            name="email"
-                            required
-                            autocomplete="email"
-                            autofocus
+                        <input value="{{ old('email') }}" type="email" id="email" name="email" required
+                            autocomplete="email" autofocus
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                            placeholder="admin@example.com"
-                        />
+                            placeholder="admin@example.com" />
                         @error('email')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            required
-                            autocomplete="current-password"
-                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                            placeholder="••••••••"
-                        />
+                        <div class="relative">
+                            <input type="password" id="password" name="password" required
+                                autocomplete="current-password"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all pr-12"
+                                placeholder="••••••••" />
+                            <button type="button" id="togglePassword"
+                                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none transition-colors">
+                                <!-- Eye Icon -->
+                                <svg id="eyeIcon" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                <!-- Eye-slash Icon -->
+                                <svg id="eyeSlashIcon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.225 0 2.391.218 3.473.616m3.961 3.961a9.96 9.96 0 011.56 3.423M12 9a3 3 0 10-3 3M3 3l18 18" />
+                                </svg>
+                            </button>
+                        </div>
                         @error('password')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <button
-                        id="manualLoginBtn"
-                        type="submit"
-                        class="w-full bg-[#1a3d6b] hover:bg-[#0f2b5c] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center disabled:opacity-50"
-                    >
+                    <button id="manualLoginBtn" type="submit"
+                        class="w-full bg-[#1a3d6b] hover:bg-[#0f2b5c] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center disabled:opacity-50">
                         <svg id="manualSpinner" class="hidden animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor"
                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                             </path>
@@ -100,14 +107,12 @@
                 </div>
 
                 <div class="space-y-3">
-                    <button
-                        id="googleLoginBtn"
-                        type="button"
-                        class="w-full flex items-center justify-center px-4 py-3.5 rounded-xl font-medium transition-all duration-200 shadow-sm border border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                    >
+                    <button id="googleLoginBtn" type="button"
+                        class="w-full flex items-center justify-center px-4 py-3.5 rounded-xl font-medium transition-all duration-200 shadow-sm border border-gray-200 text-gray-700 bg-white hover:bg-gray-50">
                         <span id="googleLoading" class="hidden items-center">
                             <svg class="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor"
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
@@ -142,10 +147,12 @@
             <div id="carouselBackgrounds" class="absolute inset-0"></div>
             <div class="relative z-10 flex flex-col justify-between h-full p-12">
                 <div class="flex justify-between items-center p-4 rounded-2xl w-fit">
-                    <img src="{{ asset('images/logo-divusi.png') }}" alt="Divusi Logo" class="h-16 w-auto object-contain brightness-0 invert" />
+                    <img src="{{ asset('images/logo-divusi.png') }}" alt="Divusi Logo"
+                        class="h-16 w-auto object-contain brightness-0 invert" />
                 </div>
 
-                <div class="bg-white/12 backdrop-blur-xl rounded-3xl p-9 border border-white/25 shadow-2xl transition-all duration-500">
+                <div
+                    class="bg-white/12 backdrop-blur-xl rounded-3xl p-9 border border-white/25 shadow-2xl transition-all duration-500">
                     <div id="quoteWrapper" class="fade-text-enter">
                         <p id="quoteText" class="carousel-quote"></p>
                     </div>
@@ -186,6 +193,26 @@
                 manualLoginLabel.textContent = 'Masuk...';
             });
 
+            // Password Toggle Logic
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            const eyeSlashIcon = document.getElementById('eyeSlashIcon');
+
+            togglePassword?.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                // Toggle icons
+                if (type === 'text') {
+                    eyeIcon.classList.add('hidden');
+                    eyeSlashIcon.classList.remove('hidden');
+                } else {
+                    eyeIcon.classList.remove('hidden');
+                    eyeSlashIcon.classList.add('hidden');
+                }
+            });
+
             googleLoginBtn?.addEventListener('click', () => {
                 googleLoginBtn.disabled = true;
                 googleLoading.classList.remove('hidden');
@@ -214,7 +241,8 @@
 
                     const dot = document.createElement('button');
                     dot.type = 'button';
-                    dot.className = `w-2 h-2 rounded-full transition-all duration-300 ${index === 0 ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}`;
+                    dot.className =
+                        `w-2 h-2 rounded-full transition-all duration-300 ${index === 0 ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}`;
                     dot.addEventListener('click', () => {
                         currentImageIndex = index;
                         renderSlide();
@@ -232,7 +260,8 @@
                     slides[i].classList.toggle('opacity-0', i !== currentImageIndex);
                 }
                 for (let i = 0; i < dots.length; i++) {
-                    dots[i].className = `w-2 h-2 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}`;
+                    dots[i].className =
+                        `w-2 h-2 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}`;
                 }
 
                 quoteWrapper?.classList.remove('fade-text-enter');
