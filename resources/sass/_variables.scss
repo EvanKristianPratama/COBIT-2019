@@ -30,6 +30,6 @@ $sidebar-active-text-color: $primary; // Warna teks item aktif
 $transition-duration: 0.3s; // Durasi transisi untuk efek hover
 $transition-timing: ease; // Timing function untuk transisi
 
-$login-bg: url('..public/images/background.png'); // Ganti dengan path gambar latar belakang yang diinginkan
+$login-bg: url('/images/background.png'); // Ambil asset langsung dari folder public
 $login-bg-size: cover; // Atur sesuai kebutuhan, bisa juga contain atau auto
 $login-overlay-color: rgba(0, 0, 0, 0.2); // Contoh overlay gelap

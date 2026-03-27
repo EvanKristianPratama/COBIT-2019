@@ -342,8 +342,7 @@
                     'step3.*',
                     'step4.*',
                     'target-capability.*',
-                    'target-maturity.*',
-                    'roadmap.*'
+                    'target-maturity.*'
                 );
             @endphp
             <div class="breadcrumb-wrapper">
