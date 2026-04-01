@@ -93,36 +93,38 @@
             </div>
             <div class="card-body">
 
-                <div class="domain-tabs-wrapper">
-                    <div class="domain-tabs" role="tablist">
-                        <a href="{{ route('assessment-eval.evidence.index', $evalId) }}"
-                            class="domain-tab text-decoration-none d-flex align-items-center"
-                            style="background-color: #0f2b5c; color: #fff;">
-                            <i class="fas fa-plus me-2"></i>Evidence
-                        </a>
-                        @if ($isOwner && $evaluation->status !== 'finished')
-                            <button type="button" class="d-flex align-items-center px-3 py-2 me-1 border-0 fw-bold"
-                                data-bs-toggle="modal" data-bs-target="#editScopeModal"
-                                style="background-color: #0f2b5c; color: #fff; border-radius: 10px; font-size: 0.9rem;">
-                                <i class="fas fa-layer-group me-2"></i>SCOPE
-                            </button>
-                        @endif
-                        <button type="button" class="domain-tab active " data-domain="all">All</button>
-                        <button type="button" class="domain-tab" data-domain="EDM">EDM</button>
-                        <button type="button" class="domain-tab" data-domain="APO">APO</button>
-                        <button type="button" class="domain-tab" data-domain="BAI">BAI</button>
-                        <button type="button" class="domain-tab" data-domain="DSS">DSS</button>
-                        <button type="button" class="domain-tab" data-domain="MEA">MEA</button>
-                        <button type="button" class="domain-tab" data-domain="recap">Summary Result</button>
-                        <button type="button" class="domain-tab" data-domain="diagram">Spider Web Diagram</button>
-                        <a href="{{ route('assessment-eval.report', $evalId) }}"
-                            class="domain-tab text-decoration-none d-flex align-items-center"
-                            style="background-color: #0f2b5c; color: #fff;">
-                            <i class="fas fa-file-alt me-2"></i>Report
-                        </a>
-                    </div>
-                    <div id="objective-filter-wrapper" class="objective-filter-wrapper" style="display: none;">
-                        <div class="objective-filter-tabs" id="objective-filter-tabs" role="tablist"></div>
+                <div class="assessment-toolbar-anchor" id="assessment-toolbar-anchor">
+                    <div class="domain-tabs-wrapper" id="assessment-toolbar">
+                        <div class="domain-tabs" role="tablist">
+                            <a href="{{ route('assessment-eval.evidence.index', $evalId) }}"
+                                class="domain-tab text-decoration-none d-flex align-items-center"
+                                style="background-color: #0f2b5c; color: #fff;">
+                                <i class="fas fa-plus me-2"></i>Evidence
+                            </a>
+                            @if ($isOwner && $evaluation->status !== 'finished')
+                                <button type="button" class="d-flex align-items-center px-3 py-2 me-1 border-0 fw-bold"
+                                    data-bs-toggle="modal" data-bs-target="#editScopeModal"
+                                    style="background-color: #0f2b5c; color: #fff; border-radius: 10px; font-size: 0.9rem;">
+                                    <i class="fas fa-layer-group me-2"></i>SCOPE
+                                </button>
+                            @endif
+                            <button type="button" class="domain-tab active " data-domain="all">All</button>
+                            <button type="button" class="domain-tab" data-domain="EDM">EDM</button>
+                            <button type="button" class="domain-tab" data-domain="APO">APO</button>
+                            <button type="button" class="domain-tab" data-domain="BAI">BAI</button>
+                            <button type="button" class="domain-tab" data-domain="DSS">DSS</button>
+                            <button type="button" class="domain-tab" data-domain="MEA">MEA</button>
+                            <button type="button" class="domain-tab" data-domain="recap">Summary Result</button>
+                            <button type="button" class="domain-tab" data-domain="diagram">Spider Web Diagram</button>
+                            <a href="{{ route('assessment-eval.report', $evalId) }}"
+                                class="domain-tab text-decoration-none d-flex align-items-center"
+                                style="background-color: #0f2b5c; color: #fff;">
+                                <i class="fas fa-file-alt me-2"></i>Report
+                            </a>
+                        </div>
+                        <div id="objective-filter-wrapper" class="objective-filter-wrapper" style="display: none;">
+                            <div class="objective-filter-tabs" id="objective-filter-tabs" role="tablist"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -3825,7 +3827,66 @@
         document.addEventListener('DOMContentLoaded', () => {
             const isOwnerFlag = window.IS_OWNER === true || window.IS_OWNER === 'true';
             new COBITAssessmentManager({{ $evalId }}, '{{ $evaluation->status ?? 'draft' }}', isOwnerFlag);
+            initAssessmentToolbarSticky();
         });
+
+        function initAssessmentToolbarSticky() {
+            const toolbarAnchor = document.getElementById('assessment-toolbar-anchor');
+            const toolbar = document.getElementById('assessment-toolbar');
+
+            if (!toolbarAnchor || !toolbar) {
+                return;
+            }
+
+            const breadcrumbWrapper = document.querySelector('.breadcrumb-wrapper');
+
+            const getTopOffset = () => {
+                const rootStyles = window.getComputedStyle(document.documentElement);
+                const navbarHeight = parseFloat(rootStyles.getPropertyValue('--navbar-height')) || 68;
+                const breadcrumbHeight = breadcrumbWrapper ? breadcrumbWrapper.offsetHeight : 0;
+
+                return Math.round(navbarHeight + breadcrumbHeight + 12);
+            };
+
+            const syncToolbarState = () => {
+                const anchorRect = toolbarAnchor.getBoundingClientRect();
+                const topOffset = getTopOffset();
+                const shouldStick = anchorRect.top <= topOffset;
+
+                toolbar.classList.toggle('is-sticky', shouldStick);
+
+                if (shouldStick) {
+                    toolbar.style.top = `${topOffset}px`;
+                    toolbar.style.left = `${anchorRect.left}px`;
+                    toolbar.style.width = `${anchorRect.width}px`;
+                    toolbarAnchor.style.minHeight = `${toolbar.offsetHeight}px`;
+                } else {
+                    toolbar.style.top = '';
+                    toolbar.style.left = '';
+                    toolbar.style.width = '';
+                    toolbarAnchor.style.minHeight = '';
+                }
+            };
+
+            const requestSync = () => window.requestAnimationFrame(syncToolbarState);
+
+            window.addEventListener('scroll', requestSync, {
+                passive: true
+            });
+            window.addEventListener('resize', requestSync);
+
+            if ('ResizeObserver' in window) {
+                const observer = new ResizeObserver(requestSync);
+                observer.observe(toolbarAnchor);
+                observer.observe(toolbar);
+
+                if (breadcrumbWrapper) {
+                    observer.observe(breadcrumbWrapper);
+                }
+            }
+
+            requestSync();
+        }
     </script>
 
     {{-- Custom CSS for better styling --}}
@@ -3875,6 +3936,10 @@
             border: none;
             border-radius: 10px;
             overflow: hidden;
+        }
+
+        .hero-card {
+            overflow: visible;
         }
 
         .card-header {
@@ -3984,12 +4049,26 @@
             font-size: 0.75rem;
         }
 
+        .assessment-toolbar-anchor {
+            position: relative;
+        }
+
         .domain-tabs-wrapper {
             background: #f7f9ff;
             border-radius: 0.8rem;
             padding: 0.25rem 0.5rem 0.2rem;
             border: 1px solid #e1e6f5;
             overflow-x: auto;
+            transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .domain-tabs-wrapper.is-sticky {
+            position: fixed;
+            z-index: 1015;
+            background: rgba(247, 249, 255, 0.96);
+            box-shadow: 0 18px 36px rgba(15, 43, 92, 0.14);
+            backdrop-filter: blur(14px);
+            transform: translateY(0);
         }
 
         .domain-tabs {
@@ -4055,6 +4134,13 @@
         .objective-filter-tab.active {
             color: #0f2b5c;
             border-bottom-color: #0f6ad9;
+        }
+
+        @media (max-width: 991.98px) {
+            .domain-tabs-wrapper.is-sticky {
+                left: 0.75rem !important;
+                width: calc(100vw - 1.5rem) !important;
+            }
         }
 
         .domain-overview-wrapper {

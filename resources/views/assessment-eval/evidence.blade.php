@@ -103,7 +103,7 @@
                                 <tr>
                                     <td class="text-center text-truncate" style="max-width: 0;"
                                         title="{{ $loop->iteration }}">{{ $loop->iteration }}</td>
-                                    <td class="text-truncate" style="max-width: 0;"
+                                    <td class="evidence-title-cell"
                                         title="{{ $evidence->judul_dokumen }}" data-field="judul_dokumen">
                                         {{ $evidence->judul_dokumen }}</td>
                                     <td class="text-truncate" style="max-width: 0;"
@@ -597,7 +597,7 @@
 
                         tr.innerHTML = `
                 <td class="text-center text-truncate" style="max-width: 0;" title="${startIndex + idx + 1}">${startIndex + idx + 1}</td>
-                <td class="text-truncate" style="max-width: 0;" title="${safe(evidence.judul_dokumen)}" data-field="judul_dokumen">${safe(evidence.judul_dokumen)}</td>
+                <td class="evidence-title-cell" title="${safe(evidence.judul_dokumen)}" data-field="judul_dokumen">${safe(evidence.judul_dokumen)}</td>
                 <td class="text-truncate" style="max-width: 0;" title="${safe(evidence.no_dokumen)}" data-field="no_dokumen">${safe(evidence.no_dokumen)}</td>
                 <td style="word-wrap: break-word; white-space: normal;" title="${safe(evidence.summary)}" data-field="summary">${safe(evidence.summary)}</td>
                 <td class="text-center text-truncate" style="max-width: 0;" title="${safe(evidence.grup)}" data-field="grup">${safe(evidence.grup)}</td>
@@ -738,7 +738,7 @@
 
                     tr.innerHTML = `
             <td class="text-center text-truncate" style="max-width: 0;"></td>
-            <td class="text-truncate" style="max-width: 0;" title="${safe(evidence.judul_dokumen)}">${safe(evidence.judul_dokumen)}</td>
+            <td class="evidence-title-cell" title="${safe(evidence.judul_dokumen)}">${safe(evidence.judul_dokumen)}</td>
             <td class="text-truncate" style="max-width: 0;" title="${safe(evidence.no_dokumen)}">${safe(evidence.no_dokumen)}</td>
             <td style="word-wrap: break-word; white-space: normal;" title="${safe(evidence.summary)}">${safe(evidence.summary)}</td>
             <td class="text-center text-truncate" style="max-width: 0;" title="${safe(evidence.grup)}">${safe(evidence.grup)}</td>
@@ -860,7 +860,7 @@
                     <input type="checkbox" name="importEvidence" value="${itemId}" ${isDuplicate ? 'disabled' : ''} />
                 </td>
                 <td class="text-center">${item.__no}</td>
-                <td>${item.judul_dokumen || '-'}</td>
+                <td class="evidence-title-cell">${item.judul_dokumen || '-'}</td>
                 <td>${item.no_dokumen || '-'}</td>
                 <td>${item.summary || '-'}</td>
                 <td class="text-center">${item.grup || '-'}</td>
@@ -1291,6 +1291,24 @@
                 align-items: center;
                 justify-content: center;
                 border-radius: 50%;
+            }
+
+            #evidence-table thead tr:first-child th,
+            #import-table thead tr:first-child th {
+                white-space: normal;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+                line-height: 1.25;
+                vertical-align: middle;
+            }
+
+            .evidence-title-cell {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: unset !important;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+                line-height: 1.35;
             }
         </style>
     @endsection
