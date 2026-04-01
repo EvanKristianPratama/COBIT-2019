@@ -3394,42 +3394,49 @@
                     evidence: '',
                     note: ''
                 };
+
+                const normalizeText = (value) => {
+                    if (value === null || value === undefined) {
+                        return '';
+                    }
+
+                    return typeof value === 'string' ? value : String(value);
+                };
+
                 if (rawEvidence !== null && rawEvidence !== undefined) {
                     return {
-                        evidence: rawEvidence || '',
-                        note: rawValue || ''
+                        evidence: normalizeText(rawEvidence),
+                        note: normalizeText(rawValue)
                     };
                 }
 
-                if (!rawValue) {
+                if (rawValue === null || rawValue === undefined || rawValue === '') {
                     return emptyPayload;
+                }
+
+                if (typeof rawValue === 'object') {
+                    return {
+                        evidence: normalizeText(rawValue.evidence || rawValue.comment || ''),
+                        note: normalizeText(rawValue.note || rawValue.notes || '')
+                    };
                 }
 
                 if (typeof rawValue === 'string') {
                     try {
                         const parsed = JSON.parse(rawValue);
-                        if (parsed && typeof parsed === 'object') {
+                        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
                             return {
-                                evidence: parsed.evidence || parsed.comment || '',
-                                note: parsed.note || parsed.notes || ''
+                                evidence: normalizeText(parsed.evidence || parsed.comment || ''),
+                                note: normalizeText(parsed.note || parsed.notes || '')
                             };
                         }
                     } catch (error) {
-                        return {
-                            evidence: rawValue,
-                            note: ''
-                        };
+                        // Plain text without an evidence field must remain a note.
                     }
-                    return {
-                        evidence: rawValue,
-                        note: ''
-                    };
-                }
 
-                if (typeof rawValue === 'object') {
                     return {
-                        evidence: rawValue.evidence || rawValue.comment || '',
-                        note: rawValue.note || rawValue.notes || ''
+                        evidence: '',
+                        note: rawValue
                     };
                 }
 
