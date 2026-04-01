@@ -39,4 +39,8 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
+
+    'assessment_eval' => [
+        'cleanup_secret' => env('ASSESSMENT_EVAL_CLEANUP_SECRET'),
+    ],
 ];

@@ -3,30 +3,30 @@
 namespace App\Http\Controllers\AssessmentEval;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssessmentEval\DeleteScopeRequest;
+use App\Http\Requests\AssessmentEval\UpdateScopeRequest;
+use App\Services\Assessment\Access\AssessmentAccessService;
+use App\Services\Assessment\Scope\AssessmentScopeService;
 use App\Services\EvaluationService;
 use App\Models\MstObjective;
-use App\Models\TrsScoping;
-use App\Models\TrsEvalDetail;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 
 class AssessmentScopeController extends Controller
 {
-    protected $evaluationService;
-
-    public function __construct(EvaluationService $evaluationService)
-    {
-        $this->evaluationService = $evaluationService;
+    public function __construct(
+        protected EvaluationService $evaluationService,
+        protected AssessmentScopeService $assessmentScopeService,
+        protected AssessmentAccessService $assessmentAccessService
+    ) {
     }
 
-    public function update(Request $request, $evalId)
+    public function update(UpdateScopeRequest $request, $evalId)
     {
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
 
-            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+            if (! $evaluation || ! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
@@ -34,62 +34,14 @@ class AssessmentScopeController extends Controller
                 return response()->json(['success' => false, 'message' => 'Assessment is finished'], 403);
             }
 
-            $selectedScopes = $request->input('scopes', []); 
-            $isNewScope = $request->input('is_new', false);
-            $scopeName = $request->input('nama_scope');
-
-            DB::transaction(function () use ($evalId, $selectedScopes, $isNewScope, $scopeName, $request) {
-                if ($isNewScope && $scopeName) {
-                    $scoping = TrsScoping::create([
-                        'eval_id' => $evalId,
-                        'nama_scope' => $scopeName
-                    ]);
-
-                    $inserts = [];
-                    foreach ($selectedScopes as $scope) {
-                        $scope = trim((string)$scope);
-                        if ($scope !== '') {
-                            $inserts[] = [
-                                'eval_id' => $evalId,
-                                'scoping_id' => $scoping->id,
-                                'domain_id' => $scope,
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ];
-                        }
-                    }
-
-                    if (!empty($inserts)) TrsEvalDetail::insert($inserts);
-
-                } else {
-                    $scopeId = $request->input('scope_id');
-                    $scopeToUpdate = $scopeId 
-                        ? TrsScoping::where('id', $scopeId)->where('eval_id', $evalId)->first()
-                        : TrsScoping::where('eval_id', $evalId)->first();
-                    
-                    if ($scopeToUpdate) {
-                        if ($scopeName) $scopeToUpdate->update(['nama_scope' => $scopeName]);
-                        
-                        TrsEvalDetail::where('scoping_id', $scopeToUpdate->id)->delete();
-
-                        $inserts = [];
-                        foreach ($selectedScopes as $scope) {
-                            $scope = trim((string)$scope);
-                            if ($scope !== '') {
-                                $inserts[] = [
-                                    'eval_id' => $evalId,
-                                    'scoping_id' => $scopeToUpdate->id,
-                                    'domain_id' => $scope,
-                                    'created_at' => now(),
-                                    'updated_at' => now()
-                                ];
-                            }
-                        }
-
-                        if (!empty($inserts)) TrsEvalDetail::insert($inserts);
-                    }
-                }
-            });
+            $validated = $request->validated();
+            $this->assessmentScopeService->syncScope(
+                $evaluation,
+                $validated['scopes'],
+                $validated['nama_scope'],
+                $validated['scope_id'] ?? null,
+                (bool) ($validated['is_new'] ?? false)
+            );
             
             return response()->json(['success' => true, 'message' => 'Scope updated successfully']);
 
@@ -99,17 +51,21 @@ class AssessmentScopeController extends Controller
         }
     }
 
-    public function destroy(Request $request)
+    public function destroy(DeleteScopeRequest $request)
     {
         try {
-            $scope = TrsScoping::find($request->input('scope_id'));
+            $scope = $this->assessmentAccessService->findManagedScope(
+                (int) $request->validated('scope_id'),
+                Auth::user()
+            );
 
             if ($scope) {
-                $scope->delete(); 
+                $this->assessmentScopeService->deleteScope($scope);
+
                 return response()->json(['success' => true]);
             }
             
-            return response()->json(['success' => false, 'message' => 'Scope not found']);
+            return response()->json(['success' => false, 'message' => 'Scope not found or access denied']);
 
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);

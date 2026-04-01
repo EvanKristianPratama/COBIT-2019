@@ -3,49 +3,35 @@
 namespace App\Http\Controllers\AssessmentEval;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\TargetMaturity;
+use App\Http\Requests\AssessmentEval\StoreTargetMaturityRequest;
+use App\Services\Assessment\Target\TargetMaturityService;
 use Illuminate\Support\Facades\Auth;
 
 class TargetMaturityController extends Controller
 {
+    public function __construct(
+        private readonly TargetMaturityService $targetMaturityService
+    ) {
+    }
+
     public function index()
     {
-        $userId = Auth::id();
-        $targets = TargetMaturity::where('user_id', $userId)
-            ->orderBy('tahun', 'desc')
-            ->get();
-            
+        $targets = $this->targetMaturityService->getTargetsForUser(Auth::id());
+
         return view('cobit2019.targetMaturity', compact('targets'));
     }
 
-    public function store(Request $request)
+    public function store(StoreTargetMaturityRequest $request)
     {
-        $request->validate([
-            'tahun' => 'required|integer|min:2000|max:2099',
-            'target_maturity' => 'required|numeric|min:0|max:5',
-        ]);
-
-        $user = Auth::user();
-
-        TargetMaturity::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'tahun' => $request->tahun,
-                'organisasi' => $user->organisasi ?? 'Unknown'
-            ],
-            [
-                'target_maturity' => $request->target_maturity
-            ]
-        );
+        $this->targetMaturityService->store(Auth::user(), $request->validated());
 
         return redirect()->back()->with('success', 'Target Maturity saved successfully.');
     }
 
     public function destroy($id)
     {
-        $target = TargetMaturity::where('user_id', Auth::id())->findOrFail($id);
-        $target->delete();
+        $this->targetMaturityService->deleteForUser((int) $id, Auth::id());
+
         return redirect()->back()->with('success', 'Target Maturity deleted.');
     }
 }

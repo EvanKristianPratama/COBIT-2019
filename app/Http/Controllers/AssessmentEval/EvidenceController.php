@@ -3,21 +3,22 @@
 namespace App\Http\Controllers\AssessmentEval;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssessmentEval\PreviousEvidenceRequest;
+use App\Http\Requests\AssessmentEval\UpsertEvidenceRequest;
+use App\Services\Assessment\Access\AssessmentAccessService;
+use App\Services\Assessment\Evidence\AssessmentEvidenceService;
 use App\Services\EvaluationService;
-use App\Models\MstEval;
 use App\Models\MstEvidence;
-use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class EvidenceController extends Controller
 {
-    protected $evaluationService;
-
-    public function __construct(EvaluationService $evaluationService)
-    {
-        $this->evaluationService = $evaluationService;
+    public function __construct(
+        protected EvaluationService $evaluationService,
+        protected AssessmentEvidenceService $assessmentEvidenceService,
+        protected AssessmentAccessService $assessmentAccessService
+    ) {
     }
 
     public function index($evalId)
@@ -29,18 +30,13 @@ class EvidenceController extends Controller
                 return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Assessment not found']);
             }
 
-            $owner = User::find($evaluation->user_id);
             $currentUser = Auth::user();
-
-            $isOwner = (string)$evaluation->user_id === (string)$currentUser->id;
-            $sameOrg = !empty($owner->organisasi) && !empty($currentUser->organisasi) && 
-                       strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0;
-
-            if (!$isOwner && !$sameOrg) {
+            if (! $this->assessmentAccessService->canView($currentUser, $evaluation)) {
                 return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
             }
 
-            $evidences = MstEvidence::where('eval_id', $evalId)->orderBy('created_at', 'desc')->get();
+            $evidences = $this->assessmentEvidenceService->getEvidences($evaluation);
+            $isOwner = $this->assessmentAccessService->canManage($currentUser, $evaluation);
 
             return view('assessment-eval.evidence', compact('evaluation', 'evidences', 'evalId', 'isOwner'));
 
@@ -49,123 +45,26 @@ class EvidenceController extends Controller
         }
     }
 
-    public function previous(Request $request, $evalId)
+    public function previous(PreviousEvidenceRequest $request, $evalId)
     {
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             if (!$evaluation) return response()->json(['success' => false, 'message' => 'Assessment not found'], 404);
 
             $currentUser = Auth::user();
-            $owner = User::find($evaluation->user_id);
-
-            if (!$currentUser || !$owner) return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-
-            $sameOrg = !empty($owner->organisasi) && !empty($currentUser->organisasi) && 
-                       strcasecmp(trim((string)$owner->organisasi), trim((string)$currentUser->organisasi)) === 0;
-
-            if ((string)$currentUser->id !== (string)$owner->id && !$sameOrg) {
+            if (!$this->assessmentAccessService->canView($currentUser, $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
-            $orgName = trim((string)$owner->organisasi);
-            $userIds = User::when($orgName !== '', function ($q) use ($orgName) {
-                    $q->whereRaw('LOWER(TRIM(organisasi)) = ?', [strtolower($orgName)]);
-                })
-                ->orWhere('id', $owner->id)
-                ->pluck('id');
-
-            $evalIds = MstEval::whereIn('user_id', $userIds)
-                ->where('eval_id', '!=', $evalId)
-                ->pluck('eval_id');
-
-            if ($evalIds->isEmpty()) {
-                return response()->json([
-                    'success' => true, 
-                    'data' => [],
-                    'pagination' => ['total' => 0, 'per_page' => 20, 'current_page' => 1, 'last_page' => 1]
-                ]);
-            }
-
-            $page = max(1, (int)$request->input('page', 1));
-            $perPage = max(5, min(100, (int)$request->input('per_page', 20)));
-            $search = $request->input('search', '');
-            
-            // Get individual column filters
-            $filters = $request->input('filters', []);
-
-            $query = MstEvidence::whereIn('eval_id', $evalIds)
-                ->with(['evaluation' => function ($q) {
-                    $q->select('eval_id', 'tahun');
-                }]);
-
-            // Apply general search (footer search box)
-            if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('judul_dokumen', 'like', "%{$search}%")
-                      ->orWhere('no_dokumen', 'like', "%{$search}%")
-                      ->orWhere('pemilik_dokumen', 'like', "%{$search}%")
-                      ->orWhere('grup', 'like', "%{$search}%");
-                });
-            }
-            
-            // Apply column-specific filters (AND logic)
-            if (!empty($filters) && is_array($filters)) {
-                $allowedFields = [
-                    'judul_dokumen', 'no_dokumen', 'grup', 'tipe',
-                    'tahun_terbit', 'tahun_kadaluarsa', 'pemilik_dokumen',
-                    'pengesahan', 'klasifikasi', 'summary', 'ket_tipe'
-                ];
-                
-                foreach ($filters as $field => $value) {
-                    if (empty($value)) continue;
-                    
-                    if (in_array($field, $allowedFields)) {
-                        $query->where($field, 'like', "%{$value}%");
-                    }
-                }
-            }
-
-            $total = $query->count();
-            $lastPage = max(1, ceil($total / $perPage));
-            $page = min($page, $lastPage);
-
-            $evidences = $query->orderByDesc('created_at')
-                ->skip(($page - 1) * $perPage)
-                ->take($perPage)
-                ->get([
-                    'id', 'eval_id', 'judul_dokumen', 'no_dokumen', 'grup', 'tipe',
-                    'tahun_terbit', 'tahun_kadaluarsa', 'pemilik_dokumen', 'pengesahan',
-                    'klasifikasi', 'summary', 'link', 'ket_tipe', 'created_at'
-                ]);
-
-            $mapped = $evidences->map(function ($evidence) {
-                return [
-                    'id' => $evidence->id,
-                    'eval_id' => $evidence->eval_id,
-                    'judul_dokumen' => $evidence->judul_dokumen,
-                    'no_dokumen' => $evidence->no_dokumen,
-                    'grup' => $evidence->grup,
-                    'tipe' => $evidence->tipe,
-                    'tahun_terbit' => $evidence->tahun_terbit,
-                    'tahun_kadaluarsa' => $evidence->tahun_kadaluarsa,
-                    'pemilik_dokumen' => $evidence->pemilik_dokumen,
-                    'pengesahan' => $evidence->pengesahan,
-                    'klasifikasi' => $evidence->klasifikasi,
-                    'summary' => $evidence->summary,
-                    'link' => $evidence->link,
-                    'ket_tipe' => $evidence->ket_tipe,
-                    'created_at' => $evidence->created_at,
-                    'assessment_year' => optional($evidence->evaluation)->tahun ?? null,
-                ];
-            });
+            $previousEvidences = $this->assessmentEvidenceService->getPreviousEvidences(
+                $evaluation,
+                $request->validated()
+            );
 
             return response()->json([
                 'success' => true, 
-                'data' => $mapped,
-                'pagination' => [
-                    'total' => $total, 'per_page' => $perPage,
-                    'current_page' => $page, 'last_page' => $lastPage
-                ]
+                'data' => $previousEvidences['data'],
+                'pagination' => $previousEvidences['pagination'],
             ]);
 
         } catch (\Exception $e) {
@@ -174,31 +73,16 @@ class EvidenceController extends Controller
         }
     }
 
-    public function store(Request $request, $evalId)
+    public function store(UpsertEvidenceRequest $request, $evalId)
     {
         try {
             $evaluation = $this->evaluationService->getEvaluationById($evalId);
             
-            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+            if (!$evaluation || ! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
-            $validated = $request->validate([
-                'judul_dokumen' => 'required|string|max:255',
-                'no_dokumen' => 'nullable|string|max:100',
-                'tahun_terbit' => 'nullable|integer',
-                'tahun_kadaluarsa' => 'nullable|integer',
-                'tipe' => 'nullable|string|max:100',
-                'pengesahan' => 'nullable|string|max:255',
-                'pemilik_dokumen' => 'nullable|string|max:255',
-                'klasifikasi' => 'nullable|string|max:100',
-                'grup' => 'nullable|string|max:100',
-                'link' => 'nullable|string',
-                'ket_tipe' => 'nullable|string|max:255',
-                'summary' => 'nullable|string',
-            ]);
-
-            $evidence = MstEvidence::create(['eval_id' => $evalId, ...$validated]);
+            $evidence = $this->assessmentEvidenceService->store($evaluation, $request->validated());
 
             return response()->json([
                 'success' => true,
@@ -212,32 +96,17 @@ class EvidenceController extends Controller
         }
     }
 
-    public function update(Request $request, $evidenceId)
+    public function update(UpsertEvidenceRequest $request, $evidenceId)
     {
         try {
             $evidence = MstEvidence::findOrFail($evidenceId);
             $evaluation = $this->evaluationService->getEvaluationById($evidence->eval_id);
 
-            if (!$evaluation || (string)$evaluation->user_id !== (string)Auth::id()) {
+            if (!$evaluation || ! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
-            $validated = $request->validate([
-                'judul_dokumen' => 'required|string|max:255',
-                'no_dokumen' => 'nullable|string|max:100',
-                'tahun_terbit' => 'nullable|integer',
-                'tahun_kadaluarsa' => 'nullable|integer',
-                'tipe' => 'nullable|string|max:100',
-                'pengesahan' => 'nullable|string|max:255',
-                'pemilik_dokumen' => 'nullable|string|max:255',
-                'klasifikasi' => 'nullable|string|max:100',
-                'grup' => 'nullable|string|max:100',
-                'link' => 'nullable|string',
-                'ket_tipe' => 'nullable|string|max:255',
-                'summary' => 'nullable|string',
-            ]);
-
-            $evidence->update($validated);
+            $evidence = $this->assessmentEvidenceService->update($evidence, $request->validated());
 
             return response()->json([
                 'success' => true,

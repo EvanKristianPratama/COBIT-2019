@@ -549,7 +549,11 @@ class EvaluationService
         // If we only look at "activities with data", we might miss 0-scored objectives that are part of the scope
         // causing the average to be higher (smaller divisor).
 
-        $selectedDomains = \App\Models\TrsEvalDetail::where('eval_id', $evalId)->pluck('domain_id')->unique()->toArray();
+        $selectedDomains = \App\Models\TrsEvalDetail::where('eval_id', $evalId)
+            ->whereHas('scoping')
+            ->pluck('domain_id')
+            ->unique()
+            ->toArray();
 
         if (! empty($selectedDomains)) {
             $objectives = \App\Models\MstObjective::with(['practices.activities'])
