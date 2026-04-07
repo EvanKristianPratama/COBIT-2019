@@ -2623,7 +2623,7 @@
                 }
 
                 const ratingLetter = this.getScoreLetter(finalScore);
-                const value = finalLevel > 0 ? Number((finalLevel + finalScore).toFixed(2)) : 0;
+                const value = finalLevel > 0 ? Number((((finalLevel - 1) + finalScore)).toFixed(2)) : 0;
 
                 return {
                     level: finalLevel,

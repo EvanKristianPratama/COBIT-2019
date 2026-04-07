@@ -774,7 +774,7 @@ class EvaluationService
         }
 
         $ratingLetter = $this->getScoreLetter($finalScore);
-        $displayValue = $finalLevel > 0 ? round($finalLevel + $finalScore, 2) : 0.0;
+        $displayValue = $finalLevel > 0 ? round(($finalLevel - 1) + $finalScore, 2) : 0.0;
 
         return [
             'final_level' => $finalLevel,
