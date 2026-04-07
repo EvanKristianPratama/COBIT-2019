@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+    @php($routeEvalId = $evaluation->encrypted_id)
     <!-- JSpreadsheet v5 CDN -->
     <script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
     <script src="https://jsuites.net/v5/jsuites.js"></script>
@@ -18,19 +19,19 @@
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('assessment-eval.report', ['evalId' => $evaluation->eval_id]) }}"
+                            <a href="{{ route('assessment-eval.report', ['evalId' => $routeEvalId]) }}"
                                 class="text-decoration-none text-muted" style="color: #0f2b5c !important;">
                                 <i class="fas fa-chart-bar me-1"></i>Assessment Recapitulation Report
                             </a>
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ route('assessment-eval.report-activity', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objectives->first()->objective_id]) }}"
+                            <a href="{{ route('assessment-eval.report-activity', ['evalId' => $routeEvalId, 'objectiveId' => $objectives->first()->objective_id]) }}"
                                 class="text-decoration-none text-muted" style="color: #0f2b5c !important;">
                                 <i class="fas fa-file-alt me-1"></i>Detail Recapitulation Report
                             </a>
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ route('assessment-eval.note', $evaluation->eval_id) }}"
+                            <a href="{{ route('assessment-eval.note', $routeEvalId) }}"
                                 class="text-decoration-none text-muted" style="color: #0f2b5c !important;">
                                 <i class="fas fa-clipboard-list me-1"></i> Summary Report
                             </a>
@@ -477,12 +478,12 @@
 
             {{-- Floating Action Buttons --}}
             <div class="sticky-action-group">
-                <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
+                <a href="{{ route('assessment-eval.summary-pdf', ['evalId' => $routeEvalId, 'objectiveId' => $objective->objective_id]) }}"
                     class="btn btn-danger sticky-action-btn" target="_blank" title="Export PDF Per GAMO">
                     <i class="fas fa-file-pdf"></i>
                     <span>PDF Per GAMO</span>
                 </a>
-                <a href="{{ route('assessment-eval.summary-detail-pdf', ['evalId' => $evaluation->eval_id, 'objectiveId' => $objective->objective_id]) }}"
+                <a href="{{ route('assessment-eval.summary-detail-pdf', ['evalId' => $routeEvalId, 'objectiveId' => $objective->objective_id]) }}"
                     class="btn btn-warning sticky-action-btn" target="_blank" title="Export PDF Per Practice">
                     <i class="fas fa-file-pdf"></i>
                     <span>PDF Per Practice</span>

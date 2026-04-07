@@ -2,6 +2,8 @@
 
 @section('content')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @php($displayEvalId = $evaluation->eval_id)
+    @php($routeEvalId = $evaluation->encrypted_id)
 
     <div class="container mx-auto p-6">
         {{-- Header --}}
@@ -14,7 +16,7 @@
                             Report</div>
                         <div class="hero-eval-id"
                             style="font-size:1.05rem;font-weight:600;margin-top:0.25rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);">
-                            Assessment Id: {{ $evalId }}
+                            Assessment Id: {{ $displayEvalId }}
                         </div>
                         <div class="hero-eval-year text-uppercase"
                             style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:0.06em;">
@@ -23,7 +25,7 @@
                         </div>
                     </div>
                     <div>
-                        <a href="{{ route('assessment-eval.show', $evalId) }}"
+                        <a href="{{ route('assessment-eval.show', $routeEvalId) }}"
                             class="btn btn-light btn-sm rounded-pill px-3">
                             <i class="fas fa-arrow-left me-2"></i>Back to Assessment
                         </a>
@@ -38,14 +40,14 @@
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('assessment-eval.report', $evalId) }}"
+                            <a href="{{ route('assessment-eval.report', $routeEvalId) }}"
                                 class="text-decoration-none {{ Route::currentRouteName() == 'assessment-eval.report' ? 'active-tab text-primary fw-bold' : '' }}"
                                 style="{{ Route::currentRouteName() != 'assessment-eval.report' ? 'color: #0f2b5c;' : '' }}">
                                 <i class="fas fa-file-alt me-1"></i> Assessment Recapitulation Report
                             </a>
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ route('assessment-eval.note', $evalId) }}"
+                            <a href="{{ route('assessment-eval.note', $routeEvalId) }}"
                                 class="text-decoration-none {{ Route::currentRouteName() == 'assessment-eval.note' ? 'active-tab text-primary fw-bold' : '' }}"
                                 style="{{ Route::currentRouteName() != 'assessment-eval.note' ? 'color: #0f2b5c;' : '' }}">
                                 <i class="fas fa-clipboard-list me-1"></i> Summary
@@ -88,7 +90,8 @@
 
             // Configuration
             const Config = {
-                assessmentUrl: "{{ route('assessment-eval.show', $evalId) }}",
+                assessmentUrl: "{{ route('assessment-eval.show', $routeEvalId) }}",
+                routeEvalId: "{{ $routeEvalId }}",
                 maxLevels: {
                     'EDM01': 4,
                     'EDM02': 5,
@@ -255,12 +258,12 @@
                         <td class="text-center fw-bold text-secondary">${max}</td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
-                                <a href="/assessment-eval/{{ $evalId }}/report-activity/${id}" 
+                                <a href="/assessment-eval/${Config.routeEvalId}/report-activity/${id}" 
                                    class="btn btn-xs btn-outline-primary rounded-pill py-1 px-3 me-1" 
                                    style="font-size: 0.7rem; font-weight: 600;">
                                     Detail
                                 </a>
-                                <a href="/assessment-eval/{{ $evalId }}/summary/${id}" 
+                                <a href="/assessment-eval/${Config.routeEvalId}/summary/${id}" 
                                    class="btn btn-xs btn-outline-info rounded-pill py-1 px-3" 
                                    style="font-size: 0.7rem; font-weight: 600;">
                                     Summary
@@ -300,7 +303,7 @@
                     html += `
                     <td class="text-center bg-light text-dark">-</td>
                     <td class="text-center bg-light text-dark">
-                        <a href="/assessment-eval/{{ $evalId }}/summary-pdf" 
+                        <a href="/assessment-eval/{{ $routeEvalId }}/summary-pdf" 
                            class="btn btn-xs btn-danger rounded-pill py-1 px-3" 
                            style="font-size: 0.7rem; font-weight: 600;" target="_blank">
                             Export All

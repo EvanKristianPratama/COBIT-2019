@@ -2,6 +2,8 @@
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
+@php($displayEvalId = $evaluation->eval_id)
+@php($routeEvalId = $evaluation->encrypted_id)
 
 <div class="container-fluid px-4 py-3">
     {{-- Header --}}
@@ -15,12 +17,12 @@
                     </div>
                 </div>
                 <div>
-                    <a href="{{ route('assessment-eval.report-activity-pdf', ['evalId' => $evalId, 'objectiveId' => $objective->objective_id]) }}{{ $filterLevel ? '?level=' . $filterLevel : '' }}" 
+                    <a href="{{ route('assessment-eval.report-activity-pdf', ['evalId' => $routeEvalId, 'objectiveId' => $objective->objective_id]) }}{{ $filterLevel ? '?level=' . $filterLevel : '' }}" 
                        class="btn btn-sm btn-danger text-white fw-bold rounded-pill px-3 me-2" 
                        target="_blank">
                         <i class="fas fa-file-pdf me-1"></i>Export PDF
                     </a>
-                    <a href="{{ route('assessment-eval.report', $evalId) }}" class="btn btn-light btn-sm rounded-pill px-3">
+                    <a href="{{ route('assessment-eval.report', $routeEvalId) }}" class="btn btn-light btn-sm rounded-pill px-3">
                         <i class="fas fa-arrow-left me-2"></i>Back to Report
                     </a>
                 </div>
@@ -66,7 +68,7 @@
                             <div class="row">
                                 <div class="col-sm-4 mb-3 mb-sm-0">
                                     <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Assessment ID</div>
-                                    <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ $evalId }}</div>
+                                    <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ $displayEvalId }}</div>
                                 </div>
                                 <div class="col-sm-4 mb-3 mb-sm-0">
                                     <div class="text-uppercase extreme-small fw-bold text-muted mb-1">Assessment Year</div>

@@ -19,6 +19,12 @@ use Illuminate\Support\Facades\Log;
 
 class EvaluationService
 {
+    private const SCORE_THRESHOLD_PARTIAL = 0.15;
+
+    private const SCORE_THRESHOLD_LARGELY = 0.50;
+
+    private const SCORE_THRESHOLD_FULLY = 0.85;
+
     /**
      * Save evaluation data from the assessment form
      */
@@ -605,98 +611,10 @@ class EvaluationService
             return;
         }
 
-        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
         $calculatedLevels = [];
 
         foreach ($objectives as $obj) {
-            $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
-            $allLevelsFound = [];
-
-            foreach ($obj->practices as $p) {
-                if ($p->activities) {
-                    foreach ($p->activities as $a) {
-                        $lvl = (int) $a->capability_lvl;
-                        if ($lvl >= 2 && $lvl <= 5) {
-                            $activitiesByLevel[$lvl][] = $a;
-                            $allLevelsFound[] = $lvl;
-                        }
-                    }
-                }
-            }
-
-            if (empty($allLevelsFound)) {
-                $calculatedLevels[] = 0;
-                // Save objective score 0
-                TrsObjectiveScore::create([
-                    'eval_id' => $evalId,
-                    'objective_id' => $obj->objective_id,
-                    'level' => 0,
-                ]);
-
-                continue;
-            }
-
-            $minLevel = min($allLevelsFound);
-
-            $getScore = function ($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
-                if ($lvl < $minLevel) {
-                    return 1.0;
-                }
-
-                $acts = $activitiesByLevel[$lvl] ?? [];
-                if (empty($acts)) {
-                    return 0.0;
-                }
-
-                $vals = 0;
-                foreach ($acts as $a) {
-                    // We need to look up in the collection we fetched
-                    $actRecord = $activityData[$a->activity_id] ?? null;
-                    $r = $actRecord ? $actRecord->level_achieved : 'N';
-                    $vals += ($ratingMap[$r] ?? 0.0);
-                }
-
-                return $vals / count($acts);
-            };
-
-            $score2 = $getScore(2);
-            $score3 = $getScore(3);
-            $score4 = $getScore(4);
-            $score5 = $getScore(5);
-
-            $finalLevel = 0;
-            if ($score2 <= 0.15) {
-                $finalLevel = 0;
-            } elseif ($score2 <= 0.50) {
-                $finalLevel = 1;
-            } elseif ($score2 <= 0.85) {
-                $finalLevel = 2;
-            } else {
-                if ($score3 <= 0.50) {
-                    $finalLevel = 2;
-                } elseif ($score3 <= 0.85) {
-                    $finalLevel = 3;
-                } else {
-                    if ($score4 <= 0.50) {
-                        $finalLevel = 3;
-                    } elseif ($score4 <= 0.85) {
-                        $finalLevel = 4;
-                    } else {
-                        if ($score5 <= 0.50) {
-                            $finalLevel = 4;
-                        } else {
-                            $finalLevel = 5;
-                        }
-                    }
-                }
-            }
-
-            if ($minLevel > 2) {
-                $startScore = $getScore($minLevel);
-                if ($startScore <= 0.15) {
-                    $finalLevel = 0;
-                }
-            }
+            $finalLevel = $this->calculateObjectiveAssessmentMetrics($obj, $activityData)['final_level'];
 
             $calculatedLevels[] = $finalLevel;
 
@@ -777,14 +695,29 @@ class EvaluationService
      */
     public function calculateObjectiveMaturity($obj, $activityData)
     {
-        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
+        return $this->calculateObjectiveAssessmentMetrics($obj, $activityData)['final_level'];
+    }
+
+    /**
+     * @return array{
+     *     final_level:int,
+     *     final_score:float,
+     *     rating_letter:string,
+     *     rating_string:string,
+     *     display_value:float,
+     *     display_value_label:string,
+     *     level_scores:array<int, array{score:float, letter:string}>
+     * }
+     */
+    public function calculateObjectiveAssessmentMetrics($obj, $activityData): array
+    {
         $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
         $allLevelsFound = [];
 
         foreach ($obj->practices as $p) {
             if ($p->activities) {
                 foreach ($p->activities as $a) {
-                    $lvl = (int) $a->capability_lvl;
+                    $lvl = (int) ($a->capability_lvl ?? $a->capability_level ?? 0);
                     if ($lvl >= 2 && $lvl <= 5) {
                         $activitiesByLevel[$lvl][] = $a;
                         $allLevelsFound[] = $lvl;
@@ -794,77 +727,121 @@ class EvaluationService
         }
 
         if (empty($allLevelsFound)) {
-            return 0;
+            return [
+                'final_level' => 0,
+                'final_score' => 0.0,
+                'rating_letter' => 'N',
+                'rating_string' => '0N',
+                'display_value' => 0.0,
+                'display_value_label' => '0.00',
+                'level_scores' => [],
+            ];
         }
 
         $minLevel = min($allLevelsFound);
 
-        $getScore = function ($lvl) use ($minLevel, $activitiesByLevel, $activityData, $ratingMap) {
-            if ($lvl < $minLevel) {
-                return 1.0;
-            }
+        $getScore = function ($lvl) use ($activitiesByLevel, $activityData) {
             $acts = $activitiesByLevel[$lvl] ?? [];
             if (empty($acts)) {
                 return 0.0;
             }
             $vals = 0;
             foreach ($acts as $a) {
-                // Check if activityData is array or object/model
-                if (is_array($activityData)) {
-                    // Check if it's nested structure [activity_id => [level_achieved => ...]]
-                    if (isset($activityData[$a->activity_id]['level_achieved'])) {
-                        $r = $activityData[$a->activity_id]['level_achieved'];
-                    } else {
-                        // Or maybe direct key access if flat? Assuming nested based on common usage
-                        $r = 'N';
-                    }
-                } else {
-                    // Assuming collection or object
-                    $r = isset($activityData[$a->activity_id]) ? $activityData[$a->activity_id]['level_achieved'] : 'N';
-                }
-
-                $vals += ($ratingMap[$r] ?? 0.0);
+                $vals += $this->getRatingNumericValue($this->extractAchievedRating($activityData, $a->activity_id));
             }
 
             return $vals / count($acts);
         };
 
-        $score2 = $getScore(2);
-        $score3 = $getScore(3);
-        $score4 = $getScore(4);
-        $score5 = $getScore(5);
+        $levelScores = [];
+        foreach (range($minLevel, 5) as $level) {
+            $score = $getScore($level);
+            $levelScores[$level] = [
+                'score' => $score,
+                'letter' => $this->getScoreLetter($score),
+            ];
+        }
 
         $finalLevel = 0;
-        if ($score2 <= 0.15) {
-            $finalLevel = 0;
-        } elseif ($score2 <= 0.50) {
-            $finalLevel = 1;
-        } elseif ($score2 <= 0.85) {
-            $finalLevel = 2;
-        } else {
-            if ($score3 <= 0.50) {
-                $finalLevel = 2;
-            } elseif ($score3 <= 0.85) {
-                $finalLevel = 3;
-            } else {
-                if ($score4 <= 0.50) {
-                    $finalLevel = 3;
-                } elseif ($score4 <= 0.85) {
-                    $finalLevel = 4;
-                } else {
-                    $finalLevel = ($score5 <= 0.50) ? 4 : 5;
-                }
+        $finalScore = 0.0;
+        for ($level = 5; $level >= $minLevel; $level--) {
+            $score = $levelScores[$level]['score'] ?? 0.0;
+            if ($this->isAchievedScore($score)) {
+                $finalLevel = $level;
+                $finalScore = $score;
+                break;
             }
         }
 
-        if ($minLevel > 2) {
-            $startScore = $getScore($minLevel);
-            if ($startScore <= 0.15) {
-                $finalLevel = 0;
+        $ratingLetter = $this->getScoreLetter($finalScore);
+        $displayValue = $finalLevel > 0 ? round($finalLevel + $finalScore, 2) : 0.0;
+
+        return [
+            'final_level' => $finalLevel,
+            'final_score' => $finalScore,
+            'rating_letter' => $ratingLetter,
+            'rating_string' => $finalLevel > 0 ? $finalLevel.$ratingLetter : '0N',
+            'display_value' => $displayValue,
+            'display_value_label' => number_format($displayValue, 2, '.', ''),
+            'level_scores' => $levelScores,
+        ];
+    }
+
+    public function getScoreLetter(float $score): string
+    {
+        if ($score > self::SCORE_THRESHOLD_FULLY) {
+            return 'F';
+        }
+        if ($score > self::SCORE_THRESHOLD_LARGELY) {
+            return 'L';
+        }
+        if ($score > self::SCORE_THRESHOLD_PARTIAL) {
+            return 'P';
+        }
+
+        return 'N';
+    }
+
+    public function isAchievedScore(float $score): bool
+    {
+        return $score > self::SCORE_THRESHOLD_PARTIAL;
+    }
+
+    public function getRatingNumericValue(?string $rating): float
+    {
+        return match ($rating) {
+            'F' => 1.0,
+            'L' => 2.0 / 3.0,
+            'P' => 1.0 / 3.0,
+            default => 0.0,
+        };
+    }
+
+    private function extractAchievedRating($activityData, string $activityId): string
+    {
+        if ($activityData instanceof \Illuminate\Support\Collection) {
+            $activity = $activityData->get($activityId);
+
+            return (string) ($activity?->level_achieved ?? 'N');
+        }
+
+        if (is_array($activityData) && array_key_exists($activityId, $activityData)) {
+            $activity = $activityData[$activityId];
+
+            if (is_array($activity)) {
+                return (string) ($activity['level_achieved'] ?? 'N');
+            }
+
+            if (is_object($activity)) {
+                return (string) ($activity->level_achieved ?? 'N');
             }
         }
 
-        return $finalLevel;
+        if ($activityData instanceof \ArrayAccess && isset($activityData[$activityId])) {
+            return (string) ($activityData[$activityId]['level_achieved'] ?? 'N');
+        }
+
+        return 'N';
     }
 
     private function purgeActivityEvaluations($query): void

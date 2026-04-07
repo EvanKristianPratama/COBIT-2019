@@ -16,13 +16,14 @@ class AssessmentSummaryController extends Controller
 {
     public function __construct(
         private readonly AssessmentSummaryService $assessmentSummaryService,
-        private readonly AssessmentAccessService $assessmentAccessService
+        private readonly AssessmentAccessService $assessmentAccessService,
+        private readonly EvaluationService $evaluationService
     ) {
     }
 
     public function summary($evalId, $objectiveId = null)
     {
-        $evaluation = MstEval::findOrFail($evalId);
+        $evaluation = $this->resolveEvaluation($evalId);
         if (! $this->assessmentAccessService->canView(Auth::user(), $evaluation)) {
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
         }
@@ -35,7 +36,7 @@ class AssessmentSummaryController extends Controller
 
     public function saveNote(SaveSummaryNoteRequest $request, $evalId)
     {
-        $evaluation = MstEval::findOrFail($evalId);
+        $evaluation = $this->resolveEvaluation($evalId);
         if (! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
         }
@@ -47,7 +48,7 @@ class AssessmentSummaryController extends Controller
 
     public function getNote($evalId)
     {
-        $evaluation = MstEval::findOrFail($evalId);
+        $evaluation = $this->resolveEvaluation($evalId);
         if (! $this->assessmentAccessService->canView(Auth::user(), $evaluation)) {
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
         }
@@ -57,7 +58,7 @@ class AssessmentSummaryController extends Controller
 
     public function summaryPdf($evalId, $objectiveId = null)
     {
-        $evaluation = MstEval::findOrFail($evalId);
+        $evaluation = $this->resolveEvaluation($evalId);
         if (! $this->assessmentAccessService->canView(Auth::user(), $evaluation)) {
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
         }
@@ -69,14 +70,14 @@ class AssessmentSummaryController extends Controller
         $pdf = Pdf::loadView('assessment-eval.report-summary-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
 
-        $filename = 'Summary-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
+        $filename = 'Summary-Report-'.$evaluation->eval_id.($objectiveId ? '-'.$objectiveId : '').'.pdf';
 
         return $pdf->stream($filename);
     }
 
     public function summaryDetailPdf($evalId, $objectiveId = null)
     {
-        $evaluation = MstEval::findOrFail($evalId);
+        $evaluation = $this->resolveEvaluation($evalId);
         if (! $this->assessmentAccessService->canView(Auth::user(), $evaluation)) {
             return redirect()->route('assessment-eval.list')->withErrors(['error' => 'Access denied']);
         }
@@ -88,9 +89,18 @@ class AssessmentSummaryController extends Controller
         $pdf = Pdf::loadView('assessment-eval.report-summary-detail-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
 
-        $filename = 'Summary-Detail-Report-'.$evalId.($objectiveId ? '-'.$objectiveId : '').'.pdf';
+        $filename = 'Summary-Detail-Report-'.$evaluation->eval_id.($objectiveId ? '-'.$objectiveId : '').'.pdf';
 
         return $pdf->stream($filename);
+    }
+
+    private function resolveEvaluation($evalId): MstEval
+    {
+        $evaluation = $this->evaluationService->getEvaluationById($evalId);
+
+        abort_if(! $evaluation, 404);
+
+        return $evaluation;
     }
 
     public function cleanupEvidence($secret_key)  // ❌ Hapus parameter $evalId di sini

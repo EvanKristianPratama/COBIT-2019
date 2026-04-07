@@ -7,7 +7,6 @@ use App\Models\MstEvidence;
 use App\Models\MstObjective;
 use App\Models\TrsActivityeval;
 use App\Models\TrsDomain;
-use App\Models\TrsObjectiveScore;
 use App\Services\EvaluationService;
 use InvalidArgumentException;
 
@@ -53,14 +52,16 @@ class ActivityReportService
             }
         }
 
-        $objectiveScore = TrsObjectiveScore::where('eval_id', $evalId)
-            ->where('objective_id', $objectiveId)
-            ->first();
-        $currentLevel = $objectiveScore ? $objectiveScore->level : 0;
+        $evaluationActivityData = TrsActivityeval::where('eval_id', $evalId)
+            ->get()
+            ->keyBy('activity_id');
+        $metrics = $this->evaluationService->calculateObjectiveAssessmentMetrics($objective, $evaluationActivityData);
+        $currentLevel = $metrics['final_level'];
 
         $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
         $targetLevel = $targetCapabilityMap[$objectiveId] ?? null;
-        $ratingString = $this->calculateRatingString($objective, $currentLevel, $evalId);
+        $ratingString = $metrics['rating_string'];
+        $displayValue = $metrics['display_value_label'];
         $evalEvidences = MstEvidence::where('eval_id', $evalId)->get()->keyBy('id');
 
         $activityData = [];
@@ -71,9 +72,7 @@ class ActivityReportService
                     continue;
                 }
 
-                $activityEval = TrsActivityeval::where('eval_id', $evalId)
-                    ->where('activity_id', $activity->activity_id)
-                    ->first();
+                $activityEval = $evaluationActivityData->get($activity->activity_id);
 
                 if (! $activityEval || ! $activityEval->level_achieved) {
                     continue;
@@ -128,7 +127,6 @@ class ActivityReportService
             return strcmp($left['activity_id'], $right['activity_id']);
         });
 
-        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
         $levelRatings = [];
         $activitiesByLevel = collect($activityData)->groupBy('capability_level');
 
@@ -137,21 +135,13 @@ class ActivityReportService
             $count = 0;
 
             foreach ($activities as $activity) {
-                $totalScore += $ratingMap[$activity['answer']] ?? 0;
+                $totalScore += $this->evaluationService->getRatingNumericValue($activity['answer']);
                 $count++;
             }
 
             if ($count > 0) {
                 $averageScore = $totalScore / $count;
-                $letter = 'N';
-
-                if ($averageScore > 0.85) {
-                    $letter = 'F';
-                } elseif ($averageScore > 0.50) {
-                    $letter = 'L';
-                } elseif ($averageScore > 0.15) {
-                    $letter = 'P';
-                }
+                $letter = $this->evaluationService->getScoreLetter($averageScore);
 
                 $levelRatings[$level] = [
                     'rating' => $level.$letter,
@@ -179,61 +169,8 @@ class ActivityReportService
             'organization',
             'targetLevel',
             'ratingString',
+            'displayValue',
             'levelRatings'
         );
-    }
-
-    private function calculateRatingString($objective, $finalLevel, int $evalId): string
-    {
-        if ((int) $finalLevel === 0) {
-            return '0N';
-        }
-
-        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
-        $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
-
-        foreach ($objective->practices as $practice) {
-            foreach ($practice->activities as $activity) {
-                $level = (int) ($activity->capability_lvl ?? $activity->capability_level ?? 0);
-                if ($level >= 2 && $level <= 5) {
-                    $activitiesByLevel[$level][] = $activity;
-                }
-            }
-        }
-
-        $levelToCheck = max(2, (int) $finalLevel);
-        $activities = $activitiesByLevel[$levelToCheck] ?? [];
-        if ($activities === []) {
-            return $finalLevel.'F';
-        }
-
-        $totalScore = 0;
-        $count = 0;
-        foreach ($activities as $activity) {
-            $activityEval = TrsActivityeval::where('eval_id', $evalId)
-                ->where('activity_id', $activity->activity_id)
-                ->first();
-
-            $rating = $activityEval ? $activityEval->level_achieved : 'N';
-            $totalScore += $ratingMap[$rating] ?? 0;
-            $count++;
-        }
-
-        if ($count === 0) {
-            return $finalLevel.'F';
-        }
-
-        $averageScore = $totalScore / $count;
-        $letter = 'N';
-
-        if ($averageScore > 0.85) {
-            $letter = 'F';
-        } elseif ($averageScore > 0.50) {
-            $letter = 'L';
-        } elseif ($averageScore > 0.15) {
-            $letter = 'P';
-        }
-
-        return $finalLevel.$letter;
     }
 }

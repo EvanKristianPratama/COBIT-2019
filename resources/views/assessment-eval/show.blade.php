@@ -151,9 +151,11 @@
                                         <th rowspan="2" style="width: 25%; vertical-align: middle;">Gamo Name</th>
                                         <th colspan="6" class="text-center">Score</th>
                                         <th rowspan="2" class="text-center"
-                                            style="width: 15%; vertical-align: middle;">Rating</th>
+                                            style="width: 12%; vertical-align: middle;">Value</th>
                                         <th rowspan="2" class="text-center"
-                                            style="width: 15%; vertical-align: middle;">Maximum Capability</th>
+                                            style="width: 12%; vertical-align: middle;">Rating</th>
+                                        <th rowspan="2" class="text-center"
+                                            style="width: 14%; vertical-align: middle;">Maximum Capability</th>
                                     </tr>
                                     <tr>
                                         <th class="text-center" style="width: 10%">0</th>
@@ -1097,6 +1099,7 @@
                 this.evidenceModalFilters = {};
                 this.currentEvidenceModalExistingValues = [];
                 this.evidenceModalData = Array.isArray(window.SERVER_EVIDENCES) ? window.SERVER_EVIDENCES : [];
+                this.objectiveDisplayMetrics = {};
 
                 // Modal Pagination
                 this.evidenceModalPagination = {
@@ -1135,6 +1138,11 @@
                         'P': 1 / 3,
                         'L': 2 / 3,
                         'F': 1
+                    },
+                    scoreThresholds: {
+                        partial: 0.15,
+                        largely: 0.50,
+                        fully: 0.85
                     },
                     badgeClasses: ['badge-level-0', 'badge-level-1', 'badge-level-2', 'badge-level-3',
                         'badge-level-4', 'badge-level-5'
@@ -1441,6 +1449,7 @@
             resetAssessmentFields() {
                 this.levelScores = {};
                 this.objectiveCapabilityLevels = {};
+                this.objectiveDisplayMetrics = {};
                 this.initializeEvidenceLibrary();
 
                 if (this.elementCache.ratingSelects) {
@@ -1967,6 +1976,8 @@
 
             async populateAssessmentDataParallel(data) {
                 this.levelScores = {};
+                this.objectiveCapabilityLevels = {};
+                this.objectiveDisplayMetrics = {};
                 this.initializeEvidenceLibrary();
 
                 const allSelects = document.querySelectorAll('.activity-rating-select');
@@ -2099,6 +2110,8 @@
 
             async populateAssessmentData(data) {
                 this.levelScores = {};
+                this.objectiveCapabilityLevels = {};
+                this.objectiveDisplayMetrics = {};
                 this.initializeEvidenceLibrary();
 
                 const allSelects = document.querySelectorAll('.activity-rating-select');
@@ -2595,67 +2608,36 @@
                 this.updateObjectiveCapabilityLevel(objectiveId);
             }
 
-            updateObjectiveCapabilityLevel(objectiveId) {
-                let finalLevel = 0;
+            getObjectiveDisplayMetrics(objectiveId) {
                 const minLevel = this.getMinLevelForObjective(objectiveId);
+                let finalLevel = 0;
+                let finalScore = 0;
 
-                // Helper to get score safely
-                const getScore = (lvl) => {
-                    if (lvl < minLevel) {
-                        return 1.0;
+                for (let level = 5; level >= minLevel; level -= 1) {
+                    const score = this.levelScores[objectiveId]?.[level]?.score || 0;
+                    if (this.getScoreLetter(score) !== 'N') {
+                        finalLevel = level;
+                        finalScore = score;
+                        break;
                     }
-                    if (this.levelScores[objectiveId] && this.levelScores[objectiveId][lvl]) {
-                        return this.levelScores[objectiveId][lvl].score || 0;
-                    }
-                    return 0;
+                }
+
+                const ratingLetter = this.getScoreLetter(finalScore);
+                const value = finalLevel > 0 ? Number((finalLevel + finalScore).toFixed(2)) : 0;
+
+                return {
+                    level: finalLevel,
+                    score: finalScore,
+                    ratingLetter,
+                    ratingString: finalLevel > 0 ? `${finalLevel}${ratingLetter}` : '0N',
+                    value,
+                    valueLabel: value.toFixed(2),
                 };
+            }
 
-                const score2 = getScore(2);
-                const score3 = getScore(3);
-                const score4 = getScore(4);
-                const score5 = getScore(5);
-
-                // Logic based on user formula:
-                // =IF(K17<=0.15,0, IF(K17<=0.5,1,IF(K17<=0.85,2,IF(K30<=0.5,2,IF(K30<=0.85,3,IF(K40<=0.5,3,IF(K40<=0.85,4,IF(K46<=0.5,4,5))))))))
-
-                if (score2 <= 0.15) {
-                    finalLevel = 0;
-                } else if (score2 <= 0.50) {
-                    finalLevel = 1;
-                } else if (score2 <= 0.85) {
-                    finalLevel = 2;
-                } else {
-                    // Level 2 > 0.85, check Level 3
-                    if (score3 <= 0.50) {
-                        finalLevel = 2;
-                    } else if (score3 <= 0.85) {
-                        finalLevel = 3;
-                    } else {
-                        // Level 3 > 0.85, check Level 4
-                        if (score4 <= 0.50) {
-                            finalLevel = 3;
-                        } else if (score4 <= 0.85) {
-                            finalLevel = 4;
-                        } else {
-                            // Level 4 > 0.85, check Level 5
-                            if (score5 <= 0.50) {
-                                finalLevel = 4;
-                            } else {
-                                finalLevel = 5;
-                            }
-                        }
-                    }
-                }
-
-                // Special handling for objectives starting at higher levels (e.g. MEA02 starts at Level 3)
-                // If the score for the minimum level is low (<= 0.15), force level 0
-                // This ensures the default state is 0 instead of the implied previous level
-                if (minLevel > 2) {
-                    const startScore = getScore(minLevel);
-                    if (startScore <= 0.15) {
-                        finalLevel = 0;
-                    }
-                }
+            updateObjectiveCapabilityLevel(objectiveId) {
+                const metrics = this.getObjectiveDisplayMetrics(objectiveId);
+                const finalLevel = metrics.level;
 
                 // Update the objective capability level badge
                 const capabilityBadge = document.getElementById(`capability-level-${objectiveId}`);
@@ -2663,6 +2645,7 @@
                     this.updateCapabilityBadge(capabilityBadge, finalLevel);
                 }
 
+                this.objectiveDisplayMetrics[objectiveId] = metrics;
                 this.objectiveCapabilityLevels[objectiveId] = finalLevel;
             }
 
@@ -2734,9 +2717,9 @@
             }
 
             getScoreLetter(score) {
-                if (score > 0.85) return 'F';
-                if (score > 0.50) return 'L';
-                if (score > 0.15) return 'P';
+                if (score > this.config.scoreThresholds.fully) return 'F';
+                if (score > this.config.scoreThresholds.largely) return 'L';
+                if (score > this.config.scoreThresholds.partial) return 'P';
                 return 'N';
             }
 
@@ -2752,7 +2735,7 @@
                     'badge-level-5'
                 ];
                 badgeClasses.forEach(c => badge.classList.remove(c));
-                const levelKey = Math.min(Math.max(level, 1), 5);
+                const levelKey = Math.min(Math.max(level, 0), 5);
                 badge.classList.add(`badge-level-${levelKey}`);
 
                 const levelNumber = badge.querySelector('.level-number');
@@ -2897,8 +2880,9 @@
                 const chartData = Array.from(objectiveCards).map(card => {
                     const objectiveId = card.getAttribute('data-objective-id');
                     const objectiveName = card.getAttribute('data-objective-name') || objectiveId;
-                    const currentLevel = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 0, 0),
-                        5);
+                    const metrics = this.objectiveDisplayMetrics[objectiveId] || this.getObjectiveDisplayMetrics(
+                        objectiveId);
+                    const currentLevel = Math.min(Math.max(metrics.level || 0, 0), 5);
 
                     // Get ratings for each level
                     const ratings = {};
@@ -2914,6 +2898,8 @@
                         objectiveId,
                         objectiveName,
                         level: currentLevel,
+                        valueLabel: metrics.valueLabel,
+                        ratingString: metrics.ratingString,
                         ratings: ratings,
                         maxCapability: this.getMaxCapabilityForObjective(objectiveId)
                     };
@@ -2965,20 +2951,18 @@
                         if (!domain || !objectiveId) {
                             return null;
                         }
-                        const level = Math.min(Math.max(this.objectiveCapabilityLevels[objectiveId] || 0, 0), 5);
-
-                        // Get rating letter for the current level
-                        let ratingLetter = 'N';
-                        if (level > 0 && this.levelScores[objectiveId] && this.levelScores[objectiveId][level]) {
-                            ratingLetter = this.levelScores[objectiveId][level].letter;
-                        }
+                        const metrics = this.objectiveDisplayMetrics[objectiveId] || this
+                            .getObjectiveDisplayMetrics(objectiveId);
+                        const level = Math.min(Math.max(metrics.level || 0, 0), 5);
 
                         return {
                             domain,
                             objectiveId,
                             objectiveName,
                             level,
-                            ratingLetter
+                            ratingLetter: metrics.ratingLetter,
+                            ratingString: metrics.ratingString,
+                            valueLabel: metrics.valueLabel
                         };
                     })
                     .filter(Boolean)
@@ -3009,6 +2993,7 @@
                 <th style="width:100px;">Gamo</th>
                 <th>Gamo Name</th>
                 <th style="width:100px;" class="text-center">Score</th>
+                <th style="width:110px;" class="text-center">Value</th>
                 <th style="width:100px;" class="text-center">Rating</th>
                 <th style="width:100px;" class="text-center">Target</th>
                 <th style="width:100px;" class="text-center">Gap</th>
@@ -3037,7 +3022,8 @@
                     const bgColor = levelColors[level] || '#f8f9fa';
                     const textColor = levelTextColors[level] || '#6c757d';
 
-                    const ratingDisplay = level > 0 ? `${level} ${row.ratingLetter}` : '0 N';
+                    const ratingDisplay = row.ratingString || '0N';
+                    const valueDisplay = row.valueLabel || '0.00';
                     const maxCap = this.getMaxCapabilityForObjective(row.objectiveId);
                     const targetVal = this.getTargetCapabilityForObjective(row.objectiveId);
                     const gap = (targetVal === null || targetVal === undefined) ? null : (level - targetVal);
@@ -3069,6 +3055,9 @@
                 </td>
                 <td class="text-center fw-bold" style="background-color: ${bgColor}; color: ${textColor};">
                     ${level}
+                </td>
+                <td class="text-center fw-semibold text-dark">
+                    ${valueDisplay}
                 </td>
                 <td class="text-center fw-bold text-dark">
                     ${ratingDisplay}
@@ -3122,9 +3111,11 @@
                 <td colspan="4" class="text-end pe-3">I&T Maturity Score</td>
                 <td class="text-center bg-primary text-white">${maturity}</td>
                 <td class="bg-light"></td>
+                <td class="bg-light"></td>
                 <td class="text-center bg-info text-white">${avgTarget}</td>
                 <td class="bg-light"></td>
                 <td class="text-center bg-secondary text-white">${avgMaxLevel}</td>
+                <td class="bg-light"></td>
             </tr>
         `;
 
@@ -3327,6 +3318,8 @@
                 objectiveId,
                 objectiveName,
                 level,
+                valueLabel = '0.00',
+                ratingString = '0N',
                 ratings = {},
                 meta = {},
                 maxCapability = 5
@@ -3365,17 +3358,20 @@
                     tr.appendChild(tdLevel);
                 }
 
-                // Rating Column (Previously Level Saat Ini)
+                const tdValue = document.createElement('td');
+                tdValue.className = 'text-center fw-semibold text-dark';
+                tdValue.textContent = valueLabel;
+                tr.appendChild(tdValue);
+
+                // Rating Column
                 const tdCurrent = document.createElement('td');
                 tdCurrent.className = 'text-center';
-
-                const currentRatingLetter = ratings[level] || 'N';
                 const averageNote = meta && typeof meta.average === 'number' ?
                     `<div class="mt-1"><small class="text-muted">Avg: ${meta.average.toFixed(2)}</small></div>` :
                     '';
 
                 tdCurrent.innerHTML = `
-            <span class="fw-bold" style="font-size: 1rem;">${level} ${currentRatingLetter}</span>
+            <span class="fw-bold" style="font-size: 1rem;">${ratingString}</span>
             ${averageNote}
         `;
                 tr.appendChild(tdCurrent);

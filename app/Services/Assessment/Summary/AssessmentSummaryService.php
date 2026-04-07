@@ -5,7 +5,6 @@ namespace App\Services\Assessment\Summary;
 use App\Models\MstEval;
 use App\Models\MstObjective;
 use App\Models\TrsActivityeval;
-use App\Models\TrsObjectiveScore;
 use App\Models\TrsRoadmap;
 use App\Models\TrsSummaryActivity;
 use App\Models\TrsSummaryReport;
@@ -36,12 +35,6 @@ class AssessmentSummaryService
         }
 
         $objectives = $objectivesQuery->get();
-
-        $scoresQuery = TrsObjectiveScore::where('eval_id', $evalId);
-        if ($objectiveId) {
-            $scoresQuery->where('objective_id', $objectiveId);
-        }
-        $objectiveScores = $scoresQuery->pluck('level', 'objective_id')->toArray();
 
         $savedNotesQuery = TrsSummaryReport::where('eval_id', $evalId)
             ->when($objectiveId, fn ($query) => $query->where('objective_id', $objectiveId))
@@ -78,19 +71,23 @@ class AssessmentSummaryService
             ->get()
             ->groupBy('activityeval_id');
 
+        $activityData = TrsActivityeval::where('eval_id', $evalId)
+            ->get()
+            ->keyBy('activity_id');
         $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
-        $ratingMap = ['N' => 0.0, 'P' => 1.0 / 3.0, 'L' => 2.0 / 3.0, 'F' => 1.0];
 
-        $objectives->map(function ($objective) use ($objectiveScores, $maxLevels, $mappedEvidence, $ratingMap, $targetCapabilityMap, $savedNotes, $evalId) {
-            $currentLevel = $objectiveScores[$objective->objective_id] ?? 0;
-            $objective->current_score = $currentLevel;
+        $objectives->map(function ($objective) use ($activityData, $maxLevels, $mappedEvidence, $targetCapabilityMap, $savedNotes) {
+            $metrics = $this->evaluationService->calculateObjectiveAssessmentMetrics($objective, $activityData);
+
+            $objective->current_score = $metrics['final_level'];
+            $objective->display_value = $metrics['display_value_label'];
             $objective->max_level = $maxLevels[$objective->objective_id] ?? 0;
             $objective->saved_note = $savedNotes[$objective->objective_id] ?? [
                 'kesimpulan' => '',
                 'rekomendasi' => '',
                 'roadmap_rekomendasi' => null,
             ];
-            $objective->rating_string = $this->calculateRatingString($objective, $currentLevel, $ratingMap, $evalId);
+            $objective->rating_string = $metrics['rating_string'];
             $objective->target_level = $targetCapabilityMap[$objective->objective_id] ?? 0;
 
             $objectiveEvidenceKeys = [];
@@ -257,53 +254,6 @@ class AssessmentSummaryService
         }
 
         return compact('objectives', 'years');
-    }
-
-    private function calculateRatingString($objective, int $finalLevel, array $ratingMap, int $evalId): string
-    {
-        if ($finalLevel === 0) {
-            return '0N';
-        }
-
-        $activitiesByLevel = [2 => [], 3 => [], 4 => [], 5 => []];
-        foreach ($objective->practices as $practice) {
-            foreach ($practice->activities as $activity) {
-                $level = (int) ($activity->capability_lvl ?? $activity->capability_level ?? 0);
-                if ($level >= 2 && $level <= 5) {
-                    $activitiesByLevel[$level][] = $activity;
-                }
-            }
-        }
-
-        $levelToCheck = max(2, $finalLevel);
-        $activities = $activitiesByLevel[$levelToCheck] ?? [];
-        if ($activities === []) {
-            return $finalLevel.'F';
-        }
-
-        $totalScore = 0.0;
-        foreach ($activities as $activity) {
-            $activityEval = TrsActivityeval::where('eval_id', $evalId)
-                ->where('activity_id', $activity->activity_id)
-                ->first();
-
-            $rating = $activityEval?->level_achieved ?? 'N';
-            $totalScore += $ratingMap[$rating] ?? 0.0;
-        }
-
-        $averageScore = $totalScore / count($activities);
-
-        if ($averageScore > 0.85) {
-            return $finalLevel.'F';
-        }
-        if ($averageScore > 0.50) {
-            return $finalLevel.'L';
-        }
-        if ($averageScore > 0.15) {
-            return $finalLevel.'P';
-        }
-
-        return $finalLevel.'N';
     }
 
     private function isPolicyEvidenceType(?string $type): bool
