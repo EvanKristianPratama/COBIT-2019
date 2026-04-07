@@ -111,7 +111,7 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                            <a href="{{ route('admin.assessments.show', $recentAssessment->assessment_id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <a href="{{ route('admin.design-assessments.show', $recentAssessment->assessment_id) }}" class="btn btn-sm btn-outline-secondary">
                                                 <i class="fas fa-shield-alt me-1"></i>Manage
                                             </a>
                                             <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">

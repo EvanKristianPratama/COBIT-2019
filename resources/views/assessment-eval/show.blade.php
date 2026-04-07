@@ -101,7 +101,7 @@
                                 style="background-color: #0f2b5c; color: #fff;">
                                 <i class="fas fa-plus me-2"></i>Evidence
                             </a>
-                            @if ($isOwner && $evaluation->status !== 'finished')
+                            @if (($canManageAssessment ?? false) && $evaluation->status !== 'finished')
                                 <button type="button" class="d-flex align-items-center px-3 py-2 me-1 border-0 fw-bold"
                                     data-bs-toggle="modal" data-bs-target="#editScopeModal"
                                     style="background-color: #0f2b5c; color: #fff; border-radius: 10px; font-size: 0.9rem;">
@@ -1019,8 +1019,10 @@
         </div>
     </div>
 
+    @php($canManageAssessment = (bool) ($canManageAssessment ?? false))
+
     <div class="sticky-action-group">
-        @if ((int) (Auth::id() ?? 0) === (int) ($evaluation->user_id ?? 0))
+        @if ($canManageAssessment)
             <button type="button" class="sticky-action-btn btn btn-primary" id="save-assessment"
                 title="Save Assessment">
                 <i class="fas fa-save me-2"></i>Save
@@ -1048,8 +1050,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Server-provided owner flag to control data loading and sensitive UI
-        window.IS_OWNER = {{ isset($isOwner) && $isOwner ? 'true' : 'false' }};
+        // Server-provided manage flag to control editable UI state
+        window.CAN_MANAGE_ASSESSMENT = {{ $canManageAssessment ? 'true' : 'false' }};
         // Selected domains (GAMO) provided by server — used by the Scope tab
         window.SELECTED_DOMAINS = {!! json_encode($selectedDomains ?? []) !!};
         // Server-provided evidences
@@ -1057,12 +1059,12 @@
         // Target capability map keyed by GAMO (only when assessment year matches Target Capability year)
         window.TARGET_CAPABILITY_MAP = {!! json_encode($targetCapabilityMap ?? []) !!};
         class COBITAssessmentManager {
-            constructor(evalId, status = 'draft', isOwner = false) {
+            constructor(evalId, status = 'draft', canManageAssessment = false) {
                 this.assessmentData = {};
                 this.levelScores = {};
                 this.currentEvalId = evalId;
                 this.status = status;
-                this.isOwner = (isOwner === true || isOwner === 'true');
+                this.canManageAssessment = (canManageAssessment === true || canManageAssessment === 'true');
                 this.evidenceLibrary = new Set();
                 this.diagramChartInstance = null;
                 this.objectiveCapabilityLevels = {};
@@ -1946,7 +1948,7 @@
                     hideLoadingFn();
 
                     // If viewer is not owner, force read-only mode after data is loaded
-                    if (!this.isOwner) {
+                    if (!this.canManageAssessment) {
                         this.setActionButtonsDisabled(true);
                         this.lockInterface();
                     }
@@ -3825,8 +3827,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const isOwnerFlag = window.IS_OWNER === true || window.IS_OWNER === 'true';
-            new COBITAssessmentManager({{ $evalId }}, '{{ $evaluation->status ?? 'draft' }}', isOwnerFlag);
+            const canManageAssessmentFlag = window.CAN_MANAGE_ASSESSMENT === true || window.CAN_MANAGE_ASSESSMENT === 'true';
+            new COBITAssessmentManager({{ $evalId }}, '{{ $evaluation->status ?? 'draft' }}', canManageAssessmentFlag);
             initAssessmentToolbarSticky();
         });
 

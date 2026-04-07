@@ -36,7 +36,7 @@
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold text-primary">List of Evidence</h5>
-                @if ($isOwner)
+                @if ($canManageAssessment ?? false)
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-secondary rounded-pill" id="btn-import-prev"
                             data-bs-toggle="modal" data-bs-target="#importEvidenceModal">
@@ -145,7 +145,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @if ($isOwner)
+                                        @if ($canManageAssessment ?? false)
                                             <button class="btn btn-sm btn-outline-warning btn-edit-evidence"
                                                 title="Edit" data-bs-toggle="modal" data-bs-target="#addEvidenceModal"
                                                 data-evidence="{{ json_encode($evidence) }}">
@@ -457,7 +457,7 @@
                 };
 
                 const flags = {
-                    isOwner: @json($isOwner)
+                    canManageAssessment: @json($canManageAssessment)
                 };
 
                 const importModal = dom.importModalEl ? new bootstrap.Modal(dom.importModalEl) : null;
@@ -582,7 +582,7 @@
                             '-';
 
                         let actionHtml = '-';
-                        if (flags.isOwner) {
+                        if (flags.canManageAssessment) {
                             // escape json for data attribute
                             const jsonStr = JSON.stringify(evidence).replace(/'/g, "&#39;");
                             actionHtml = `
@@ -725,7 +725,7 @@
                         `<a href="${evidence.link}" target="_blank" class="text-decoration-none">Link</a>` : '-';
 
                     let actionHtml = '-';
-                    if (flags.isOwner) {
+                    if (flags.canManageAssessment) {
                         actionHtml = `
                 <button class="btn btn-sm btn-outline-warning btn-edit-evidence"
                         title="Edit"

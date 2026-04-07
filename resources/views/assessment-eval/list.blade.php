@@ -126,7 +126,7 @@
                                             <a href="{{ route('assessment-eval.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
                                                 <i class="fas fa-file-alt me-1"></i> Report
                                             </a>
-                                            @if(($evaluation->status ?? '') !== 'finished')
+                                            @if(($evaluation->status ?? '') !== 'finished' && ($evaluation->can_manage ?? false))
                                                 <form action="{{ route('assessment-eval.delete', $evaluation->encrypted_id) }}" method="POST" class="d-inline delete-form" data-id="{{ $evaluation->encrypted_id }}">
                                                     @csrf
                                                     @method('DELETE')
@@ -213,6 +213,15 @@
                                             <a href="{{ route('assessment-eval.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
                                                 <i class="fas fa-file-alt me-1"></i> Report
                                             </a>
+                                            @if(($evaluation->status ?? '') !== 'finished' && ($evaluation->can_manage ?? false))
+                                                <form action="{{ route('assessment-eval.delete', $evaluation->encrypted_id) }}" method="POST" class="d-inline delete-form" data-id="{{ $evaluation->encrypted_id }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" title="Hapus">
+                                                        <i class="fas fa-trash me-1"></i> Hapus
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

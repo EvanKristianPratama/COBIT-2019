@@ -59,7 +59,7 @@ class AssessmentEvalController extends Controller
                 $evaluation,
                 request()->integer('scope_id') ?: null
             );
-            $data['isOwner'] = $this->assessmentAccessService->canManage($currentUser, $evaluation);
+            $data['canManageAssessment'] = $this->assessmentAccessService->canManage($currentUser, $evaluation);
 
             return view('assessment-eval.show', $data);
         } catch (\Exception $e) {
@@ -122,7 +122,7 @@ class AssessmentEvalController extends Controller
                 'success' => true,
                 'data' => [
                     ...$data,
-                    'isOwner' => $this->assessmentAccessService->canManage($currentUser, $evaluation),
+                    'canManageAssessment' => $this->assessmentAccessService->canManage($currentUser, $evaluation),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -145,9 +145,15 @@ class AssessmentEvalController extends Controller
     public function delete($evalId)
     {
         try {
-            $evaluation = MstEval::where('eval_id', $evalId)
-                ->where('user_id', Auth::id())
-                ->firstOrFail();
+            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+
+            if (! $evaluation) {
+                return redirect()->back()->withErrors(['error' => 'Assessment tidak ditemukan.']);
+            }
+
+            if (! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
+                return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk menghapus assessment ini.']);
+            }
 
             $this->assessmentManagementService->delete($evaluation);
 

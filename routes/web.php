@@ -1,9 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\UserAdminController;
-use App\Http\Controllers\Admin\AssessmentController as AdminAssessment;
+use App\Http\Controllers\Admin\AssessmentController as DesignAssessmentAdmin;
 use App\Http\Controllers\Admin\AccessAdminController;
 use App\Http\Controllers\Admin\DesignFactorAdminController;
+use App\Http\Controllers\Admin\EvaluationAdminController as AdminAssessment;
 use App\Http\Controllers\Admin\OrganizationAdminController;
 use App\Http\Controllers\AssessmentEval\ActivityReportController;
 use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
@@ -112,25 +113,24 @@ Route::prefix('admin')
         Route::get('design-factors', [DesignFactorAdminController::class, 'index'])
             ->name('design-factors.index');
 
-        // CRUD Assessment
-        Route::post('assessments', [AdminAssessment::class, 'store'])
-            ->name('assessments.store');
-        Route::get('assessments/{assessment_id}', [AdminAssessment::class, 'show'])
-            ->name('assessments.show');
-        Route::post('assessments/{assessment_id}/assign-user', [AdminAssessment::class, 'assignUser'])
-            ->name('assessments.assign-user');
-        Route::delete('assessments/{assessment_id}/assignments/{assignment_id}', [AdminAssessment::class, 'revokeUser'])
-            ->name('assessments.revoke-user');
-        Route::delete('assessments/{assessment_id}', [AdminAssessment::class, 'destroy'])
-            ->name('assessments.destroy');
+        // CRUD Design Factor Assessment Codes
+        Route::get('design-assessment-codes', [DesignAssessmentAdmin::class, 'index'])
+            ->name('design-assessments.index');
+        Route::post('design-assessment-codes', [DesignAssessmentAdmin::class, 'store'])
+            ->name('design-assessments.store');
+        Route::get('design-assessment-codes/{assessment_id}', [DesignAssessmentAdmin::class, 'show'])
+            ->name('design-assessments.show');
+        Route::post('design-assessment-codes/{assessment_id}/assign-user', [DesignAssessmentAdmin::class, 'assignUser'])
+            ->name('design-assessments.assign-user');
+        Route::delete('design-assessment-codes/{assessment_id}/assignments/{assignment_id}', [DesignAssessmentAdmin::class, 'revokeUser'])
+            ->name('design-assessments.revoke-user');
+        Route::delete('design-assessment-codes/{assessment_id}', [DesignAssessmentAdmin::class, 'destroy'])
+            ->name('design-assessments.destroy');
 
-        // Tampilkan semua pending requests
-        Route::get('requests', [AdminAssessment::class, 'pendingRequests'])
-            ->name('requests');
-
-        // Approve satu request berdasar index di JSON
-        Route::post('requests/{idx}/approve', [AdminAssessment::class, 'approveRequest'])
-            ->name('requests.approve');
+        Route::get('design-assessment-requests', [DesignAssessmentAdmin::class, 'pendingRequests'])
+            ->name('design-assessments.requests');
+        Route::post('design-assessment-requests/{idx}/approve', [DesignAssessmentAdmin::class, 'approveRequest'])
+            ->name('design-assessments.requests.approve');
     });
 
 // Redirect ke halaman login

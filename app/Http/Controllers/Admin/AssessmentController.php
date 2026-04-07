@@ -113,7 +113,7 @@ class AssessmentController extends Controller
         session()->put('assessment_temp', false);
 
         return redirect()
-            ->route('admin.assessments.index')
+            ->route('admin.design-assessments.index')
             ->with('success', 'Kode assessment berhasil dibuat');
     }
 
@@ -194,7 +194,7 @@ class AssessmentController extends Controller
         
         if (!$assessment) {
             return redirect()
-                ->route('admin.assessments.index')
+                ->route('admin.design-assessments.index')
                 ->with('error', 'Assessment dengan ID tersebut tidak ditemukan.');
         }
 
@@ -247,14 +247,14 @@ class AssessmentController extends Controller
 
         if ((int) $assessment->user_id === (int) $user->id) {
             return redirect()
-                ->route('admin.assessments.show', $assessment->assessment_id)
+                ->route('admin.design-assessments.show', $assessment->assessment_id)
                 ->with('error', 'User pemilik assessment sudah memiliki akses utama.');
         }
 
         $this->cobitAssessmentAccessService->assign($user, $assessment, Auth::user());
 
         return redirect()
-            ->route('admin.assessments.show', $assessment->assessment_id)
+            ->route('admin.design-assessments.show', $assessment->assessment_id)
             ->with('success', 'Akses user berhasil ditambahkan ke assessment.');
     }
 
@@ -268,7 +268,7 @@ class AssessmentController extends Controller
         $this->cobitAssessmentAccessService->revoke($assessment, $assignment);
 
         return redirect()
-            ->route('admin.assessments.show', $assessment->assessment_id)
+            ->route('admin.design-assessments.show', $assessment->assessment_id)
             ->with('success', 'Akses user berhasil dicabut dari assessment.');
     }
 

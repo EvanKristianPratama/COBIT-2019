@@ -28,13 +28,13 @@
             'label' => 'Manage Design Factor',
             'icon' => 'fa-sitemap',
             'route' => route('admin.design-factors.index'),
-            'active' => request()->routeIs('admin.design-factors.*'),
+            'active' => request()->routeIs('admin.design-factors.*', 'admin.design-assessments.*'),
         ],
         [
             'label' => 'Manage Assessment',
             'icon' => 'fa-clipboard-check',
             'route' => route('admin.assessments.index'),
-            'active' => request()->routeIs('admin.assessments.*', 'admin.dashboard', 'admin.requests*'),
+            'active' => request()->routeIs('admin.assessments.*', 'admin.dashboard'),
         ],
     ];
 @endphp

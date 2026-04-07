@@ -36,9 +36,9 @@ class EvidenceController extends Controller
             }
 
             $evidences = $this->assessmentEvidenceService->getEvidences($evaluation);
-            $isOwner = $this->assessmentAccessService->canManage($currentUser, $evaluation);
+            $canManageAssessment = $this->assessmentAccessService->canManage($currentUser, $evaluation);
 
-            return view('assessment-eval.evidence', compact('evaluation', 'evidences', 'evalId', 'isOwner'));
+            return view('assessment-eval.evidence', compact('evaluation', 'evidences', 'evalId', 'canManageAssessment'));
 
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to load evidence: ' . $e->getMessage()]);

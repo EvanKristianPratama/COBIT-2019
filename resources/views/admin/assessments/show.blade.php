@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('admin_title', 'Manage Assessment Detail')
+@section('admin_title', 'Manage Assessment Code Detail')
 
 @section('admin_content')
 <div class="container-fluid px-0 assessment-admin-page">
@@ -8,7 +8,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-primary text-white py-3">
             <div class="d-flex justify-content-between align-items-center">
-                <h3 class="mb-0">Detail Assessment {{ $assessment->assessment_id }}</h3>
+                <h3 class="mb-0">Detail Assessment Code {{ $assessment->assessment_id }}</h3>
                 <div>
                         <div class="btn-group me-2">
                             <button type="button" class="btn btn-success dropdown-toggle px-3 py-2" data-bs-toggle="dropdown" aria-expanded="false">
@@ -27,7 +27,7 @@
                                 <li><a class="dropdown-item" href="{{ route('df10.form', ['id' => 10, 'assessment' => $assessment->assessment_id]) }}">Design Factor 10</a></li>
                             </ul>
                         </div>
-                    <a href="{{ route('admin.assessments.index') }}" class="btn btn-light px-3 py-2">
+                    <a href="{{ route('admin.design-assessments.index') }}" class="btn btn-light px-3 py-2">
                         <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                     </a>
                 </div>
@@ -75,7 +75,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.assessments.assign-user', $assessment->assessment_id) }}" method="POST">
+                    <form action="{{ route('admin.design-assessments.assign-user', $assessment->assessment_id) }}" method="POST">
                         @csrf
                         <div class="mb-3">
                             <label for="assigned_user_id" class="form-label">User</label>
@@ -162,7 +162,7 @@
                                                 <small class="text-muted">{{ optional($assignment->created_at)->format('H:i') }}</small>
                                             </td>
                                             <td class="text-end">
-                                                <form action="{{ route('admin.assessments.revoke-user', [$assessment->assessment_id, $assignment->id]) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('admin.design-assessments.revoke-user', [$assessment->assessment_id, $assignment->id]) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-outline-danger px-3" onclick="return confirm('Cabut akses user dari assessment ini?')">

@@ -1,7 +1,7 @@
 {{-- resources/views/admin/assessment/requests.blade.php --}}
 @extends('layouts.admin')
 
-@section('admin_title', 'Manage Assessment Requests')
+@section('admin_title', 'Manage Assessment Code Requests')
 
 @section('admin_content')
 <style>
@@ -53,8 +53,8 @@
 
 <div class="container-fluid px-0 py-1 requests-admin-page">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="mb-0">Pending Assessment Requests</h3>
-    <a href="{{ url('/admin/dashboard') }}" class="btn btn-secondary">
+    <h3 class="mb-0">Pending Assessment Code Requests</h3>
+    <a href="{{ route('admin.design-assessments.index') }}" class="btn btn-secondary">
       <i class="fas fa-arrow-left me-1"></i> Kembali ke Dashboard
     </a>
   </div>
@@ -105,7 +105,7 @@
                 <td>{{ $r['instansi'] }}</td>
                 <td>{{ $r['requested_at'] }}</td>
                 <td class="text-center">
-                  <form method="POST" action="{{ route('admin.requests.approve', $idx) }}">
+                  <form method="POST" action="{{ route('admin.design-assessments.requests.approve', $idx) }}">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-success">
                       <i class="fas fa-check me-1"></i>Approve

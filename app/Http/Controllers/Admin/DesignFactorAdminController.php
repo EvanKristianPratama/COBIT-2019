@@ -60,6 +60,12 @@ class DesignFactorAdminController extends Controller
                 'icon' => 'fa-road',
                 'variant' => 'neutral',
             ],
+            [
+                'label' => 'Assessment Code',
+                'route' => route('admin.design-assessments.index'),
+                'icon' => 'fa-shield-alt',
+                'variant' => 'neutral',
+            ],
         ];
 
         return view('admin.design-factors.index', compact('stats', 'recentAssessments', 'workspaceLinks'));

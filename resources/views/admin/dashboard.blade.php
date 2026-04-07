@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('admin_title', 'Manage Assessment')
+@section('admin_title', 'Manage Assessment Code')
 
 @section('admin_content')
 <style>
@@ -142,9 +142,9 @@
     <div class="page-header mb-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
             <div class="mb-3 mb-md-0">
-                <h1 class="h2 fw-bold mb-2">Kelola Kode Assessment</h1>
+                <h1 class="h2 fw-bold mb-2">Kelola Kode Design Factor Assessment</h1>
             </div>
-            <a href="{{ url('admin/requests') }}" class="btn btn-primary d-flex align-items-center">
+            <a href="{{ route('admin.design-assessments.requests') }}" class="btn btn-primary d-flex align-items-center">
                 <i class="fas fa-list me-2"></i> Cek Daftar Request
             </a>
         </div>
@@ -159,7 +159,7 @@
                     <h6 class="m-0 fw-medium">Buat Kode Baru</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.assessments.index') }}" method="POST">
+                    <form action="{{ route('admin.design-assessments.store') }}" method="POST">
                         @csrf
                         <div class="row g-3">
                             <div class="col-md-5">
@@ -204,7 +204,7 @@
                     <h6 class="m-0 fw-medium">Filter Data</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.assessments.index') }}" method="GET">
+                    <form action="{{ route('admin.design-assessments.index') }}" method="GET">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small text-muted mb-1">ID</label>
@@ -232,7 +232,7 @@
                                     <button type="submit" class="btn btn-secondary flex-grow-1">
                                         <i class="fas fa-filter me-2"></i>Terapkan Filter
                                     </button>
-                                    <a href="{{ route('admin.assessments.index') }}" class="btn btn-outline-secondary flex-grow-1">
+                                    <a href="{{ route('admin.design-assessments.index') }}" class="btn btn-outline-secondary flex-grow-1">
                                         <i class="fas fa-times me-2"></i>Reset
                                     </a>
                                 </div>
@@ -364,7 +364,7 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <a href="{{ route('admin.assessments.show', $a->assessment_id) }}" 
+                                        <a href="{{ route('admin.design-assessments.show', $a->assessment_id) }}" 
                                            class="btn btn-sm btn-outline-secondary px-3">
                                             <i class="fas fa-shield-alt me-1"></i>Manage
                                         </a>

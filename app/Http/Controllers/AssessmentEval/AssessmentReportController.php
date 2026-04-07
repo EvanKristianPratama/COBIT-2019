@@ -35,7 +35,7 @@ class AssessmentReportController extends Controller
 
             return view('assessment-eval.report', array_merge(
                 $this->assessmentReportService->buildSingleAssessmentReport($evaluation),
-                ['isOwner' => $this->assessmentAccessService->canManage($currentUser, $evaluation)]
+                ['canManageAssessment' => $this->assessmentAccessService->canManage($currentUser, $evaluation)]
             ));
 
         } catch (\Exception $e) {

@@ -8,6 +8,7 @@ use App\Models\TrsScoping;
 use App\Models\User;
 use App\Services\Auth\AccessProfilePermissionService;
 use App\Support\Authorization\PermissionCatalog;
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 
 class AssessmentAccessService
@@ -107,7 +108,11 @@ class AssessmentAccessService
             return;
         }
 
-        $query->orWhereIn('organization_id', $organizationIds);
+        $query->orWhereIn('organization_id', $organizationIds)
+            ->orWhereHas('user', function (Builder $ownerQuery) use ($organizationIds) {
+                $ownerQuery->whereIn('organization_id', $organizationIds)
+                    ->orWhereHas('organizations', fn (Builder $organizationQuery) => $organizationQuery->whereIn('mst_organization.organization_id', $organizationIds));
+            });
     }
 
     private function belongsToUserOrganizations(User $user, MstEval $evaluation): bool
@@ -116,10 +121,84 @@ class AssessmentAccessService
             return true;
         }
 
+        $organizationIds = $this->resolveEvaluationOrganizationIds($evaluation);
+
+        foreach ($organizationIds as $organizationId) {
+            if ($user->hasOrganizationId($organizationId)) {
+                return true;
+            }
+        }
+
+        $organizationNames = $this->resolveEvaluationOrganizationNames($evaluation);
+
+        foreach ($organizationNames as $organizationName) {
+            if ($user->hasOrganizationAccess($organizationName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function resolveEvaluationOrganizationIds(MstEval $evaluation): array
+    {
+        $organizationIds = collect();
+
+        if ($evaluation->organization_id) {
+            $organizationIds->push((int) $evaluation->organization_id);
+        }
+
+        $owner = $evaluation->relationLoaded('user')
+            ? $evaluation->user
+            : $evaluation->user()->with('organizations')->first();
+
+        if ($owner) {
+            $organizationIds = $organizationIds
+                ->merge($owner->organizationIds())
+                ->when($owner->rawOrganizationId(), fn (Collection $ids, int $organizationId) => $ids->push($organizationId));
+        }
+
+        return $organizationIds
+            ->map(fn ($organizationId) => (int) $organizationId)
+            ->filter(fn (int $organizationId): bool => $organizationId > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function resolveEvaluationOrganizationNames(MstEval $evaluation): array
+    {
+        $organizationNames = collect();
+
         $organizationName = $evaluation->relationLoaded('organization')
             ? $evaluation->organization?->organization_name
             : $evaluation->organization()->value('organization_name');
 
-        return $user->hasOrganizationAccess($organizationName);
+        if (filled($organizationName)) {
+            $organizationNames->push((string) $organizationName);
+        }
+
+        $owner = $evaluation->relationLoaded('user')
+            ? $evaluation->user
+            : $evaluation->user()->with('organizations')->first();
+
+        if ($owner) {
+            $organizationNames = $organizationNames
+                ->merge($owner->organizationNames())
+                ->when($owner->rawOrganizationName(), fn (Collection $names, string $name) => $names->push($name));
+        }
+
+        return $organizationNames
+            ->filter(fn ($organizationName): bool => filled($organizationName))
+            ->map(fn ($organizationName): string => (string) $organizationName)
+            ->unique()
+            ->values()
+            ->all();
     }
 }
