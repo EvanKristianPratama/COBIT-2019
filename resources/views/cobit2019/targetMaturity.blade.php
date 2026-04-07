@@ -19,7 +19,18 @@
                 @csrf
                  <div class="col-md-4">
                     <label class="form-label fw-bold small text-uppercase text-muted">Organisasi</label>
-                    <input type="text" class="form-control bg-light" value="{{ Auth::user()->organisasi ?? 'Tidak ada organisasi' }}" readonly>
+                    @if(($organizationOptions->count() ?? 0) > 1)
+                        <select id="organization_id" name="organization_id" class="form-select">
+                            @foreach($organizationOptions as $organizationOption)
+                                <option value="{{ $organizationOption->organization_id }}" {{ (string) old('organization_id', $selectedOrganizationId) === (string) $organizationOption->organization_id ? 'selected' : '' }}>
+                                    {{ $organizationOption->organization_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="organization_id" value="{{ old('organization_id', $selectedOrganizationId) }}">
+                        <input type="text" class="form-control bg-light" value="{{ Auth::user()->organisasi ?? 'Tidak ada organisasi' }}" readonly>
+                    @endif
                 </div>
 
                 <div class="col-md-3">
@@ -81,4 +92,18 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const organizationSelect = document.getElementById('organization_id');
+    if (!organizationSelect) {
+        return;
+    }
+
+    organizationSelect.addEventListener('change', function () {
+        const url = new URL(window.location.href);
+        url.searchParams.set('organization_id', this.value);
+        window.location.href = url.toString();
+    });
+});
+</script>
 @endsection

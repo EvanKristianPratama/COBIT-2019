@@ -4,6 +4,8 @@ namespace App\Http\Controllers\cobit2019;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
+use App\Services\Cobit\CobitAssessmentAccessService;
+use App\Services\Organization\OrganizationRegistryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +14,12 @@ class DesignToolkitController extends Controller
 {
     private const REQUESTS_FILE = 'requests.json';
     private const STATUS_PENDING = 'pending';
+
+    public function __construct(
+        private readonly CobitAssessmentAccessService $cobitAssessmentAccessService,
+        private readonly OrganizationRegistryService $organizationRegistryService
+    ) {
+    }
 
     /**
      * Display assessment list
@@ -85,12 +93,22 @@ class DesignToolkitController extends Controller
 
         $user = Auth::user();
         $assessment = Assessment::where('kode_assessment', $data['kode_assessment'])->first();
+        $assessmentId = $assessment?->assessment_id;
+
+        if (! $assessment) {
+            return redirect()->route('cobit.home')->with('error', 'Assessment tidak ditemukan.');
+        }
+
+        if ($user->isAdmin() || (string) $assessment->user_id === (string) $user->id || $this->cobitAssessmentAccessService->assignmentFor($user, $assessment)) {
+            return redirect()->route('cobit.home')->with('error', 'Akses ke assessment ini sudah tersedia.');
+        }
 
         $requests = $this->loadRequests();
 
         // Check if request already exists
         $exists = collect($requests)->first(
-            fn($item) => $item['user_id'] === $user->id && $item['assessment_id'] === $assessment->id
+            fn($item) => (int) ($item['user_id'] ?? 0) === (int) $user->id
+                && (int) ($item['assessment_id'] ?? 0) === (int) $assessmentId
         );
 
         if ($exists) {
@@ -103,7 +121,7 @@ class DesignToolkitController extends Controller
         $requests[] = [
             'user_id' => $user->id,
             'username' => $user->name,
-            'assessment_id' => $assessment->id,
+            'assessment_id' => $assessmentId,
             'kode' => $assessment->kode_assessment,
             'instansi' => $assessment->instansi,
             'requested_at' => now()->toDateTimeString(),
@@ -154,20 +172,18 @@ class DesignToolkitController extends Controller
 
     private function buildBaseQuery($user)
     {
-        $query = Assessment::query();
-
-        if (!empty($user->organisasi)) {
-            $query->where('instansi', 'like', '%' . $user->organisasi . '%');
-        }
-
-        return $query;
+        return $this->cobitAssessmentAccessService->queryAccessible($user);
     }
 
     private function applyFilters($query, Request $request, array $fields)
     {
-        foreach ($fields as $field) {
-            if ($request->filled($field)) {
-                $query->where($field, 'like', '%' . $request->input($field) . '%');
+        foreach ($fields as $requestKey => $column) {
+            if (is_int($requestKey)) {
+                $requestKey = $column;
+            }
+
+            if ($request->filled($requestKey)) {
+                $query->where($column, 'like', '%' . $request->input($requestKey) . '%');
             }
         }
     }
@@ -182,56 +198,36 @@ class DesignToolkitController extends Controller
 
     private function isAdmin($user): bool
     {
-        return !empty($user->role) && strtolower($user->role) === 'admin';
+        return $user?->isAdmin() ?? false;
     }
 
     private function getAdminAssessments($user, Request $request, string $orderDir): array
     {
-        if (empty($user->organisasi)) {
-            $queryAll = Assessment::query();
-            $this->applyFilters($queryAll, $request, ['kode' => 'kode_assessment', 'instansi']);
+        $query = Assessment::query()->with('organization');
+        $this->applyFilters($query, $request, ['kode' => 'kode_assessment', 'instansi']);
+        $assessments = $query->orderBy('created_at', $orderDir)->get();
 
+        if ($user->organizationKeys() === []) {
             return [
                 'assessments_same' => collect(),
-                'assessments_other' => $queryAll->orderBy('created_at', $orderDir)->get(),
+                'assessments_other' => $assessments,
             ];
         }
 
-        $querySame = Assessment::where('instansi', 'like', '%' . $user->organisasi . '%');
-        $queryOther = Assessment::where(function ($q) use ($user) {
-            $q->where('instansi', 'not like', '%' . $user->organisasi . '%')
-              ->orWhereNull('instansi')
-              ->orWhere('instansi', '');
-        });
-
-        // Apply filters
-        if ($request->filled('kode')) {
-            $querySame->where('kode_assessment', 'like', '%' . $request->kode . '%');
-            $queryOther->where('kode_assessment', 'like', '%' . $request->kode . '%');
-        }
-        if ($request->filled('instansi')) {
-            $querySame->where('instansi', 'like', '%' . $request->instansi . '%');
-            $queryOther->where('instansi', 'like', '%' . $request->instansi . '%');
-        }
+        [$assessmentsSame, $assessmentsOther] = $assessments->partition(
+            fn (Assessment $assessment): bool => $user->hasOrganizationId((int) $assessment->organization_id)
+                || $user->hasOrganizationAccess($assessment->instansi)
+        );
 
         return [
-            'assessments_same' => $querySame->orderBy('created_at', $orderDir)->get(),
-            'assessments_other' => $queryOther->orderBy('created_at', $orderDir)->get(),
+            'assessments_same' => $assessmentsSame->values(),
+            'assessments_other' => $assessmentsOther->values(),
         ];
     }
 
     private function getUserAssessments($user, Request $request, string $orderDir)
     {
-        $query = Assessment::query();
-
-        // PIC sees all
-        if (!empty($user->role) && strtolower($user->role) === 'pic') {
-            // No filter
-        } elseif (!empty($user->organisasi)) {
-            $query->where('instansi', 'like', '%' . $user->organisasi . '%');
-        } else {
-            $query->where('user_id', $user->id);
-        }
+        $query = $this->cobitAssessmentAccessService->queryAccessible($user);
 
         // Apply filters
         if ($request->filled('kode')) {
@@ -279,13 +275,24 @@ class DesignToolkitController extends Controller
 
     private function createNewAssessment($user)
     {
+        if (! $user->can('design-factors.input')) {
+            return redirect()->route('cobit.home')->with('error', 'Akun ini hanya memiliki akses lihat untuk design factor.');
+        }
+
         $newCode = 'AUTO-' . strtoupper(substr(md5(uniqid()), 0, 6));
+        $organizationId = $user->organization_id ? (int) $user->organization_id : null;
+        $organizationName = $this->organizationRegistryService->resolveName(
+            $organizationId,
+            $user->organisasi ?? ($user->name ?? 'User Assessment')
+        );
 
         $assessment = Assessment::create([
             'kode_assessment' => $newCode,
-            'instansi' => $user->organisasi ?? ($user->name ?? 'User Assessment'),
+            'organization_id' => $organizationId,
+            'instansi' => $organizationName,
             'user_id' => $user->id,
         ]);
+        $this->cobitAssessmentAccessService->assign($user, $assessment, $user);
 
         session()->put([
             'assessment_id' => $assessment->assessment_id ?? $assessment->id,
@@ -307,10 +314,9 @@ class DesignToolkitController extends Controller
                 ->with('error', 'Kode assessment tidak valid. Silakan periksa kembali kode yang Anda masukkan.');
         }
 
-        // Attach to user if owner not set
-        if ($assessment->user_id === null && !$this->isGuestUser($user)) {
-            $assessment->user_id = $user->id;
-            $assessment->save();
+        if (! $this->cobitAssessmentAccessService->canView($user, $assessment)) {
+            return back()->withInput()
+                ->with('error', 'Anda belum memiliki akses ke assessment ini. Silakan minta approval terlebih dahulu.');
         }
 
         session()->put([

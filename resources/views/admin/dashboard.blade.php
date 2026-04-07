@@ -1,7 +1,124 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
-@section('content')
-<div class="container">
+@section('admin_title', 'Manage Assessment')
+
+@section('admin_content')
+<style>
+    .assessment-dashboard-page {
+        --assessment-primary: var(--cobit-primary);
+        --assessment-primary-soft: rgba(15, 43, 92, 0.08);
+        --assessment-secondary: var(--cobit-secondary);
+        --assessment-secondary-soft: rgba(26, 61, 107, 0.1);
+        --assessment-success: var(--cobit-secondary);
+        --assessment-success-soft: rgba(26, 61, 107, 0.1);
+        --assessment-info: var(--cobit-accent);
+        --assessment-info-soft: rgba(15, 106, 217, 0.1);
+        --assessment-warning: var(--cobit-accent);
+        --assessment-warning-soft: rgba(15, 106, 217, 0.1);
+        --assessment-border: #d7dfeb;
+        --assessment-muted: #64748b;
+    }
+
+    .assessment-dashboard-page .card {
+        border: 1px solid var(--assessment-border) !important;
+        border-radius: 22px;
+        box-shadow: 0 16px 34px rgba(15, 23, 42, 0.05);
+    }
+
+    .assessment-dashboard-page .page-header h1,
+    .assessment-dashboard-page .page-header .h2 {
+        color: #0f172a;
+    }
+
+    .assessment-dashboard-page .text-muted {
+        color: var(--assessment-muted) !important;
+    }
+
+    .assessment-dashboard-page .card-header.bg-primary {
+        background: linear-gradient(135deg, var(--cobit-primary) 0%, var(--cobit-secondary) 100%) !important;
+    }
+
+    .assessment-dashboard-page .card-header.bg-secondary {
+        background: linear-gradient(135deg, var(--cobit-secondary) 0%, var(--cobit-accent) 100%) !important;
+    }
+
+    .assessment-dashboard-page .btn-primary {
+        background: var(--cobit-primary);
+        border-color: var(--cobit-primary);
+    }
+
+    .assessment-dashboard-page .btn-primary:hover,
+    .assessment-dashboard-page .btn-primary:focus {
+        background: var(--cobit-secondary);
+        border-color: var(--cobit-secondary);
+    }
+
+    .assessment-dashboard-page .btn-secondary {
+        background: var(--cobit-secondary);
+        border-color: var(--cobit-secondary);
+    }
+
+    .assessment-dashboard-page .btn-secondary:hover,
+    .assessment-dashboard-page .btn-secondary:focus {
+        background: var(--cobit-accent);
+        border-color: var(--cobit-accent);
+    }
+
+    .assessment-dashboard-page .btn-outline-secondary {
+        color: var(--cobit-secondary);
+        border-color: #c7d2de;
+    }
+
+    .assessment-dashboard-page .btn-outline-secondary:hover {
+        background: #f8fafc;
+        color: var(--cobit-secondary);
+        border-color: #b8c7d6;
+    }
+
+    .assessment-dashboard-page .bg-primary.bg-opacity-10 {
+        background: var(--assessment-primary-soft) !important;
+    }
+
+    .assessment-dashboard-page .bg-success.bg-opacity-10 {
+        background: var(--assessment-success-soft) !important;
+    }
+
+    .assessment-dashboard-page .bg-info.bg-opacity-10 {
+        background: var(--assessment-info-soft) !important;
+    }
+
+    .assessment-dashboard-page .bg-warning.bg-opacity-10 {
+        background: var(--assessment-warning-soft) !important;
+    }
+
+    .assessment-dashboard-page .text-primary {
+        color: var(--assessment-primary) !important;
+    }
+
+    .assessment-dashboard-page .text-success {
+        color: var(--assessment-success) !important;
+    }
+
+    .assessment-dashboard-page .text-info {
+        color: var(--assessment-info) !important;
+    }
+
+    .assessment-dashboard-page .text-warning {
+        color: var(--assessment-warning) !important;
+    }
+
+    .assessment-dashboard-page .badge.bg-primary.bg-opacity-10 {
+        background: var(--assessment-primary-soft) !important;
+        color: var(--assessment-primary) !important;
+    }
+
+    .assessment-dashboard-page .badge.bg-info.bg-opacity-10 {
+        background: var(--assessment-info-soft) !important;
+        color: var(--assessment-info) !important;
+    }
+</style>
+
+<div class="container-fluid px-0 assessment-dashboard-page">
     {{-- Alert Messages --}}
     <div class="alert-container mb-4">
         @if(session('error'))
@@ -26,7 +143,6 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
             <div class="mb-3 mb-md-0">
                 <h1 class="h2 fw-bold mb-2">Kelola Kode Assessment</h1>
-                <p class="text-muted mb-0">Kelola kode assessment dan instansi terkait</p>
             </div>
             <a href="{{ url('admin/requests') }}" class="btn btn-primary d-flex align-items-center">
                 <i class="fas fa-list me-2"></i> Cek Daftar Request
@@ -56,11 +172,17 @@
                                 @enderror
                             </div>
                             <div class="col-md-5">
-                                <label for="instansi" class="form-label small text-muted mb-1">Instansi Default</label>
-                                <input type="text" id="instansi" name="instansi"
-                                    class="form-control @error('instansi') is-invalid @enderror"
-                                    value="{{ old('instansi') }}" required>
-                                @error('instansi')
+                                <label for="organization_id" class="form-label small text-muted mb-1">Organisasi</label>
+                                <select id="organization_id" name="organization_id"
+                                    class="form-select @error('organization_id') is-invalid @enderror" required>
+                                    <option value="">Pilih organisasi</option>
+                                    @foreach($organizationCatalog as $organizationOption)
+                                        <option value="{{ $organizationOption->organization_id }}" {{ (string) old('organization_id') === (string) $organizationOption->organization_id ? 'selected' : '' }}>
+                                            {{ $organizationOption->organization_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('organization_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -95,9 +217,15 @@
                                     placeholder="Cari Kode" value="{{ request('kode_assessment') }}">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small text-muted mb-1">Instansi</label>
-                                <input type="text" name="instansi" class="form-control" 
-                                    placeholder="Cari Instansi" value="{{ request('instansi') }}">
+                                <label class="form-label small text-muted mb-1">Organisasi</label>
+                                <select name="organization_id" class="form-select">
+                                    <option value="">Semua organisasi</option>
+                                    @foreach($organizationCatalog as $organizationOption)
+                                        <option value="{{ $organizationOption->organization_id }}" {{ (string) request('organization_id') === (string) $organizationOption->organization_id ? 'selected' : '' }}>
+                                            {{ $organizationOption->organization_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-12 mt-2">
                                 <div class="d-flex gap-2">
@@ -172,8 +300,8 @@
                                 <i class="fas fa-sync fa-xl text-warning"></i>
                             </div>
                             <div class="ms-3">
-                                <h3 class="mb-0">{{ $assessments->unique('instansi')->count() }}</h3>
-                                <p class="text-muted small mb-0">Instansi Unik</p>
+                                <h3 class="mb-0">{{ $assessments->unique(fn ($assessment) => $assessment->organization_id ?: strtolower((string) $assessment->instansi))->count() }}</h3>
+                                <p class="text-muted small mb-0">Organisasi Unik</p>
                             </div>
                         </div>
                     </div>
@@ -206,7 +334,8 @@
                             <tr>
                                 <th class="py-3 ps-4">ID</th>
                                 <th class="py-3">Kode</th>
-                                <th class="py-3">Instansi</th>
+                                <th class="py-3">Organisasi</th>
+                                <th class="py-3 text-center">Assigned Users</th>
                                 <th class="py-3">Dibuat Pada</th>
                                 <th class="py-3 text-center">Aksi</th>
                             </tr>
@@ -223,6 +352,11 @@
                                     <td class="text-truncate" style="max-width: 200px" title="{{ $a->instansi }}">
                                         {{ $a->instansi }}
                                     </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info bg-opacity-10 text-info px-3 py-2">
+                                            {{ $a->access_assignments_count ?? 0 }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <div class="d-flex flex-column">
                                             <span>{{ $a->created_at->format('d M Y') }}</span>
@@ -232,7 +366,7 @@
                                     <td class="text-center">
                                         <a href="{{ route('admin.assessments.show', $a->assessment_id) }}" 
                                            class="btn btn-sm btn-outline-secondary px-3">
-                                            <i class="fas fa-eye me-1"></i>Detail
+                                            <i class="fas fa-shield-alt me-1"></i>Manage
                                         </a>
                                     </td>
                                 </tr>

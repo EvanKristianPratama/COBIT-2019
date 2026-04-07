@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
 
 class LoginController extends Controller
@@ -58,14 +61,35 @@ class LoginController extends Controller
         $user = User::where('email', $googleUser->getEmail())->first();
 
         if (!$user) {
-            return view('auth.register-google', [
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'password' => bcrypt(str()->random(24)),
-            ]);
+            $user = $this->createPendingGoogleUser($googleUser);
         }
 
         Auth::login($user);
         return redirect()->route('home');
+    }
+
+    private function createPendingGoogleUser(SocialiteUser $googleUser): User
+    {
+        $email = (string) $googleUser->getEmail();
+        $name = trim((string) $googleUser->getName()) !== ''
+            ? (string) $googleUser->getName()
+            : Str::headline(Str::before($email, '@'));
+
+        $user = User::create([
+            'name' => $name,
+            'email' => $email,
+            'password' => Hash::make(Str::random(40)),
+            'jabatan' => 'Pending Approval',
+            'organisasi' => null,
+            'organization_id' => null,
+            'role' => 'user',
+            'access_profile' => null,
+        ]);
+
+        $user->forceFill([
+            'email_verified_at' => now(),
+        ])->saveQuietly();
+
+        return $user;
     }
 }

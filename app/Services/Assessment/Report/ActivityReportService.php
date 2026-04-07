@@ -25,7 +25,13 @@ class ActivityReportService
     {
         $evalId = $evaluation->eval_id;
         $owner = $evaluation->relationLoaded('user') ? $evaluation->user : $evaluation->user()->first();
-        $organization = $owner?->organisasi ?? 'N/A';
+        $organization = $evaluation->relationLoaded('organization')
+            ? $evaluation->organization?->organization_name
+            : $evaluation->organization()->value('organization_name');
+
+        if (! $organization) {
+            $organization = $owner?->organisasi ?? 'N/A';
+        }
 
         $objective = MstObjective::with(['practices.activities'])
             ->where('objective_id', $objectiveId)

@@ -14,7 +14,7 @@
           <div class="card-body p-4">
             {{-- Panel Admin: Statistik Distribusi Jawaban DF2 --}}
             @php
-              $isAdmin = in_array(strtolower(trim(Auth::user()->role ?? '')), ['admin','administrator','pic'], true);
+              $isAdmin = Auth::user()?->isAdmin() ?? false;
               $df2Fields = [
                 'input1df2' => 'EG01',
                 'input2df2' => 'EG02',

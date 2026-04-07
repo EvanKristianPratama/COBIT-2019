@@ -5,9 +5,12 @@ namespace App\Services;
 use App\Models\MstActivities;
 use App\Models\MstEval;
 use App\Models\MstEvidence;
+use App\Models\User;
 use App\Models\TrsActivityeval;
+use App\Models\TrsEvalDetail;
 use App\Models\TrsMaturityScore;
 use App\Models\TrsObjectiveScore;
+use App\Models\TrsScoping;
 use App\Models\TrsSummaryActivity;
 use App\Models\TrsSummaryReport;
 use Illuminate\Support\Facades\Auth;
@@ -24,12 +27,25 @@ class EvaluationService
         try {
             DB::beginTransaction();
 
+            $existingEvaluation = isset($data['eval_id'])
+                ? MstEval::query()->find($data['eval_id'])
+                : null;
+
+            $userId = $data['user_id']
+                ?? $existingEvaluation?->user_id
+                ?? Auth::id();
+
+            $organizationId = $data['organization_id']
+                ?? $existingEvaluation?->organization_id
+                ?? User::where('id', $userId)->value('organization_id');
+
             $evaluation = MstEval::updateOrCreate(
                 [
                     'eval_id' => $data['eval_id'] ?? null,
                 ],
                 [
-                    'user_id' => $data['user_id'] ?? Auth::id(),
+                    'user_id' => $userId,
+                    'organization_id' => $organizationId,
                 ]
             );
 
@@ -53,10 +69,11 @@ class EvaluationService
                     });
 
                 // Delete activities that are not in the incoming data (completely removed from form)
-                TrsActivityeval::withTrashed()
-                    ->where('eval_id', $evaluation->eval_id)
-                    ->whereNotIn('activity_id', $incomingActivityIds)
-                    ->forceDelete();
+                $this->purgeActivityEvaluations(
+                    TrsActivityeval::withTrashed()
+                        ->where('eval_id', $evaluation->eval_id)
+                        ->whereNotIn('activity_id', $incomingActivityIds)
+                );
 
                 foreach ($data['activity_evaluations'] as $activityData) {
                     // Always save or update the activity, even if rated as 'N'
@@ -279,13 +296,14 @@ class EvaluationService
     /**
      * Create a new evaluation for a user
      */
-    public function createNewEvaluation($userId)
+    public function createNewEvaluation($userId, ?int $organizationId = null)
     {
         try {
             DB::beginTransaction();
 
             $evaluation = MstEval::create([
                 'user_id' => $userId,
+                'organization_id' => $organizationId ?? User::where('id', $userId)->value('organization_id'),
             ]);
 
             DB::commit();
@@ -356,9 +374,18 @@ class EvaluationService
 
             $evaluation = MstEval::findOrFail($evalId);
 
-            TrsActivityeval::where('eval_id', $evalId)->delete();
+            $this->purgeActivityEvaluations(
+                TrsActivityeval::withTrashed()->where('eval_id', $evalId)
+            );
 
-            $evaluation->delete();
+            TrsSummaryReport::where('eval_id', $evalId)->delete();
+            TrsObjectiveScore::where('eval_id', $evalId)->delete();
+            TrsMaturityScore::where('eval_id', $evalId)->delete();
+            TrsEvalDetail::where('eval_id', $evalId)->delete();
+            TrsScoping::withTrashed()->where('eval_id', $evalId)->forceDelete();
+            MstEvidence::withTrashed()->where('eval_id', $evalId)->forceDelete();
+
+            $evaluation->forceDelete();
 
             DB::commit();
 
@@ -720,6 +747,10 @@ class EvaluationService
         if ($assessmentYear) {
             $targetCapability = \App\Models\TargetCapability::where('user_id', $evaluation->user_id)
                 ->where('tahun', (int) $assessmentYear)
+                ->when(
+                    filled($evaluation->organization_id),
+                    fn ($query) => $query->where('organization_id', $evaluation->organization_id)
+                )
                 ->latest('updated_at')
                 ->first();
 
@@ -834,5 +865,17 @@ class EvaluationService
         }
 
         return $finalLevel;
+    }
+
+    private function purgeActivityEvaluations($query): void
+    {
+        $activityEvalIds = (clone $query)->pluck('id');
+
+        if ($activityEvalIds->isEmpty()) {
+            return;
+        }
+
+        TrsSummaryActivity::whereIn('activityeval_id', $activityEvalIds)->delete();
+        $query->forceDelete();
     }
 }

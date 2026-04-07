@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Assessment extends Model
 {
@@ -25,6 +26,7 @@ class Assessment extends Model
     // Mass-assignable fields
     protected $fillable = [
         'instansi',
+        'organization_id',
         'user_id',
         'kode_assessment',
     ];
@@ -35,6 +37,16 @@ class Assessment extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
+    }
+
+    public function accessAssignments(): MorphMany
+    {
+        return $this->morphMany(AccessAssignment::class, 'assignable');
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(MstOrganization::class, 'organization_id', 'organization_id');
     }
 
     /**
@@ -180,5 +192,20 @@ class Assessment extends Model
     public static function getGuestAssessment(): ?self
     {
         return self::where('kode_assessment', 'guest')->first();
+    }
+
+    public function getInstansiAttribute($value): ?string
+    {
+        if ($this->relationLoaded('organization')) {
+            return $this->organization?->organization_name ?? $value;
+        }
+
+        $organizationId = $this->getRawOriginal('organization_id');
+
+        if ($organizationId) {
+            return $this->organization()->value('organization_name') ?? $value;
+        }
+
+        return $value;
     }
 }

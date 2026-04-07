@@ -28,6 +28,7 @@ class AssessmentEvalController extends Controller
                 Auth::id(),
                 $request->validated()
             );
+            $this->assessmentAccessService->assign(Auth::user(), $evaluation, Auth::user());
 
             return redirect()->route('assessment-eval.show', ['evalId' => $evaluation->encrypted_id]);
         } catch (\Exception $e) {
@@ -89,7 +90,7 @@ class AssessmentEvalController extends Controller
                 return response()->json(['success' => false, 'message' => 'Assessment is finished and cannot be modified.'], 403);
             }
 
-            $this->assessmentManagementService->saveAssessment($evaluation, Auth::id(), $request->validated());
+            $this->assessmentManagementService->saveAssessment($evaluation, $request->validated());
 
             return response()->json([
                 'success' => true,

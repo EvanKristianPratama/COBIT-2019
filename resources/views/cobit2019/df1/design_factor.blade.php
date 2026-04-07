@@ -28,7 +28,7 @@
 
                             {{-- Panel Admin: Distribusi Jawaban (Chart) --}}
                             @php
-                                $isAdmin = in_array(strtolower(trim(Auth::user()->role ?? '')), ['admin','administrator','pic'], true);
+                                $isAdmin = Auth::user()?->isAdmin() ?? false;
                                 $df1Fields = [
                                     'input1df1' => 'Growth/Acquisition',
                                     'input2df1' => 'Innovation/Differentiation',

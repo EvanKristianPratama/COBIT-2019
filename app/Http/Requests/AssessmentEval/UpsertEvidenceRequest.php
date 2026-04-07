@@ -8,7 +8,7 @@ class UpsertEvidenceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        return auth()->check() && auth()->user()->can('assessments.input');
     }
 
     /**

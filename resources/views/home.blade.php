@@ -7,64 +7,79 @@
       <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo" class="home-brand-logo">
     </header>
 
-    <div class="row g-3 home-tool-grid">
-      <div class="col-md-6 col-xl-3">
-        <a href="{{ route('cobit2019.objectives.show', 'APO01') }}" class="home-tool-link">
-          <article class="home-tool-item">
-            <span class="home-tool-icon bg-soft-amber"><i class="fas fa-puzzle-piece"></i></span>
-            <div>
-              <h2>Governance System Component</h2>
-              <p>Kamus Governance System Component.</p>
-            </div>
-          </article>
-        </a>
+    @if ($approvalPending)
+      <article class="home-pending-state">
+        <span class="home-pending-icon">
+          <i class="fas fa-user-clock"></i>
+        </span>
+        <h1>Selamat Datang, {{ $user->name }}</h1>
+        <p>Mohon menunggu approval dari admin.</p>
+      </article>
+    @endif
+
+    @unless ($approvalPending)
+      <div class="row g-3 home-tool-grid">
+        @forelse ($modules as $module)
+          <div class="col-md-6 col-xl-3">
+            <a href="{{ $module['route'] }}" class="home-tool-link">
+              <article class="home-tool-item">
+                <span class="home-tool-icon {{ $module['icon_class'] }}"><i class="{{ $module['icon'] }}"></i></span>
+                <div>
+                  <h2>{{ $module['title'] }}</h2>
+                  <p>{{ $module['description'] }}</p>
+                </div>
+              </article>
+            </a>
+          </div>
+        @empty
+          <div class="col-12">
+            <article class="home-empty-state">
+              <h2>Tidak ada modul aktif</h2>
+              <p>Hubungi admin untuk assignment akses modul pada akun ini.</p>
+            </article>
+          </div>
+        @endforelse
       </div>
 
-      <div class="col-md-6 col-xl-3">
-        <a href="{{ route('cobit.home') }}" class="home-tool-link">
-          <article class="home-tool-item">
-            <span class="home-tool-icon bg-soft-red"><i class="fas fa-cogs"></i></span>
-            <div>
-              <h2>Design I&T Tailored Governance System</h2>
-              <p>Perancangan tata kelola TI.</p>
-            </div>
-          </article>
-        </a>
-      </div>
+      <footer class="home-support-row">
 
-      <div class="col-md-6 col-xl-3">
-        <a href="{{ route('assessment-eval.index') }}" class="home-tool-link">
-          <article class="home-tool-item">
-            <span class="home-tool-icon bg-soft-blue"><i class="fas fa-clipboard-check"></i></span>
-            <div>
-              <h2>Assessment Maturity & Capability</h2>
-              <p>Evaluasi maturity dan capability.</p>
-            </div>
-          </article>
-        </a>
-      </div>
-
-      <div class="col-md-6 col-xl-3">
-        <a href="{{ route('spreadsheet.index') }}" class="home-tool-link">
-          <article class="home-tool-item">
-            <span class="home-tool-icon bg-soft-green"><i class="fas fa-table"></i></span>
-            <div>
-              <h2>Spreadsheet Tools</h2>
-              <p>Analisis data format spreadsheet.</p>
-            </div>
-          </article>
-        </a>
-      </div>
-    </div>
-
-    <footer class="home-support-row">
-
-      <span class="text-muted fw-bold">
-        {{ Auth::user()->organisasi ?? 'Nama Organisasi' }}
-      </span>
-    </footer>
+        <span class="text-muted fw-bold">
+          {{ $user->displayOrganizationSummary() ?: 'Nama Organisasi' }}
+        </span>
+      </footer>
+    @endunless
   </section>
 </div>
+
+@if ($approvalPending)
+  <div class="modal fade" id="approvalPendingModal" tabindex="-1" aria-labelledby="approvalPendingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="approvalPendingModalLabel">Menunggu Persetujuan Admin</h5>
+        </div>
+        <div class="modal-body pt-2">
+          <div class="d-flex align-items-start gap-3">
+            <span class="approval-modal-icon">
+              <i class="fas fa-user-clock"></i>
+            </span>
+            <div>
+              <p class="mb-2 fw-semibold text-dark">Akun Anda berhasil terdaftar melalui Google.</p>
+              <p class="mb-0 text-muted">Admin perlu mengatur organisasi, role, dan paket akses sebelum modul dapat digunakan.</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="btn btn-outline-secondary">Logout</button>
+          </form>
+          <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Saya Mengerti</button>
+        </div>
+      </div>
+    </div>
+  </div>
+@endif
 
 <style>
   .home-clean-wrap {
@@ -188,6 +203,75 @@
     color: var(--home-muted);
   }
 
+  .home-empty-state {
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    background: #f8fafc;
+  }
+
+  .home-empty-state h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--home-text);
+  }
+
+  .home-empty-state p {
+    margin: .45rem 0 0;
+    color: var(--home-muted);
+    font-size: .88rem;
+  }
+
+  .home-pending-state {
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--home-text);
+  }
+
+  .home-pending-state h1 {
+    margin: 1rem 0 .5rem;
+    font-size: 1.75rem;
+    font-weight: 800;
+  }
+
+  .home-pending-state p {
+    margin: 0;
+    color: var(--home-muted);
+    font-size: 1rem;
+  }
+
+  .home-pending-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #dbeafe;
+    color: #0f2b5c;
+    font-size: 1.4rem;
+  }
+
+  .approval-modal-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #dbeafe;
+    color: #0f2b5c;
+    font-size: 1.15rem;
+    flex: 0 0 auto;
+  }
+
   .home-support-btn {
     display: inline-flex;
     align-items: center;
@@ -219,4 +303,16 @@
     }
   }
 </style>
+
+@if ($approvalPending)
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const approvalPendingModal = document.getElementById('approvalPendingModal');
+
+      if (approvalPendingModal && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(approvalPendingModal).show();
+      }
+    });
+  </script>
+@endif
 @endsection

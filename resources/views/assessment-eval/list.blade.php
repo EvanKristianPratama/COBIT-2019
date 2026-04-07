@@ -149,7 +149,82 @@
             </div>
         @endif
 
-        {{-- Other Users' Assessments Section --}}
+        @if($assignedAssessments->count() > 0)
+            <div class="mb-5">
+                <div class="section-header mb-4">
+                    <div>
+                        <h4 class="section-title">
+                            <i class="fas fa-share-alt me-2 text-info"></i>
+                            Assessment Ditugaskan ({{ $assignedAssessments->count() }})
+                        </h4>
+                        <div class="section-subtitle text-muted">Assessment yang dapat dibuka dari coverage organisasi atau assignment akses langsung.</div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle shadow-sm bg-white" style="min-width: 1400px;">
+                        <thead class="table-secondary text-center align-middle">
+                            <tr style="border-bottom: 2px solid #dee2e6;">
+                                <th style="width: 50px;">No</th>
+                                <th style="width: 60px;">Id</th>
+                                <th>Tahun Assesment</th>
+                                <th>Organisasi</th>
+                                <th class="text-center">Jumlah Scope</th>
+                                <th class="text-center">Status</th>
+                                <th>Last Update</th>
+                                <th class="text-center">I&T Maturity Score</th>
+                                <th class="text-center">Average Target Capability</th>
+                                <th class="text-center">I&T Target Maturity</th>
+                                <th class="text-center" style="width: 180px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($assignedAssessments as $evaluation)
+                                @php
+                                    $statusLabel = ($evaluation->status ?? '') === 'finished' ? 'Finish' : 'Draft';
+                                    $statusBadge = ($evaluation->status ?? '') === 'finished' ? 'bg-success' : 'bg-secondary';
+                                    $score = $evaluation->maturityScore->score ?? 0;
+                                    $scoreColorClass = 'text-danger';
+                                    if ($score >= 4) {
+                                        $scoreColorClass = 'text-primary';
+                                    } elseif ($score >= 3) {
+                                        $scoreColorClass = 'text-success';
+                                    } elseif ($score >= 2) {
+                                        $scoreColorClass = 'text-warning';
+                                    }
+                                @endphp
+                                <tr>
+                                    <td class="text-center">{{ $loop->iteration + ($assignedAssessments->currentPage() - 1) * $assignedAssessments->perPage() }}</td>
+                                    <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
+                                    <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
+                                    <td class="text-center">{{ $evaluation->organization?->organization_name ?? $evaluation->user->organisasi ?? '-' }}</td>
+                                    <td class="text-center">{{ $evaluation->scope_count ?? '-' }}</td>
+                                    <td class="text-center">
+                                        <span class="badge {{ $statusBadge }} rounded-pill">{{ $statusLabel }}</span>
+                                    </td>
+                                    <td class="small text-muted">{{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}</td>
+                                    <td class="text-center fw-bold fs-5 {{ $scoreColorClass }}">{{ number_format($score, 2) }}</td>
+                                    <td class="text-center fw-bold">{{ number_format($evaluation->avg_target_capability ?? 0, 2) }}</td>
+                                    <td class="text-center fw-bold text-info">{{ $evaluation->target_maturity ? number_format($evaluation->target_maturity, 2) : '-' }}</td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a href="{{ route('assessment-eval.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
+                                                <i class="fas fa-eye me-1"></i> Detail
+                                            </a>
+                                            <a href="{{ route('assessment-eval.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
+                                                <i class="fas fa-file-alt me-1"></i> Report
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    {{ $assignedAssessments->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </div>
+            </div>
+        @endif
 
     @else
         {{-- Empty State --}}
@@ -161,16 +236,20 @@
                     <p class="text-muted mb-4">
                         Mulai assessment pertama untuk membuka ringkasan domain seperti pada halaman detail.
                     </p>
-                    <form id="createAssessmentForm" action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline">
-                        @csrf
-                        <button type="button" 
-                                class="btn btn-primary btn-lg hero-action-btn"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#assessorModal"
-                                data-action="create">
-                            <i class="fas fa-plus me-2"></i>Buat Assessment Pertama
-                        </button>
-                    </form>
+                    @can('assessments.input')
+                        <form id="createAssessmentForm" action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="button" 
+                                    class="btn btn-primary btn-lg hero-action-btn"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#assessorModal"
+                                    data-action="create">
+                                <i class="fas fa-plus me-2"></i>Buat Assessment Pertama
+                            </button>
+                        </form>
+                    @else
+                        <span class="badge bg-light text-dark border">Akun ini hanya dapat melihat assessment yang sudah di-assign.</span>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -191,6 +270,21 @@
                 <p class="text-muted small mb-4">Silakan lengkapi data berikut sebelum melanjutkan ke halaman assessment.</p>
                 
                 <form id="assessorForm">
+                    @if(($organizationOptions->count() ?? 0) > 1)
+                        <div class="mb-3">
+                            <label for="assessment_organization_id" class="form-label fw-semibold small text-uppercase text-muted">Organisasi Assessment</label>
+                            <select class="form-select" id="assessment_organization_id" name="organization_id">
+                                @foreach($organizationOptions as $organizationOption)
+                                    <option value="{{ $organizationOption->organization_id }}" {{ (string) $selectedOrganizationId === (string) $organizationOption->organization_id ? 'selected' : '' }}>
+                                        {{ $organizationOption->organization_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <input type="hidden" id="assessment_organization_id" name="organization_id" value="{{ $selectedOrganizationId }}">
+                    @endif
+
                     <div class="mb-3">
                         <label for="assessment_year" class="form-label fw-semibold small text-uppercase text-muted">Tahun Assessment</label>
                         <input type="number" class="form-control" id="assessment_year" name="assessment_year" placeholder="YYYY" min="2000" max="2099" value="{{ date('Y') }}">
@@ -331,6 +425,7 @@
 </div>
 
 <div class="sticky-action-group">
+    @can('assessments.input')
     <form id="createAssessmentFormSticky" action="{{ route('assessment-eval.create') }}" method="POST" class="d-inline">
         @csrf
         <button type="button" 
@@ -343,6 +438,7 @@
             <i class="fas fa-plus me-2"></i>Assessment Baru
         </button>
     </form>
+    @endcan
     <a href="{{ url('/') }}" class="sticky-action-btn btn btn-light" title="Beranda">
         <i class="fas fa-home me-2"></i>Home
     </a>
@@ -402,39 +498,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Let's submit the sticky form as it's always present (or check which one exists)
                 const form = document.getElementById('createAssessmentFormSticky') || document.getElementById('createAssessmentForm');
                 if (form) {
-                    // Ensure previous hidden input is removed to avoid duplicates
-                    const existing = form.querySelector('input[name="selected_gamos"]');
-                    if (existing) existing.remove();
+                    ['selected_gamos', 'tahun', 'nama_scope', 'organization_id'].forEach(function (fieldName) {
+                        form.querySelectorAll(`input[name="${fieldName}"]`).forEach(function (input) {
+                            input.remove();
+                        });
+                    });
 
                     // Add selected GAMOs as a comma-separated hidden input so backend can accept array or CSV
-                const hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.name = 'selected_gamos';
-                hidden.value = selectedGamos.join(',');
-                form.appendChild(hidden);
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'selected_gamos';
+                    hidden.value = selectedGamos.join(',');
+                    form.appendChild(hidden);
 
-                const yearInput = document.getElementById('assessment_year');
-                if (yearInput) {
-                    const hiddenYear = document.createElement('input');
-                    hiddenYear.type = 'hidden';
-                    hiddenYear.name = 'tahun';
-                    hiddenYear.value = yearInput.value;
-                    form.appendChild(hiddenYear);
-                }
+                    const yearInput = document.getElementById('assessment_year');
+                    if (yearInput) {
+                        const hiddenYear = document.createElement('input');
+                        hiddenYear.type = 'hidden';
+                        hiddenYear.name = 'tahun';
+                        hiddenYear.value = yearInput.value;
+                        form.appendChild(hiddenYear);
+                    }
 
-                // Add scope name
-                // Add scope name
-                const scopeInput = document.getElementById('nama_scope');
-                if (scopeInput) {
-                    const hiddenScope = document.createElement('input');
-                    hiddenScope.type = 'hidden';
-                    hiddenScope.name = 'nama_scope';
-                    hiddenScope.value = scopeInput.value;
-                    form.appendChild(hiddenScope);
-                }
+                    const organizationInput = document.getElementById('assessment_organization_id');
+                    if (organizationInput) {
+                        const hiddenOrganization = document.createElement('input');
+                        hiddenOrganization.type = 'hidden';
+                        hiddenOrganization.name = 'organization_id';
+                        hiddenOrganization.value = organizationInput.value;
+                        form.appendChild(hiddenOrganization);
+                    }
 
-                // Submit the form to create the assessment; controller will read selected_gamos
-                form.submit();
+                    const scopeInput = document.getElementById('nama_scope');
+                    if (scopeInput) {
+                        const hiddenScope = document.createElement('input');
+                        hiddenScope.type = 'hidden';
+                        hiddenScope.name = 'nama_scope';
+                        hiddenScope.value = scopeInput.value;
+                        form.appendChild(hiddenScope);
+                    }
+
+                    form.submit();
                 }
             } else if (currentAction === 'view' && targetUrl) {
                 // Redirect to show page

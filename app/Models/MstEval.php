@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Crypt;
 
 class MstEval extends Model
@@ -23,6 +25,7 @@ class MstEval extends Model
 
     protected $fillable = [
         'user_id',
+        'organization_id',
         'status',
         'tahun',
     ];
@@ -33,6 +36,16 @@ class MstEval extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(MstOrganization::class, 'organization_id', 'organization_id');
+    }
+
+    public function accessAssignments(): MorphMany
+    {
+        return $this->morphMany(AccessAssignment::class, 'assignable');
     }
 
     /**

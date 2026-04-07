@@ -7,12 +7,14 @@ use App\Models\TargetMaturity;
 use App\Models\TrsEvalDetail;
 use App\Models\TrsScoping;
 use App\Models\User;
+use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\EvaluationService;
 
 class AssessmentReportService
 {
     public function __construct(
-        private readonly EvaluationService $evaluationService
+        private readonly EvaluationService $evaluationService,
+        private readonly AssessmentAccessService $assessmentAccessService
     ) {
     }
 
@@ -48,10 +50,10 @@ class AssessmentReportService
 
         if ($year) {
             $tmQuery = TargetMaturity::where('tahun', $year);
-            $org = $owner?->organisasi ?? null;
+            $organizationId = $evaluation->organization_id;
 
-            if ($org) {
-                $tmQuery->where('organisasi', $org);
+            if ($organizationId) {
+                $tmQuery->where('organization_id', $organizationId);
             } elseif ($owner) {
                 $tmQuery->where('user_id', $owner->id);
             }
@@ -75,22 +77,12 @@ class AssessmentReportService
      */
     public function buildOverviewReport(User $user): array
     {
-        $org = $user->organisasi ?? null;
+        $assessments = $this->assessmentAccessService
+            ->queryAccessible($user)
+            ->with(['user', 'organization', 'maturityScore'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        $query = MstEval::with(['user', 'maturityScore'])->orderBy('created_at', 'desc');
-
-        if ($org) {
-            $query->where(function ($builder) use ($user, $org) {
-                $builder->where('user_id', $user->id)
-                    ->orWhereHas('user', function ($subQuery) use ($org) {
-                        $subQuery->where('organisasi', $org);
-                    });
-            });
-        } else {
-            $query->where('user_id', $user->id);
-        }
-
-        $assessments = $query->get();
         if ($assessments->isEmpty()) {
             return ['error' => 'No assessments found.'];
         }
@@ -99,19 +91,35 @@ class AssessmentReportService
         $processedData = [];
 
         $allYears = $assessments->pluck('tahun')->filter()->unique()->values()->all();
-        $targetMaturityMap = [];
+        $ownerIds = $assessments->pluck('user_id')->filter()->unique()->values()->all();
+        $organizationIds = $assessments->pluck('organization_id')->filter()->unique()->values()->all();
+
+        $targetMaturityByOrganization = [];
+        $targetMaturityByUser = [];
 
         if (! empty($allYears)) {
             $targetMaturities = TargetMaturity::whereIn('tahun', $allYears)
-                ->when($org, function ($builder) use ($org) {
-                    $builder->where('organisasi', $org);
-                }, function ($builder) use ($user) {
-                    $builder->where('user_id', $user->id);
+                ->where(function ($builder) use ($ownerIds, $organizationIds) {
+                    if ($organizationIds !== []) {
+                        $builder->whereIn('organization_id', $organizationIds);
+                    }
+
+                    if ($ownerIds !== []) {
+                        $method = $organizationIds !== [] ? 'orWhereIn' : 'whereIn';
+                        $builder->{$method}('user_id', $ownerIds);
+                    }
                 })
                 ->get();
 
             foreach ($targetMaturities as $targetMaturity) {
-                $targetMaturityMap[$targetMaturity->tahun] = $targetMaturity->target_maturity;
+                if ($targetMaturity->organization_id !== null) {
+                    $targetMaturityByOrganization[$targetMaturity->organization_id.'|'.$targetMaturity->tahun] = $targetMaturity->target_maturity;
+                    continue;
+                }
+
+                if ($targetMaturity->user_id !== null) {
+                    $targetMaturityByUser[$targetMaturity->user_id.'|'.$targetMaturity->tahun] = $targetMaturity->target_maturity;
+                }
             }
         }
 
@@ -124,6 +132,9 @@ class AssessmentReportService
             $loadedData = $this->evaluationService->loadEvaluation($evaluation->eval_id);
             $activityData = $loadedData['activity_evaluations'] ?? [];
             $year = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->created_at->format('Y');
+            $targetMaturity = $evaluation->organization_id !== null
+                ? ($targetMaturityByOrganization[$evaluation->organization_id.'|'.$year] ?? null)
+                : ($targetMaturityByUser[$evaluation->user_id.'|'.$year] ?? null);
 
             foreach ($scopes as $scope) {
                 $scopeDomains = TrsEvalDetail::where('scoping_id', $scope->id)->pluck('domain_id')->toArray();
@@ -142,7 +153,7 @@ class AssessmentReportService
                     'scope_name' => $scope->nama_scope,
                     'user_name' => $evaluation->user->name ?? 'Unknown',
                     'maturity_scores' => $maturityScores,
-                    'target_maturity' => $targetMaturityMap[$year] ?? null,
+                    'target_maturity' => $targetMaturity,
                 ];
             }
         }

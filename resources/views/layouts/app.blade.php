@@ -280,6 +280,10 @@
 
 <body class="{{ Route::is('login', 'register') ? 'login' : '' }}">
     <div id="app">
+        @php
+            $isFluidPage = trim($__env->yieldContent('page-mode')) === 'fluid';
+            $hideBreadcrumb = trim($__env->yieldContent('hide_breadcrumb')) === '1';
+        @endphp
 
         <nav class="navbar navbar-expand-md navbar-dark fixed-top app-navbar">
             <div class="container">
@@ -301,15 +305,10 @@
                                         {{ __('Login') }}</a>
                                 </li>
                             @endif
-                            @if (Route::has('register'))
-                                <li class="nav-item">
-                                    <a class="nav-link app-nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-                                </li>
-                            @endif
                         @else
                             <li class="nav-item d-flex align-items-center gap-2">
-                                <span class="top-org-chip d-none d-lg-inline-flex" title="{{ Auth::user()->organisasi ?? 'Nama Organisasi' }}">
-                                    <span class="top-org-text">{{ Auth::user()->organisasi ?? 'Nama Organisasi' }}</span>
+                                <span class="top-org-chip d-none d-lg-inline-flex" title="{{ Auth::user()->displayOrganizationSummary() }}">
+                                    <span class="top-org-text">{{ Auth::user()->displayOrganizationSummary() }}</span>
                                 </span>
                                 <a class="nav-link p-0" href="#" role="button" data-bs-toggle="offcanvas"
                                     data-bs-target="#sidebarOffcanvas">
@@ -327,6 +326,7 @@
 
         @auth
             @php
+                $authUser = Auth::user();
                 $disableBreadcrumbClick = request()->routeIs(
                     'df1.*',
                     'df2.*',
@@ -344,64 +344,76 @@
                     'target-capability.*',
                     'target-maturity.*'
                 );
+                $approvalPending = $authUser->requiresAdminApproval();
+                $canAccessCobit = ! $approvalPending && ($authUser->isAdmin() || $authUser->can(\App\Support\Authorization\PermissionCatalog::CobitView));
+                $canAccessAssessments = ! $approvalPending && ($authUser->isAdmin() || $authUser->can(\App\Support\Authorization\PermissionCatalog::AssessmentsView));
+                $canAccessSpreadsheet = ! $approvalPending;
             @endphp
-            <div class="breadcrumb-wrapper">
-                <div class="container">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">
-                                <a
-                                    href="{{ $disableBreadcrumbClick ? '#' : route('home') }}"
-                                    class="{{ Route::is('home') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
-                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
-                                >
-                                    <i class="fas fa-home"></i> Home
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a
-                                    href="{{ $disableBreadcrumbClick ? '#' : route('cobit2019.objectives.show', 'APO01') }}"
-                                    class="{{ Route::is('cobit2019.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
-                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
-                                >
-                                    <i class="fas fa-book"></i> Governance System Component
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a
-                                    href="{{ $disableBreadcrumbClick ? '#' : route('cobit.home') }}"
-                                    class="{{ Route::is('cobit.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
-                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
-                                >
-                                    <i class="fas fa-tools"></i> Design I&T Tailored Governance System
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a
-                                    href="{{ $disableBreadcrumbClick ? '#' : route('assessment-eval.index') }}"
-                                    class="{{ Route::is('assessment-eval.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
-                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
-                                >
-                                    <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a
-                                    href="{{ $disableBreadcrumbClick ? '#' : route('spreadsheet.index') }}"
-                                    class="{{ Route::is('spreadsheet.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
-                                    @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
-                                >
-                                    <i class="fas fa-table"></i> Spreadsheet Tools
-                                </a>
-                            </li>
-                        </ol>
-                    </nav>
+            @unless($hideBreadcrumb)
+                <div class="breadcrumb-wrapper">
+                    <div class="container">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item">
+                                    <a
+                                        href="{{ $disableBreadcrumbClick ? '#' : route('home') }}"
+                                        class="{{ Route::is('home') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                        @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                    >
+                                        <i class="fas fa-home"></i> Home
+                                    </a>
+                                </li>
+                                @if($canAccessCobit)
+                                    <li class="breadcrumb-item">
+                                        <a
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('cobit2019.objectives.show', 'APO01') }}"
+                                            class="{{ Route::is('cobit2019.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                        >
+                                            <i class="fas fa-book"></i> Governance System Component
+                                        </a>
+                                    </li>
+                                    <li class="breadcrumb-item">
+                                        <a
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('cobit.home') }}"
+                                            class="{{ Route::is('cobit.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                        >
+                                            <i class="fas fa-tools"></i> Design I&T Tailored Governance System
+                                        </a>
+                                    </li>
+                                @endif
+                                @if($canAccessAssessments)
+                                    <li class="breadcrumb-item">
+                                        <a
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('assessment-eval.index') }}"
+                                            class="{{ Route::is('assessment-eval.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                        >
+                                            <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
+                                        </a>
+                                    </li>
+                                @endif
+                                @if($canAccessSpreadsheet)
+                                    <li class="breadcrumb-item">
+                                        <a
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('spreadsheet.index') }}"
+                                            class="{{ Route::is('spreadsheet.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                        >
+                                            <i class="fas fa-table"></i> Spreadsheet Tools
+                                        </a>
+                                    </li>
+                                @endif
+                            </ol>
+                        </nav>
+                    </div>
                 </div>
-            </div>
+            @endunless
         @endauth
 
         <main class="container-fluid main-content">
-            <div class="container">
+            <div class="{{ $isFluidPage ? 'container-fluid px-0' : 'container' }}">
                 @yield('content')
             </div>
         </main>
@@ -429,7 +441,7 @@
                         <h6 class="mb-0">{{ Auth::user()->name }}</h6>
                         <small class="text-white-50">{{ Auth::user()->email }}</small>
                         <div class="sidebar-user-meta">
-                            <span class="sidebar-meta-badge">{{ Auth::user()->organisasi ?? 'Organisasi' }}</span>
+                            <span class="sidebar-meta-badge">{{ Auth::user()->displayOrganizationSummary() }}</span>
                             <span class="sidebar-meta-badge">{{ Auth::user()->jabatan ?? 'Jabatan' }}</span>
                         </div>
                     </div>
@@ -443,43 +455,62 @@
                                 <i class="fas fa-home me-2"></i> Home
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('cobit2019.objectives.show', 'APO01') }}">
-                                <i class="fas fa-book me-2"></i> Governance System Component
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('cobit.home') }}">
-                                <i class="fas fa-tools me-2"></i> Design Factor
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('assessment-eval.index') }}">
-                                <i class="fas fa-clipboard-check me-2"></i> Assessment
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('spreadsheet.index') }}">
-                                <i class="fas fa-table me-2"></i> Spreadsheet Tools
-                            </a>
-                        </li>
+                        @if($canAccessCobit)
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('cobit2019.objectives.show', 'APO01') }}">
+                                    <i class="fas fa-book me-2"></i> Governance System Component
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('cobit.home') }}">
+                                    <i class="fas fa-tools me-2"></i> Design Factor
+                                </a>
+                            </li>
+                        @endif
+                        @if($canAccessAssessments)
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('assessment-eval.index') }}">
+                                    <i class="fas fa-clipboard-check me-2"></i> Assessment
+                                </a>
+                            </li>
+                        @endif
+                        @if($canAccessSpreadsheet)
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('spreadsheet.index') }}">
+                                    <i class="fas fa-table me-2"></i> Spreadsheet Tools
+                                </a>
+                            </li>
+                        @endif
 
-                        @if(in_array(Auth::user()->role, ['admin','pic']))
+                        @if($authUser->isAdmin())
                             <li class="nav-item mt-2">
-                                <span class="sidebar-section-label">Admin Menu</span>
+                                <span class="sidebar-section-label">Admin Console</span>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('admin.assessments.index') }}">
-                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                    <i class="fas fa-clipboard-check me-2"></i> Manage Assessment
                                 </a>
                             </li>
-                            @if(Auth::user()->role === 'admin')
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('admin.users.index') }}">
-                                        <i class="fas fa-users me-2"></i> Manage Users
-                                    </a>
-                                </li>
-                            @endif
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.users.index') }}">
+                                    <i class="fas fa-users me-2"></i> Manage User
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.access.index') }}">
+                                    <i class="fas fa-key me-2"></i> Manage Akses
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.design-factors.index') }}">
+                                    <i class="fas fa-sitemap me-2"></i> Manage Design Factor
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.organizations.index') }}">
+                                    <i class="fas fa-building me-2"></i> Manage Organization
+                                </a>
+                            </li>
                         @endif
 
                         <li class="nav-item mt-2">

@@ -22,7 +22,10 @@ class AssessmentManagementService
     public function createAssessment(int $userId, array $attributes): MstEval
     {
         return DB::transaction(function () use ($userId, $attributes) {
-            $evaluation = $this->evaluationService->createNewEvaluation($userId);
+            $evaluation = $this->evaluationService->createNewEvaluation(
+                $userId,
+                isset($attributes['organization_id']) ? (int) $attributes['organization_id'] : null
+            );
             $evaluation->tahun = $attributes['tahun'] ?? date('Y');
             $evaluation->save();
 
@@ -71,10 +74,11 @@ class AssessmentManagementService
         ];
     }
 
-    public function saveAssessment(MstEval $evaluation, int $userId, array $payload): MstEval
+    public function saveAssessment(MstEval $evaluation, array $payload): MstEval
     {
         $data = $this->evaluationService->convertAssessmentData($payload);
-        $data['user_id'] = $userId;
+        $data['user_id'] = $evaluation->user_id;
+        $data['organization_id'] = $evaluation->organization_id;
         $data['eval_id'] = $evaluation->eval_id;
 
         return $this->evaluationService->saveEvaluation($data);
@@ -117,7 +121,7 @@ class AssessmentManagementService
 
     public function delete(MstEval $evaluation): void
     {
-        $evaluation->delete();
+        $this->evaluationService->deleteEvaluation($evaluation->eval_id);
     }
 
     public function getMaturityScore(?MstEval $evaluation): float

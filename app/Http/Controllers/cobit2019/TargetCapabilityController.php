@@ -3,13 +3,21 @@
 namespace App\Http\Controllers\cobit2019;
 
 use App\Http\Controllers\Controller;
+use App\Models\MstOrganization;
 use App\Models\TargetCapability;
+use App\Services\Organization\OrganizationRegistryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Validation\Rule;
 
 class TargetCapabilityController extends Controller
 {
+    public function __construct(
+        private readonly OrganizationRegistryService $organizationRegistryService
+    ) {
+    }
+
     private const FIELDS = [
         'EDM01','EDM02','EDM03','EDM04','EDM05',
         'APO01','APO02','APO03','APO04','APO05','APO06','APO07','APO08','APO09','APO10','APO11','APO12','APO13','APO14',
@@ -26,9 +34,28 @@ class TargetCapabilityController extends Controller
 
     public function edit(Request $request, $id = null)
     {
+        $user = Auth::user();
+        $organizationOptions = $user->organizations()
+            ->select('mst_organization.organization_id', 'organization_name')
+            ->orderByPivot('is_primary', 'desc')
+            ->orderBy('organization_name')
+            ->get();
+
+        $targetQuery = TargetCapability::with('organization')
+            ->where('user_id', $user->id);
+
         $target = $id
-            ? TargetCapability::find($id)
-            : TargetCapability::where('user_id', Auth::id())->latest('updated_at')->first();
+            ? (clone $targetQuery)->findOrFail($id)
+            : null;
+
+        $selectedOrganizationId = $this->resolveSelectedOrganizationId($request, $target);
+
+        if (! $id) {
+            $target = (clone $targetQuery)
+                ->when($selectedOrganizationId, fn ($query) => $query->where('organization_id', $selectedOrganizationId))
+                ->latest('updated_at')
+                ->first();
+        }
 
         // Domain mapping
         $domains = [
@@ -47,7 +74,9 @@ class TargetCapabilityController extends Controller
         $totalFields = count(self::FIELDS);
 
         // ambil seluruh target user untuk ditampilkan berdampingan per tahun
-        $allTargets = TargetCapability::where('user_id', Auth::id())
+        $allTargets = TargetCapability::where('user_id', $user->id)
+            ->with('organization')
+            ->when($selectedOrganizationId, fn ($query) => $query->where('organization_id', $selectedOrganizationId))
             ->orderBy('tahun', 'desc')
             ->get();
 
@@ -60,7 +89,9 @@ class TargetCapabilityController extends Controller
             'allTargets',
             'domains',
             'flatCodes',
-            'title'
+            'title',
+            'organizationOptions',
+            'selectedOrganizationId'
         ));
     }
 
@@ -72,8 +103,11 @@ class TargetCapabilityController extends Controller
         $payload = $this->extractPayload($data);
 
         if (!empty($data['target_id'])) {
-            TargetCapability::where('target_id', $data['target_id'])->update($payload);
-            $id = $data['target_id'];
+            $model = TargetCapability::query()
+                ->where('user_id', Auth::id())
+                ->findOrFail($data['target_id']);
+            $model->fill($payload)->save();
+            $id = $model->target_id;
         } else {
             $model = TargetCapability::create($payload);
             $id = $model->target_id;
@@ -87,15 +121,30 @@ class TargetCapabilityController extends Controller
      */
     public function addYear(Request $request)
     {
+        $validated = $request->validate([
+            'tahun' => ['nullable', 'integer', 'min:2000', 'max:2099'],
+            'organization_id' => [
+                'required',
+                'integer',
+                'exists:mst_organization,organization_id',
+                Rule::in(Auth::user()?->organizationIds() ?? []),
+            ],
+        ]);
+
         $userId = Auth::id();
+        $organizationId = (int) $validated['organization_id'];
 
         // cari tahun terbaru milik user
-        $latest = TargetCapability::where('user_id', $userId)->orderBy('tahun', 'desc')->first();
-        $nextYear = $request->input('tahun') ? (int)$request->input('tahun') : ($latest ? ((int)$latest->tahun + 1) : (int)now()->year);
+        $latest = TargetCapability::where('user_id', $userId)
+            ->where('organization_id', $organizationId)
+            ->orderBy('tahun', 'desc')
+            ->first();
+        $nextYear = isset($validated['tahun']) ? (int) $validated['tahun'] : ($latest ? ((int) $latest->tahun + 1) : (int) now()->year);
 
         $payload = [
             'user_id' => $userId,
-            'organisasi' => $latest->organisasi ?? Auth::user()->organisasi ?? null,
+            'organization_id' => $organizationId,
+            'organisasi' => $this->organizationRegistryService->resolveName($organizationId, Auth::user()->organisasi),
             'tahun' => $nextYear,
         ];
 
@@ -115,8 +164,12 @@ class TargetCapabilityController extends Controller
     {
         return [
             'target_id'  => 'nullable|integer',
-            'user_id'    => 'required|integer|exists:users,id',
-            'organisasi' => 'nullable|string|max:255',
+            'organization_id' => [
+                'required',
+                'integer',
+                'exists:mst_organization,organization_id',
+                Rule::in(Auth::user()?->organizationIds() ?? []),
+            ],
             'tahun'      => 'required|integer|min:2000|max:2099',
         ];
     }
@@ -137,9 +190,16 @@ class TargetCapabilityController extends Controller
 
     private function extractPayload(array $data): array
     {
+        $organizationId = (int) $data['organization_id'];
+        $resolvedOrganizationName = $this->organizationRegistryService->resolveName(
+            $organizationId,
+            Auth::user()->organisasi
+        );
+
         $payload = [
-            'user_id'    => $data['user_id'],
-            'organisasi' => $data['organisasi'] ?? null,
+            'user_id'    => Auth::id(),
+            'organization_id' => $organizationId,
+            'organisasi' => $resolvedOrganizationName,
             'tahun'      => $data['tahun'],
         ];
 
@@ -148,5 +208,28 @@ class TargetCapabilityController extends Controller
         }
 
         return $payload;
+    }
+
+    private function resolveSelectedOrganizationId(Request $request, ?TargetCapability $target = null): ?int
+    {
+        $user = Auth::user();
+        $requestedOrganizationId = $request->integer('organization_id');
+
+        if ($target?->organization_id) {
+            return (int) $target->organization_id;
+        }
+
+        if ($requestedOrganizationId && $user->hasOrganizationId($requestedOrganizationId)) {
+            return $requestedOrganizationId;
+        }
+
+        if ($user->organization_id) {
+            return (int) $user->organization_id;
+        }
+
+        return MstOrganization::query()
+            ->whereIn('organization_id', $user->organizationIds())
+            ->orderBy('organization_name')
+            ->value('organization_id');
     }
 }

@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Route;
 use App\Models\User;
-use App\Models\Assessment;
+use App\Services\Auth\UserAuthorizationService;
+use App\Services\Auth\UserOrganizationService;
 
 class GuestController extends Controller
 {
+    public function __construct(
+        private readonly UserAuthorizationService $userAuthorizationService,
+        private readonly UserOrganizationService $userOrganizationService
+    ) {
+    }
+
     public function loginGuest(Request $request)
     {
         // jika sudah login
@@ -30,7 +36,7 @@ class GuestController extends Controller
             }
             // lanjutkan alur tanpa debug output
             // Admin tetap ke dashboard admin (case-insensitive)
-            if (strtolower($user->role ?? '') === 'admin') {
+            if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard');
             }
             return redirect()->route('home');
@@ -42,10 +48,20 @@ class GuestController extends Controller
             [
                 'name' => 'Guest User',
                 'password' => bcrypt(Str::random(16)),
-                'role' => 'guest',
-                'jabatan' => 'guest'
+                'role' => 'user',
+                'access_profile' => 'df_editor',
+                'jabatan' => 'guest',
+                'organisasi' => 'Guest Session',
             ]
         );
+        $guestUser->forceFill([
+            'role' => 'user',
+            'access_profile' => 'df_editor',
+            'jabatan' => 'guest',
+            'organisasi' => 'Guest Session',
+        ])->save();
+        $this->userOrganizationService->syncFromNames($guestUser, 'Guest Session');
+        $this->userAuthorizationService->sync($guestUser);
         Auth::login($guestUser);
 
         // buat session assessment sementara dan lanjutkan tanpa debug

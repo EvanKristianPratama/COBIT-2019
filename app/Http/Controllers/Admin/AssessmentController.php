@@ -3,18 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AssignAssessmentUserRequest;
+use App\Models\AccessAssignment;
+use App\Models\Assessment;
+use App\Models\MstOrganization;
+use App\Models\User;
+use App\Services\Cobit\CobitAssessmentAccessService;
+use App\Services\Organization\OrganizationRegistryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use App\Models\Assessment;
-use App\Models\User;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class AssessmentController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        private readonly CobitAssessmentAccessService $cobitAssessmentAccessService,
+        private readonly OrganizationRegistryService $organizationRegistryService
+    ) {
         $this->middleware('auth');
     }
 
@@ -25,13 +32,10 @@ class AssessmentController extends Controller
      */
     public function index(Request $request)
     {
-        // Pastikan hanya admin yang bisa akses
-        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'pic') {
-            abort(403);
-        }
+        $this->ensureAdmin();
 
         // Bangun query dasar
-        $query = Assessment::query();
+        $query = Assessment::query()->with('organization');
 
         // Filter exact by ID
         if ($request->filled('id')) {
@@ -43,15 +47,32 @@ class AssessmentController extends Controller
             $query->where('kode_assessment', 'like', '%' . $request->kode_assessment . '%');
         }
 
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', (int) $request->organization_id);
+        }
+
         // Filter partial by instansi
         if ($request->filled('instansi')) {
-            $query->where('instansi', 'like', '%' . $request->instansi . '%');
+            $query->where(function ($builder) use ($request) {
+                $builder->where('instansi', 'like', '%' . $request->instansi . '%')
+                    ->orWhereHas('organization', function ($organizationQuery) use ($request) {
+                        $organizationQuery->where('organization_name', 'like', '%' . $request->instansi . '%');
+                    });
+            });
         }
 
         // Ambil dan urutkan
-        $assessments = $query->orderBy('created_at', 'desc')->get();
+        $assessments = $query
+            ->withCount('accessAssignments')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return view('admin.dashboard', compact('assessments'));
+        $organizationCatalog = MstOrganization::query()
+            ->where('is_active', true)
+            ->orderBy('organization_name')
+            ->get(['organization_id', 'organization_name']);
+
+        return view('admin.dashboard', compact('assessments', 'organizationCatalog'));
     }
 
     /**
@@ -59,9 +80,7 @@ class AssessmentController extends Controller
      */
     public function store(Request $request)
     {
-        if (!Auth::check()) {
-            abort(403);
-        }
+        $this->ensureAdmin();
 
         $kode = $request->input('kode_assessment');
         $exists = Assessment::where('kode_assessment', $kode)->count();
@@ -73,14 +92,19 @@ class AssessmentController extends Controller
         // use singular table name because DB table is `assessment`
         $data = $request->validate([
             'kode_assessment' => 'required|string|unique:assessment,kode_assessment',
-            'instansi' => 'required|string|max:255',
+            'organization_id' => 'required|integer|exists:mst_organization,organization_id',
         ]);
+
+        $organizationId = (int) $data['organization_id'];
+        $organizationName = $this->organizationRegistryService->resolveName($organizationId);
 
         $assessment = Assessment::create([
             'kode_assessment' => $data['kode_assessment'],
-            'instansi' => $data['instansi'],
+            'organization_id' => $organizationId,
+            'instansi' => $organizationName,
             'user_id' => Auth::id(),
         ]);
+        $this->cobitAssessmentAccessService->assign(Auth::user(), $assessment, Auth::user());
 
         // set session so user can immediately enter the assessment
         session()->put('assessment_id', $assessment->assessment_id ?? $assessment->id);
@@ -98,9 +122,7 @@ class AssessmentController extends Controller
      */
     public function pendingRequests()
     {
-        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'pic') {
-            abort(403);
-        }
+        $this->ensureAdmin();
 
         $path = 'requests.json';
         $all = Storage::exists($path)
@@ -123,9 +145,7 @@ class AssessmentController extends Controller
      */
     public function approveRequest($idx)
     {
-        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'pic') {
-            abort(403);
-        }
+        $this->ensureAdmin();
 
         $path = 'requests.json';
 
@@ -139,8 +159,24 @@ class AssessmentController extends Controller
             return back()->with('error', 'Request tidak ditemukan.');
         }
 
+        $entry = $all[$idx];
+        $user = User::find($entry['user_id'] ?? null);
+        $assessment = Assessment::query()
+            ->when(isset($entry['assessment_id']), fn ($query) => $query->where('assessment_id', $entry['assessment_id']))
+            ->when(isset($entry['kode']), fn ($query) => $query->orWhere('kode_assessment', $entry['kode']))
+            ->first();
+
+        if (! $user || ! $assessment) {
+            return back()->with('error', 'User atau assessment pada request tidak ditemukan.');
+        }
+
+        $assignment = $this->cobitAssessmentAccessService->assign($user, $assessment, Auth::user());
+
         $all[$idx]['status'] = 'approved';
         $all[$idx]['approved_at'] = now()->toDateTimeString();
+        $all[$idx]['approved_by'] = Auth::id();
+        $all[$idx]['assigned_access_profile'] = $assignment->access_profile;
+        $all[$idx]['assessment_id'] = $assessment->assessment_id;
 
         Storage::put($path, json_encode($all, JSON_PRETTY_PRINT));
 
@@ -152,9 +188,7 @@ class AssessmentController extends Controller
      */
     public function show($assessment_id)
     {
-        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'pic') {
-            abort(403);
-        }
+        $this->ensureAdmin();
 
         $assessment = $this->loadAssessmentWithRelations($assessment_id);
         
@@ -175,11 +209,67 @@ class AssessmentController extends Controller
         // Set session so admin/pic can immediately fill DF for this assessment
         $this->setAssessmentSession($assessment, $respondentIds);
 
+        $assignedUsers = $assessment->accessAssignments()
+            ->with(['user.organizations', 'user.primaryOrganization'])
+            ->latest()
+            ->get();
+
+        $assignedUserIds = $assignedUsers->pluck('user_id')
+            ->push((int) $assessment->user_id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $assignableUsers = User::query()
+            ->with(['organizations', 'primaryOrganization'])
+            ->approvedUsers()
+            ->where('isActivated', true)
+            ->whereNotIn('id', $assignedUserIds)
+            ->orderBy('organisasi')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.assessments.show', [
             'assessment' => $assessment,
             'users' => $users,
             'userIds' => $respondentIds,
+            'assignedUsers' => $assignedUsers,
+            'assignableUsers' => $assignableUsers,
         ]);
+    }
+
+    public function assignUser(AssignAssessmentUserRequest $request, $assessment_id)
+    {
+        $this->ensureAdmin();
+
+        $assessment = Assessment::findOrFail($assessment_id);
+        $user = User::findOrFail((int) $request->validated()['user_id']);
+
+        if ((int) $assessment->user_id === (int) $user->id) {
+            return redirect()
+                ->route('admin.assessments.show', $assessment->assessment_id)
+                ->with('error', 'User pemilik assessment sudah memiliki akses utama.');
+        }
+
+        $this->cobitAssessmentAccessService->assign($user, $assessment, Auth::user());
+
+        return redirect()
+            ->route('admin.assessments.show', $assessment->assessment_id)
+            ->with('success', 'Akses user berhasil ditambahkan ke assessment.');
+    }
+
+    public function revokeUser($assessment_id, $assignment_id)
+    {
+        $this->ensureAdmin();
+
+        $assessment = Assessment::findOrFail($assessment_id);
+        $assignment = $assessment->accessAssignments()->with('user')->findOrFail($assignment_id);
+
+        $this->cobitAssessmentAccessService->revoke($assessment, $assignment);
+
+        return redirect()
+            ->route('admin.assessments.show', $assessment->assessment_id)
+            ->with('success', 'Akses user berhasil dicabut dari assessment.');
     }
 
     /**
@@ -189,6 +279,9 @@ class AssessmentController extends Controller
     {
         $relations = $this->buildRelationsArray();
         $with = $this->buildEagerLoadArray($relations);
+        $with['organization'] = fn ($query) => $query->select('organization_id', 'organization_name');
+        $with['creator'] = fn ($query) => $query->select('id', 'name', 'email', 'organisasi', 'organization_id');
+        $with['accessAssignments.user'] = fn ($query) => $query->select('id', 'name', 'email', 'organisasi', 'organization_id', 'access_profile', 'role');
 
         try {
             return Assessment::with($with)->findOrFail($assessment_id);
@@ -260,9 +353,7 @@ class AssessmentController extends Controller
     protected function excludeAdminUsers($respondentIds)
     {
         $adminIds = User::whereIn('id', $respondentIds->toArray())
-            ->where(function ($q) {
-                $q->where('role', 'admin')->orWhere('role', 'Administrator');
-            })
+            ->where('role', 'admin')
             ->pluck('id')
             ->toArray();
 
@@ -291,5 +382,12 @@ class AssessmentController extends Controller
     protected function route_has($name)
     {
         return \Illuminate\Support\Facades\Route::has($name);
+    }
+
+    private function ensureAdmin(): void
+    {
+        if (! Auth::check() || ! Auth::user()->isAdmin()) {
+            abort(403);
+        }
     }
 }

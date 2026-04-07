@@ -17,6 +17,7 @@ class TargetMaturity extends Model
 
     protected $fillable = [
         'user_id',
+        'organization_id',
         'tahun',
         'organisasi',
         'target_maturity'
@@ -25,5 +26,25 @@ class TargetMaturity extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(MstOrganization::class, 'organization_id', 'organization_id');
+    }
+
+    public function getOrganisasiAttribute($value): ?string
+    {
+        if ($this->relationLoaded('organization')) {
+            return $this->organization?->organization_name ?? $value;
+        }
+
+        $organizationId = $this->getRawOriginal('organization_id');
+
+        if ($organizationId) {
+            return $this->organization()->value('organization_name') ?? $value;
+        }
+
+        return $value;
     }
 }

@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+  $canManageCobit = Auth::check() && Auth::user()->can('design-factors.input');
+@endphp
 <div class="design-toolkit rounded-6">
   {{-- Hero Banner (full width) --}}
   <div class="hero-banner">
@@ -57,8 +60,11 @@
           <div class="card mb-4">
             <div class="card-body p-0">
               {{-- Admin: only show same organization --}}
-              @if(! empty($user->role) && strtolower($user->role) === 'admin')
-                @if($assessments_same->isEmpty())
+              @if($user->isAdmin())
+                @php
+                  $adminAssessments = $assessments_same->merge($assessments_other);
+                @endphp
+                @if($adminAssessments->isEmpty())
                   <div class="empty-state">
                     <p>Belum ada design factor</p>
                   </div>
@@ -68,16 +74,17 @@
                       <thead>
                         <tr>
                           <th>NAME</th>
+                          <th>ORGANISASI</th>
                           <th class="text-end" style="width: 120px">ACTIONS</th>
                         </tr>
                       </thead>
                       <tbody>
-                        @foreach($assessments_same as $item)
+                        @foreach($adminAssessments as $item)
                         <tr>
                           <td>
                             <div class="fw-semibold">{{ $item->kode_assessment }}</div>
-                            <small class="text-muted">{{ $item->instansi }}</small>
                           </td>
+                          <td><small class="text-muted">{{ $item->instansi }}</small></td>
                           <td class="text-end">
                             <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
                               @csrf
@@ -132,19 +139,21 @@
           </div>
         @endif
 
-        @if(Auth::check() && !empty($user->role) && strtolower($user->role) === 'admin')
+        @if(Auth::check())
           {{-- Action Buttons --}}
           <div class="d-flex gap-3 justify-content-end">
             <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#joinModal">
               Join dengan Kode
             </button>
-            <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
-              @csrf
-              <input type="hidden" name="kode_assessment" value="new">
-              <button type="submit" class="btn btn-primary">
-                Buat Baru
-              </button>
-            </form>
+            @if($canManageCobit)
+              <form method="POST" action="{{ route('assessment.join.store') }}" class="d-inline">
+                @csrf
+                <input type="hidden" name="kode_assessment" value="new">
+                <button type="submit" class="btn btn-primary">
+                  Buat Baru
+                </button>
+              </form>
+            @endif
           </div>
         @endif
 
@@ -158,7 +167,7 @@
   </a>
 </div>
 
-@if(Auth::check() && !empty($user->role) && strtolower($user->role) === 'admin')
+@if(Auth::check())
   {{-- Join Modal --}}
   <div class="modal fade" id="joinModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">

@@ -28,8 +28,19 @@
                 <div class="row g-3 mb-4 align-items-end">
                   <div class="col-md-4">
                         <label class="form-label fw-bold small text-uppercase text-muted">Organisasi</label>
-                        <input type="text" name="organisasi" class="form-control bg-light" 
-                               value="{{ old('organisasi', $target->organisasi ?? Auth::user()->organisasi ?? '') }}" readonly>
+                        @if(($organizationOptions->count() ?? 0) > 1)
+                            <select id="organization_id" name="organization_id" class="form-select">
+                                @foreach($organizationOptions as $organizationOption)
+                                    <option value="{{ $organizationOption->organization_id }}" {{ (string) old('organization_id', $selectedOrganizationId) === (string) $organizationOption->organization_id ? 'selected' : '' }}>
+                                        {{ $organizationOption->organization_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input type="hidden" name="organization_id" value="{{ old('organization_id', $selectedOrganizationId) }}">
+                            <input type="text" class="form-control bg-light"
+                                   value="{{ $target->organisasi ?? Auth::user()->organisasi ?? '' }}" readonly>
+                        @endif
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold small text-uppercase text-muted">Tahun Target</label>
@@ -225,6 +236,7 @@
 {{-- Hidden Form for Add Year --}}
 <form id="addYearForm" action="{{ route('target-capability.addYear') }}" method="POST" style="display: none;">
     @csrf
+    <input type="hidden" name="organization_id" value="{{ old('organization_id', $selectedOrganizationId) }}">
     <input type="hidden" name="tahun" value="{{ old('tahun', $target->tahun ?? now()->year) }}">
 </form>
 
@@ -259,6 +271,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     updateTotal();
+
+    const organizationSelect = document.getElementById('organization_id');
+    if (organizationSelect) {
+        organizationSelect.addEventListener('change', function () {
+            const url = new URL(window.location.href);
+            url.searchParams.set('organization_id', this.value);
+            window.location.href = url.toString();
+        });
+    }
 
     // Add Year Button Handler
     const addYearBtn = document.getElementById('addYearBtn');

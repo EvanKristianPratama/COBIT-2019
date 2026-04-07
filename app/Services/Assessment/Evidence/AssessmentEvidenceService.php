@@ -21,12 +21,15 @@ class AssessmentEvidenceService
      */
     public function getPreviousEvidences(MstEval $evaluation, array $filters): array
     {
-        $owner = User::find($evaluation->user_id);
-        $orgName = trim((string) ($owner?->organisasi ?? ''));
+        $organizationId = $evaluation->organization_id
+            ?? User::where('id', $evaluation->user_id)->value('organization_id');
 
-        $userIds = User::when($orgName !== '', function ($query) use ($orgName) {
-            $query->whereRaw('LOWER(TRIM(organisasi)) = ?', [strtolower($orgName)]);
-        })
+        $userIds = User::query()
+            ->when($organizationId, function ($query) use ($organizationId) {
+                $query->whereHas('organizations', function ($organizationQuery) use ($organizationId) {
+                    $organizationQuery->where('mst_organization.organization_id', $organizationId);
+                });
+            })
             ->orWhere('id', $evaluation->user_id)
             ->pluck('id');
 

@@ -8,40 +8,45 @@ use App\Models\TargetMaturity;
 use App\Models\TrsActivityeval;
 use App\Models\TrsScoping;
 use App\Models\User;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\Assessment\Access\AssessmentAccessService;
 use Illuminate\Support\Facades\DB;
 
 class AssessmentListService
 {
+    public function __construct(
+        private readonly AssessmentAccessService $assessmentAccessService
+    ) {
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function getIndexData(User $user): array
     {
-        $org = $user->organisasi ?? null;
+        $organizationOptions = $user->organizations()
+            ->select('mst_organization.organization_id', 'organization_name')
+            ->orderByPivot('is_primary', 'desc')
+            ->orderBy('organization_name')
+            ->get();
 
-        $myQuery = MstEval::with(['user', 'maturityScore'])
+        $myQuery = $this->assessmentAccessService
+            ->queryAccessible($user)
+            ->with(['user', 'organization', 'maturityScore'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 
-        $otherQuery = null;
-        if ($org) {
-            $otherQuery = MstEval::with(['user', 'maturityScore'])
-                ->where('user_id', '!=', $user->id)
-                ->whereHas('user', function ($query) use ($org) {
-                    $query->where('organisasi', $org);
-                })
-                ->orderBy('created_at', 'desc');
-        }
+        $assignedQuery = $this->assessmentAccessService
+            ->queryAccessible($user)
+            ->with(['user', 'organization', 'maturityScore'])
+            ->where('user_id', '!=', $user->id)
+            ->orderBy('created_at', 'desc');
 
         $myAssessments = $myQuery->paginate(10, ['*'], 'my_page');
-        $otherAssessments = $otherQuery
-            ? $otherQuery->paginate(10, ['*'], 'other_page')
-            : new LengthAwarePaginator([], 0, 10);
+        $assignedAssessments = $assignedQuery->paginate(10, ['*'], 'assigned_page');
 
         $allEvals = collect($myAssessments->items());
-        if ($otherQuery) {
-            $allEvals = $allEvals->merge($otherAssessments->items());
+        if ($assignedAssessments->total() > 0) {
+            $allEvals = $allEvals->merge($assignedAssessments->items());
         }
 
         if ($allEvals->isNotEmpty()) {
@@ -58,81 +63,80 @@ class AssessmentListService
                 ->groupBy('eval_id')
                 ->pluck('last_activity_at', 'eval_id');
 
-            $years = $allEvals->pluck('tahun')->filter()->unique()->values()->all();
-            $targetAverages = [];
-            $targetMaturityMap = [];
-
-            if ($years !== []) {
-                $targetCaps = TargetCapability::whereIn('tahun', $years)
-                    ->when($org, function ($query) use ($org) {
-                        $query->where('organisasi', $org);
-                    }, function ($query) use ($user) {
-                        $query->where('user_id', $user->id);
-                    })
-                    ->get();
-
-                $domainCols = [
-                    'EDM01', 'EDM02', 'EDM03', 'EDM04', 'EDM05',
-                    'APO01', 'APO02', 'APO03', 'APO04', 'APO05', 'APO06', 'APO07', 'APO08', 'APO09', 'APO10', 'APO11', 'APO12', 'APO13', 'APO14',
-                    'BAI01', 'BAI02', 'BAI03', 'BAI04', 'BAI05', 'BAI06', 'BAI07', 'BAI08', 'BAI09', 'BAI10', 'BAI11',
-                    'DSS01', 'DSS02', 'DSS03', 'DSS04', 'DSS05', 'DSS06',
-                    'MEA01', 'MEA02', 'MEA03', 'MEA04',
-                ];
-
-                foreach ($targetCaps as $targetCap) {
-                    $sum = 0;
-                    $count = 0;
-                    foreach ($domainCols as $col) {
-                        $value = $targetCap->{$col};
-                        if ($value !== null && is_numeric($value)) {
-                            $sum += $value;
-                            $count++;
-                        }
-                    }
-
-                    $targetAverages[$targetCap->tahun] = $count > 0 ? round($sum / $count, 2) : 0;
-                }
-
-                $targetMaturities = TargetMaturity::whereIn('tahun', $years)
-                    ->when($org, function ($query) use ($org) {
-                        $query->where('organisasi', $org);
-                    }, function ($query) use ($user) {
-                        $query->where('user_id', $user->id);
-                    })
-                    ->get();
-
-                foreach ($targetMaturities as $targetMaturity) {
-                    $targetMaturityMap[$targetMaturity->tahun] = $targetMaturity->target_maturity;
-                }
-            }
-
             foreach ($allEvals as $evaluation) {
                 $evaluation->scope_count = $scopeCounts[$evaluation->eval_id] ?? 0;
                 $evaluation->last_saved_at = $lastActivityDates[$evaluation->eval_id] ?? $evaluation->created_at;
-                $evaluation->avg_target_capability = $targetAverages[$evaluation->tahun ?? ''] ?? 0;
-                $evaluation->target_maturity = $targetMaturityMap[$evaluation->tahun ?? ''] ?? null;
+                $evaluation->avg_target_capability = $this->resolveTargetCapabilityAverage($evaluation);
+                $evaluation->target_maturity = $this->resolveTargetMaturity($evaluation);
             }
         }
 
-        $totalAssessments = $myAssessments->total() + ($otherQuery ? $otherAssessments->total() : 0);
+        $totalAssessments = $myAssessments->total() + $assignedAssessments->total();
 
-        $statsQuery = MstEval::query();
-        if ($org) {
-            $statsQuery->whereHas('user', function ($query) use ($org) {
-                $query->where('organisasi', $org);
-            });
-        } else {
-            $statsQuery->where('user_id', $user->id);
-        }
+        $statsQuery = $this->assessmentAccessService->queryAccessible($user);
 
         $finishedAssessments = (clone $statsQuery)->where('status', 'finished')->count();
 
         return [
             'myAssessments' => $myAssessments,
-            'otherAssessments' => $otherAssessments,
+            'assignedAssessments' => $assignedAssessments,
             'totalAssessments' => $totalAssessments,
             'finishedAssessments' => $finishedAssessments,
             'draftAssessments' => max(0, $totalAssessments - $finishedAssessments),
+            'organizationOptions' => $organizationOptions,
+            'selectedOrganizationId' => $user->organization_id ?: $organizationOptions->first()?->organization_id,
         ];
+    }
+
+    private function resolveTargetCapabilityAverage(MstEval $evaluation): float
+    {
+        $target = TargetCapability::query()
+            ->where('tahun', $evaluation->tahun)
+            ->when(
+                filled($evaluation->organization_id),
+                fn ($query) => $query->where('organization_id', $evaluation->organization_id),
+                fn ($query) => $query->where('user_id', $evaluation->user_id)
+            )
+            ->latest('target_id')
+            ->first();
+
+        if (! $target) {
+            return 0;
+        }
+
+        $domainCols = [
+            'EDM01', 'EDM02', 'EDM03', 'EDM04', 'EDM05',
+            'APO01', 'APO02', 'APO03', 'APO04', 'APO05', 'APO06', 'APO07', 'APO08', 'APO09', 'APO10', 'APO11', 'APO12', 'APO13', 'APO14',
+            'BAI01', 'BAI02', 'BAI03', 'BAI04', 'BAI05', 'BAI06', 'BAI07', 'BAI08', 'BAI09', 'BAI10', 'BAI11',
+            'DSS01', 'DSS02', 'DSS03', 'DSS04', 'DSS05', 'DSS06',
+            'MEA01', 'MEA02', 'MEA03', 'MEA04',
+        ];
+
+        $sum = 0;
+        $count = 0;
+        foreach ($domainCols as $col) {
+            $value = $target->{$col};
+            if ($value !== null && is_numeric($value)) {
+                $sum += $value;
+                $count++;
+            }
+        }
+
+        return $count > 0 ? round($sum / $count, 2) : 0;
+    }
+
+    private function resolveTargetMaturity(MstEval $evaluation): ?float
+    {
+        $target = TargetMaturity::query()
+            ->where('tahun', $evaluation->tahun)
+            ->when(
+                filled($evaluation->organization_id),
+                fn ($query) => $query->where('organization_id', $evaluation->organization_id),
+                fn ($query) => $query->where('user_id', $evaluation->user_id)
+            )
+            ->latest('id')
+            ->first();
+
+        return $target?->target_maturity;
     }
 }

@@ -1,9 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
-@section('content')
-<div class="container">
+@section('admin_title', 'Manage Assessment Detail')
+
+@section('admin_content')
+<div class="container-fluid px-0 assessment-admin-page">
     {{-- Main Card --}}
-    <div class="card shadow-sm mb-4">
+    <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-primary text-white py-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">Detail Assessment {{ $assessment->assessment_id }}</h3>
@@ -35,15 +37,153 @@
             <div class="row">
                 <div class="col-md-6">
                     <p class="mb-1"><strong>Kode:</strong> {{ $assessment->kode_assessment }}</p>
-                    <p><strong>Instansi:</strong> {{ $assessment->instansi }}</p>
+                    <p class="mb-1"><strong>Instansi:</strong> {{ $assessment->instansi }}</p>
+                    <p class="mb-0"><strong>Owner:</strong> {{ $assessment->creator->name ?? 'System' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="stat-tile stat-tile-primary">
+                                <span class="stat-label">Owner</span>
+                                <span class="stat-value">1</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-tile stat-tile-info">
+                                <span class="stat-label">Assigned</span>
+                                <span class="stat-value">{{ $assignedUsers->count() }}</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-tile stat-tile-secondary">
+                                <span class="stat-label">Respondents</span>
+                                <span class="stat-value">{{ $userIds->count() }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header panel-header-primary">
+                    <div>
+                        <h5 class="mb-1">Access Control</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('admin.assessments.assign-user', $assessment->assessment_id) }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="assigned_user_id" class="form-label">User</label>
+                            <select
+                                id="assigned_user_id"
+                                name="user_id"
+                                class="form-select @error('user_id') is-invalid @enderror"
+                                required
+                            >
+                                <option value="">Pilih user</option>
+                                @foreach($assignableUsers as $assignableUser)
+                                    <option value="{{ $assignableUser->id }}" {{ old('user_id') == $assignableUser->id ? 'selected' : '' }}>
+                                        {{ $assignableUser->name }} | {{ $assignableUser->displayOrganizationSummary() }} | {{ $assignableUser->displayAccessProfileLabel() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('user_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="access-profile-card mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="small text-uppercase text-muted fw-semibold">Rule</div>
+                                    <div class="fw-semibold">Akses ikut paket user</div>
+                                </div>
+                                <span class="badge bg-light text-dark border">Global Profile</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus me-2"></i>Assign User
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header panel-header-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">Assigned Users</h5>
+                        </div>
+                        <span class="badge bg-light text-dark border">{{ $assignedUsers->count() }} Users</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if($assignedUsers->isEmpty())
+                        <div class="empty-panel">
+                            <i class="fas fa-user-shield mb-3"></i>
+                            <p class="mb-0">Belum ada user yang di-assign ke assessment ini.</p>
+                        </div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 access-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Organisasi</th>
+                                        <th>Access</th>
+                                        <th>Assigned At</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($assignedUsers as $assignment)
+                                        @php $assignedUser = $assignment->user; @endphp
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">{{ $assignedUser?->name ?? 'Unknown User' }}</div>
+                                                <small class="text-muted">{{ $assignedUser?->email ?? '-' }}</small>
+                                            </td>
+                                            <td>{{ $assignedUser?->displayOrganizationSummary() ?? '-' }}</td>
+                                            <td>
+                                                <span class="badge bg-info bg-opacity-10 text-info px-3 py-2">
+                                                    {{ $assignedUser?->displayAccessProfileLabel() ?? ucfirst($assignment->access_profile) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div>{{ optional($assignment->created_at)->format('d M Y') }}</div>
+                                                <small class="text-muted">{{ optional($assignment->created_at)->format('H:i') }}</small>
+                                            </td>
+                                            <td class="text-end">
+                                                <form action="{{ route('admin.assessments.revoke-user', [$assessment->assessment_id, $assignment->id]) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger px-3" onclick="return confirm('Cabut akses user dari assessment ini?')">
+                                                        <i class="fas fa-user-minus me-1"></i>Revoke
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 
     {{-- Filter Card --}}
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white py-3">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header panel-header-dark">
             <h6 class="m-0 font-weight-bold">Filter Data</h6>
         </div>
         <div class="card-body">
@@ -81,8 +221,8 @@
 
     {{-- SECTION: Design Factor Inputs --}}
     <div id="section-df">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white py-3">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header panel-header-primary">
                 <h5 class="mb-0">Design Factor Inputs</h5>
             </div>
             <div class="card-body">
@@ -166,8 +306,8 @@
 
     {{-- SECTION: Scores --}}
     <div id="section-scores" style="display:none;">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-white py-3">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header panel-header-info">
                 <h5 class="mb-0">Design Factor Scores</h5>
             </div>
             <div class="card-body">
@@ -213,8 +353,8 @@
 
     {{-- SECTION: Relative Importance --}}
     <div id="section-relimp" style="display:none;">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-success text-white py-3">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header panel-header-success">
                 <h5 class="mb-0">Relative Importance</h5>
             </div>
             <div class="card-body">
@@ -258,6 +398,133 @@
         </div>
     </div>
 </div>
+
+<style>
+  .assessment-admin-page .card {
+    border-radius: 0.95rem;
+    overflow: hidden;
+    border: 1px solid #d7dfeb;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.05);
+  }
+
+  .assessment-admin-page .card-header.bg-primary {
+    background: linear-gradient(135deg, var(--cobit-primary) 0%, var(--cobit-secondary) 100%) !important;
+  }
+
+  .assessment-admin-page .btn-primary {
+    background: var(--cobit-primary);
+    border-color: var(--cobit-primary);
+  }
+
+  .assessment-admin-page .btn-primary:hover,
+  .assessment-admin-page .btn-primary:focus {
+    background: var(--cobit-secondary);
+    border-color: var(--cobit-secondary);
+  }
+
+  .assessment-admin-page .btn-light {
+    color: var(--cobit-secondary);
+  }
+
+  .assessment-admin-page .btn-success {
+    background: var(--cobit-accent);
+    border-color: var(--cobit-accent);
+  }
+
+  .assessment-admin-page .btn-success:hover,
+  .assessment-admin-page .btn-success:focus {
+    background: var(--cobit-secondary);
+    border-color: var(--cobit-secondary);
+  }
+
+  .panel-header-primary,
+  .panel-header-secondary,
+  .panel-header-info,
+  .panel-header-success,
+  .panel-header-dark {
+    color: #fff;
+    border: 0;
+    padding: 1rem 1.25rem;
+  }
+
+  .panel-header-primary { background: linear-gradient(135deg, var(--cobit-primary) 0%, var(--cobit-secondary) 100%); }
+  .panel-header-secondary { background: linear-gradient(135deg, var(--cobit-secondary) 0%, var(--cobit-accent) 100%); }
+  .panel-header-info { background: linear-gradient(135deg, var(--cobit-secondary) 0%, var(--cobit-accent) 100%); }
+  .panel-header-success { background: linear-gradient(135deg, var(--cobit-accent) 0%, var(--cobit-secondary) 100%); }
+  .panel-header-dark { background: linear-gradient(135deg, var(--cobit-primary) 0%, var(--cobit-secondary) 100%); }
+
+  .stat-tile {
+    border-radius: 0.85rem;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .stat-tile-primary {
+    background: rgba(15, 43, 92, 0.08);
+    color: var(--cobit-primary);
+  }
+
+  .stat-tile-info {
+    background: rgba(26, 61, 107, 0.12);
+    color: var(--cobit-secondary);
+  }
+
+  .stat-tile-secondary {
+    background: rgba(15, 106, 217, 0.1);
+    color: var(--cobit-accent);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    opacity: 0.8;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .access-profile-card {
+    border: 1px solid #d7dfeb;
+    border-radius: 0.85rem;
+    background: linear-gradient(135deg, rgba(23, 50, 75, 0.04), rgba(255, 255, 255, 0.96));
+    padding: 0.9rem 1rem;
+  }
+
+  .empty-panel {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: #6c757d;
+  }
+
+  .empty-panel i {
+    font-size: 2rem;
+    color: #adb5bd;
+  }
+
+  .access-table thead th {
+    background: #f8f9fa;
+    color: #64748b;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+
+  .access-table tbody tr {
+    border-bottom: 1px solid #eef2f7;
+  }
+
+  .access-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+</style>
 
 
 <script>
