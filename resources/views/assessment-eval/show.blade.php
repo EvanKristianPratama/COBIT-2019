@@ -2671,14 +2671,16 @@
                 const finalScore = ratingSourceLevel !== null ?
                     (this.levelScores[objectiveId]?.[ratingSourceLevel]?.score || 0) :
                     0;
-                const ratingLetter = finalLevel > 0 ? this.getScoreLetter(finalScore) : 'N';
+                const ratingLetter = progressLevel > 0 ? this.getScoreLetter(progressScore) : 'N';
                 const value = progressLevel > 0 ? Number((((progressLevel - 1) + progressScore)).toFixed(2)) : 0;
 
                 return {
                     level: finalLevel,
                     score: finalScore,
+                    progressLevel,
+                    progressScore,
                     ratingLetter,
-                    ratingString: finalLevel > 0 ? `${finalLevel}${ratingLetter}` : '0N',
+                    ratingString: progressLevel > 0 ? `${progressLevel}${ratingLetter}` : '0N',
                     value,
                     valueLabel: value.toFixed(2),
                 };

@@ -702,6 +702,8 @@ class EvaluationService
      * @return array{
      *     final_level:int,
      *     final_score:float,
+     *     progress_level:int,
+     *     progress_score:float,
      *     rating_letter:string,
      *     rating_string:string,
      *     display_value:float,
@@ -730,6 +732,8 @@ class EvaluationService
             return [
                 'final_level' => 0,
                 'final_score' => 0.0,
+                'progress_level' => 0,
+                'progress_score' => 0.0,
                 'rating_letter' => 'N',
                 'rating_string' => '0N',
                 'display_value' => 0.0,
@@ -819,14 +823,16 @@ class EvaluationService
         }
 
         $finalScore = $ratingSourceLevel !== null ? ($levelScores[$ratingSourceLevel]['score'] ?? 0.0) : 0.0;
-        $ratingLetter = $finalLevel > 0 ? $this->getScoreLetter($finalScore) : 'N';
+        $ratingLetter = $progressLevel > 0 ? $this->getScoreLetter($progressScore) : 'N';
         $displayValue = $progressLevel > 0 ? round(($progressLevel - 1) + $progressScore, 2) : 0.0;
 
         return [
             'final_level' => $finalLevel,
             'final_score' => $finalScore,
+            'progress_level' => $progressLevel,
+            'progress_score' => $progressScore,
             'rating_letter' => $ratingLetter,
-            'rating_string' => $finalLevel > 0 ? $finalLevel.$ratingLetter : '0N',
+            'rating_string' => $progressLevel > 0 ? $progressLevel.$ratingLetter : '0N',
             'display_value' => $displayValue,
             'display_value_label' => number_format($displayValue, 2, '.', ''),
             'level_scores' => $levelScores,
