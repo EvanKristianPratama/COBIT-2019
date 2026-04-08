@@ -138,14 +138,7 @@
                                 <label for="filter-practice" class="form-label mb-0 small fw-bold text-secondary" style="white-space: nowrap;">Filter by Practice:</label>
                                 <select class="form-select form-select-sm" id="filter-practice">
                                     <option value="">All Practices</option>
-                                    @php
-                                        $practices = collect($activityData)
-                                            ->map(fn($a) => ['id' => $a['practice_id'], 'name' => $a['practice_name']])
-                                            ->unique('id')
-                                            ->sortBy('id')
-                                            ->values();
-                                    @endphp
-                                    @foreach($practices as $practice)
+                                    @foreach(($practices ?? []) as $practice)
                                         <option value="{{ $practice['id'] }}">{{ $practice['id'] }} - {{ Str::limit($practice['name'], 30) }}</option>
                                     @endforeach
                                 </select>
@@ -171,74 +164,58 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            // Group activities by (level, practice_id) for rowspan calculation
-                            $groups = collect($activityData)->groupBy(function($item) {
-                                return $item['capability_level'] . '-' . $item['practice_id'];
-                            });
-                            $rowIndex = 0;
-                            $processedGroups = [];
-                        @endphp
-                        
-                        @forelse($activityData as $index => $activity)
-                            @php
-                                $groupId = $activity['capability_level'] . '-' . $activity['practice_id'];
-                                $isFirstInGroup = !in_array($groupId, $processedGroups);
-                                $groupRowspan = $isFirstInGroup ? $groups[$groupId]->count() : 0;
-                                if ($isFirstInGroup) {
-                                    $processedGroups[] = $groupId;
-                                    $rowIndex++;
-                                }
-                            @endphp
-                            <tr data-level="{{ $activity['capability_level'] }}" data-practice="{{ $activity['practice_id'] }}" class="activity-row-practice">
-                                @if($isFirstInGroup)
-                                    <td class="text-center" rowspan="{{ $groupRowspan }}">{{ $rowIndex }}</td>
-                                    <td class="fw-semibold" rowspan="{{ $groupRowspan }}">{{ str_replace('"', '', $activity['practice_id']) }}</td>
-                                    <td rowspan="{{ $groupRowspan }}">{{ str_replace('"', '', $activity['practice_name']) }}</td>
-                                @endif
-                                <td>{{ str_replace('"', '', $activity['activity_description']) }}</td>
-                                <td class="text-center">
-                                    @php
-                                        $answer = $activity['answer'];
-                                        $badgeClass = match(strtolower($answer)) {
-                                            'fully', 'f' => 'bg-success',
-                                            'largely', 'l' => 'bg-info',
-                                            'partially', 'p' => 'bg-warning text-dark',
-                                            'not', 'n' => 'bg-danger',
-                                            default => 'bg-secondary'
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ $answer }}</span>
-                                </td>
-                                <td>
-                                    @if(!empty($activity['evidence']) && is_array($activity['evidence']) && count($activity['evidence']) > 0)
-                                        <ul class="mb-0 ps-3 small">
-                                            @foreach($activity['evidence'] as $ev)
-                                                <li>{{ $ev }}</li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <span class="text-muted small">-</span>
+                        @if(count($practiceRows ?? []) > 0)
+                            @foreach(($practiceRows ?? []) as $activity)
+                                <tr data-level="{{ $activity['capability_level'] }}" data-practice="{{ $activity['practice_id'] }}" class="activity-row-practice">
+                                    @if($activity['show_group'])
+                                        <td class="text-center" rowspan="{{ $activity['group_rowspan'] }}">{{ $activity['group_row_number'] }}</td>
+                                        <td class="fw-semibold" rowspan="{{ $activity['group_rowspan'] }}">{{ str_replace('"', '', $activity['practice_id']) }}</td>
+                                        <td rowspan="{{ $activity['group_rowspan'] }}">{{ str_replace('"', '', $activity['practice_name']) }}</td>
                                     @endif
-                                </td>
-                                <td>
-                                    @if($activity['notes'])
-                                        <span class="small">{{ $activity['notes'] }}</span>
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
-                                <td class="text-center fw-bold">
-                                    {{ $activity['capability_level'] ?? '-' }}
-                                </td>
-                            </tr>
-                        @empty
+                                    <td>{{ str_replace('"', '', $activity['activity_description']) }}</td>
+                                    <td class="text-center">
+                                        <?php
+                                            $answer = $activity['answer'];
+                                            $badgeClass = match(strtolower($answer)) {
+                                                'fully', 'f' => 'bg-success',
+                                                'largely', 'l' => 'bg-info',
+                                                'partially', 'p' => 'bg-warning text-dark',
+                                                'not', 'n' => 'bg-danger',
+                                                default => 'bg-secondary'
+                                            };
+                                        ?>
+                                        <span class="badge {{ $badgeClass }}">{{ $answer }}</span>
+                                    </td>
+                                    <td>
+                                        @if(!empty($activity['evidence']) && is_array($activity['evidence']) && count($activity['evidence']) > 0)
+                                            <ul class="mb-0 ps-3 small">
+                                                @foreach($activity['evidence'] as $ev)
+                                                    <li>{{ $ev }}</li>
+                                                @endforeach
+                                            </ul>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($activity['notes'])
+                                            <span class="small">{{ $activity['notes'] }}</span>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center fw-bold">
+                                        {{ $activity['capability_level'] ?? '-' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @else
                             <tr>
                                 <td colspan="8" class="text-center py-4 text-muted">
                                     No filled activities for this criteria.
                                 </td>
                             </tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -276,7 +253,7 @@
                                 <label for="filter-practice-level" class="form-label mb-0 small fw-bold text-secondary" style="white-space: nowrap;">Filter by Practice:</label>
                                 <select class="form-select form-select-sm" id="filter-practice-level">
                                     <option value="">All Practices</option>
-                                    @foreach($practices as $practice)
+                                    @foreach(($practices ?? []) as $practice)
                                         <option value="{{ $practice['id'] }}">{{ $practice['id'] }} - {{ Str::limit($practice['name'], 30) }}</option>
                                     @endforeach
                                 </select>
@@ -302,126 +279,68 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            // Group by level first, then practice
-                            $activityDataByLevel = collect($activityData)->sortBy([['capability_level', 'asc'], ['practice_id', 'asc'], ['activity_id', 'asc']]);
-                            $groupsByLevel = $activityDataByLevel->groupBy(function($item) {
-                                return $item['capability_level'] . '-' . $item['practice_id'];
-                            });
-                            $rowIndexLevel = 0;
-                            $processedGroupsLevel = [];
-                            $previousLevel = null;
-                        @endphp
-                        
-                        @forelse($activityDataByLevel as $index => $activity)
-                            @php
-                                $groupIdLevel = $activity['capability_level'] . '-' . $activity['practice_id'];
-                                $isFirstInGroupLevel = !in_array($groupIdLevel, $processedGroupsLevel);
-                                $groupRowspanLevel = $isFirstInGroupLevel ? $groupsByLevel[$groupIdLevel]->count() : 0;
-                                $currentLevel = $activity['capability_level'];
-                                $isNewLevel = $previousLevel !== null && $currentLevel !== $previousLevel;
-                                
-                                if ($isFirstInGroupLevel) {
-                                    $processedGroupsLevel[] = $groupIdLevel;
-                                    $rowIndexLevel++;
-                                }
-                            @endphp
-                            
-                            {{-- Level separator row --}}
-                            @if($isNewLevel)
-                                <tr class="level-separator-row" data-separator-level="{{ $currentLevel }}">
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">LEVEL</td>
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">{{ $currentLevel }}</td>
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">RATING</td>
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">
-                                        @if(isset($levelRatings[$currentLevel]))
-                                            @php
-                                                $score = $levelRatings[$currentLevel]['score'] / 100;
-                                                $letter = 'N';
-                                                if ($score > 0.85) $letter = 'F';
-                                                elseif ($score > 0.50) $letter = 'L';
-                                                elseif ($score > 0.15) $letter = 'P';
-                                            @endphp
-                                            {{ $letter }} {{ number_format($score, 2) }}
-                                        @else
-                                            N 0.00
-                                        @endif
-                                    </td>
-                                    <td colspan="4" style="background-color: #e9ecef;"></td>
-                                </tr>
-                                @php $previousLevel = $currentLevel; @endphp
-                            @elseif($previousLevel === null)
-                                {{-- First level header --}}
-                                <tr class="level-separator-row" data-separator-level="{{ $currentLevel }}">
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">LEVEL</td>
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">{{ $currentLevel }}</td>
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">RATING</td>
-                                    <td class="text-center fw-bold" style="background-color: #e9ecef;">
-                                        @if(isset($levelRatings[$currentLevel]))
-                                            @php
-                                                $score = $levelRatings[$currentLevel]['score'] / 100;
-                                                $letter = 'N';
-                                                if ($score > 0.85) $letter = 'F';
-                                                elseif ($score > 0.50) $letter = 'L';
-                                                elseif ($score > 0.15) $letter = 'P';
-                                            @endphp
-                                            {{ $letter }} {{ number_format($score, 2) }}
-                                        @else
-                                            N 0.00
-                                        @endif
-                                    </td>
-                                    <td colspan="4" style="background-color: #e9ecef;"></td>
-                                </tr>
-                                @php $previousLevel = $currentLevel; @endphp
-                            @endif
-                            
-                            <tr data-level="{{ $activity['capability_level'] }}" data-practice="{{ $activity['practice_id'] }}" class="activity-row-level">
-                                @if($isFirstInGroupLevel)
-                                    <td class="text-center" rowspan="{{ $groupRowspanLevel }}">{{ $rowIndexLevel }}</td>
-                                    <td class="text-center fw-bold" rowspan="{{ $groupRowspanLevel }}" style="background-color: #f8f9fa;">{{ $activity['capability_level'] ?? '-' }}</td>
-                                    <td class="fw-semibold" rowspan="{{ $groupRowspanLevel }}">{{ str_replace('"', '', $activity['practice_id']) }}</td>
-                                    <td rowspan="{{ $groupRowspanLevel }}">{{ str_replace('"', '', $activity['practice_name']) }}</td>
+                        @if(count($levelRows ?? []) > 0)
+                            @foreach(($levelRows ?? []) as $activity)
+                                @if($activity['show_level_separator'])
+                                    <tr class="level-separator-row" data-separator-level="{{ $activity['separator_level'] }}">
+                                        <td class="text-center fw-bold" style="background-color: #e9ecef;">LEVEL</td>
+                                        <td class="text-center fw-bold" style="background-color: #e9ecef;">{{ $activity['separator_level'] }}</td>
+                                        <td class="text-center fw-bold" style="background-color: #e9ecef;">RATING</td>
+                                        <td class="text-center fw-bold" style="background-color: #e9ecef;">
+                                            {{ $activity['separator_rating_display'] }}
+                                        </td>
+                                        <td colspan="4" style="background-color: #e9ecef;"></td>
+                                    </tr>
                                 @endif
-                                <td>{{ str_replace('"', '', $activity['activity_description']) }}</td>
-                                <td class="text-center">
-                                    @php
-                                        $answer = $activity['answer'];
-                                        $badgeClass = match(strtolower($answer)) {
-                                            'fully', 'f' => 'bg-success',
-                                            'largely', 'l' => 'bg-info',
-                                            'partially', 'p' => 'bg-warning text-dark',
-                                            'not', 'n' => 'bg-danger',
-                                            default => 'bg-secondary'
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ $answer }}</span>
-                                </td>
-                                <td>
-                                    @if(!empty($activity['evidence']) && is_array($activity['evidence']) && count($activity['evidence']) > 0)
-                                        <ul class="mb-0 ps-3 small">
-                                            @foreach($activity['evidence'] as $ev)
-                                                <li>{{ $ev }}</li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <span class="text-muted small">-</span>
+
+                                <tr data-level="{{ $activity['capability_level'] }}" data-practice="{{ $activity['practice_id'] }}" class="activity-row-level">
+                                    @if($activity['show_group'])
+                                        <td class="text-center" rowspan="{{ $activity['group_rowspan'] }}">{{ $activity['group_row_number'] }}</td>
+                                        <td class="text-center fw-bold" rowspan="{{ $activity['group_rowspan'] }}" style="background-color: #f8f9fa;">{{ $activity['capability_level'] ?? '-' }}</td>
+                                        <td class="fw-semibold" rowspan="{{ $activity['group_rowspan'] }}">{{ str_replace('"', '', $activity['practice_id']) }}</td>
+                                        <td rowspan="{{ $activity['group_rowspan'] }}">{{ str_replace('"', '', $activity['practice_name']) }}</td>
                                     @endif
-                                </td>
-                                <td>
-                                    @if($activity['notes'])
-                                        <span class="small">{{ $activity['notes'] }}</span>
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
+                                    <td>{{ str_replace('"', '', $activity['activity_description']) }}</td>
+                                    <td class="text-center">
+                                        <?php
+                                            $answer = $activity['answer'];
+                                            $badgeClass = match(strtolower($answer)) {
+                                                'fully', 'f' => 'bg-success',
+                                                'largely', 'l' => 'bg-info',
+                                                'partially', 'p' => 'bg-warning text-dark',
+                                                'not', 'n' => 'bg-danger',
+                                                default => 'bg-secondary'
+                                            };
+                                        ?>
+                                        <span class="badge {{ $badgeClass }}">{{ $answer }}</span>
+                                    </td>
+                                    <td>
+                                        @if(!empty($activity['evidence']) && is_array($activity['evidence']) && count($activity['evidence']) > 0)
+                                            <ul class="mb-0 ps-3 small">
+                                                @foreach($activity['evidence'] as $ev)
+                                                    <li>{{ $ev }}</li>
+                                                @endforeach
+                                            </ul>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($activity['notes'])
+                                            <span class="small">{{ $activity['notes'] }}</span>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @else
                             <tr>
                                 <td colspan="8" class="text-center py-4 text-muted">
                                     No filled activities for this criteria.
                                 </td>
                             </tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>

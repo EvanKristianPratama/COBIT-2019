@@ -127,6 +127,18 @@ class ActivityReportService
             return strcmp($left['activity_id'], $right['activity_id']);
         });
 
+        $practices = collect($activityData)
+            ->map(fn ($activity) => [
+                'id' => $activity['practice_id'],
+                'name' => $activity['practice_name'],
+            ])
+            ->unique('id')
+            ->sortBy('id')
+            ->values()
+            ->all();
+
+        $practiceRows = $this->buildPracticeRows($activityData);
+
         $levelRatings = [];
         $activitiesByLevel = collect($activityData)->groupBy('capability_level');
 
@@ -157,12 +169,16 @@ class ActivityReportService
             }
         }
 
+        $levelRows = $this->buildLevelRows($activityData, $levelRatings);
+
         return compact(
             'evaluation',
             'evalId',
             'objective',
             'areaObjective',
             'activityData',
+            'practiceRows',
+            'levelRows',
             'filterLevel',
             'currentLevel',
             'maxLevel',
@@ -170,7 +186,94 @@ class ActivityReportService
             'targetLevel',
             'ratingString',
             'displayValue',
+            'practices',
             'levelRatings'
         );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $activityData
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildPracticeRows(array $activityData): array
+    {
+        $groupCounts = collect($activityData)
+            ->groupBy(fn ($item) => $item['capability_level'].'-'.$item['practice_id'])
+            ->map(fn ($items) => $items->count())
+            ->all();
+
+        $seenGroups = [];
+        $rowIndex = 0;
+
+        return array_map(function (array $activity) use (&$seenGroups, &$rowIndex, $groupCounts) {
+            $groupId = $activity['capability_level'].'-'.$activity['practice_id'];
+            $isFirstInGroup = ! isset($seenGroups[$groupId]);
+
+            if ($isFirstInGroup) {
+                $seenGroups[$groupId] = true;
+                $rowIndex++;
+            }
+
+            return array_merge($activity, [
+                'show_group' => $isFirstInGroup,
+                'group_rowspan' => $isFirstInGroup ? ($groupCounts[$groupId] ?? 1) : 0,
+                'group_row_number' => $isFirstInGroup ? $rowIndex : null,
+            ]);
+        }, $activityData);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $activityData
+     * @param  array<string, array<string, mixed>>  $levelRatings
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildLevelRows(array $activityData, array $levelRatings): array
+    {
+        $activityDataByLevel = collect($activityData)
+            ->sortBy([
+                ['capability_level', 'asc'],
+                ['practice_id', 'asc'],
+                ['activity_id', 'asc'],
+            ])
+            ->values()
+            ->all();
+
+        $groupCounts = collect($activityDataByLevel)
+            ->groupBy(fn ($item) => $item['capability_level'].'-'.$item['practice_id'])
+            ->map(fn ($items) => $items->count())
+            ->all();
+
+        $seenGroups = [];
+        $rowIndex = 0;
+        $previousLevel = null;
+
+        return array_map(function (array $activity) use (&$seenGroups, &$rowIndex, &$previousLevel, $groupCounts, $levelRatings) {
+            $currentLevel = (string) $activity['capability_level'];
+            $groupId = $currentLevel.'-'.$activity['practice_id'];
+            $isFirstInGroup = ! isset($seenGroups[$groupId]);
+            $showLevelSeparator = $previousLevel === null || $currentLevel !== $previousLevel;
+
+            if ($isFirstInGroup) {
+                $seenGroups[$groupId] = true;
+                $rowIndex++;
+            }
+
+            $ratingData = $levelRatings[$currentLevel] ?? null;
+            $separatorScore = $ratingData ? number_format(($ratingData['score'] ?? 0) / 100, 2) : '0.00';
+            $separatorLetter = $ratingData
+                ? $this->evaluationService->getScoreLetter(($ratingData['score'] ?? 0) / 100)
+                : 'N';
+
+            $previousLevel = $currentLevel;
+
+            return array_merge($activity, [
+                'show_group' => $isFirstInGroup,
+                'group_rowspan' => $isFirstInGroup ? ($groupCounts[$groupId] ?? 1) : 0,
+                'group_row_number' => $isFirstInGroup ? $rowIndex : null,
+                'show_level_separator' => $showLevelSeparator,
+                'separator_level' => $currentLevel,
+                'separator_rating_display' => $separatorLetter.' '.$separatorScore,
+            ]);
+        }, $activityDataByLevel);
     }
 }

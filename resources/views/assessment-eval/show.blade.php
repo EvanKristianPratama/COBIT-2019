@@ -2610,20 +2610,69 @@
 
             getObjectiveDisplayMetrics(objectiveId) {
                 const minLevel = this.getMinLevelForObjective(objectiveId);
-                let finalLevel = 0;
-                let finalScore = 0;
+                let progressLevel = 0;
+                let progressScore = 0;
 
                 for (let level = 5; level >= minLevel; level -= 1) {
                     const score = this.levelScores[objectiveId]?.[level]?.score || 0;
                     if (this.getScoreLetter(score) !== 'N') {
-                        finalLevel = level;
-                        finalScore = score;
+                        progressLevel = level;
+                        progressScore = score;
                         break;
                     }
                 }
 
-                const ratingLetter = this.getScoreLetter(finalScore);
-                const value = finalLevel > 0 ? Number((((finalLevel - 1) + finalScore)).toFixed(2)) : 0;
+                const getCapabilityScore = (level) => {
+                    if (level < minLevel) {
+                        return 1;
+                    }
+
+                    return this.levelScores[objectiveId]?.[level]?.score || 0;
+                };
+
+                const score2 = getCapabilityScore(2);
+                const score3 = getCapabilityScore(3);
+                const score4 = getCapabilityScore(4);
+                const score5 = getCapabilityScore(5);
+
+                let finalLevel = 0;
+                if (score2 <= this.config.scoreThresholds.partial) {
+                    finalLevel = 0;
+                } else if (score2 <= this.config.scoreThresholds.largely) {
+                    finalLevel = 1;
+                } else if (score2 <= this.config.scoreThresholds.fully) {
+                    finalLevel = 2;
+                } else {
+                    if (score3 <= this.config.scoreThresholds.largely) {
+                        finalLevel = 2;
+                    } else if (score3 <= this.config.scoreThresholds.fully) {
+                        finalLevel = 3;
+                    } else {
+                        if (score4 <= this.config.scoreThresholds.largely) {
+                            finalLevel = 3;
+                        } else if (score4 <= this.config.scoreThresholds.fully) {
+                            finalLevel = 4;
+                        } else {
+                            finalLevel = score5 <= this.config.scoreThresholds.largely ? 4 : 5;
+                        }
+                    }
+                }
+
+                if (minLevel > 2 && (this.levelScores[objectiveId]?.[minLevel]?.score || 0) <= this.config
+                    .scoreThresholds.partial) {
+                    finalLevel = 0;
+                }
+
+                let ratingSourceLevel = finalLevel > 0 ? Math.max(2, finalLevel) : null;
+                if (ratingSourceLevel !== null && !this.levelScores[objectiveId]?.[ratingSourceLevel]) {
+                    ratingSourceLevel = minLevel;
+                }
+
+                const finalScore = ratingSourceLevel !== null ?
+                    (this.levelScores[objectiveId]?.[ratingSourceLevel]?.score || 0) :
+                    0;
+                const ratingLetter = finalLevel > 0 ? this.getScoreLetter(finalScore) : 'N';
+                const value = progressLevel > 0 ? Number((((progressLevel - 1) + progressScore)).toFixed(2)) : 0;
 
                 return {
                     level: finalLevel,

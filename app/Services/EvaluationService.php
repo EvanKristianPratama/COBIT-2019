@@ -762,19 +762,65 @@ class EvaluationService
             ];
         }
 
-        $finalLevel = 0;
-        $finalScore = 0.0;
+        $progressLevel = 0;
+        $progressScore = 0.0;
         for ($level = 5; $level >= $minLevel; $level--) {
             $score = $levelScores[$level]['score'] ?? 0.0;
             if ($this->isAchievedScore($score)) {
-                $finalLevel = $level;
-                $finalScore = $score;
+                $progressLevel = $level;
+                $progressScore = $score;
                 break;
             }
         }
 
-        $ratingLetter = $this->getScoreLetter($finalScore);
-        $displayValue = $finalLevel > 0 ? round(($finalLevel - 1) + $finalScore, 2) : 0.0;
+        $getCapabilityScore = function (int $level) use ($levelScores, $minLevel): float {
+            if ($level < $minLevel) {
+                return 1.0;
+            }
+
+            return $levelScores[$level]['score'] ?? 0.0;
+        };
+
+        $score2 = $getCapabilityScore(2);
+        $score3 = $getCapabilityScore(3);
+        $score4 = $getCapabilityScore(4);
+        $score5 = $getCapabilityScore(5);
+
+        $finalLevel = 0;
+        if ($score2 <= self::SCORE_THRESHOLD_PARTIAL) {
+            $finalLevel = 0;
+        } elseif ($score2 <= self::SCORE_THRESHOLD_LARGELY) {
+            $finalLevel = 1;
+        } elseif ($score2 <= self::SCORE_THRESHOLD_FULLY) {
+            $finalLevel = 2;
+        } else {
+            if ($score3 <= self::SCORE_THRESHOLD_LARGELY) {
+                $finalLevel = 2;
+            } elseif ($score3 <= self::SCORE_THRESHOLD_FULLY) {
+                $finalLevel = 3;
+            } else {
+                if ($score4 <= self::SCORE_THRESHOLD_LARGELY) {
+                    $finalLevel = 3;
+                } elseif ($score4 <= self::SCORE_THRESHOLD_FULLY) {
+                    $finalLevel = 4;
+                } else {
+                    $finalLevel = $score5 <= self::SCORE_THRESHOLD_LARGELY ? 4 : 5;
+                }
+            }
+        }
+
+        if ($minLevel > 2 && ($levelScores[$minLevel]['score'] ?? 0.0) <= self::SCORE_THRESHOLD_PARTIAL) {
+            $finalLevel = 0;
+        }
+
+        $ratingSourceLevel = $finalLevel > 0 ? max(2, $finalLevel) : null;
+        if ($ratingSourceLevel !== null && ! isset($levelScores[$ratingSourceLevel])) {
+            $ratingSourceLevel = $minLevel;
+        }
+
+        $finalScore = $ratingSourceLevel !== null ? ($levelScores[$ratingSourceLevel]['score'] ?? 0.0) : 0.0;
+        $ratingLetter = $finalLevel > 0 ? $this->getScoreLetter($finalScore) : 'N';
+        $displayValue = $progressLevel > 0 ? round(($progressLevel - 1) + $progressScore, 2) : 0.0;
 
         return [
             'final_level' => $finalLevel,
