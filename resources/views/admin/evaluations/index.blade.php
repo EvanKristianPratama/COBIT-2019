@@ -366,10 +366,10 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                            <a href="{{ route('assessment-eval.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary">
+                                            <a href="{{ route('assessment.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye me-1"></i>Detail
                                             </a>
-                                            <a href="{{ route('assessment-eval.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <a href="{{ route('assessment.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary">
                                                 <i class="fas fa-file-alt me-1"></i>Report
                                             </a>
                                         </div>

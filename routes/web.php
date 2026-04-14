@@ -6,14 +6,14 @@ use App\Http\Controllers\Admin\AccessAdminController;
 use App\Http\Controllers\Admin\DesignFactorAdminController;
 use App\Http\Controllers\Admin\EvaluationAdminController as AdminAssessment;
 use App\Http\Controllers\Admin\OrganizationAdminController;
-use App\Http\Controllers\AssessmentEval\ActivityReportController;
-use App\Http\Controllers\AssessmentEval\AssessmentEvalController;
-use App\Http\Controllers\AssessmentEval\AssessmentListController;
-use App\Http\Controllers\AssessmentEval\AssessmentReportController;
-use App\Http\Controllers\AssessmentEval\AssessmentScopeController;
-use App\Http\Controllers\AssessmentEval\AssessmentSummaryController;
-use App\Http\Controllers\AssessmentEval\EvidenceController;
-use App\Http\Controllers\AssessmentEval\TargetMaturityController;
+use App\Http\Controllers\Assessment\ActivityReportController;
+use App\Http\Controllers\Assessment\AssessmentEvalController;
+use App\Http\Controllers\Assessment\AssessmentListController;
+use App\Http\Controllers\Assessment\AssessmentReportController;
+use App\Http\Controllers\Assessment\AssessmentScopeController;
+use App\Http\Controllers\Assessment\AssessmentSummaryController;
+use App\Http\Controllers\Assessment\EvidenceController;
+use App\Http\Controllers\Assessment\TargetMaturityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\cobit2019\DesignToolkitController;
 use App\Http\Controllers\cobit2019\Df10Controller;
@@ -32,7 +32,6 @@ use App\Http\Controllers\cobit2019\Step2Controller;
 use App\Http\Controllers\cobit2019\Step3Controller;
 use App\Http\Controllers\cobit2019\Step4Controller;
 use App\Http\Controllers\cobit2019\TargetCapabilityController;
-use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Spreadsheet\SpreadsheetController;
 use Illuminate\Support\Facades\Crypt;
@@ -137,9 +136,6 @@ Route::prefix('admin')
 Route::get('/', function () {
     return redirect()->route('login');
 });
-
-// Guest, login, dan register routes
-Route::get('/guest', [GuestController::class, 'loginGuest'])->name('guest.login');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -302,99 +298,96 @@ Route::prefix('cobit2019/roadmap')
         Route::post('/delete-year', [RoadmapController::class, 'deleteYear'])->name('delete-year');
     });
 
-// Assessment Evaluation routes
+// Assessment routes
 Route::middleware(['auth', 'permission:assessments.view'])->group(function () {
-    Route::get('/assessment-eval', [AssessmentEvalController::class, 'index'])
-        ->name('assessment-eval.index');
+    Route::get('/assessment', [AssessmentListController::class, 'index'])
+        ->name('assessment.index');
 
-    Route::get('/assessment-eval/list', [AssessmentListController::class, 'index'])
-        ->name('assessment-eval.list');
+    Route::get('/assessment/list', [AssessmentListController::class, 'index'])
+        ->name('assessment.list');
 
-    Route::get('/assessment-eval/report-all', [AssessmentReportController::class, 'index'])
-        ->name('assessment-eval.report.all');
+    Route::get('/assessment/report-all', [AssessmentReportController::class, 'index'])
+        ->name('assessment.report.all');
 
-    Route::post('/assessment-eval/report-all/pdf', [AssessmentReportController::class, 'exportPdf'])
-        ->name('assessment-eval.report.all-pdf');
+    Route::post('/assessment/report-all/pdf', [AssessmentReportController::class, 'exportPdf'])
+        ->name('assessment.report.all-pdf');
 
-    Route::get('/assessment-eval/report-spiderweb', [AssessmentReportController::class, 'spiderweb'])
-        ->name('assessment-eval.report.spiderweb');
+    Route::get('/assessment/report-spiderweb', [AssessmentReportController::class, 'spiderweb'])
+        ->name('assessment.report.spiderweb');
 
-    Route::resource('assessment-eval/target-maturity', TargetMaturityController::class)
+    Route::resource('assessment/target-maturity', TargetMaturityController::class)
         ->only(['index']);
 
-    Route::get('/assessment-eval/{evalId}', [AssessmentEvalController::class, 'showAssessment'])
-        ->name('assessment-eval.show');
+    Route::get('/assessment/{evalId}', [AssessmentEvalController::class, 'showAssessment'])
+        ->name('assessment.show');
 
-    Route::get('/assessment-eval/{evalId}/load', [AssessmentEvalController::class, 'load'])
-        ->name('assessment-eval.load');
+    Route::get('/assessment/{evalId}/load', [AssessmentEvalController::class, 'load'])
+        ->name('assessment.load');
 
-    Route::get('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 'index'])
-        ->name('assessment-eval.evidence.index');
+    Route::get('/assessment/{evalId}/evidence', [EvidenceController::class, 'index'])
+        ->name('assessment.evidence.index');
 
-    Route::get('/assessment-eval/{evalId}/evidence/previous', [EvidenceController::class, 'previous'])
-        ->name('assessment-eval.evidence.previous');
+    Route::get('/assessment/{evalId}/evidence/previous', [EvidenceController::class, 'previous'])
+        ->name('assessment.evidence.previous');
 
-    Route::get('/assessment-eval/{evalId}/report', [AssessmentReportController::class, 'show'])
-        ->name('assessment-eval.report');
+    Route::get('/assessment/{evalId}/report', [AssessmentReportController::class, 'show'])
+        ->name('assessment.report');
 
-    Route::get('/assessment-eval/{evalId}/summary', [AssessmentSummaryController::class, 'getNote'])
-        ->name('assessment-eval.note');
+    Route::get('/assessment/{evalId}/summary', [AssessmentSummaryController::class, 'getNote'])
+        ->name('assessment.note');
 
-    Route::get('/assessment-eval/{evalId}/summary/{objectiveId?}', [AssessmentSummaryController::class, 'summary'])
-        ->name('assessment-eval.summary');
+    Route::get('/assessment/{evalId}/summary/{objectiveId?}', [AssessmentSummaryController::class, 'summary'])
+        ->name('assessment.summary');
 
-    Route::get('/assessment-eval/cleanup-evidence/{secret_key}', [AssessmentSummaryController::class, 'cleanupEvidence'])
-        ->name('assessment-eval.cleanup-evidence');
+    Route::get('/assessment/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryPdf'])
+        ->name('assessment.summary-pdf');
 
-    Route::get('/assessment-eval/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryPdf'])
-        ->name('assessment-eval.summary-pdf');
+    Route::get('/assessment/{evalId}/summary-detail-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryDetailPdf'])
+        ->name('assessment.summary-detail-pdf');
 
-    Route::get('/assessment-eval/{evalId}/summary-detail-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryDetailPdf'])
-        ->name('assessment-eval.summary-detail-pdf');
+    Route::get('/assessment/{evalId}/report-activity/{objectiveId}', [ActivityReportController::class, 'show'])
+        ->name('assessment.report-activity');
 
-    Route::get('/assessment-eval/{evalId}/report-activity/{objectiveId}', [ActivityReportController::class, 'show'])
-        ->name('assessment-eval.report-activity');
+    Route::get('/assessment/{evalId}/report-activity-pdf/{objectiveId}', [ActivityReportController::class, 'downloadPdf'])
+        ->name('assessment.report-activity-pdf');
 
-    Route::get('/assessment-eval/{evalId}/report-activity-pdf/{objectiveId}', [ActivityReportController::class, 'downloadPdf'])
-        ->name('assessment-eval.report-activity-pdf');
-
-    Route::get('/assessment-eval/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
-        ->name('assessment-eval.score');
+    Route::get('/assessment/{evalId}/score', [AssessmentEvalController::class, 'getMaturityScore'])
+        ->name('assessment.score');
 });
 
 Route::middleware(['auth', 'permission:assessments.input'])->group(function () {
-    Route::resource('assessment-eval/target-maturity', TargetMaturityController::class)
+    Route::resource('assessment/target-maturity', TargetMaturityController::class)
         ->only(['store', 'destroy']);
 
-    Route::post('/assessment-eval/create', [AssessmentEvalController::class, 'createAssessment'])
-        ->name('assessment-eval.create');
+    Route::post('/assessment/create', [AssessmentEvalController::class, 'createAssessment'])
+        ->name('assessment.create');
 
-    Route::post('/assessment-eval/{evalId}/update-scope', [AssessmentScopeController::class, 'update'])
-        ->name('assessment-eval.update-scope');
+    Route::post('/assessment/{evalId}/update-scope', [AssessmentScopeController::class, 'update'])
+        ->name('assessment.update-scope');
 
-    Route::delete('/assessment-eval/delete-scope', [AssessmentScopeController::class, 'destroy'])
-        ->name('assessment-eval.delete-scope');
+    Route::delete('/assessment/delete-scope', [AssessmentScopeController::class, 'destroy'])
+        ->name('assessment.delete-scope');
 
-    Route::post('/assessment-eval/{evalId}/save', [AssessmentEvalController::class, 'save'])
-        ->name('assessment-eval.save');
+    Route::post('/assessment/{evalId}/save', [AssessmentEvalController::class, 'save'])
+        ->name('assessment.save');
 
-    Route::delete('/assessment-eval/{evalId}', [AssessmentEvalController::class, 'delete'])
-        ->name('assessment-eval.delete');
+    Route::delete('/assessment/{evalId}', [AssessmentEvalController::class, 'delete'])
+        ->name('assessment.delete');
 
-    Route::post('/assessment-eval/{evalId}/finish', [AssessmentEvalController::class, 'finish'])
-        ->name('assessment-eval.finish');
+    Route::post('/assessment/{evalId}/finish', [AssessmentEvalController::class, 'finish'])
+        ->name('assessment.finish');
 
-    Route::post('/assessment-eval/{evalId}/unlock', [AssessmentEvalController::class, 'unlock'])
-        ->name('assessment-eval.unlock');
+    Route::post('/assessment/{evalId}/unlock', [AssessmentEvalController::class, 'unlock'])
+        ->name('assessment.unlock');
 
-    Route::post('/assessment-eval/{evalId}/evidence', [EvidenceController::class, 'store'])
-        ->name('assessment-eval.evidence.store');
+    Route::post('/assessment/{evalId}/evidence', [EvidenceController::class, 'store'])
+        ->name('assessment.evidence.store');
 
-    Route::put('/assessment-eval/evidence/{evidenceId}', [EvidenceController::class, 'update'])
-        ->name('assessment-eval.evidence.update');
+    Route::put('/assessment/evidence/{evidenceId}', [EvidenceController::class, 'update'])
+        ->name('assessment.evidence.update');
 
-    Route::post('/assessment-eval/{evalId}/summary/save-note', [AssessmentSummaryController::class, 'saveNote'])
-        ->name('assessment-eval.summary.save-note');
+    Route::post('/assessment/{evalId}/summary/save-note', [AssessmentSummaryController::class, 'saveNote'])
+        ->name('assessment.summary.save-note');
 });
 
 // Spreadsheet Tools

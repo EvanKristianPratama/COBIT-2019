@@ -49,7 +49,7 @@ class HomeController extends Controller
             [
                 'title' => 'Assessment Maturity & Capability',
                 'description' => 'Evaluasi maturity dan capability.',
-                'route' => route('assessment-eval.index'),
+                'route' => route('assessment.index'),
                 'icon' => 'fas fa-clipboard-check',
                 'icon_class' => 'bg-soft-blue',
                 'visible' => $this->hasAccess($user, PermissionCatalog::AssessmentsView),

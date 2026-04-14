@@ -51,7 +51,7 @@ class AssessmentManagementService
             ? TrsEvalDetail::where('scoping_id', $activeScope->id)->pluck('domain_id')->unique()->toArray()
             : TrsEvalDetail::whereIn('scoping_id', $allScopes->pluck('id'))->pluck('domain_id')->unique()->toArray();
 
-        $objectivesQuery = MstObjective::with(['practices.activities']);
+        $objectivesQuery = MstObjective::with(['practices.activities', 'practices.infoflowoutput']);
         if ($selectedDomains !== []) {
             $objectivesQuery->where(function ($query) use ($selectedDomains) {
                 foreach ($selectedDomains as $domain) {

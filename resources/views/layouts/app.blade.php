@@ -386,8 +386,8 @@
                                 @if($canAccessAssessments)
                                     <li class="breadcrumb-item">
                                         <a
-                                            href="{{ $disableBreadcrumbClick ? '#' : route('assessment-eval.index') }}"
-                                            class="{{ Route::is('assessment-eval.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('assessment.index') }}"
+                                            class="{{ Route::is('assessment.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
                                             @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
                                         >
                                             <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
@@ -469,7 +469,7 @@
                         @endif
                         @if($canAccessAssessments)
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('assessment-eval.index') }}">
+                                <a class="nav-link" href="{{ route('assessment.index') }}">
                                     <i class="fas fa-clipboard-check me-2"></i> Assessment
                                 </a>
                             </li>

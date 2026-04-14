@@ -5,6 +5,7 @@ namespace App\Services\Assessment\Summary;
 use App\Models\MstEval;
 use App\Models\MstObjective;
 use App\Models\TrsActivityeval;
+use App\Models\TrsEvalDetail;
 use App\Models\TrsRoadmap;
 use App\Models\TrsSummaryActivity;
 use App\Models\TrsSummaryReport;
@@ -23,6 +24,7 @@ class AssessmentSummaryService
     public function getSummary(MstEval $evaluation, ?string $objectiveId = null): array
     {
         $evalId = $evaluation->eval_id;
+        $scopedObjectiveIds = $this->getScopedObjectiveIds($evaluation);
 
         $objectivesQuery = MstObjective::with([
             'practices.activities.evaluations' => function ($query) use ($evalId) {
@@ -32,12 +34,18 @@ class AssessmentSummaryService
 
         if ($objectiveId) {
             $objectivesQuery->where('objective_id', $objectiveId);
+        } elseif ($scopedObjectiveIds !== []) {
+            $objectivesQuery->whereIn('objective_id', $scopedObjectiveIds);
         }
 
         $objectives = $objectivesQuery->get();
 
         $savedNotesQuery = TrsSummaryReport::where('eval_id', $evalId)
             ->when($objectiveId, fn ($query) => $query->where('objective_id', $objectiveId))
+            ->when(
+                ! $objectiveId && $scopedObjectiveIds !== [],
+                fn ($query) => $query->whereIn('objective_id', $scopedObjectiveIds)
+            )
             ->get();
 
         $savedNotes = [];
@@ -194,7 +202,13 @@ class AssessmentSummaryService
      */
     public function getNotesPageData(MstEval $evaluation): array
     {
+        $scopedObjectiveIds = $this->getScopedObjectiveIds($evaluation);
+
         $reports = TrsSummaryReport::where('eval_id', $evaluation->eval_id)
+            ->when(
+                $scopedObjectiveIds !== [],
+                fn ($query) => $query->whereIn('objective_id', $scopedObjectiveIds)
+            )
             ->orderByRaw("
                 CASE
                     WHEN objective_id LIKE 'EDM%' THEN 1
@@ -210,7 +224,10 @@ class AssessmentSummaryService
 
         return [
             'reports' => $reports,
-            'objectives' => MstObjective::pluck('objective', 'objective_id'),
+            'objectives' => MstObjective::when(
+                $scopedObjectiveIds !== [],
+                fn ($query) => $query->whereIn('objective_id', $scopedObjectiveIds)
+            )->pluck('objective', 'objective_id'),
             'evalId' => $evaluation->eval_id,
             'evaluation' => $evaluation,
         ];
@@ -260,5 +277,19 @@ class AssessmentSummaryService
     {
         return $type !== null
             && (stripos($type, 'Design') !== false || stripos($type, 'Procedure') !== false);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function getScopedObjectiveIds(MstEval $evaluation): array
+    {
+        return TrsEvalDetail::query()
+            ->where('eval_id', $evaluation->eval_id)
+            ->pluck('domain_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 }

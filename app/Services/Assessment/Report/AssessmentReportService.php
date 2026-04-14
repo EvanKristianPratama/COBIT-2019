@@ -25,7 +25,21 @@ class AssessmentReportService
     {
         $evalId = $evaluation->eval_id;
         $allScopes = TrsScoping::where('eval_id', $evalId)->get();
-        $objectives = $this->evaluationService->getSortedObjectives();
+        $scopedObjectiveIds = TrsEvalDetail::whereIn('scoping_id', $allScopes->pluck('id'))
+            ->pluck('domain_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $objectives = $this->evaluationService->getSortedObjectives()
+            ->when(
+                $scopedObjectiveIds !== [],
+                fn ($collection) => $collection->filter(
+                    fn ($objective) => in_array($objective->objective_id, $scopedObjectiveIds, true)
+                )
+            )
+            ->values();
         $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
 
         $loadedData = $this->evaluationService->loadEvaluation($evalId);
