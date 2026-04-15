@@ -570,5 +570,18 @@
     .practice-summary-metric-row td {
         background: #fff;
     }
+    .practice-summary-score-header-row td {
+        background: #ffffff;
+        font-weight: 700;
+        text-align: center;
+        color: #1f2937;
+    }
+    .practice-summary-score-value-row td {
+        background: #f8f9fa;
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-align: center;
+        color: #212529;
+    }
 </style>
 @endsection

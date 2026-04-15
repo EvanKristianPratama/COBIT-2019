@@ -60,11 +60,15 @@
                         @endforeach
                         <td class="text-center"></td>
                     </tr>
-                    <tr class="practice-summary-metric-row">
-                        <td class="fw-bold">Capability</td>
+                    <tr class="practice-summary-score-header-row">
+                        <td colspan="2" class="text-center">Value</td>
+                        <td colspan="2" class="text-center">Rating</td>
+                        <td colspan="2" class="text-center">Capability</td>
+                    </tr>
+                    <tr class="practice-summary-score-value-row">
                         <td colspan="2" class="text-center">{{ $practiceSummaryCapability['value'] ?? '0,00' }}</td>
                         <td colspan="2" class="text-center">{{ $practiceSummaryCapability['rating'] ?? '0N' }}</td>
-                        <td class="text-center">{{ $practiceSummaryCapability['level'] ?? '0' }}</td>
+                        <td colspan="2" class="text-center">{{ $practiceSummaryCapability['level'] ?? '0' }}</td>
                     </tr>
                 </tfoot>
             </table>

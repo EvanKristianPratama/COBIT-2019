@@ -141,6 +141,17 @@
             background-color: #f8f9fa;
             font-weight: bold;
         }
+        .practice-summary-score-header-row td {
+            background-color: #ffffff;
+            text-align: center;
+            font-weight: bold;
+        }
+        .practice-summary-score-value-row td {
+            background-color: #f8f9fa;
+            text-align: center;
+            font-weight: bold;
+            font-size: 8.5pt;
+        }
         .practice-summary-report-table .practice-col {
             width: 38%;
         }
