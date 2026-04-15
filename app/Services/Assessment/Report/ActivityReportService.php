@@ -57,6 +57,16 @@ class ActivityReportService
             ->keyBy('activity_id');
         $metrics = $this->evaluationService->calculateObjectiveAssessmentMetrics($objective, $evaluationActivityData);
         $currentLevel = $metrics['final_level'];
+        [$practiceSummaryRows, $practiceSummaryTotals] = $this->buildPracticeSummary($objective);
+        $practiceSummaryLevelMetrics = $this->buildPracticeSummaryLevelMetrics(
+            $practiceSummaryTotals,
+            $metrics['level_scores'] ?? []
+        );
+        $practiceSummaryCapability = [
+            'value' => $this->formatSummaryNumber((float) ($metrics['display_value'] ?? 0)),
+            'rating' => $metrics['rating_string'] ?? '0N',
+            'level' => (string) ($metrics['final_level'] ?? 0),
+        ];
 
         $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
         $targetLevel = $targetCapabilityMap[$objectiveId] ?? null;
@@ -187,8 +197,92 @@ class ActivityReportService
             'ratingString',
             'displayValue',
             'practices',
-            'levelRatings'
+            'levelRatings',
+            'practiceSummaryRows',
+            'practiceSummaryTotals',
+            'practiceSummaryLevelMetrics',
+            'practiceSummaryCapability'
         );
+    }
+
+    /**
+     * @return array{0: array<int, array<string, mixed>>, 1: array<string|int, int>}
+     */
+    private function buildPracticeSummary(MstObjective $objective): array
+    {
+        $rows = [];
+        $totals = [
+            2 => 0,
+            3 => 0,
+            4 => 0,
+            5 => 0,
+            'total' => 0,
+        ];
+
+        foreach ($objective->practices as $practice) {
+            $levelCounts = [
+                2 => 0,
+                3 => 0,
+                4 => 0,
+                5 => 0,
+            ];
+
+            foreach ($practice->activities ?? [] as $activity) {
+                $rawLevel = (string) ($activity->capability_lvl ?? $activity->capability_level ?? '');
+                preg_match('/(\d+)/', $rawLevel, $matches);
+                $levelNumber = isset($matches[1]) ? (int) $matches[1] : null;
+
+                if ($levelNumber !== null && array_key_exists($levelNumber, $levelCounts)) {
+                    $levelCounts[$levelNumber]++;
+                }
+            }
+
+            $practiceTotal = array_sum($levelCounts);
+            if ($practiceTotal === 0) {
+                continue;
+            }
+
+            foreach ([2, 3, 4, 5] as $levelNumber) {
+                $totals[$levelNumber] += $levelCounts[$levelNumber];
+            }
+            $totals['total'] += $practiceTotal;
+
+            $rows[] = [
+                'practice_id' => trim((string) $practice->practice_id, '"'),
+                'practice_name' => trim((string) $practice->practice_name, '"'),
+                'counts' => $levelCounts,
+                'total' => $practiceTotal,
+            ];
+        }
+
+        usort($rows, fn (array $left, array $right) => strcmp($left['practice_id'], $right['practice_id']));
+
+        return [$rows, $totals];
+    }
+
+    /**
+     * @param  array<string|int, int>  $practiceSummaryTotals
+     * @param  array<int, array<string, mixed>>  $levelScores
+     * @return array<int, array<string, string>>
+     */
+    private function buildPracticeSummaryLevelMetrics(array $practiceSummaryTotals, array $levelScores): array
+    {
+        $result = [];
+
+        foreach ([2, 3, 4, 5] as $level) {
+            $hasActivities = (int) ($practiceSummaryTotals[$level] ?? 0) > 0;
+            $result[$level] = [
+                'index' => $hasActivities ? $this->formatSummaryNumber((float) ($levelScores[$level]['score'] ?? 0)) : '',
+                'rating' => $hasActivities ? (string) ($levelScores[$level]['letter'] ?? 'N') : '',
+            ];
+        }
+
+        return $result;
+    }
+
+    private function formatSummaryNumber(float $value): string
+    {
+        return number_format($value, 2, ',', '');
     }
 
     /**

@@ -221,6 +221,8 @@
             </div>
         </div>
     </div>
+
+    @include('assessment.report.partials.practice-summary')
     </div>
 
     {{-- VIEW BY LEVEL --}}
@@ -502,6 +504,71 @@
     .level-separator-row td {
         font-size: 0.9rem;
         padding: 0.75rem 0.5rem;
+    }
+    .practice-summary-report {
+        border: 1px solid #dee2e6;
+        border-radius: 0.9rem;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(15, 43, 92, 0.06);
+    }
+    .practice-summary-report-header {
+        padding: 0.95rem 1.1rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .practice-summary-report-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    .practice-summary-report-body {
+        overflow-x: auto;
+    }
+    .practice-summary-report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+    .practice-summary-report-table th,
+    .practice-summary-report-table td {
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 0.65rem;
+        vertical-align: middle;
+    }
+    .practice-summary-report-table thead th {
+        background: #f8f9fa;
+        color: #334155;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .practice-summary-report-table tbody td {
+        background: #fff;
+        color: #212529;
+    }
+    .practice-summary-report-table tfoot td {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #212529;
+    }
+    .practice-summary-report-table .practice-col {
+        width: 36%;
+    }
+    .practice-summary-report-table .level-col,
+    .practice-summary-report-table .total-col {
+        width: 10.5%;
+    }
+    .practice-summary-code {
+        font-weight: 700;
+        color: #1f2937;
+    }
+    .practice-summary-name {
+        color: #6c757d;
+    }
+    .practice-summary-metric-row td {
+        background: #fff;
     }
 </style>
 @endsection

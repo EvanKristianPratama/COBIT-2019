@@ -84,6 +84,8 @@
         }
         .text-center { text-align: center; }
         .text-muted { color: #666; font-style: italic; }
+        .fw-bold { font-weight: bold; }
+        .align-middle { vertical-align: middle; }
         .badge {
             display: inline-block;
             padding: 3px 8px;
@@ -101,6 +103,56 @@
         }
         .evidence-list li {
             margin-bottom: 2px;
+        }
+        .practice-summary-report {
+            margin-top: 12px;
+            border: 0.75pt solid #000;
+            page-break-inside: avoid;
+        }
+        .practice-summary-report-header {
+            padding: 6px 8px;
+            background-color: #f1f3f5;
+            border-bottom: 0.75pt solid #000;
+        }
+        .practice-summary-report-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #000;
+        }
+        .practice-summary-report-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .practice-summary-report-table th,
+        .practice-summary-report-table td {
+            border: 0.75pt solid #000;
+            padding: 4px;
+            vertical-align: middle;
+            font-size: 7.5pt;
+        }
+        .practice-summary-report-table thead th {
+            background-color: #f8f9fa;
+            color: #000;
+            text-align: center;
+            font-weight: bold;
+            font-size: 7pt;
+        }
+        .practice-summary-report-table tfoot td {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .practice-summary-report-table .practice-col {
+            width: 38%;
+        }
+        .practice-summary-report-table .level-col,
+        .practice-summary-report-table .total-col {
+            width: 10.4%;
+        }
+        .practice-summary-code {
+            font-weight: bold;
+        }
+        .practice-summary-name {
+            color: #444;
         }
     </style>
 </head>
@@ -244,5 +296,7 @@
             @endforelse
         </tbody>
     </table>
+
+    @include('assessment.report.partials.practice-summary')
 </body>
 </html>
