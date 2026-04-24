@@ -55,22 +55,32 @@
                             <i class="fas fa-user me-2 text-primary"></i>
                             Assessment Saya ({{ $myAssessments->count() }})
                         </h4>
-                        <div class="section-subtitle text-muted">Assessment yang Anda buat</div>
                     </div>
                     <div>
-                        <a href="{{ route('assessment.report.all') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
-                            <i class="fas fa-chart-line me-2"></i> All Reports
-                        </a>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{{ route('assessment.report.all') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+                                <i class="fas fa-chart-line me-2"></i> All Reports
+                            </a>
+                            @can('assessments.input')
+                                <button type="button"
+                                        class="btn btn-primary rounded-pill px-3 fw-bold"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#assessorModal"
+                                        data-action="create">
+                                    <i class="fas fa-plus me-2"></i>Assessment Baru
+                                </button>
+                            @endcan
+                        </div>
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle shadow-sm bg-white" style="min-width: 1400px;">
+                    <table class="table table-bordered table-hover table-sm align-middle shadow-sm bg-white assessment-list-table">
                         <thead class="table-secondary text-center align-middle">
                             <tr style="border-bottom: 2px solid #dee2e6;">
                                 <th style="width: 50px;">No</th>
                                 <th style="width: 60px;">Id</th>
                                 <th>Tahun Assesment</th>
-
+                                <th>Organisasi</th>
 
                                 <th class="text-center">Jumlah Scope</th>
                                 <th class="text-center">Status</th>
@@ -108,7 +118,7 @@
                                     <td class="text-center">{{ $loop->iteration + ($myAssessments->currentPage() - 1) * $myAssessments->perPage() }}</td>
                                     <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
                                     <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
-
+                                    <td class="text-center">{{ $evaluation->organization?->organization_name ?? $evaluation->user->organisasi ?? '-' }}</td>
 
                                     <td class="text-center">{{ $evaluation->scope_count ?? '-' }}</td>
                                     <td class="text-center">
@@ -119,7 +129,7 @@
                                     <td class="text-center fw-bold">{{ number_format($evaluation->avg_target_capability ?? 0, 2) }}</td>
                                     <td class="text-center fw-bold text-info">{{ $evaluation->target_maturity ? number_format($evaluation->target_maturity, 2) : '-' }}</td>
                                     <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1">
+                                        <div class="d-flex justify-content-center gap-1 flex-wrap">
                                             <a href="{{ route('assessment.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
                                                 <i class="fas fa-eye me-1"></i> Detail
                                             </a>
@@ -151,17 +161,17 @@
 
         @if($assignedAssessments->count() > 0)
             <div class="mb-5">
-                <div class="section-header mb-4">
+                <div class="section-header mb-4 d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="section-title">
                             <i class="fas fa-share-alt me-2 text-info"></i>
                             Assessment Ditugaskan ({{ $assignedAssessments->count() }})
                         </h4>
-                        <div class="section-subtitle text-muted">Assessment yang dapat dibuka dari coverage organisasi atau assignment akses langsung.</div>
                     </div>
+                    <div></div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle shadow-sm bg-white" style="min-width: 1400px;">
+                    <table class="table table-bordered table-hover table-sm align-middle shadow-sm bg-white assessment-list-table">
                         <thead class="table-secondary text-center align-middle">
                             <tr style="border-bottom: 2px solid #dee2e6;">
                                 <th style="width: 50px;">No</th>
@@ -174,7 +184,7 @@
                                 <th class="text-center">I&T Maturity Score</th>
                                 <th class="text-center">Average Target Capability</th>
                                 <th class="text-center">I&T Target Maturity</th>
-                                <th class="text-center" style="width: 180px;">Aksi</th>
+                                <th class="text-center" style="width: 250px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -206,7 +216,7 @@
                                     <td class="text-center fw-bold">{{ number_format($evaluation->avg_target_capability ?? 0, 2) }}</td>
                                     <td class="text-center fw-bold text-info">{{ $evaluation->target_maturity ? number_format($evaluation->target_maturity, 2) : '-' }}</td>
                                     <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1">
+                                        <div class="d-flex justify-content-center gap-1 flex-wrap">
                                             <a href="{{ route('assessment.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
                                                 <i class="fas fa-eye me-1"></i> Detail
                                             </a>
@@ -433,21 +443,11 @@
     </div>
 </div>
 
+<form id="createAssessmentFormSticky" action="{{ route('assessment.create') }}" method="POST" class="d-none">
+    @csrf
+</form>
+
 <div class="sticky-action-group">
-    @can('assessments.input')
-    <form id="createAssessmentFormSticky" action="{{ route('assessment.create') }}" method="POST" class="d-inline">
-        @csrf
-        <button type="button" 
-                id="open-new-assessment-modal" 
-                class="sticky-action-btn btn btn-primary" 
-                title="Assessment Baru"
-                data-bs-toggle="modal" 
-                data-bs-target="#assessorModal"
-                data-action="create">
-            <i class="fas fa-plus me-2"></i>Assessment Baru
-        </button>
-    </form>
-    @endcan
     <a href="{{ url('/') }}" class="sticky-action-btn btn btn-light" title="Beranda">
         <i class="fas fa-home me-2"></i>Home
     </a>
@@ -1087,6 +1087,25 @@ document.addEventListener('DOMContentLoaded', function() {
     height: 3px;
     background: linear-gradient(90deg, #0f6ad9, #0c4fb5);
     border-radius: 2px;
+}
+
+.assessment-list-table {
+    width: 100%;
+    table-layout: fixed;
+    font-size: 0.82rem;
+}
+
+.assessment-list-table th,
+.assessment-list-table td {
+    padding: 0.4rem 0.35rem;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.25;
+}
+
+.assessment-list-table .btn {
+    font-size: 0.68rem;
+    padding: 0.16rem 0.4rem;
 }
 </style>
 @endsection
