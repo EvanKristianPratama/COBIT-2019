@@ -1245,6 +1245,7 @@
         window.SERVER_EVIDENCES = {!! json_encode($evidences ?? []) !!};
         // Target capability map keyed by GAMO (only when assessment year matches Target Capability year)
         window.TARGET_CAPABILITY_MAP = {!! json_encode($targetCapabilityMap ?? []) !!};
+        const spiderDiagramClientName = @json($evaluation->organization->organization_name ?? 'N/A');
         class COBITAssessmentManager {
             constructor(evalId, status = 'draft', canManageAssessment = false) {
                 this.assessmentData = {};
@@ -3645,7 +3646,7 @@
                             },
                             title: {
                                 display: true,
-                                text: `I&T Maturity Level Assessment - ${data.length} Goverment & Management Objectives`,
+                                text: `Hasil I&T Maturity Assessment ${spiderDiagramClientName} - ${data.length} Governance & Management Objective`,
                                 font: {
                                     size: 18,
                                     weight: 'bold'
