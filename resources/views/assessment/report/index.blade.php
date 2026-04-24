@@ -90,6 +90,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         /**
          * Multi-Scope Assessment Report
@@ -257,6 +258,9 @@
                                 <button type="button" class="btn btn-danger" id="swal-export-pdf">
                                     <i class="fas fa-file-pdf me-2"></i>Export PDF
                                 </button>
+                                <button type="button" class="btn btn-success" id="swal-export-excel">
+                                    <i class="fas fa-file-excel me-2"></i>Export Excel
+                                </button>
                                 <button type="button" class="btn btn-primary" id="swal-export-all">
                                     <i class="fas fa-layer-group me-2"></i>Export All
                                 </button>
@@ -267,6 +271,7 @@
                         didOpen: () => {
                             const jpgOption = document.getElementById('swal-export-jpg');
                             const pdfOption = document.getElementById('swal-export-pdf');
+                            const excelOption = document.getElementById('swal-export-excel');
                             const allOption = document.getElementById('swal-export-all');
 
                             if (jpgOption) {
@@ -280,6 +285,13 @@
                                 pdfOption.addEventListener('click', () => {
                                     Swal.close();
                                     this.exportRecapAsPdf();
+                                });
+                            }
+
+                            if (excelOption) {
+                                excelOption.addEventListener('click', () => {
+                                    Swal.close();
+                                    this.exportRecapAsExcel();
                                 });
                             }
 
@@ -328,7 +340,6 @@
                             target: target === null ? '-' : Utils.fmt(target),
                             gap: Utils.formatGap(gap),
                             maxLevel: String(maxLevel),
-                            action: 'Detail',
                             actionUrl: `/assessment/${Config.routeEvalId}/report-activity/${objectiveId}`,
                             summaryUrl: `/assessment/${Config.routeEvalId}/summary/${objectiveId}`
                         });
@@ -376,7 +387,6 @@
                             <th style="padding:6px;border:1px solid #000;background:#f3f4f6;">Target</th>
                             <th style="padding:6px;border:1px solid #000;background:#f3f4f6;">Gap</th>
                             <th style="padding:6px;border:1px solid #000;background:#f3f4f6;">Max Level</th>
-                            <th style="padding:6px;border:1px solid #000;background:#f3f4f6;">Action</th>
                         </tr>
                     `;
 
@@ -395,7 +405,6 @@
                             <td style="padding:6px;border:1px solid #000;text-align:center;">${Utils.escape(row.target)}</td>
                             <td style="padding:6px;border:1px solid #000;text-align:center;">${Utils.escape(row.gap)}</td>
                             <td style="padding:6px;border:1px solid #000;text-align:center;">${Utils.escape(row.maxLevel)}</td>
-                            <td style="padding:6px;border:1px solid #000;text-align:center;">${Utils.escape(row.action)}</td>
                         </tr>
                     `;
                         })()}
@@ -410,7 +419,6 @@
                             <td style="padding:6px;border:1px solid #000;text-align:center;background:#22b8cf;color:#fff;font-weight:700;">${summary.target}</td>
                             <td style="padding:6px;border:1px solid #000;text-align:center;">${summary.gap}</td>
                             <td style="padding:6px;border:1px solid #000;text-align:center;background:#6c757d;color:#fff;font-weight:700;">${summary.maxLevel}</td>
-                            <td style="padding:6px;border:1px solid #000;text-align:center;">-</td>
                         </tr>
                     `;
 
@@ -482,7 +490,7 @@
                         const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
                         const head = [[
-                            'No', 'Domain', 'GAMO', 'GAMO Name', 'Score', 'Value', 'Rating', 'Target', 'Gap', 'Max Level', 'Action'
+                            'No', 'Domain', 'GAMO', 'GAMO Name', 'Score', 'Value', 'Rating', 'Target', 'Gap', 'Max Level'
                         ]];
                         const body = rows.map(row => [
                             row.no,
@@ -494,8 +502,7 @@
                             row.rating,
                             row.target,
                             row.gap,
-                            row.maxLevel,
-                            row.action
+                            row.maxLevel
                         ]);
 
                         body.push([
@@ -508,8 +515,7 @@
                             '-',
                             summary.target,
                             summary.gap,
-                            summary.maxLevel,
-                            '-'
+                            summary.maxLevel
                         ]);
 
                         doc.setFontSize(13);
@@ -531,8 +537,7 @@
                                 6: { halign: 'center', cellWidth: 48 },
                                 7: { halign: 'center', cellWidth: 48 },
                                 8: { halign: 'center', cellWidth: 48 },
-                                9: { halign: 'center', cellWidth: 55 },
-                                10: { halign: 'center', cellWidth: 46 }
+                                9: { halign: 'center', cellWidth: 55 }
                             },
                             didParseCell: function(data) {
                                 if (data.section === 'body' && data.row.index === body.length - 1) {
@@ -564,6 +569,51 @@
                         console.error('Export PDF failed:', error);
                         Swal.fire('Error', 'Gagal export PDF.', 'error');
                     }
+                },
+
+                exportRecapAsExcel() {
+                    if (typeof XLSX === 'undefined') {
+                        Swal.fire('Error', 'Library Excel belum termuat. Coba refresh halaman.', 'error');
+                        return;
+                    }
+
+                    const rows = this.buildRecapExportRows();
+                    if (!rows.length) {
+                        Swal.fire('Info', 'Tidak ada data untuk diexport.', 'info');
+                        return;
+                    }
+
+                    const summary = this.buildRecapSummary(rows);
+                    const exportRows = rows.map((row) => ({
+                        No: row.no,
+                        Domain: row.domain,
+                        GAMO: row.gamo,
+                        'GAMO Name': row.gamoName,
+                        Score: row.score,
+                        Value: row.value,
+                        Rating: row.rating,
+                        Target: row.target,
+                        Gap: row.gap,
+                        'Max Level': row.maxLevel
+                    }));
+
+                    exportRows.push({
+                        No: '',
+                        Domain: '',
+                        GAMO: '',
+                        'GAMO Name': 'I&T Maturity Score',
+                        Score: summary.score,
+                        Value: '-',
+                        Rating: '-',
+                        Target: summary.target,
+                        Gap: summary.gap,
+                        'Max Level': summary.maxLevel
+                    });
+
+                    const ws = XLSX.utils.json_to_sheet(exportRows);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Recapitulation');
+                    XLSX.writeFile(wb, `assessment_recapitulation_result_${new Date().toISOString().slice(0, 10)}.xlsx`);
                 },
 
                 renderHeaders() {
