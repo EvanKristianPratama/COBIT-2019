@@ -77,6 +77,17 @@ Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
         ->name('cobit2019.objectives.bycomponent');
 });
 
+Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
+    Route::post('/objectives/infoflow-input', [MstObjectiveController::class, 'createInfoflowInput'])
+        ->name('cobit2019.objectives.infoflow-input.store');
+    Route::put('/objectives/infoflow-input/{inputId}', [MstObjectiveController::class, 'updateInfoflowInput'])
+        ->name('cobit2019.objectives.infoflow-input.update');
+    Route::post('/objectives/infoflow-output', [MstObjectiveController::class, 'createInfoflowOutput'])
+        ->name('cobit2019.objectives.infoflow-output.store');
+    Route::put('/objectives/infoflow-output/{outputId}', [MstObjectiveController::class, 'updateInfoflowOutput'])
+        ->name('cobit2019.objectives.infoflow-output.update');
+});
+
 // Admin routes (auth + role check di controller)
 Route::prefix('admin')
     ->middleware(['auth', 'role:admin'])

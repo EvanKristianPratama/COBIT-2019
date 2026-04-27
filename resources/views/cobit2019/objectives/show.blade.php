@@ -343,9 +343,31 @@
             padding: 0 !important;
             vertical-align: middle !important;
         }
+
+        .infoflow-edit-control {
+            min-width: 180px;
+            font-size: 0.8rem;
+        }
+
+        .infoflow-edit-control.textarea {
+            min-height: 74px;
+        }
+
+        .infoflow-notif-wrap {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 2000;
+            width: min(360px, calc(100vw - 32px));
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
     </style>
 
     <div class="container py-4 objectives-page">
+        <div id="infoflowNotifWrap" class="infoflow-notif-wrap" aria-live="polite" aria-atomic="true"></div>
+
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h4 mb-0">Kamus Component</h1>
@@ -358,6 +380,12 @@
                 <button id="modeComponentBtn" type="button" class="btn btn-primary flex-fill">View by Component</button>
                 <button id="masterToggleBtn" type="button" class="btn btn-outline-primary flex-fill">Master</button>
             </div>
+        </div>
+
+        <div class="mb-3 d-flex justify-content-end">
+            <button id="inputModeBtn" type="button" class="btn btn-outline-secondary btn-sm">
+                Input Mode: OFF
+            </button>
         </div>
 
         <!-- Component Selector -->
@@ -554,7 +582,8 @@
                 masterRendered: false,
                 searchTerm: '',
                 capAllRows: [], // store all capability rows for filtering
-                objectiveMap: new Map() // safeId -> objective_id mapping untuk tab filter
+                objectiveMap: new Map(), // safeId -> objective_id mapping untuk tab filter
+                inputMode: false
             };
 
 
@@ -563,6 +592,10 @@
                 enterGoals: @json($masterEnterGoals ?? []),
                 alignGoals: @json($masterAlignGoals ?? []),
                 roles: @json($masterRoles ?? [])
+            };
+
+            const AUTHZ = {
+                canInputMode: @json(auth()->check() && auth()->user()->can('design-factors.input'))
             };
 
             // ===================================================================
@@ -580,6 +613,8 @@
                 modeGamoBtn: document.getElementById('modeGamoBtn'),
                 modeComponentBtn: document.getElementById('modeComponentBtn'),
                 masterToggleBtn: document.getElementById('masterToggleBtn'),
+                inputModeBtn: document.getElementById('inputModeBtn'),
+                infoflowNotifWrap: document.getElementById('infoflowNotifWrap'),
                 capPrefixTabs: document.getElementById('capPrefixTabs'),
                 masterCapTableBody: () => document.querySelector('#masterCapTable tbody')
             };
@@ -651,6 +686,11 @@
             // ===================================================================
 
             const DataService = {
+                getCsrfToken() {
+                    const el = document.querySelector('meta[name="csrf-token"]');
+                    return el ? el.getAttribute('content') : '';
+                },
+
                 async fetchAllObjectives() {
                     if (STATE.cacheAll) return STATE.cacheAll;
 
@@ -667,6 +707,85 @@
 
                     STATE.cacheAll = await response.json();
                     return STATE.cacheAll;
+                },
+
+                async parseJsonResponse(response) {
+                    let payload = null;
+
+                    try {
+                        payload = await response.json();
+                    } catch (err) {
+                        payload = null;
+                    }
+
+                    if (!response.ok) {
+                        const message = payload && payload.message ?
+                            payload.message :
+                            `Request failed: ${response.status}`;
+                        throw new Error(message);
+                    }
+
+                    return payload;
+                },
+
+                async updateInfoflowInput(inputId, data) {
+                    const response = await fetch(`{{ url('/objectives/infoflow-input') }}/${encodeURIComponent(inputId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createInfoflowInput(data) {
+                    const response = await fetch(`{{ url('/objectives/infoflow-input') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async updateInfoflowOutput(outputId, data) {
+                    const response = await fetch(`{{ url('/objectives/infoflow-output') }}/${encodeURIComponent(outputId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createInfoflowOutput(data) {
+                    const response = await fetch(`{{ url('/objectives/infoflow-output') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
                 }
             };
 
@@ -1560,10 +1679,14 @@
                                     gamo: obj.objective_id || '',
                                     practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
                                         .trim(),
+                                    practiceId: practice.practice_id || '',
+                                    inputId: null,
+                                    outputId: null,
                                     from: '',
-                                    input: '(No information flows)',
+                                    input: '',
                                     output: '',
-                                    to: ''
+                                    to: '',
+                                    isNoInputRow: true
                                 });
                                 return;
                             }
@@ -1577,10 +1700,14 @@
                                             gamo: obj.objective_id || '',
                                             practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
                                                 .trim(),
+                                            practiceId: inp.practice_id || practice.practice_id || '',
+                                            inputId: inp.input_id || null,
+                                            outputId: out.output_id || null,
                                             from: inp.from || '',
                                             input: inp.description || '',
                                             output: out.description || '',
-                                            to: out.to || ''
+                                            to: out.to || '',
+                                            isNoInputRow: false
                                         });
                                     });
                                 } else {
@@ -1588,10 +1715,14 @@
                                         gamo: obj.objective_id || '',
                                         practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
                                             .trim(),
+                                        practiceId: inp.practice_id || practice.practice_id || '',
+                                        inputId: inp.input_id || null,
+                                        outputId: null,
                                         from: inp.from || '',
                                         input: inp.description || '',
-                                        output: '(No Output)',
-                                        to: ''
+                                        output: '',
+                                        to: '',
+                                        isNoInputRow: false
                                     });
                                 }
                             });
@@ -1602,18 +1733,86 @@
                         return '<div class="text-muted">No information flows found.</div>';
                     }
 
-                    const tbody = rows.map(r => `
+                    const editable = STATE.inputMode;
+                    const editHint = editable ?
+                        `<div class="alert alert-warning py-2 px-3 small mb-2">Input Mode aktif. Anda bisa edit data lama atau tambah data baru pada baris yang kosong, lalu klik <strong>Simpan/Tambah</strong> per baris.</div>` :
+                        '';
+
+                    const actionHeader = editable ? '<th style="width:120px">Action</th>' : '';
+                    const escapeAttr = (value) => String(value ?? '')
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('"', '&quot;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;');
+                    const escapeTextarea = (value) => String(value ?? '')
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;');
+
+                    const tbody = rows.map((r, rowIndex) => {
+                        if (!editable) {
+                            const inputText = r.inputId ?
+                                (r.input || '') :
+                                '(No information flows)';
+                            const outputText = r.outputId ?
+                                (r.output || '') :
+                                (r.inputId ? '(No Output)' : '');
+
+                            return `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.practice)}</td>
           <td class="small">${Utils.formatText(r.from)}</td>
-          <td class="small">${Utils.formatText(r.input)}</td>
-          <td class="small">${Utils.formatText(r.output)}</td>
+          <td class="small">${Utils.formatText(inputText)}</td>
+          <td class="small">${Utils.formatText(outputText)}</td>
           <td class="small">${Utils.formatText(r.to)}</td>
         </tr>
-      `).join('');
+      `;
+                        }
+
+                        const canCreateInput = !r.inputId && Boolean(r.practiceId);
+                        const hasInputContext = Boolean(r.inputId) || canCreateInput;
+                        const canCreateOrUpdateOutput = hasInputContext;
+
+                        const fromEditor = hasInputContext ?
+                            `<input type="text" class="form-control form-control-sm infoflow-edit-control js-infoflow-field" data-field="from" value="${escapeAttr(r.from || '')}">` :
+                            `<span class="small text-muted">-</span>`;
+
+                        const inputEditor = hasInputContext ?
+                            `<textarea class="form-control form-control-sm infoflow-edit-control textarea js-infoflow-field" data-field="input_description">${escapeTextarea(r.input || '')}</textarea>` :
+                            `<span class="small text-muted">${Utils.formatText(r.input || '(No information flows)')}</span>`;
+
+                        const outputEditor = canCreateOrUpdateOutput ?
+                            `<textarea class="form-control form-control-sm infoflow-edit-control textarea js-infoflow-field" data-field="output_description">${escapeTextarea(r.output || '')}</textarea>` :
+                            `<span class="small text-muted">${Utils.formatText(r.output || '(No Output)')}</span>`;
+
+                        const toEditor = canCreateOrUpdateOutput ?
+                            `<input type="text" class="form-control form-control-sm infoflow-edit-control js-infoflow-field" data-field="to" value="${escapeAttr(r.to || '')}">` :
+                            `<span class="small text-muted">${Utils.formatText(r.to || '-')}</span>`;
+
+                        let actionCell = `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>Practice tidak valid</button>`;
+
+                        if (hasInputContext) {
+                            const buttonLabel = r.inputId ? 'Simpan' : 'Tambah';
+                            actionCell =
+                                `<button type="button" class="btn btn-sm btn-primary js-save-infoflow-row" data-input-id="${escapeAttr(r.inputId || '')}" data-output-id="${escapeAttr(r.outputId || '')}" data-practice-id="${escapeAttr(r.practiceId || '')}" data-row-index="${rowIndex}" data-create-mode="${canCreateInput ? '1' : '0'}">${buttonLabel}</button>`;
+                        }
+
+                        return `
+      <tr class="js-infoflow-row" data-row-index="${rowIndex}">
+        <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+        <td class="small">${Utils.formatText(r.practice)}</td>
+        <td class="small">${fromEditor}</td>
+        <td class="small">${inputEditor}</td>
+        <td class="small">${outputEditor}</td>
+        <td class="small">${toEditor}</td>
+        <td class="small text-center">${actionCell}</td>
+      </tr>
+    `;
+                    }).join('');
 
                     return `
+        ${editHint}
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1624,6 +1823,7 @@
                 <th>Input Description</th>
                 <th>Output Description</th>
                 <th>To</th>
+                ${actionHeader}
               </tr>
             </thead>
             <tbody>${tbody}</tbody>
@@ -2620,6 +2820,206 @@
                 }
             };
 
+            const NotificationController = {
+                show(type, message, timeoutMs = 3200) {
+                    if (!DOM.infoflowNotifWrap) return;
+
+                    const classMap = {
+                        success: 'alert-success',
+                        danger: 'alert-danger',
+                        warning: 'alert-warning',
+                        info: 'alert-info'
+                    };
+
+                    const alertClass = classMap[type] || 'alert-secondary';
+                    const note = document.createElement('div');
+                    note.className = `alert ${alertClass} alert-dismissible fade show py-2 px-3 mb-0 shadow-sm`;
+                    note.setAttribute('role', 'status');
+                    note.innerHTML = `
+                        <div class="small">${Utils.escapeHtml(message || '')}</div>
+                        <button type="button" class="btn-close" aria-label="Close"></button>
+                    `;
+
+                    const closeBtn = note.querySelector('.btn-close');
+                    closeBtn.addEventListener('click', () => {
+                        note.remove();
+                    });
+
+                    DOM.infoflowNotifWrap.prepend(note);
+
+                    window.setTimeout(() => {
+                        note.remove();
+                    }, timeoutMs);
+                }
+            };
+
+            const InputModeController = {
+                syncButton() {
+                    if (!DOM.inputModeBtn) return;
+
+                    if (!AUTHZ.canInputMode) {
+                        DOM.inputModeBtn.textContent = 'Input Mode: No Access';
+                        DOM.inputModeBtn.disabled = true;
+                        DOM.inputModeBtn.classList.remove('btn-primary', 'btn-outline-secondary');
+                        DOM.inputModeBtn.classList.add('btn-outline-secondary');
+                        return;
+                    }
+
+                    DOM.inputModeBtn.disabled = false;
+                    DOM.inputModeBtn.textContent = `Input Mode: ${STATE.inputMode ? 'ON' : 'OFF'}`;
+
+                    DOM.inputModeBtn.classList.remove('btn-primary', 'btn-outline-secondary');
+                    DOM.inputModeBtn.classList.add(STATE.inputMode ? 'btn-primary' : 'btn-outline-secondary');
+                },
+
+                toggle() {
+                    if (!AUTHZ.canInputMode) return;
+                    STATE.inputMode = !STATE.inputMode;
+                    this.syncButton();
+                    this.refreshActiveInfoflowView();
+                    NotificationController.show(
+                        'info',
+                        STATE.inputMode ? 'Input Mode aktif. Data infoflow bisa diedit.' :
+                        'Input Mode nonaktif. Data kembali terkunci.',
+                        2400
+                    );
+                },
+
+                async refreshActiveInfoflowView() {
+                    const isMasterVisible = DOM.masterPanel && DOM.masterPanel.style.display === 'block';
+                    if (isMasterVisible) return;
+
+                    const isGamoMode = DOM.gamoPane && DOM.gamoPane.style.display === 'block';
+                    if (isGamoMode) {
+                        const activeObjAnchor = DOM.gamoBreadcrumbs ?
+                            DOM.gamoBreadcrumbs.querySelector('a[data-obj].active') :
+                            null;
+                        const activeObjectiveId = activeObjAnchor ?
+                            activeObjAnchor.getAttribute('data-obj') :
+                            '';
+
+                        const activeComponentBtn = DOM.gamoResults ?
+                            DOM.gamoResults.querySelector('#gamoTabs .nav-link.active') :
+                            null;
+                        const activeComponent = activeComponentBtn ?
+                            activeComponentBtn.getAttribute('data-comp') :
+                            'infoflows';
+
+                        if (activeObjectiveId) {
+                            await GamoViewController.selectObjective(activeObjectiveId);
+
+                            const targetBtn = DOM.gamoResults ?
+                                DOM.gamoResults.querySelector(
+                                    `#gamoTabs .nav-link[data-comp="${activeComponent || 'infoflows'}"]`
+                                ) :
+                                null;
+
+                            if (targetBtn) {
+                                targetBtn.click();
+                            }
+                        } else if (activeComponentBtn && activeComponent === 'infoflows') {
+                            activeComponentBtn.click();
+                        }
+                        return;
+                    }
+
+                    if (DOM.componentSelect && DOM.componentSelect.value === 'infoflows') {
+                        DOM.componentSelect.dispatchEvent(new Event('change'));
+                    }
+                },
+
+                async saveInfoflowRow(button) {
+                    if (!button || !AUTHZ.canInputMode) return;
+
+                    const row = button.closest('.js-infoflow-row');
+                    const inputIdRaw = button.getAttribute('data-input-id');
+                    const outputIdRaw = button.getAttribute('data-output-id');
+                    const practiceId = (button.getAttribute('data-practice-id') || '').trim();
+
+                    if (!row || !practiceId) {
+                        NotificationController.show('danger', 'Practice ID tidak ditemukan. Data tidak bisa disimpan.');
+                        return;
+                    }
+
+                    const inputId = inputIdRaw ? String(inputIdRaw).trim() : '';
+                    const outputId = outputIdRaw ? String(outputIdRaw).trim() : '';
+
+                    const fromField = row.querySelector('.js-infoflow-field[data-field="from"]');
+                    const inputDescField = row.querySelector('.js-infoflow-field[data-field="input_description"]');
+                    const outputDescField = row.querySelector('.js-infoflow-field[data-field="output_description"]');
+                    const toField = row.querySelector('.js-infoflow-field[data-field="to"]');
+
+                    const normalizeText = (value) => String(value || '').trim();
+
+                    const inputPayload = {
+                        from: normalizeText(fromField ? fromField.value : ''),
+                        description: normalizeText(inputDescField ? inputDescField.value : '')
+                    };
+
+                    const outputPayload = {
+                        to: normalizeText(toField ? toField.value : ''),
+                        description: normalizeText(outputDescField ? outputDescField.value : '')
+                    };
+
+                    const hasAnyInputValue = Boolean(inputPayload.from || inputPayload.description);
+                    const hasAnyOutputValue = Boolean(outputPayload.to || outputPayload.description);
+                    const isCreateRow = !inputId;
+
+                    if (isCreateRow && !hasAnyInputValue && !hasAnyOutputValue) {
+                        NotificationController.show('warning',
+                            'Isi minimal satu field sebelum menambah data infoflow baru.');
+                        return;
+                    }
+
+                    const originalLabel = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Menyimpan...';
+
+                    try {
+                        let resolvedInputId = inputId;
+
+                        if (resolvedInputId) {
+                            await DataService.updateInfoflowInput(resolvedInputId, inputPayload);
+                        } else {
+                            const createdInput = await DataService.createInfoflowInput({
+                                practice_id: practiceId,
+                                ...inputPayload
+                            });
+
+                            resolvedInputId = String(createdInput.input_id || '');
+                        }
+
+                        if (outputId) {
+                            await DataService.updateInfoflowOutput(outputId, outputPayload);
+                        } else if (hasAnyOutputValue) {
+                            await DataService.createInfoflowOutput({
+                                practice_id: practiceId,
+                                input_id: resolvedInputId ? Number(resolvedInputId) : null,
+                                ...outputPayload
+                            });
+                        }
+
+                        button.textContent = 'Tersimpan';
+                        NotificationController.show(
+                            'success',
+                            isCreateRow ? 'Data infoflow baru berhasil ditambahkan.' :
+                            'Data infoflow berhasil diperbarui.'
+                        );
+                        await this.refreshActiveInfoflowView();
+                    } catch (err) {
+                        console.error('Failed to save infoflow row:', err);
+                        button.textContent = 'Gagal';
+                        NotificationController.show('danger',
+                            `Gagal menyimpan data infoflow: ${err.message}`);
+                    } finally {
+                        window.setTimeout(() => {
+                            button.disabled = false;
+                            button.textContent = originalLabel;
+                        }, 900);
+                    }
+                }
+            };
+
             // ===================================================================
             // EVENT LISTENERS
             // ===================================================================
@@ -2629,7 +3029,10 @@
                     this.setupComponentSelect();
                     this.setupModeButtons();
                     this.setupMasterToggle();
+                    this.setupInputModeToggle();
+                    this.setupInfoflowRowSaveHandler();
                     this.initializeComponent();
+                    InputModeController.syncButton();
                 },
 
                 setupComponentSelect() {
@@ -2651,6 +3054,22 @@
                 setupMasterToggle() {
                     DOM.masterToggleBtn.addEventListener('click', () => {
                         ModeController.toggleMaster();
+                    });
+                },
+
+                setupInputModeToggle() {
+                    if (!DOM.inputModeBtn) return;
+
+                    DOM.inputModeBtn.addEventListener('click', () => {
+                        InputModeController.toggle();
+                    });
+                },
+
+                setupInfoflowRowSaveHandler() {
+                    document.addEventListener('click', (event) => {
+                        const targetBtn = event.target.closest('.js-save-infoflow-row');
+                        if (!targetBtn) return;
+                        InputModeController.saveInfoflowRow(targetBtn);
                     });
                 },
 

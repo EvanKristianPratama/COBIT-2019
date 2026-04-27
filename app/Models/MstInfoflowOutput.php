@@ -13,7 +13,7 @@ class MstInfoflowOutput extends Model
 
     protected $primaryKey = 'output_id';
 
-    // public $incrementing = false;
+    public $incrementing = false;
 
     protected $keyType = 'int';
 
@@ -21,10 +21,25 @@ class MstInfoflowOutput extends Model
 
     protected $fillable = [
         'output_id',
-        'objective_id',
+        'practice_id',
         'to',
         'description',
         // 'skill',
         // 'objective_purpose',
     ];
+
+    public function practice()
+    {
+        return $this->belongsTo(MstPractice::class, 'practice_id', 'practice_id');
+    }
+
+    public function connectedinputs()
+    {
+        return $this->belongsToMany(
+            MstInfoflowInput::class,
+            'trs_infoflowio',
+            'output_id',
+            'input_id'
+        );
+    }
 }

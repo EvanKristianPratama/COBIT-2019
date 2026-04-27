@@ -63,7 +63,7 @@
                     <tr class="practice-summary-score-header-row">
                         <td colspan="2" class="text-center">Value</td>
                         <td colspan="2" class="text-center">Rating</td>
-                        <td colspan="2" class="text-center">Capability</td>
+                        <td colspan="2" class="text-center">Capability Level</td>
                     </tr>
                     <tr class="practice-summary-score-value-row">
                         <td colspan="2" class="text-center">{{ $practiceSummaryCapability['value'] ?? '0,00' }}</td>

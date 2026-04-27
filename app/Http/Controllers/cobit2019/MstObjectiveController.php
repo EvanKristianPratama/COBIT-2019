@@ -4,10 +4,13 @@ namespace App\Http\Controllers\cobit2019;
 
 use App\Http\Controllers\Controller;
 use App\Models\MstAligngoals;
+use App\Models\MstInfoflowInput;
+use App\Models\MstInfoflowOutput;
 use App\Models\MstEntergoals;
 use App\Models\MstObjective;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class MstObjectiveController extends Controller
 {
@@ -225,6 +228,120 @@ class MstObjectiveController extends Controller
                 ];
             });
         })->values();
+    }
+
+    /**
+     * Update an information flow input row.
+     */
+    public function updateInfoflowInput(Request $request, $inputId)
+    {
+        $input = MstInfoflowInput::findOrFail($inputId);
+
+        $data = $request->validate([
+            'from' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $input->update($data);
+
+        return response()->json($input->fresh());
+    }
+
+    /**
+     * Create an information flow input row.
+     */
+    public function createInfoflowInput(Request $request)
+    {
+        $data = $request->validate([
+            'practice_id' => 'required|string|exists:mst_practice,practice_id',
+            'from' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $input = DB::transaction(function () use ($data) {
+            $nextInputId = $this->nextInfoflowInputId();
+
+            return MstInfoflowInput::create([
+                'input_id' => $nextInputId,
+                'practice_id' => $data['practice_id'],
+                'from' => $data['from'] ?? null,
+                'description' => $data['description'] ?? null,
+            ]);
+        });
+
+        return response()->json($input->fresh(), 201);
+    }
+
+    /**
+     * Update an information flow output row.
+     */
+    public function updateInfoflowOutput(Request $request, $outputId)
+    {
+        $output = MstInfoflowOutput::findOrFail($outputId);
+
+        $data = $request->validate([
+            'to' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $output->update($data);
+
+        return response()->json($output->fresh());
+    }
+
+    /**
+     * Create an information flow output row and optionally connect to input.
+     */
+    public function createInfoflowOutput(Request $request)
+    {
+        $data = $request->validate([
+            'practice_id' => 'required|string|exists:mst_practice,practice_id',
+            'input_id' => 'nullable|integer|exists:mst_infoflowinput,input_id',
+            'to' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $output = DB::transaction(function () use ($data) {
+            $nextOutputId = $this->nextInfoflowOutputId();
+
+            $output = MstInfoflowOutput::create([
+                'output_id' => $nextOutputId,
+                'practice_id' => $data['practice_id'],
+                'to' => $data['to'] ?? null,
+                'description' => $data['description'] ?? null,
+            ]);
+
+            if (!empty($data['input_id'])) {
+                $input = MstInfoflowInput::findOrFail($data['input_id']);
+                $input->connectedoutputs()->syncWithoutDetaching([$output->output_id]);
+            }
+
+            return $output;
+        });
+
+        return response()->json($output->fresh(), 201);
+    }
+
+    protected function nextInfoflowInputId(): int
+    {
+        $latest = DB::table('mst_infoflowinput')
+            ->select('input_id')
+            ->orderByDesc('input_id')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) ($latest->input_id ?? 0)) + 1;
+    }
+
+    protected function nextInfoflowOutputId(): int
+    {
+        $latest = DB::table('mst_infoflowoutput')
+            ->select('output_id')
+            ->orderByDesc('output_id')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) ($latest->output_id ?? 0)) + 1;
     }
 
     /**
