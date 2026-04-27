@@ -13,7 +13,7 @@ class MstSIA extends Model
 
     protected $primaryKey = 'sia_id';
 
-    // public $incrementing = false;
+    public $incrementing = false;
 
     protected $keyType = 'int';
 
@@ -24,4 +24,9 @@ class MstSIA extends Model
         'objective_id',
         'description',
     ];
+
+    public function objective()
+    {
+        return $this->belongsTo(MstObjective::class, 'objective_id');
+    }
 }

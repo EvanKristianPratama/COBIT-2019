@@ -13,7 +13,7 @@ class MstPolicy extends Model
 
     protected $primaryKey = 'policy_id';
 
-    // public $incrementing = false;
+    public $incrementing = false;
 
     protected $keyType = 'int';
 
@@ -42,4 +42,3 @@ class MstPolicy extends Model
         );
     }
 }
-

@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\MstAligngoals;
 use App\Models\MstInfoflowInput;
 use App\Models\MstInfoflowOutput;
+use App\Models\MstKeyCulture;
 use App\Models\MstEntergoals;
+use App\Models\MstGuidance;
 use App\Models\MstObjective;
+use App\Models\MstPolicy;
+use App\Models\MstSIA;
+use App\Models\MstSkill;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -342,6 +347,257 @@ class MstObjectiveController extends Controller
             ->first();
 
         return ((int) ($latest->output_id ?? 0)) + 1;
+    }
+
+    public function createPolicy(Request $request)
+    {
+        $data = $request->validate([
+            'objective_id' => 'required|string|exists:mst_objective,objective_id',
+            'policy' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
+
+        $policy = DB::transaction(function () use ($data) {
+            return MstPolicy::create([
+                'policy_id' => $this->nextPolicyId(),
+                'objective_id' => $data['objective_id'],
+                'policy' => $data['policy'] ?? null,
+                'description' => $data['description'] ?? null,
+            ]);
+        });
+
+        return response()->json($policy->fresh(), 201);
+    }
+
+    public function updatePolicy(Request $request, $policyId)
+    {
+        $policy = MstPolicy::findOrFail($policyId);
+
+        $data = $request->validate([
+            'policy' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
+
+        $policy->update($data);
+
+        return response()->json($policy->fresh());
+    }
+
+    public function createSkill(Request $request)
+    {
+        $data = $request->validate([
+            'objective_id' => 'required|string|exists:mst_objective,objective_id',
+            'skill' => 'nullable|string|max:255',
+        ]);
+
+        $skill = MstSkill::create($data);
+
+        return response()->json($skill->fresh(), 201);
+    }
+
+    public function updateSkill(Request $request, $skillId)
+    {
+        $skill = MstSkill::findOrFail($skillId);
+
+        $data = $request->validate([
+            'skill' => 'nullable|string|max:255',
+        ]);
+
+        $skill->update($data);
+
+        return response()->json($skill->fresh());
+    }
+
+    public function createKeyCulture(Request $request)
+    {
+        $data = $request->validate([
+            'objective_id' => 'required|string|exists:mst_objective,objective_id',
+            'element' => 'nullable|string',
+        ]);
+
+        $keyCulture = DB::transaction(function () use ($data) {
+            return MstKeyCulture::create([
+                'keyculture_id' => $this->nextKeyCultureId(),
+                'objective_id' => $data['objective_id'],
+                'element' => $data['element'] ?? null,
+            ]);
+        });
+
+        return response()->json($keyCulture->fresh(), 201);
+    }
+
+    public function updateKeyCulture(Request $request, $keyCultureId)
+    {
+        $keyCulture = MstKeyCulture::findOrFail($keyCultureId);
+
+        $data = $request->validate([
+            'element' => 'nullable|string',
+        ]);
+
+        $keyCulture->update($data);
+
+        return response()->json($keyCulture->fresh());
+    }
+
+    public function createSia(Request $request)
+    {
+        $data = $request->validate([
+            'objective_id' => 'required|string|exists:mst_objective,objective_id',
+            'description' => 'nullable|string',
+        ]);
+
+        $sia = DB::transaction(function () use ($data) {
+            return MstSIA::create([
+                'sia_id' => $this->nextSiaId(),
+                'objective_id' => $data['objective_id'],
+                'description' => $data['description'] ?? null,
+            ]);
+        });
+
+        return response()->json($sia->fresh(), 201);
+    }
+
+    public function updateSia(Request $request, $siaId)
+    {
+        $sia = MstSIA::findOrFail($siaId);
+
+        $data = $request->validate([
+            'description' => 'nullable|string',
+        ]);
+
+        $sia->update($data);
+
+        return response()->json($sia->fresh());
+    }
+
+    public function createPolicyGuidance(Request $request, $policyId)
+    {
+        $policy = MstPolicy::findOrFail($policyId);
+
+        $data = $request->validate([
+            'guidance' => 'nullable|string',
+            'reference' => 'nullable|string',
+        ]);
+
+        $guidance = DB::transaction(function () use ($policy, $data) {
+            $guidance = MstGuidance::create([
+                'guidance_id' => $this->nextGuidanceId(),
+                'guidance' => $data['guidance'] ?? null,
+                'reference' => $data['reference'] ?? null,
+            ]);
+
+            $policy->guidances()->syncWithoutDetaching([$guidance->guidance_id]);
+
+            return $guidance;
+        });
+
+        return response()->json($guidance->fresh(), 201);
+    }
+
+    public function createSkillGuidance(Request $request, $skillId)
+    {
+        $skill = MstSkill::findOrFail($skillId);
+
+        $data = $request->validate([
+            'guidance' => 'nullable|string',
+            'reference' => 'nullable|string',
+        ]);
+
+        $guidance = DB::transaction(function () use ($skill, $data) {
+            $guidance = MstGuidance::create([
+                'guidance_id' => $this->nextGuidanceId(),
+                'guidance' => $data['guidance'] ?? null,
+                'reference' => $data['reference'] ?? null,
+            ]);
+
+            $skill->guidances()->syncWithoutDetaching([$guidance->guidance_id]);
+
+            return $guidance;
+        });
+
+        return response()->json($guidance->fresh(), 201);
+    }
+
+    public function createKeyCultureGuidance(Request $request, $keyCultureId)
+    {
+        $keyCulture = MstKeyCulture::findOrFail($keyCultureId);
+
+        $data = $request->validate([
+            'guidance' => 'nullable|string',
+            'reference' => 'nullable|string',
+        ]);
+
+        $guidance = DB::transaction(function () use ($keyCulture, $data) {
+            $guidance = MstGuidance::create([
+                'guidance_id' => $this->nextGuidanceId(),
+                'guidance' => $data['guidance'] ?? null,
+                'reference' => $data['reference'] ?? null,
+            ]);
+
+            $keyCulture->guidances()->syncWithoutDetaching([$guidance->guidance_id]);
+
+            return $guidance;
+        });
+
+        return response()->json($guidance->fresh(), 201);
+    }
+
+    public function updateGuidance(Request $request, $guidanceId)
+    {
+        $guidance = MstGuidance::findOrFail($guidanceId);
+
+        $data = $request->validate([
+            'guidance' => 'nullable|string',
+            'reference' => 'nullable|string',
+        ]);
+
+        $guidance->update($data);
+
+        return response()->json($guidance->fresh());
+    }
+
+    protected function nextPolicyId(): int
+    {
+        $latest = DB::table('mst_policy')
+            ->select('policy_id')
+            ->orderByDesc('policy_id')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) ($latest->policy_id ?? 0)) + 1;
+    }
+
+    protected function nextKeyCultureId(): int
+    {
+        $latest = DB::table('mst_keyculture')
+            ->select('keyculture_id')
+            ->orderByDesc('keyculture_id')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) ($latest->keyculture_id ?? 0)) + 1;
+    }
+
+    protected function nextSiaId(): int
+    {
+        $latest = DB::table('mst_SIA')
+            ->select('sia_id')
+            ->orderByDesc('sia_id')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) ($latest->sia_id ?? 0)) + 1;
+    }
+
+    protected function nextGuidanceId(): int
+    {
+        $latest = DB::table('mst_guidance')
+            ->select('guidance_id')
+            ->orderByDesc('guidance_id')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) ($latest->guidance_id ?? 0)) + 1;
     }
 
     /**

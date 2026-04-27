@@ -13,7 +13,7 @@ class MstGuidance extends Model
 
     protected $primaryKey = 'guidance_id';
 
-    // public $incrementing = false;
+    public $incrementing = false;
 
     protected $keyType = 'int';
 

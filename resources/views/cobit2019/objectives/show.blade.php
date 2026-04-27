@@ -786,6 +786,186 @@
 
                     STATE.cacheAll = null;
                     return this.parseJsonResponse(response);
+                },
+
+                async createPolicy(data) {
+                    const response = await fetch(`{{ url('/objectives/policies') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async updatePolicy(policyId, data) {
+                    const response = await fetch(`{{ url('/objectives/policies') }}/${encodeURIComponent(policyId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createSkill(data) {
+                    const response = await fetch(`{{ url('/objectives/skills') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async updateSkill(skillId, data) {
+                    const response = await fetch(`{{ url('/objectives/skills') }}/${encodeURIComponent(skillId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createKeyCulture(data) {
+                    const response = await fetch(`{{ url('/objectives/key-culture') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async updateKeyCulture(keyCultureId, data) {
+                    const response = await fetch(`{{ url('/objectives/key-culture') }}/${encodeURIComponent(keyCultureId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createSia(data) {
+                    const response = await fetch(`{{ url('/objectives/sia') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async updateSia(siaId, data) {
+                    const response = await fetch(`{{ url('/objectives/sia') }}/${encodeURIComponent(siaId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createPolicyGuidance(policyId, data) {
+                    const response = await fetch(`{{ url('/objectives/policies') }}/${encodeURIComponent(policyId)}/guidance`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createSkillGuidance(skillId, data) {
+                    const response = await fetch(`{{ url('/objectives/skills') }}/${encodeURIComponent(skillId)}/guidance`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async createKeyCultureGuidance(keyCultureId, data) {
+                    const response = await fetch(`{{ url('/objectives/key-culture') }}/${encodeURIComponent(keyCultureId)}/guidance`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async updateGuidance(guidanceId, data) {
+                    const response = await fetch(`{{ url('/objectives/guidance') }}/${encodeURIComponent(guidanceId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
                 }
             };
 
@@ -1240,6 +1420,21 @@
           </div>
         </div>
       `;
+                },
+
+                escapeAttr(value) {
+                    return String(value ?? '')
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('"', '&quot;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;');
+                },
+
+                escapeTextarea(value) {
+                    return String(value ?? '')
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;');
                 },
 
                 renderOverview(objectives) {
@@ -1837,31 +2032,100 @@
 
                     objectives.forEach(obj => {
                         (obj.policies || []).forEach(policy => {
-                            const guidance = (policy.guidances || [])
-                                .map(g => g.guidance)
-                                .filter(Boolean)
-                                .join('<br>');
+                            const guidances = policy.guidances || [];
 
-                            const refs = (policy.guidances || [])
-                                .map(g => g.reference)
-                                .filter(Boolean)
-                                .join('<br>');
+                            if (STATE.inputMode) {
+                                if (guidances.length) {
+                                    guidances.forEach(g => {
+                                        rows.push({
+                                            gamo: obj.objective_id || '',
+                                            objectiveId: obj.objective_id || '',
+                                            policyId: policy.policy_id || null,
+                                            policy: policy.policy || policy.name || '',
+                                            desc: policy.description || '',
+                                            guidanceId: g.guidance_id || null,
+                                            guidance: g.guidance || '',
+                                            reference: g.reference || '',
+                                            isCreateRow: false
+                                        });
+                                    });
 
+                                    rows.push({
+                                        gamo: obj.objective_id || '',
+                                        objectiveId: obj.objective_id || '',
+                                        policyId: policy.policy_id || null,
+                                        policy: policy.policy || policy.name || '',
+                                        desc: policy.description || '',
+                                        guidanceId: null,
+                                        guidance: '',
+                                        reference: '',
+                                        isCreateRow: false
+                                    });
+                                } else {
+                                    rows.push({
+                                        gamo: obj.objective_id || '',
+                                        objectiveId: obj.objective_id || '',
+                                        policyId: policy.policy_id || null,
+                                        policy: policy.policy || policy.name || '',
+                                        desc: policy.description || '',
+                                        guidanceId: null,
+                                        guidance: '',
+                                        reference: '',
+                                        isCreateRow: false
+                                    });
+                                }
+                            } else {
+                                const guidance = guidances
+                                    .map(g => g.guidance)
+                                    .filter(Boolean)
+                                    .join('<br>');
+
+                                const refs = guidances
+                                    .map(g => g.reference)
+                                    .filter(Boolean)
+                                    .join('<br>');
+
+                                rows.push({
+                                    gamo: obj.objective_id || '',
+                                    objectiveId: obj.objective_id || '',
+                                    policyId: policy.policy_id || null,
+                                    policy: policy.policy || policy.name || '',
+                                    desc: policy.description || '',
+                                    guidance,
+                                    refs,
+                                    isCreateRow: false
+                                });
+                            }
+                        });
+
+                        if (STATE.inputMode) {
                             rows.push({
                                 gamo: obj.objective_id || '',
-                                policy: policy.policy || policy.name || '',
-                                desc: policy.description || '',
-                                guidance,
-                                refs
+                                objectiveId: obj.objective_id || '',
+                                policyId: null,
+                                policy: '',
+                                desc: '',
+                                guidanceId: null,
+                                guidance: '',
+                                reference: '',
+                                isCreateRow: true
                             });
-                        });
+                        }
                     });
 
                     if (!rows.length) {
                         return '<div class="text-muted">No policies / procedures found.</div>';
                     }
 
-                    const tbody = rows.map(r => `
+                    const editable = STATE.inputMode;
+                    const actionHeader = editable ? '<th style="width:120px">Action</th>' : '';
+                    const modeHint = editable ?
+                        `<div class="alert alert-warning py-2 px-3 small mb-2">Input Mode aktif. Anda bisa edit policy yang ada atau tambah policy baru per objective.</div>` :
+                        '';
+
+                    const tbody = rows.map(r => {
+                        if (!editable) {
+                            return `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.policy)}</td>
@@ -1869,9 +2133,34 @@
           <td class="small">${r.guidance}</td>
           <td class="small">${r.refs}</td>
         </tr>
-      `).join('');
+      `;
+                        }
+
+                        const label = r.policyId ? (r.guidanceId ? 'Simpan' : 'Tambah Guidance') : 'Tambah';
+                        return `
+        <tr class="js-entity-row" data-entity-type="policy">
+          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="policy">${Renderers.escapeTextarea(r.policy || '')}</textarea>
+          </td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="description">${Renderers.escapeTextarea(r.desc || '')}</textarea>
+          </td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="guidance">${Renderers.escapeTextarea(r.guidance || '')}</textarea>
+          </td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="reference">${Renderers.escapeTextarea(r.reference || '')}</textarea>
+          </td>
+          <td class="small text-center">
+            <button type="button" class="btn btn-sm btn-primary js-save-entity-row" data-entity-type="policy" data-entity-id="${Renderers.escapeAttr(r.policyId || '')}" data-guidance-id="${Renderers.escapeAttr(r.guidanceId || '')}" data-objective-id="${Renderers.escapeAttr(r.objectiveId || '')}">${label}</button>
+          </td>
+        </tr>
+      `;
+                    }).join('');
 
                     return `
+        ${modeHint}
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1881,6 +2170,7 @@
                 <th>Description</th>
                 <th>Related Guidance</th>
                 <th>Reference</th>
+                ${actionHeader}
               </tr>
             </thead>
             <tbody>${tbody}</tbody>
@@ -1894,39 +2184,126 @@
 
                     objectives.forEach(obj => {
                         (obj.skill || []).forEach(skill => {
-                            const guidance = (skill.guidances || [])
-                                .map(g => g.guidance)
-                                .filter(Boolean)
-                                .join('<br>');
+                            const guidances = skill.guidances || [];
 
-                            const refs = (skill.guidances || [])
-                                .map(g => g.reference)
-                                .filter(Boolean)
-                                .join('<br>');
+                            if (STATE.inputMode) {
+                                if (guidances.length) {
+                                    guidances.forEach(g => {
+                                        rows.push({
+                                            gamo: obj.objective_id || '',
+                                            objectiveId: obj.objective_id || '',
+                                            skillId: skill.skill_id || null,
+                                            skill: skill.skill || '',
+                                            guidanceId: g.guidance_id || null,
+                                            guidance: g.guidance || '',
+                                            reference: g.reference || '',
+                                            isCreateRow: false
+                                        });
+                                    });
 
+                                    rows.push({
+                                        gamo: obj.objective_id || '',
+                                        objectiveId: obj.objective_id || '',
+                                        skillId: skill.skill_id || null,
+                                        skill: skill.skill || '',
+                                        guidanceId: null,
+                                        guidance: '',
+                                        reference: '',
+                                        isCreateRow: false
+                                    });
+                                } else {
+                                    rows.push({
+                                        gamo: obj.objective_id || '',
+                                        objectiveId: obj.objective_id || '',
+                                        skillId: skill.skill_id || null,
+                                        skill: skill.skill || '',
+                                        guidanceId: null,
+                                        guidance: '',
+                                        reference: '',
+                                        isCreateRow: false
+                                    });
+                                }
+                            } else {
+                                const guidance = guidances
+                                    .map(g => g.guidance)
+                                    .filter(Boolean)
+                                    .join('<br>');
+
+                                const refs = guidances
+                                    .map(g => g.reference)
+                                    .filter(Boolean)
+                                    .join('<br>');
+
+                                rows.push({
+                                    gamo: obj.objective_id || '',
+                                    objectiveId: obj.objective_id || '',
+                                    skillId: skill.skill_id || null,
+                                    skill: skill.skill || '',
+                                    guidance,
+                                    refs,
+                                    isCreateRow: false
+                                });
+                            }
+                        });
+
+                        if (STATE.inputMode) {
                             rows.push({
                                 gamo: obj.objective_id || '',
-                                skill: skill.skill || '',
-                                guidance,
-                                refs
+                                objectiveId: obj.objective_id || '',
+                                skillId: null,
+                                skill: '',
+                                guidanceId: null,
+                                guidance: '',
+                                reference: '',
+                                isCreateRow: true
                             });
-                        });
+                        }
                     });
 
                     if (!rows.length) {
                         return '<div class="text-muted">No skills found.</div>';
                     }
 
-                    const tbody = rows.map(r => `
+                    const editable = STATE.inputMode;
+                    const actionHeader = editable ? '<th style="width:120px">Action</th>' : '';
+                    const modeHint = editable ?
+                        `<div class="alert alert-warning py-2 px-3 small mb-2">Input Mode aktif. Anda bisa edit skill yang ada atau tambah skill baru per objective.</div>` :
+                        '';
+
+                    const tbody = rows.map(r => {
+                        if (!editable) {
+                            return `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.skill)}</td>
           <td class="small">${r.guidance}</td>
           <td class="small">${r.refs}</td>
         </tr>
-      `).join('');
+      `;
+                        }
+
+                        const label = r.skillId ? (r.guidanceId ? 'Simpan' : 'Tambah Guidance') : 'Tambah';
+                        return `
+        <tr class="js-entity-row" data-entity-type="skill">
+          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small">
+            <input type="text" class="form-control form-control-sm infoflow-edit-control js-entity-field" data-field="skill" value="${Renderers.escapeAttr(r.skill || '')}">
+          </td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="guidance">${Renderers.escapeTextarea(r.guidance || '')}</textarea>
+          </td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="reference">${Renderers.escapeTextarea(r.reference || '')}</textarea>
+          </td>
+          <td class="small text-center">
+            <button type="button" class="btn btn-sm btn-primary js-save-entity-row" data-entity-type="skill" data-entity-id="${Renderers.escapeAttr(r.skillId || '')}" data-guidance-id="${Renderers.escapeAttr(r.guidanceId || '')}" data-objective-id="${Renderers.escapeAttr(r.objectiveId || '')}">${label}</button>
+          </td>
+        </tr>
+      `;
+                    }).join('');
 
                     return `
+        ${modeHint}
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1935,6 +2312,7 @@
                 <th>Skill</th>
                 <th>Related Guidance (Standards, Frameworks, Compliance Requirements)</th>
                 <th>Detailed Reference</th>
+                ${actionHeader}
               </tr>
             </thead>
             <tbody>${tbody}</tbody>
@@ -1948,39 +2326,126 @@
 
                     objectives.forEach(obj => {
                         (obj.keyculture || []).forEach(culture => {
-                            const guidance = (culture.guidances || [])
-                                .map(g => g.guidance)
-                                .filter(Boolean)
-                                .join('<br>');
+                            const guidances = culture.guidances || [];
 
-                            const refs = (culture.guidances || [])
-                                .map(g => g.reference)
-                                .filter(Boolean)
-                                .join('<br>');
+                            if (STATE.inputMode) {
+                                if (guidances.length) {
+                                    guidances.forEach(g => {
+                                        rows.push({
+                                            gamo: obj.objective_id || '',
+                                            objectiveId: obj.objective_id || '',
+                                            keyCultureId: culture.keyculture_id || null,
+                                            element: culture.element || '',
+                                            guidanceId: g.guidance_id || null,
+                                            guidance: g.guidance || '',
+                                            reference: g.reference || '',
+                                            isCreateRow: false
+                                        });
+                                    });
 
+                                    rows.push({
+                                        gamo: obj.objective_id || '',
+                                        objectiveId: obj.objective_id || '',
+                                        keyCultureId: culture.keyculture_id || null,
+                                        element: culture.element || '',
+                                        guidanceId: null,
+                                        guidance: '',
+                                        reference: '',
+                                        isCreateRow: false
+                                    });
+                                } else {
+                                    rows.push({
+                                        gamo: obj.objective_id || '',
+                                        objectiveId: obj.objective_id || '',
+                                        keyCultureId: culture.keyculture_id || null,
+                                        element: culture.element || '',
+                                        guidanceId: null,
+                                        guidance: '',
+                                        reference: '',
+                                        isCreateRow: false
+                                    });
+                                }
+                            } else {
+                                const guidance = guidances
+                                    .map(g => g.guidance)
+                                    .filter(Boolean)
+                                    .join('<br>');
+
+                                const refs = guidances
+                                    .map(g => g.reference)
+                                    .filter(Boolean)
+                                    .join('<br>');
+
+                                rows.push({
+                                    gamo: obj.objective_id || '',
+                                    objectiveId: obj.objective_id || '',
+                                    keyCultureId: culture.keyculture_id || null,
+                                    element: culture.element || '',
+                                    guidance,
+                                    refs,
+                                    isCreateRow: false
+                                });
+                            }
+                        });
+
+                        if (STATE.inputMode) {
                             rows.push({
                                 gamo: obj.objective_id || '',
-                                element: culture.element || '',
-                                guidance,
-                                refs
+                                objectiveId: obj.objective_id || '',
+                                keyCultureId: null,
+                                element: '',
+                                guidanceId: null,
+                                guidance: '',
+                                reference: '',
+                                isCreateRow: true
                             });
-                        });
+                        }
                     });
 
                     if (!rows.length) {
                         return '<div class="text-muted">No culture elements found.</div>';
                     }
 
-                    const tbody = rows.map(r => `
+                    const editable = STATE.inputMode;
+                    const actionHeader = editable ? '<th style="width:120px">Action</th>' : '';
+                    const modeHint = editable ?
+                        `<div class="alert alert-warning py-2 px-3 small mb-2">Input Mode aktif. Anda bisa edit culture element yang ada atau tambah elemen baru per objective.</div>` :
+                        '';
+
+                    const tbody = rows.map(r => {
+                        if (!editable) {
+                            return `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.element)}</td>
           <td class="small">${r.guidance}</td>
           <td class="small">${r.refs}</td>
         </tr>
-      `).join('');
+      `;
+                        }
+
+                        const label = r.keyCultureId ? (r.guidanceId ? 'Simpan' : 'Tambah Guidance') : 'Tambah';
+                        return `
+        <tr class="js-entity-row" data-entity-type="key-culture">
+          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="element">${Renderers.escapeTextarea(r.element || '')}</textarea>
+          </td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="guidance">${Renderers.escapeTextarea(r.guidance || '')}</textarea>
+          </td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="reference">${Renderers.escapeTextarea(r.reference || '')}</textarea>
+          </td>
+          <td class="small text-center">
+            <button type="button" class="btn btn-sm btn-primary js-save-entity-row" data-entity-type="key-culture" data-entity-id="${Renderers.escapeAttr(r.keyCultureId || '')}" data-guidance-id="${Renderers.escapeAttr(r.guidanceId || '')}" data-objective-id="${Renderers.escapeAttr(r.objectiveId || '')}">${label}</button>
+          </td>
+        </tr>
+      `;
+                    }).join('');
 
                     return `
+        ${modeHint}
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
@@ -1989,6 +2454,7 @@
                 <th>Element</th>
                 <th>Guidance</th>
                 <th>Reference</th>
+                ${actionHeader}
               </tr>
             </thead>
             <tbody>${tbody}</tbody>
@@ -2004,29 +2470,67 @@
                         (obj.s_i_a || []).forEach(service => {
                             rows.push({
                                 gamo: obj.objective_id || '',
-                                desc: service.description || ''
+                                objectiveId: obj.objective_id || '',
+                                siaId: service.sia_id || null,
+                                desc: service.description || '',
+                                isCreateRow: false
                             });
                         });
+
+                        if (STATE.inputMode) {
+                            rows.push({
+                                gamo: obj.objective_id || '',
+                                objectiveId: obj.objective_id || '',
+                                siaId: null,
+                                desc: '',
+                                isCreateRow: true
+                            });
+                        }
                     });
 
                     if (!rows.length) {
                         return '<div class="text-muted">No services / SIA found.</div>';
                     }
 
-                    const tbody = rows.map(r => `
+                    const editable = STATE.inputMode;
+                    const actionHeader = editable ? '<th style="width:120px">Action</th>' : '';
+                    const modeHint = editable ?
+                        `<div class="alert alert-warning py-2 px-3 small mb-2">Input Mode aktif. Anda bisa edit SIA yang ada atau tambah SIA baru per objective.</div>` :
+                        '';
+
+                    const tbody = rows.map(r => {
+                        if (!editable) {
+                            return `
         <tr>
           <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
           <td class="small">${Utils.formatText(r.desc)}</td>
         </tr>
-      `).join('');
+      `;
+                        }
+
+                        const label = r.siaId ? 'Simpan' : 'Tambah';
+                        return `
+        <tr class="js-entity-row" data-entity-type="sia">
+          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small">
+            <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="description">${Renderers.escapeTextarea(r.desc || '')}</textarea>
+          </td>
+          <td class="small text-center">
+            <button type="button" class="btn btn-sm btn-primary js-save-entity-row" data-entity-type="sia" data-entity-id="${Renderers.escapeAttr(r.siaId || '')}" data-objective-id="${Renderers.escapeAttr(r.objectiveId || '')}">${label}</button>
+          </td>
+        </tr>
+      `;
+                    }).join('');
 
                     return `
+        ${modeHint}
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
               <tr>
                 <th style="width:110px">GAMO</th>
                 <th>Service / SIA Description</th>
+                ${actionHeader}
               </tr>
             </thead>
             <tbody>${tbody}</tbody>
@@ -2876,16 +3380,28 @@
                     if (!AUTHZ.canInputMode) return;
                     STATE.inputMode = !STATE.inputMode;
                     this.syncButton();
-                    this.refreshActiveInfoflowView();
+                    this.refreshActiveComponentView();
                     NotificationController.show(
                         'info',
-                        STATE.inputMode ? 'Input Mode aktif. Data infoflow bisa diedit.' :
+                        STATE.inputMode ? 'Input Mode aktif. Data komponen bisa diedit.' :
                         'Input Mode nonaktif. Data kembali terkunci.',
                         2400
                     );
                 },
 
-                async refreshActiveInfoflowView() {
+                getActiveComponent() {
+                    const isGamoMode = DOM.gamoPane && DOM.gamoPane.style.display === 'block';
+                    if (isGamoMode) {
+                        const activeComponentBtn = DOM.gamoResults ?
+                            DOM.gamoResults.querySelector('#gamoTabs .nav-link.active') :
+                            null;
+                        return activeComponentBtn ? activeComponentBtn.getAttribute('data-comp') : 'overview';
+                    }
+
+                    return DOM.componentSelect ? (DOM.componentSelect.value || 'overview') : 'overview';
+                },
+
+                async refreshActiveComponentView() {
                     const isMasterVisible = DOM.masterPanel && DOM.masterPanel.style.display === 'block';
                     if (isMasterVisible) return;
 
@@ -2898,32 +3414,25 @@
                             activeObjAnchor.getAttribute('data-obj') :
                             '';
 
-                        const activeComponentBtn = DOM.gamoResults ?
-                            DOM.gamoResults.querySelector('#gamoTabs .nav-link.active') :
-                            null;
-                        const activeComponent = activeComponentBtn ?
-                            activeComponentBtn.getAttribute('data-comp') :
-                            'infoflows';
+                        const activeComponent = this.getActiveComponent();
 
                         if (activeObjectiveId) {
                             await GamoViewController.selectObjective(activeObjectiveId);
 
                             const targetBtn = DOM.gamoResults ?
                                 DOM.gamoResults.querySelector(
-                                    `#gamoTabs .nav-link[data-comp="${activeComponent || 'infoflows'}"]`
+                                    `#gamoTabs .nav-link[data-comp="${activeComponent || 'overview'}"]`
                                 ) :
                                 null;
 
                             if (targetBtn) {
                                 targetBtn.click();
                             }
-                        } else if (activeComponentBtn && activeComponent === 'infoflows') {
-                            activeComponentBtn.click();
                         }
                         return;
                     }
 
-                    if (DOM.componentSelect && DOM.componentSelect.value === 'infoflows') {
+                    if (DOM.componentSelect) {
                         DOM.componentSelect.dispatchEvent(new Event('change'));
                     }
                 },
@@ -3005,12 +3514,162 @@
                             isCreateRow ? 'Data infoflow baru berhasil ditambahkan.' :
                             'Data infoflow berhasil diperbarui.'
                         );
-                        await this.refreshActiveInfoflowView();
+                        await this.refreshActiveComponentView();
                     } catch (err) {
                         console.error('Failed to save infoflow row:', err);
                         button.textContent = 'Gagal';
                         NotificationController.show('danger',
                             `Gagal menyimpan data infoflow: ${err.message}`);
+                    } finally {
+                        window.setTimeout(() => {
+                            button.disabled = false;
+                            button.textContent = originalLabel;
+                        }, 900);
+                    }
+                },
+
+                async saveEntityRow(button) {
+                    if (!button || !AUTHZ.canInputMode) return;
+
+                    const row = button.closest('.js-entity-row');
+                    const entityType = (button.getAttribute('data-entity-type') || '').trim();
+                    const entityId = (button.getAttribute('data-entity-id') || '').trim();
+                    const guidanceId = (button.getAttribute('data-guidance-id') || '').trim();
+                    const objectiveId = (button.getAttribute('data-objective-id') || '').trim();
+
+                    if (!row || !entityType || !objectiveId) {
+                        NotificationController.show('danger', 'Data baris tidak lengkap. Simpan dibatalkan.');
+                        return;
+                    }
+
+                    const payload = {};
+                    row.querySelectorAll('.js-entity-field').forEach(field => {
+                        const key = field.getAttribute('data-field');
+                        if (!key) return;
+                        payload[key] = String(field.value || '').trim();
+                    });
+
+                    const hasAnyEntityValue = ['policy', 'description', 'skill', 'element']
+                        .some(key => Boolean(String(payload[key] || '').trim()));
+                    const hasAnyGuidanceValue = ['guidance', 'reference']
+                        .some(key => Boolean(String(payload[key] || '').trim()));
+                    const hasAnyValue = hasAnyEntityValue || hasAnyGuidanceValue;
+
+                    if (!entityId && !hasAnyValue) {
+                        NotificationController.show('warning',
+                            'Isi minimal satu field sebelum menambah data baru.');
+                        return;
+                    }
+
+                    const configMap = {
+                        policy: {
+                            create: (data) => DataService.createPolicy(data),
+                            update: (id, data) => DataService.updatePolicy(id, data),
+                            createGuidance: (id, data) => DataService.createPolicyGuidance(id, data),
+                            createPayload: {
+                                objective_id: objectiveId,
+                                policy: payload.policy || '',
+                                description: payload.description || ''
+                            },
+                            updatePayload: {
+                                policy: payload.policy || '',
+                                description: payload.description || ''
+                            },
+                            idField: 'policy_id',
+                            createdMessage: 'Policy baru berhasil ditambahkan.',
+                            updatedMessage: 'Policy berhasil diperbarui.'
+                        },
+                        skill: {
+                            create: (data) => DataService.createSkill(data),
+                            update: (id, data) => DataService.updateSkill(id, data),
+                            createGuidance: (id, data) => DataService.createSkillGuidance(id, data),
+                            createPayload: {
+                                objective_id: objectiveId,
+                                skill: payload.skill || ''
+                            },
+                            updatePayload: {
+                                skill: payload.skill || ''
+                            },
+                            idField: 'skill_id',
+                            createdMessage: 'Skill baru berhasil ditambahkan.',
+                            updatedMessage: 'Skill berhasil diperbarui.'
+                        },
+                        'key-culture': {
+                            create: (data) => DataService.createKeyCulture(data),
+                            update: (id, data) => DataService.updateKeyCulture(id, data),
+                            createGuidance: (id, data) => DataService.createKeyCultureGuidance(id, data),
+                            createPayload: {
+                                objective_id: objectiveId,
+                                element: payload.element || ''
+                            },
+                            updatePayload: {
+                                element: payload.element || ''
+                            },
+                            idField: 'keyculture_id',
+                            createdMessage: 'Culture element baru berhasil ditambahkan.',
+                            updatedMessage: 'Culture element berhasil diperbarui.'
+                        },
+                        sia: {
+                            create: (data) => DataService.createSia(data),
+                            update: (id, data) => DataService.updateSia(id, data),
+                            createPayload: {
+                                objective_id: objectiveId,
+                                description: payload.description || ''
+                            },
+                            updatePayload: {
+                                description: payload.description || ''
+                            },
+                            idField: 'sia_id',
+                            createdMessage: 'SIA baru berhasil ditambahkan.',
+                            updatedMessage: 'SIA berhasil diperbarui.'
+                        }
+                    };
+
+                    const config = configMap[entityType];
+                    if (!config) {
+                        NotificationController.show('danger', `Entity type ${entityType} belum didukung.`);
+                        return;
+                    }
+
+                    const originalLabel = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Menyimpan...';
+
+                    try {
+                        let resolvedEntityId = entityId;
+
+                        if (resolvedEntityId) {
+                            await config.update(resolvedEntityId, config.updatePayload);
+                        } else {
+                            const createdEntity = await config.create(config.createPayload);
+                            resolvedEntityId = String(createdEntity[config.idField] || '');
+                        }
+
+                        if (entityType !== 'sia') {
+                            if (guidanceId) {
+                                await DataService.updateGuidance(guidanceId, {
+                                    guidance: payload.guidance || '',
+                                    reference: payload.reference || ''
+                                });
+                            } else if (hasAnyGuidanceValue && resolvedEntityId) {
+                                await config.createGuidance(resolvedEntityId, {
+                                    guidance: payload.guidance || '',
+                                    reference: payload.reference || ''
+                                });
+                            }
+                        }
+
+                        button.textContent = 'Tersimpan';
+                        NotificationController.show(
+                            'success',
+                            entityId ? config.updatedMessage : config.createdMessage
+                        );
+                        await this.refreshActiveComponentView();
+                    } catch (err) {
+                        console.error(`Failed to save ${entityType}:`, err);
+                        button.textContent = 'Gagal';
+                        NotificationController.show('danger',
+                            `Gagal menyimpan data ${entityType}: ${err.message}`);
                     } finally {
                         window.setTimeout(() => {
                             button.disabled = false;
@@ -3031,6 +3690,7 @@
                     this.setupMasterToggle();
                     this.setupInputModeToggle();
                     this.setupInfoflowRowSaveHandler();
+                    this.setupEntityRowSaveHandler();
                     this.initializeComponent();
                     InputModeController.syncButton();
                 },
@@ -3070,6 +3730,14 @@
                         const targetBtn = event.target.closest('.js-save-infoflow-row');
                         if (!targetBtn) return;
                         InputModeController.saveInfoflowRow(targetBtn);
+                    });
+                },
+
+                setupEntityRowSaveHandler() {
+                    document.addEventListener('click', (event) => {
+                        const targetBtn = event.target.closest('.js-save-entity-row');
+                        if (!targetBtn) return;
+                        InputModeController.saveEntityRow(targetBtn);
                     });
                 },
 

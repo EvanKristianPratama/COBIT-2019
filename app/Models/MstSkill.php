@@ -26,6 +26,11 @@ class MstSkill extends Model
         // 'objective_purpose',
     ];
 
+    public function objective()
+    {
+        return $this->belongsTo(MstObjective::class, 'objective_id');
+    }
+
     public function guidances()
     {
         return $this->belongsToMany(

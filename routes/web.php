@@ -86,6 +86,30 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit2019.objectives.infoflow-output.store');
     Route::put('/objectives/infoflow-output/{outputId}', [MstObjectiveController::class, 'updateInfoflowOutput'])
         ->name('cobit2019.objectives.infoflow-output.update');
+    Route::post('/objectives/policies', [MstObjectiveController::class, 'createPolicy'])
+        ->name('cobit2019.objectives.policies.store');
+    Route::put('/objectives/policies/{policyId}', [MstObjectiveController::class, 'updatePolicy'])
+        ->name('cobit2019.objectives.policies.update');
+    Route::post('/objectives/policies/{policyId}/guidance', [MstObjectiveController::class, 'createPolicyGuidance'])
+        ->name('cobit2019.objectives.policies.guidance.store');
+    Route::post('/objectives/skills', [MstObjectiveController::class, 'createSkill'])
+        ->name('cobit2019.objectives.skills.store');
+    Route::put('/objectives/skills/{skillId}', [MstObjectiveController::class, 'updateSkill'])
+        ->name('cobit2019.objectives.skills.update');
+    Route::post('/objectives/skills/{skillId}/guidance', [MstObjectiveController::class, 'createSkillGuidance'])
+        ->name('cobit2019.objectives.skills.guidance.store');
+    Route::post('/objectives/key-culture', [MstObjectiveController::class, 'createKeyCulture'])
+        ->name('cobit2019.objectives.key-culture.store');
+    Route::put('/objectives/key-culture/{keyCultureId}', [MstObjectiveController::class, 'updateKeyCulture'])
+        ->name('cobit2019.objectives.key-culture.update');
+    Route::post('/objectives/key-culture/{keyCultureId}/guidance', [MstObjectiveController::class, 'createKeyCultureGuidance'])
+        ->name('cobit2019.objectives.key-culture.guidance.store');
+    Route::post('/objectives/sia', [MstObjectiveController::class, 'createSia'])
+        ->name('cobit2019.objectives.sia.store');
+    Route::put('/objectives/sia/{siaId}', [MstObjectiveController::class, 'updateSia'])
+        ->name('cobit2019.objectives.sia.update');
+    Route::put('/objectives/guidance/{guidanceId}', [MstObjectiveController::class, 'updateGuidance'])
+        ->name('cobit2019.objectives.guidance.update');
 });
 
 // Admin routes (auth + role check di controller)

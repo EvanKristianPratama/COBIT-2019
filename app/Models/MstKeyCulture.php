@@ -13,7 +13,7 @@ class MstKeyCulture extends Model
 
     protected $primaryKey = 'keyculture_id';
 
-    // public $incrementing = false;
+    public $incrementing = false;
 
     protected $keyType = 'int';
 
@@ -25,6 +25,11 @@ class MstKeyCulture extends Model
         'element',
         // 'objective_purpose',
     ];
+
+    public function objective()
+    {
+        return $this->belongsTo(MstObjective::class, 'objective_id');
+    }
 
     public function guidances()
     {
