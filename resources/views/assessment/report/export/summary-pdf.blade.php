@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Report Summary Detail PDF</title>
+    <title>Report Summary PDF</title>
     <style>
         body {
             font-family: sans-serif;
@@ -89,16 +89,28 @@
             page-break-inside: avoid;
             margin-bottom: 20px;
         }
-
-        .practice-header {
-            background-color: #e8e8e8;
-            font-weight: bold;
-            font-size: 9pt;
-        }
     </style>
 </head>
 
 <body>
+    @php
+        $domainOrder = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+        
+        $objectives = collect($objectives)->sortBy(function($obj) use ($domainOrder) {
+            $domain = preg_replace('/[0-9]+/', '', $obj->objective_id);
+            $order = $domainOrder[$domain] ?? 99;
+            return sprintf('%02d-%s', $order, $obj->objective_id);
+        })->values();
+
+        if (isset($roadmap) && isset($roadmap['objectives'])) {
+            $roadmap['objectives'] = collect($roadmap['objectives'])->sortBy(function($obj) use ($domainOrder) {
+                $cleanId = str_replace('"', '', $obj->objective_id);
+                $domain = preg_replace('/[0-9]+/', '', $cleanId);
+                $order = $domainOrder[$domain] ?? 99;
+                return sprintf('%02d-%s', $order, $cleanId);
+            })->values();
+        }
+    @endphp
     @foreach ($objectives as $objective)
         <div class="objective-container">
             {{-- 1. Header Bar --}}
@@ -191,73 +203,107 @@
                 </tr>
             </table>
 
-            {{-- Evidence Table Per Practice --}}
+            {{-- Management Practices List --}}
+            <div style="margin-top: 5px; margin-bottom: 5px;">
+                <div
+                    style="background-color: #0f2b5c; color: white; text-align: center; padding: 5px; font-weight: bold; font-size: 10pt;">
+                    Management Practices List
+                </div>
+                <div style="border: 1px solid #dee2e6; padding: 5px; background-color: white;">
+                    @php
+                        $practices = $objective->practices;
+                        $practiceCount = $practices->count();
+                        $chunkSize = max(1, (int) ceil($practiceCount / 3));
+                        $chunks = $practiceCount > 0 ? $practices->chunk($chunkSize) : collect();
+                    @endphp
+                    <table style="width: 100%; border: none;">
+                        @if ($practiceCount === 0)
+                            <tr style="border: none;">
+                                <td colspan="3" style="border: none; text-align: center; font-size: 0.75rem; color: #6c757d; font-style: italic;">
+                                    No management practices available.
+                                </td>
+                            </tr>
+                        @else
+                            <tr style="border: none;">
+                                @foreach ($chunks as $chunk)
+                                    <td style="width: 33%; vertical-align: top; border: none; padding: 0 5px;">
+                                        @foreach ($chunk as $practice)
+                                            <div style="margin-bottom: 3px;">
+                                                <span
+                                                    style="font-size: 0.75rem; margin-right: 3px;">{{ str_replace('"', '', $practice->practice_id) }}</span>
+                                                <span
+                                                    style="color: black; font-size: 0.75rem;">{{ str_replace('"', '', $practice->practice_name) }}</span>
+                                            </div>
+                                        @endforeach
+                                    </td>
+                                @endforeach
+                                @for ($i = $chunks->count(); $i < 3; $i++)
+                                    <td style="width: 33%; border: none;"></td>
+                                @endfor
+                            </tr>
+                        @endif
+                    </table>
+                </div>
+            </div>
+
+            {{-- Detailed Table Section --}}
             <div style="margin-top: 5px;">
                 <table class="table" style="border: 1px solid #000;">
                     <thead>
                         <tr>
                             <th
-                                style="width: 10%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
-                                Practice ID
-                            </th>
+                                style="width: 50%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                Kebijakan Pedoman /
+                                Prosedur</th>
                             <th
-                                style="width: 45%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
-                                Kebijakan Pedoman / Prosedur
-                            </th>
-                            <th
-                                style="width: 45%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
-                                Evidences / Bukti Pelaksanaan
-                            </th>
+                                style="width: 50%; background-color: #0f2b5c; color: white; padding: 5px; font-size: 10pt;">
+                                Evidences / Bukti
+                                Pelaksanaan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($objective->practices as $practice)
+                        @if ($objective->has_evidence)
                             <tr>
                                 <td
-                                    style="text-align: center; vertical-align: middle; font-weight: bold; font-size: 9pt;">
-                                    {{ str_replace('"', '', $practice->practice_id) }}
+                                    style="vertical-align: {{ isset($objective->policy_list) && count($objective->policy_list) > 0 ? 'top' : 'middle' }};">
+                                    @if (isset($objective->policy_list) && count($objective->policy_list) > 0)
+                                        <div style="font-size: 9pt;">
+                                            @foreach ($objective->policy_list as $line)
+                                                <div style="margin-bottom: 1px;">• {{ $line }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div
+                                            style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
+                                            Belum ada Kebijakan / Prosedur
+                                        </div>
+                                    @endif
                                 </td>
-                                @if (
-                                    (!isset($practice->policy_list) || count($practice->policy_list) == 0) &&
-                                        (!isset($practice->execution_list) || count($practice->execution_list) == 0))
-                                    <td colspan="2"
-                                        style="text-align: center; vertical-align: middle; font-style: italic; color: #6c757d; font-size: 9pt;">
-                                        Belum ada Kebijakan & Bukti Pelaksanaan
-                                    </td>
-                                @else
-                                    <td
-                                        style="vertical-align: {{ isset($practice->policy_list) && count($practice->policy_list) > 0 ? 'top' : 'middle' }};">
-                                        @if (isset($practice->policy_list) && count($practice->policy_list) > 0)
-                                            <div style="font-size: 9pt;">
-                                                @foreach ($practice->policy_list as $line)
-                                                    <div style="margin-bottom: 1px;">• {{ $line }}</div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <div
-                                                style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                                Belum ada Kebijakan / Prosedur
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td
-                                        style="vertical-align: {{ isset($practice->execution_list) && count($practice->execution_list) > 0 ? 'top' : 'middle' }};">
-                                        @if (isset($practice->execution_list) && count($practice->execution_list) > 0)
-                                            <div style="font-size: 9pt;">
-                                                @foreach ($practice->execution_list as $line)
-                                                    <div style="margin-bottom: 1px;">• {{ $line }}</div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <div
-                                                style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
-                                                Belum ada Evidence / Bukti Pelaksanaan
-                                            </div>
-                                        @endif
-                                    </td>
-                                @endif
+
+                                <td
+                                    style="vertical-align: {{ isset($objective->execution_list) && count($objective->execution_list) > 0 ? 'top' : 'middle' }};">
+                                    @if (isset($objective->execution_list) && count($objective->execution_list) > 0)
+                                        <div style="font-size: 9pt;">
+                                            @foreach ($objective->execution_list as $line)
+                                                <div style="margin-bottom: 1px;">• {{ $line }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div
+                                            style="color: #6c757d; font-size: 9pt; font-style: italic; text-align: center;">
+                                            Belum ada Evidences / Bukti Pelaksanaan
+                                        </div>
+                                    @endif
+                                </td>
                             </tr>
-                        @endforeach
+                        @else
+                            <tr>
+                                <td colspan="2"
+                                    style="text-align: center; font-style: italic; color: #6c757d; font-size: 9pt;">
+                                    Belum ada Kebijakan & Bukti Pelaksanaan
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -304,6 +350,7 @@
                 </div>
             </div>
 
+            @if(!isset($includeRoadmap) || $includeRoadmap)
             {{-- Roadmap Target Capability Section --}}
             <div style="margin-top: 5px; border: 1px solid #dee2e6;">
                 <div style="background-color: #0f2b5c; color: white; padding: 5px; font-weight: bold; font-size: 9pt;">
@@ -315,68 +362,70 @@
                             <thead>
                                 <tr>
                                     <th rowspan="2"
-                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle; width: 60px;">
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; vertical-align: middle; width: 60px;">
                                         Objective ID</th>
                                     <th rowspan="2"
-                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle; width: 150px;">
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; vertical-align: middle; width: 150px;">
                                         Objective Name</th>
                                     <th colspan="2"
-                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; vertical-align: middle;">
                                         Hasil Assessment {{ $evaluation->tahun ?? '2025' }}
                                     </th>
                                     @foreach ($roadmap['years'] as $year)
                                         <th colspan="2"
-                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 8pt; vertical-align: middle;">
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; vertical-align: middle;">
                                             {{ $year }}
                                         </th>
                                     @endforeach
                                 </tr>
                                 <tr>
                                     <th
-                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 6pt; width: 35px;">
                                         Level</th>
                                     <th
-                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
+                                        style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 6pt; width: 35px;">
                                         Rating</th>
                                     @foreach ($roadmap['years'] as $year)
                                         <th
-                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 6pt; width: 35px;">
                                             Level</th>
                                         <th
-                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 7pt; width: 35px;">
+                                            style="background-color: #0f2b5c; color: white; border: 1px solid #000; font-size: 6pt; width: 35px;">
                                             Rating</th>
                                     @endforeach
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($roadmap['objectives'] as $obj)
-                                    <tr>
-                                        <td
-                                            style="border: 1px solid #000; font-size: 8pt; text-align: center; font-weight: bold;">
-                                            {{ str_replace('"', '', $obj->objective_id) }}</td>
-                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: left;">
-                                            {{ str_replace('"', '', $obj->objective) }}
-                                        </td>
-                                        {{-- Current Year Assessment Results from Scorecard --}}
-                                        @php
-                                            // Find matching objective from $objectives to get scorecard data
-                                            $scorecardObj = $objectives->firstWhere('objective_id', $obj->objective_id);
-                                        @endphp
-                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
-                                            {{ $scorecardObj->current_score ?? '-' }}
-                                        </td>
-                                        <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
-                                            {{ $scorecardObj->rating_string ?? '-' }}
-                                        </td>
-                                        @foreach ($roadmap['years'] as $year)
-                                            <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
-                                                {{ data_get($obj->roadmap_values, "$year.level") ?? '-' }}
+                                    {{-- Current Year Assessment Results from Scorecard --}}
+                                    @php
+                                        // Find matching objective from $objectives to get scorecard data
+                                        $scorecardObj = $objectives->firstWhere('objective_id', $obj->objective_id);
+                                    @endphp
+                                    @if ($scorecardObj)
+                                        <tr>
+                                            <td
+                                                style="border: 1px solid #000; font-size: 7pt; text-align: center; font-weight: bold;">
+                                                {{ str_replace('"', '', $obj->objective_id) }}</td>
+                                            <td style="border: 1px solid #000; font-size: 7pt; text-align: left;">
+                                                {{ str_replace('"', '', $obj->objective) }}
                                             </td>
-                                            <td style="border: 1px solid #000; font-size: 8pt; text-align: center;">
-                                                {{ data_get($obj->roadmap_values, "$year.rating") ?? '-' }}
+                                            <td style="border: 1px solid #000; font-size: 7pt; text-align: center;">
+                                                {{ $scorecardObj->current_score ?? '-' }}
                                             </td>
-                                        @endforeach
-                                    </tr>
+                                            <td style="border: 1px solid #000; font-size: 7pt; text-align: center;">
+                                                {{ $scorecardObj->rating_string ?? '-' }}
+                                            </td>
+                                            @foreach ($roadmap['years'] as $year)
+                                                <td style="border: 1px solid #000; font-size: 7pt; text-align: center;">
+                                                    {{ data_get($obj->roadmap_values, "$year.level") ?? '-' }}
+                                                </td>
+                                                <td style="border: 1px solid #000; font-size: 7pt; text-align: center;">
+                                                    {{ data_get($obj->roadmap_values, "$year.rating") ?? '-' }}
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>
@@ -387,6 +436,7 @@
                     @endif
                 </div>
             </div>
+            @endif
 
         </div>
 

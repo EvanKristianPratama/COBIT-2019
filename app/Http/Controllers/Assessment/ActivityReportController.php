@@ -48,7 +48,7 @@ class ActivityReportController extends Controller
             return $data;
         }
 
-        $pdf = Pdf::loadView('assessment.report.activity-pdf', $data);
+        $pdf = Pdf::loadView('assessment.report.export.activity-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
 
         $filename = 'Activity-Report-'.$evalId.'-'.$objectiveId.'.pdf';

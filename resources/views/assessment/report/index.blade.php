@@ -91,6 +91,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script>
         /**
          * Multi-Scope Assessment Report
@@ -251,7 +252,7 @@
                     Swal.fire({
                         title: 'Pilih Jenis Export',
                         html: `
-                            <div class="d-grid gap-2">
+                            <div class="d-grid gap-2 mb-3">
                                 <button type="button" class="btn btn-outline-secondary" id="swal-export-jpg">
                                     <i class="fas fa-image me-2"></i>Export JPG
                                 </button>
@@ -261,9 +262,18 @@
                                 <button type="button" class="btn btn-success" id="swal-export-excel">
                                     <i class="fas fa-file-excel me-2"></i>Export Excel
                                 </button>
+                                <button type="button" class="btn btn-warning text-white" id="swal-export-ppt">
+                                    <i class="fas fa-file-powerpoint me-2"></i>Export All (PPT)
+                                </button>
                                 <button type="button" class="btn btn-primary" id="swal-export-all">
                                     <i class="fas fa-layer-group me-2"></i>Export All
                                 </button>
+                            </div>
+                            <div class="form-check text-start">
+                                <input class="form-check-input" type="checkbox" id="swal-include-roadmap" checked>
+                                <label class="form-check-label" style="font-size: 0.9rem;" for="swal-include-roadmap">
+                                    Include Roadmap Target Capability (Export All)
+                                </label>
                             </div>
                         `,
                         showConfirmButton: false,
@@ -272,6 +282,7 @@
                             const jpgOption = document.getElementById('swal-export-jpg');
                             const pdfOption = document.getElementById('swal-export-pdf');
                             const excelOption = document.getElementById('swal-export-excel');
+                            const pptOption = document.getElementById('swal-export-ppt');
                             const allOption = document.getElementById('swal-export-all');
 
                             if (jpgOption) {
@@ -295,10 +306,18 @@
                                 });
                             }
 
+                            if (pptOption) {
+                                pptOption.addEventListener('click', () => {
+                                    Swal.close();
+                                    this.exportRecapAsPpt();
+                                });
+                            }
+
                             if (allOption) {
                                 allOption.addEventListener('click', () => {
+                                    const includeRoadmap = document.getElementById('swal-include-roadmap').checked ? 1 : 0;
                                     Swal.close();
-                                    window.open("{{ route('assessment.summary-pdf', ['evalId' => $routeEvalId]) }}", '_blank');
+                                    window.open("{{ route('assessment.summary-pdf', ['evalId' => $routeEvalId]) }}?include_roadmap=" + includeRoadmap, '_blank');
                                 });
                             }
                         }
@@ -568,6 +587,183 @@
                     } catch (error) {
                         console.error('Export PDF failed:', error);
                         Swal.fire('Error', 'Gagal export PDF.', 'error');
+                    }
+                },
+
+                async exportRecapAsPpt() {
+                    const includeRoadmap = document.getElementById('swal-include-roadmap') ? (document.getElementById('swal-include-roadmap').checked ? 1 : 0) : 1;
+                    
+                    Swal.fire({
+                        title: 'Generating PPT...',
+                        text: 'Memproses data semua GAMO, harap tunggu...',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+
+                    try {
+                        const response = await fetch(`{{ route('assessment.summary-json', ['evalId' => $routeEvalId]) }}?include_roadmap=${includeRoadmap}`);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const data = await response.json();
+
+                        console.log('PPT data received:', data);
+
+                        let pptx = new PptxGenJS();
+                        pptx.layout = 'LAYOUT_16x9';
+
+                        const objectives = Array.isArray(data.objectives) ? data.objectives : [];
+                        if (objectives.length === 0) {
+                            Swal.fire('Info', 'Tidak ada data assessment untuk diexport.', 'info');
+                            return;
+                        }
+
+                        // === Slide dimensions: 16:9 = 13.33" x 7.5" ===
+                        // Margins: 0.2" each side → usable width = 12.93"
+                        // Layout:
+                        //   Title:     y=0.15, h=0.40  → ends 0.55
+                        //   Scorecard: y=0.60, h=0.50  → ends 1.10
+                        //   Content:   y=1.15           → available to 7.30 = 6.15" total
+                        //   7 sections: header(0.22) + content(0.56) = 0.78 each
+                        //   7 × 0.78 = 5.46 → fits in 6.15
+
+                        const SLIDE_W = 12.93;
+                        const MARGIN_X = 0.2;
+                        const SEC_HEADER_H = 0.22;
+                        const SEC_CONTENT_H = 0.56;
+                        const SEC_TOTAL = SEC_HEADER_H + SEC_CONTENT_H; // 0.78
+                        const CONTENT_START_Y = 1.15;
+
+                        objectives.forEach((obj, idx) => {
+                            let slide = pptx.addSlide();
+
+                            // Title
+                            slide.addText(
+                                String(obj.objective_id || '') + ' - ' + String(obj.objective || ''),
+                                { x:MARGIN_X, y:0.15, w:SLIDE_W, h:0.40, fill:{color:'0f2b5c'}, color:'ffffff', bold:true, fontSize:13, align:'left', valign:'middle' }
+                            );
+
+                            // Scorecard table
+                            let scoreRows = [
+                                [
+                                    { text: 'Capability Level', options: { fill:{color:'9b59b6'}, color:'ffffff', bold:true, align:'center', fontSize:9 } },
+                                    { text: 'Max Level', options: { fill:{color:'9b59b6'}, color:'ffffff', bold:true, align:'center', fontSize:9 } },
+                                    { text: 'Rating', options: { fill:{color:'9b59b6'}, color:'ffffff', bold:true, align:'center', fontSize:9 } },
+                                    { text: 'Capability Target', options: { fill:{color:'9b59b6'}, color:'ffffff', bold:true, align:'center', fontSize:9 } }
+                                ],
+                                [
+                                    { text: String(obj.current_score != null ? obj.current_score : '-'), options: { align:'center', bold:true, fontSize:10 } },
+                                    { text: String(obj.max_level != null ? obj.max_level : '-'), options: { align:'center', bold:true, fontSize:10 } },
+                                    { text: String(obj.rating_string || '-'), options: { align:'center', bold:true, fontSize:10 } },
+                                    { text: String(obj.target_level == 0 || obj.target_level == null ? '-' : obj.target_level), options: { align:'center', bold:true, fontSize:10 } }
+                                ]
+                            ];
+                            slide.addTable(scoreRows, {
+                                x: MARGIN_X, y: 0.60, w: SLIDE_W,
+                                rowH: [0.25, 0.25],
+                                colW: [3.23, 3.23, 3.23, 3.23],
+                                border: { type:'solid', pt:1, color:'000000' },
+                                margin: [2, 2, 2, 2]
+                            });
+
+                            // Build sections data
+                            let practicesArr = Array.isArray(obj.practices) ? obj.practices : [];
+                            let practicesText = practicesArr.length > 0
+                                ? practicesArr.map(p => '• ' + String(p.practice_id || '').replace(/"/g, '') + ' - ' + String(p.practice_name || '').replace(/"/g, '')).join('\n')
+                                : 'No management practices available.';
+
+                            let policyArr = Array.isArray(obj.policy_list) ? obj.policy_list : [];
+                            let policyText = policyArr.length > 0 ? policyArr.map(p => '• ' + p).join('\n') : 'Belum ada Kebijakan / Prosedur';
+
+                            let evidenceArr = Array.isArray(obj.execution_list) ? obj.execution_list : [];
+                            let evidenceText = evidenceArr.length > 0 ? evidenceArr.map(p => '• ' + p).join('\n') : 'Belum ada Evidences / Bukti Pelaksanaan';
+
+                            let kesimpulanText = (obj.saved_note && obj.saved_note.kesimpulan) ? String(obj.saved_note.kesimpulan).trim() : 'Belum ada kesimpulan';
+                            let rekomendasiText = (obj.saved_note && obj.saved_note.rekomendasi) ? String(obj.saved_note.rekomendasi).trim() : 'Belum ada rekomendasi';
+
+                            const sections = [
+                                { title: 'Description', content: obj.objective_description || 'No description available.' },
+                                { title: 'Purpose', content: obj.objective_purpose || 'No purpose available.' },
+                                { title: 'Management Practices', content: practicesText },
+                                { title: 'Kebijakan Pedoman / Prosedur', content: policyText },
+                                { title: 'Evidences / Bukti Pelaksanaan', content: evidenceText },
+                                { title: 'Kesimpulan', content: kesimpulanText },
+                                { title: 'Rekomendasi', content: rekomendasiText }
+                            ];
+
+                            // Render each section with fixed height
+                            let yPos = CONTENT_START_Y;
+                            sections.forEach(sec => {
+                                // Section header
+                                slide.addText(sec.title, {
+                                    x: MARGIN_X, y: yPos, w: SLIDE_W, h: SEC_HEADER_H,
+                                    fill:{color:'0f2b5c'}, color:'ffffff', bold:true, fontSize:8,
+                                    valign:'middle', margin:[0,4,0,4]
+                                });
+                                yPos += SEC_HEADER_H;
+
+                                // Section content (with shrinkText to auto-fit)
+                                slide.addText(String(sec.content || '-'), {
+                                    x: MARGIN_X, y: yPos, w: SLIDE_W, h: SEC_CONTENT_H,
+                                    fontSize: 8, color:'333333', valign:'top',
+                                    margin:[2,4,2,4], shrinkText: true
+                                });
+                                yPos += SEC_CONTENT_H;
+                            });
+                        });
+                        
+                        // Roadmap slide
+                        const roadmapObjs = (data.roadmap && Array.isArray(data.roadmap.objectives)) ? data.roadmap.objectives : [];
+                        const roadmapYears = (data.roadmap && Array.isArray(data.roadmap.years)) ? data.roadmap.years : [];
+                        
+                        if (data.includeRoadmap && roadmapObjs.length > 0) {
+                            let slide = pptx.addSlide();
+                            slide.addText('Roadmap Target Capability', { x:0.2, y:0.2, w:12.93, fontSize:14, bold:true, color:'0f2b5c' });
+
+                            // Build flat header row (no colspan/rowspan)
+                            let headerRow = [
+                                { text: 'Obj ID', options: { fill:{color:'0f2b5c'}, color:'ffffff', bold:true, align:'center', fontSize:7 } },
+                                { text: 'Objective Name', options: { fill:{color:'0f2b5c'}, color:'ffffff', bold:true, align:'center', fontSize:7 } },
+                                { text: 'Level', options: { fill:{color:'0f2b5c'}, color:'ffffff', bold:true, align:'center', fontSize:7 } },
+                                { text: 'Rating', options: { fill:{color:'0f2b5c'}, color:'ffffff', bold:true, align:'center', fontSize:7 } }
+                            ];
+                            roadmapYears.forEach(yr => {
+                                headerRow.push({ text: 'Lvl ' + yr, options: { fill:{color:'0f2b5c'}, color:'ffffff', bold:true, align:'center', fontSize:7 } });
+                                headerRow.push({ text: 'Rtg ' + yr, options: { fill:{color:'0f2b5c'}, color:'ffffff', bold:true, align:'center', fontSize:7 } });
+                            });
+
+                            let tableRows = [headerRow];
+
+                            roadmapObjs.forEach(rObj => {
+                                let sObj = objectives.find(o => o.objective_id === rObj.objective_id);
+                                let row = [
+                                    { text: String(rObj.objective_id || ''), options: { align:'center', fontSize:7 } },
+                                    { text: String(rObj.objective || ''), options: { align:'left', fontSize:7 } },
+                                    { text: String(sObj ? (sObj.current_score || '-') : '-'), options: { align:'center', fontSize:7 } },
+                                    { text: String(sObj ? (sObj.rating_string || '-') : '-'), options: { align:'center', fontSize:7 } }
+                                ];
+                                roadmapYears.forEach(yr => {
+                                    let rv = rObj.roadmap_values;
+                                    let val = (rv && rv[yr]) ? rv[yr] : null;
+                                    row.push({ text: String(val ? (val.level || '-') : '-'), options: { align:'center', fontSize:7 } });
+                                    row.push({ text: String(val ? (val.rating || '-') : '-'), options: { align:'center', fontSize:7 } });
+                                });
+                                tableRows.push(row);
+                            });
+
+                            slide.addTable(tableRows, {
+                                x: 0.2, y: 0.6, w: 12.93,
+                                border: { type:'solid', pt:1, color:'000000' },
+                                margin: [2, 2, 2, 2],
+                                fontSize: 7
+                            });
+                        }
+
+                        await pptx.writeFile({ fileName: 'Export_All_' + Config.routeEvalId + '_' + new Date().toISOString().slice(0, 10) + '.pptx' });
+                        Swal.close();
+                        Swal.fire('Success', 'Berhasil export PPT!', 'success');
+
+                    } catch (error) {
+                        console.error('Failed to generate PPT', error);
+                        Swal.fire('Error', 'Gagal memuat data untuk PPT: ' + error.message, 'error');
                     }
                 },
 

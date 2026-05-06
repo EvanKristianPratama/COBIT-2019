@@ -130,7 +130,34 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($objectives as $index => $obj)
+            @php
+                $filteredObjectives = [];
+                foreach($objectives as $obj) {
+                    $isSelected = false;
+                    foreach($normalizedSelectedData as $data) {
+                        if (isset($data['_score_map'][$obj->objective_id]) && $data['_score_map'][$obj->objective_id] !== null) {
+                            $isSelected = true;
+                            break;
+                        }
+                    }
+                    if ($isSelected) {
+                        $filteredObjectives[] = $obj;
+                    }
+                }
+
+                $domainOrder = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+                usort($filteredObjectives, function($a, $b) use ($domainOrder) {
+                    $domainA = preg_replace('/[0-9]+/', '', $a->objective_id);
+                    $domainB = preg_replace('/[0-9]+/', '', $b->objective_id);
+                    $orderA = $domainOrder[$domainA] ?? 99;
+                    $orderB = $domainOrder[$domainB] ?? 99;
+                    if ($orderA == $orderB) {
+                        return strcmp($a->objective_id, $b->objective_id);
+                    }
+                    return $orderA <=> $orderB;
+                });
+            @endphp
+            @foreach($filteredObjectives as $index => $obj)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td class="text-center"><strong>{{ $obj->objective_id }}</strong></td>
@@ -212,6 +239,66 @@
             </tr>
         </tfoot>
     </table>
+
+    @if(isset($includeRoadmap) && $includeRoadmap)
+        <div style="page-break-before: always;"></div>
+        <div class="header">
+            <h2>Roadmap Target Capability</h2>
+        </div>
+        
+        @if (isset($roadmap) && isset($roadmap['objectives']) && $roadmap['objectives']->isNotEmpty())
+            @php
+                $roadmap['objectives'] = collect($roadmap['objectives'])->sortBy(function($obj) use ($domainOrder) {
+                    $cleanId = str_replace('"', '', $obj->objective_id);
+                    $domain = preg_replace('/[0-9]+/', '', $cleanId);
+                    $order = $domainOrder[$domain] ?? 99;
+                    return sprintf('%02d-%s', $order, $cleanId);
+                })->values();
+            @endphp
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 60px;">Objective ID</th>
+                        <th rowspan="2" style="width: 150px;">Objective Name</th>
+                        @foreach ($roadmap['years'] as $year)
+                            <th colspan="2">{{ $year }}</th>
+                        @endforeach
+                    </tr>
+                    <tr>
+                        @foreach ($roadmap['years'] as $year)
+                            <th style="width: 35px; font-size: 8px;">Level</th>
+                            <th style="width: 35px; font-size: 8px;">Rating</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($roadmap['objectives'] as $obj)
+                        @php
+                            $isSelected = false;
+                            foreach($normalizedSelectedData as $data) {
+                                if (isset($data['_score_map'][$obj->objective_id]) && $data['_score_map'][$obj->objective_id] !== null) {
+                                    $isSelected = true;
+                                    break;
+                                }
+                            }
+                        @endphp
+                        @if ($isSelected)
+                            <tr>
+                                <td class="text-center score-cell">{{ str_replace('"', '', $obj->objective_id) }}</td>
+                                <td>{{ str_replace('"', '', $obj->objective) }}</td>
+                                @foreach ($roadmap['years'] as $year)
+                                    <td class="text-center">{{ data_get($obj->roadmap_values, "$year.level") ?? '-' }}</td>
+                                    <td class="text-center">{{ data_get($obj->roadmap_values, "$year.rating") ?? '-' }}</td>
+                                @endforeach
+                            </tr>
+                        @endif
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <p style="text-align: center; color: #666; font-style: italic;">Belum ada data roadmap</p>
+        @endif
+    @endif
 
 </body>
 </html>

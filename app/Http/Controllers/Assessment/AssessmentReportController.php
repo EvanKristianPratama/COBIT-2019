@@ -130,10 +130,19 @@ class AssessmentReportController extends Controller
             }
             unset($data);
 
-            $pdf = Pdf::loadView('assessment.report.all-pdf', [
+            $includeRoadmap = $request->input('include_roadmap') == '1';
+            $roadmap = [];
+            if ($includeRoadmap) {
+                $assessmentSummaryService = app(\App\Services\Assessment\Summary\AssessmentSummaryService::class);
+                $roadmap = $assessmentSummaryService->getRoadmapTargetCapability();
+            }
+
+            $pdf = Pdf::loadView('assessment.report.export.all-pdf', [
                 'objectives' => $reportData['objectives'],
                 'selectedData' => $selectedData,
                 'showMaxLevel' => $request->input('show_max_level') == '1',
+                'includeRoadmap' => $includeRoadmap,
+                'roadmap' => $roadmap,
             ]);
 
             // Set paper size to landscape for better table view

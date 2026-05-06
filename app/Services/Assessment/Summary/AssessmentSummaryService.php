@@ -30,7 +30,8 @@ class AssessmentSummaryService
             'practices.activities.evaluations' => function ($query) use ($evalId) {
                 $query->where('eval_id', $evalId);
             },
-        ])->orderBy('objective_id');
+        ])->orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
+          ->orderBy('objective_id');
 
         if ($objectiveId) {
             $objectivesQuery->where('objective_id', $objectiveId);

@@ -56,6 +56,12 @@
                                 Show Max Level
                             </label>
                         </div>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" id="include-roadmap">
+                            <label class="form-check-label small" for="include-roadmap">
+                                Include Roadmap Target Capability
+                            </label>
+                        </div>
                      </div>
                      <button class="btn btn-sm btn-outline-primary w-100 mb-1" id="btn-select-all">Select All</button>
                      <button class="btn btn-sm btn-outline-secondary w-100" id="btn-deselect-all">Deselect All</button>
@@ -633,6 +639,14 @@
                     showMaxInput.name = 'show_max_level';
                     showMaxInput.value = STATE.showMaxLevel ? '1' : '0';
                     form.appendChild(showMaxInput);
+
+                    // Include Roadmap
+                    const includeRoadmapInput = document.createElement('input');
+                    includeRoadmapInput.type = 'hidden';
+                    includeRoadmapInput.name = 'include_roadmap';
+                    const chkIncludeRoadmap = document.getElementById('include-roadmap');
+                    includeRoadmapInput.value = chkIncludeRoadmap && chkIncludeRoadmap.checked ? '1' : '0';
+                    form.appendChild(includeRoadmapInput);
 
                     document.body.appendChild(form);
                     form.submit();

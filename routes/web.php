@@ -377,6 +377,9 @@ Route::middleware(['auth', 'permission:assessments.view'])->group(function () {
     Route::get('/assessment/{evalId}/summary-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryPdf'])
         ->name('assessment.summary-pdf');
 
+    Route::get('/assessment/{evalId}/summary-json/{objectiveId?}', [AssessmentSummaryController::class, 'summaryJson'])
+        ->name('assessment.summary-json');
+
     Route::get('/assessment/{evalId}/summary-detail-pdf/{objectiveId?}', [AssessmentSummaryController::class, 'summaryDetailPdf'])
         ->name('assessment.summary-detail-pdf');
 

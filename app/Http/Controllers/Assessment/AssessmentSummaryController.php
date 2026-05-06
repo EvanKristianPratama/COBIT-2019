@@ -55,7 +55,7 @@ class AssessmentSummaryController extends Controller
         return view('assessment.report.note', $this->assessmentSummaryService->getNotesPageData($evaluation));
     }
 
-    public function summaryPdf($evalId, $objectiveId = null)
+    public function summaryPdf(\Illuminate\Http\Request $request, $evalId, $objectiveId = null)
     {
         $evaluation = $this->resolveEvaluation($evalId);
         if (! $this->assessmentAccessService->canView(Auth::user(), $evaluation)) {
@@ -66,9 +66,11 @@ class AssessmentSummaryController extends Controller
 
         $data = $this->assessmentSummaryService->getSummary($evaluation, $objectiveId);
         $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId);
-        $data = array_merge($data, compact('roadmap'));
+        
+        $includeRoadmap = $request->input('include_roadmap', '1') == '1';
+        $data = array_merge($data, compact('roadmap', 'includeRoadmap'));
 
-        $pdf = Pdf::loadView('assessment.report.summary-pdf', $data);
+        $pdf = Pdf::loadView('assessment.report.export.summary-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
 
         $filename = 'Summary-Report-'.$evaluation->eval_id.($objectiveId ? '-'.$objectiveId : '').'.pdf';
@@ -76,7 +78,23 @@ class AssessmentSummaryController extends Controller
         return $pdf->stream($filename);
     }
 
-    public function summaryDetailPdf($evalId, $objectiveId = null)
+    public function summaryJson(\Illuminate\Http\Request $request, $evalId, $objectiveId = null)
+    {
+        $evaluation = $this->resolveEvaluation($evalId);
+        if (! $this->assessmentAccessService->canView(Auth::user(), $evaluation)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        $data = $this->assessmentSummaryService->getSummary($evaluation, $objectiveId);
+        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId);
+        
+        $includeRoadmap = $request->input('include_roadmap', '1') == '1';
+        $data = array_merge($data, compact('roadmap', 'includeRoadmap'));
+
+        return response()->json($data);
+    }
+
+    public function summaryDetailPdf(\Illuminate\Http\Request $request, $evalId, $objectiveId = null)
     {
         $evaluation = $this->resolveEvaluation($evalId);
         if (! $this->assessmentAccessService->canView(Auth::user(), $evaluation)) {
@@ -87,9 +105,11 @@ class AssessmentSummaryController extends Controller
 
         $data = $this->assessmentSummaryService->getSummary($evaluation, $objectiveId);
         $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId);
-        $data = array_merge($data, compact('roadmap'));
+        
+        $includeRoadmap = $request->input('include_roadmap', '1') == '1';
+        $data = array_merge($data, compact('roadmap', 'includeRoadmap'));
 
-        $pdf = Pdf::loadView('assessment.report.summary-detail-pdf', $data);
+        $pdf = Pdf::loadView('assessment.report.export.summary-detail-pdf', $data);
         $pdf->setPaper('a4', 'landscape');
 
         $filename = 'Summary-Detail-Report-'.$evaluation->eval_id.($objectiveId ? '-'.$objectiveId : '').'.pdf';
