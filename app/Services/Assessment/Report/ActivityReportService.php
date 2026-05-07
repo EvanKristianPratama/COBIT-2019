@@ -32,12 +32,85 @@ class ActivityReportService
             $organization = $owner?->organisasi ?? 'N/A';
         }
 
+        if ($objectiveId === 'all') {
+            $scopedObjectiveIds = \App\Models\TrsEvalDetail::where('eval_id', $evalId)
+                ->pluck('domain_id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            if (empty($scopedObjectiveIds)) {
+                // Fallback: get from activityevals or all objectives
+                $scopedObjectiveIds = TrsActivityeval::where('eval_id', $evalId)
+                    ->join('mst_activities', 'trs_activityeval.activity_id', '=', 'mst_activities.activity_id')
+                    ->join('mst_practices', 'mst_activities.practice_id', '=', 'mst_practices.practice_id')
+                    ->pluck('mst_practices.objective_id')
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all();
+            }
+
+            if (empty($scopedObjectiveIds)) {
+                $scopedObjectiveIds = MstObjective::pluck('objective_id')->all();
+            }
+
+            // Sort them using the default order: EDM, APO, BAI, DSS, MEA
+            $domainOrder = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
+            usort($scopedObjectiveIds, function ($a, $b) use ($domainOrder) {
+                $prefixA = substr($a, 0, 3);
+                $prefixB = substr($b, 0, 3);
+                $rankA = $domainOrder[$prefixA] ?? 99;
+                $rankB = $domainOrder[$prefixB] ?? 99;
+                if ($rankA !== $rankB) {
+                    return $rankA <=> $rankB;
+                }
+                return strcmp($a, $b);
+            });
+
+            $reports = [];
+            foreach ($scopedObjectiveIds as $subObjectiveId) {
+                try {
+                    $reports[] = $this->buildSingle($evaluation, $subObjectiveId, $filterLevel, $organization);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("Failed to build report for objective $subObjectiveId: " . $e->getMessage());
+                }
+            }
+
+            return [
+                'is_all' => true,
+                'evaluation' => $evaluation,
+                'evalId' => $evalId,
+                'organization' => $organization,
+                'reports' => $reports,
+                'filterLevel' => $filterLevel,
+            ];
+        }
+
+        $singleReport = $this->buildSingle($evaluation, $objectiveId, $filterLevel, $organization);
+        return array_merge([
+            'is_all' => false,
+            'evaluation' => $evaluation,
+            'evalId' => $evalId,
+            'organization' => $organization,
+            'filterLevel' => $filterLevel,
+        ], $singleReport);
+    }
+
+    /**
+     * Build report for a single objective
+     */
+    private function buildSingle(MstEval $evaluation, string $objectiveId, $filterLevel = null, $organization = 'N/A'): array
+    {
+        $evalId = $evaluation->eval_id;
+
         $objective = MstObjective::with(['practices.activities'])
             ->where('objective_id', $objectiveId)
             ->first();
 
         if (! $objective) {
-            throw new InvalidArgumentException('Objective not found');
+            throw new InvalidArgumentException('Objective not found: ' . $objectiveId);
         }
 
         $areaObjective = TrsDomain::where('objective_id', $objectiveId)->first();
@@ -182,17 +255,13 @@ class ActivityReportService
         $levelRows = $this->buildLevelRows($activityData, $levelRatings);
 
         return compact(
-            'evaluation',
-            'evalId',
             'objective',
             'areaObjective',
             'activityData',
             'practiceRows',
             'levelRows',
-            'filterLevel',
             'currentLevel',
             'maxLevel',
-            'organization',
             'targetLevel',
             'ratingString',
             'displayValue',
