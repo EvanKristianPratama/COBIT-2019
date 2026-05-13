@@ -61,7 +61,7 @@ class DesignToolkitController extends Controller
         ];
 
         if (!Auth::check() || $isGuest) {
-            return view('cobit2019.cobit_home', $data);
+            return view('design_factor.cobit_home', $data);
         }
 
         $sort = $request->input('sort', 'terbaru');
@@ -73,7 +73,7 @@ class DesignToolkitController extends Controller
             $data['assessments'] = $this->getUserAssessments($user, $request, $orderDir);
         }
 
-        return view('cobit2019.cobit_home', $data);
+        return view('design_factor.cobit_home', $data);
     }
 
     /**

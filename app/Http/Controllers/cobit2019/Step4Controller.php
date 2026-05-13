@@ -43,7 +43,7 @@ class Step4Controller extends Controller
         $step4ReasonAdj = $this->mergeStep4Data($step4Session['reason_adjust'], $step4Db['reason_adjust']);
         $step4ReasonTgt = $this->mergeStep4Data($step4Session['reason_target'], $step4Db['reason_target']);
 
-        return view('cobit2019.step4.step4sumaryblade', [
+        return view('design_factor.step4.step4sumaryblade', [
             'step2' => [
                 'weights' => $weights['step2'],
                 'data' => $stepData['step2'],

@@ -32,7 +32,7 @@ class Df4Controller extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df4.design_factor4', [
+        return view('design_factor.df4.design_factor4', [
             'id' => $id,
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
@@ -98,7 +98,7 @@ class Df4Controller extends Controller
         }
         $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
-        return view('cobit2019.df4.df4_output', compact('designFactor4', 'designFactorRelativeImportance'));
+        return view('design_factor.df4.df4_output', compact('designFactor4', 'designFactorRelativeImportance'));
     }
 
     private function loadUsers(array $userIds): array

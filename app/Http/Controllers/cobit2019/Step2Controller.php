@@ -31,7 +31,7 @@ class Step2Controller extends Controller
         $savedWeights = $this->getSavedWeights($assessmentId);
         $userIds = collect([auth()->id()]);
 
-        return view('cobit2019.step2.step2sumaryblade', compact('assessment', 'userIds', 'savedWeights'));
+        return view('design_factor.step2.step2sumaryblade', compact('assessment', 'userIds', 'savedWeights'));
     }
 
     /**

@@ -32,7 +32,7 @@ class Df5Controller extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df5.design_factor5', [
+        return view('design_factor.df5.design_factor5', [
             'id' => $id,
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
@@ -99,7 +99,7 @@ class Df5Controller extends Controller
         }
         $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
-        return view('cobit2019.df5.df5_output', compact('designFactor5', 'designFactorRelativeImportance'));
+        return view('design_factor.df5.df5_output', compact('designFactor5', 'designFactorRelativeImportance'));
     }
 
     private function loadUsers(array $userIds): array

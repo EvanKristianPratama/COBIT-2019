@@ -488,7 +488,7 @@
                     <i class="fas fa-file-pdf"></i>
                     <span>PDF Per Practice</span>
                 </a>
-                <a href="{{ url('cobit2019/roadmap') }}" class="btn btn-success sticky-action-btn"
+                <a href="{{ url('design_factor/roadmap') }}" class="btn btn-success sticky-action-btn"
                     title="Add Roadmap Target">
                     <i class="fas fa-plus"></i>
                     <span>Add Roadmap</span>

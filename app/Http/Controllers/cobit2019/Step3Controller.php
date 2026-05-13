@@ -40,7 +40,7 @@ class Step3Controller extends Controller
         // Get Step 2 weights from database
         $step2Weights = $this->getStep2Weights($assessmentId, $userId);
 
-        return view('cobit2019.step3.step3sumaryblade', [
+        return view('design_factor.step3.step3sumaryblade', [
             'assessment' => $assessment,
             'savedWeights3' => $savedWeights3,
             'step2Weights' => $step2Weights,
@@ -229,7 +229,7 @@ class Step3Controller extends Controller
      */
     private function handleAssessmentNotFound(): View
     {
-        return view('cobit2019.step3.step3sumaryblade')
+        return view('design_factor.step3.step3sumaryblade')
             ->with('error', 'Data Assessment tidak ditemukan.');
     }
 }

@@ -82,7 +82,7 @@ class TargetCapabilityController extends Controller
 
         $title = 'Target Capability & Maturity';
 
-        return view('cobit2019.targetCapability', compact(
+        return view('design_factor.targetCapability', compact(
             'target', 
             'maxMap', 
             'totalFields', 

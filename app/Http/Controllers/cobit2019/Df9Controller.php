@@ -32,7 +32,7 @@ class Df9Controller extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df9.design_factor9', [
+        return view('design_factor.df9.design_factor9', [
             'id' => $id,
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
@@ -101,7 +101,7 @@ class Df9Controller extends Controller
         }
         $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
-        return view('cobit2019.df9.df9_output', compact('designFactor9', 'designFactorRelativeImportance'));
+        return view('design_factor.df9.df9_output', compact('designFactor9', 'designFactorRelativeImportance'));
     }
 
     private function loadUsers(array $userIds): array

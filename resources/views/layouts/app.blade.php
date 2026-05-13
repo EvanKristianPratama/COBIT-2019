@@ -366,8 +366,8 @@
                                 @if($canAccessCobit)
                                     <li class="breadcrumb-item">
                                         <a
-                                            href="{{ $disableBreadcrumbClick ? '#' : route('cobit2019.objectives.show', 'APO01') }}"
-                                            class="{{ Route::is('cobit2019.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('cobit_component.show', 'APO01') }}"
+                                            class="{{ Route::is('cobit_component.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
                                             @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
                                         >
                                             <i class="fas fa-book"></i> Governance System Component
@@ -457,7 +457,7 @@
                         </li>
                         @if($canAccessCobit)
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('cobit2019.objectives.show', 'APO01') }}">
+                                <a class="nav-link" href="{{ route('cobit_component.show', 'APO01') }}">
                                     <i class="fas fa-book me-2"></i> Governance System Component
                                 </a>
                             </li>

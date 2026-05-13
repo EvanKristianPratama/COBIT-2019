@@ -70,46 +70,50 @@ Route::post('/assessment/request', [DesignToolkitController::class, 'requestAsse
 
 Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
     Route::get('/objectives', [MstObjectiveController::class, 'index']);
-    Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('cobit2019.objectives.show');
+    Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('cobit_component.show');
+
+    // Visual flow analysis for a selected GAMO (Information Flow & RACI)
+    Route::get('/objectives/analysis/gamo', [MstObjectiveController::class, 'gamoAnalysis'])
+        ->name('cobit_component.gamoanalysis');
 
     // View aggregated data per component (server-side)
     Route::get('/objectives/component/{component}', [MstObjectiveController::class, 'byComponent'])
-        ->name('cobit2019.objectives.bycomponent');
+        ->name('cobit_component.bycomponent');
 });
 
 Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
     Route::post('/objectives/infoflow-input', [MstObjectiveController::class, 'createInfoflowInput'])
-        ->name('cobit2019.objectives.infoflow-input.store');
+        ->name('cobit_component.infoflow-input.store');
     Route::put('/objectives/infoflow-input/{inputId}', [MstObjectiveController::class, 'updateInfoflowInput'])
-        ->name('cobit2019.objectives.infoflow-input.update');
+        ->name('cobit_component.infoflow-input.update');
     Route::post('/objectives/infoflow-output', [MstObjectiveController::class, 'createInfoflowOutput'])
-        ->name('cobit2019.objectives.infoflow-output.store');
+        ->name('cobit_component.infoflow-output.store');
     Route::put('/objectives/infoflow-output/{outputId}', [MstObjectiveController::class, 'updateInfoflowOutput'])
-        ->name('cobit2019.objectives.infoflow-output.update');
+        ->name('cobit_component.infoflow-output.update');
     Route::post('/objectives/policies', [MstObjectiveController::class, 'createPolicy'])
-        ->name('cobit2019.objectives.policies.store');
+        ->name('cobit_component.policies.store');
     Route::put('/objectives/policies/{policyId}', [MstObjectiveController::class, 'updatePolicy'])
-        ->name('cobit2019.objectives.policies.update');
+        ->name('cobit_component.policies.update');
     Route::post('/objectives/policies/{policyId}/guidance', [MstObjectiveController::class, 'createPolicyGuidance'])
-        ->name('cobit2019.objectives.policies.guidance.store');
+        ->name('cobit_component.policies.guidance.store');
     Route::post('/objectives/skills', [MstObjectiveController::class, 'createSkill'])
-        ->name('cobit2019.objectives.skills.store');
+        ->name('cobit_component.skills.store');
     Route::put('/objectives/skills/{skillId}', [MstObjectiveController::class, 'updateSkill'])
-        ->name('cobit2019.objectives.skills.update');
+        ->name('cobit_component.skills.update');
     Route::post('/objectives/skills/{skillId}/guidance', [MstObjectiveController::class, 'createSkillGuidance'])
-        ->name('cobit2019.objectives.skills.guidance.store');
+        ->name('cobit_component.skills.guidance.store');
     Route::post('/objectives/key-culture', [MstObjectiveController::class, 'createKeyCulture'])
-        ->name('cobit2019.objectives.key-culture.store');
+        ->name('cobit_component.key-culture.store');
     Route::put('/objectives/key-culture/{keyCultureId}', [MstObjectiveController::class, 'updateKeyCulture'])
-        ->name('cobit2019.objectives.key-culture.update');
+        ->name('cobit_component.key-culture.update');
     Route::post('/objectives/key-culture/{keyCultureId}/guidance', [MstObjectiveController::class, 'createKeyCultureGuidance'])
-        ->name('cobit2019.objectives.key-culture.guidance.store');
+        ->name('cobit_component.key-culture.guidance.store');
     Route::post('/objectives/sia', [MstObjectiveController::class, 'createSia'])
-        ->name('cobit2019.objectives.sia.store');
+        ->name('cobit_component.sia.store');
     Route::put('/objectives/sia/{siaId}', [MstObjectiveController::class, 'updateSia'])
-        ->name('cobit2019.objectives.sia.update');
+        ->name('cobit_component.sia.update');
     Route::put('/objectives/guidance/{guidanceId}', [MstObjectiveController::class, 'updateGuidance'])
-        ->name('cobit2019.objectives.guidance.update');
+        ->name('cobit_component.guidance.update');
 });
 
 // Admin routes (auth + role check di controller)
@@ -187,18 +191,18 @@ Route::match(['get', 'post'], '/register', static function () {
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
 // Cobit Home view
-Route::get('/cobit2019/cobit_home', [DesignToolkitController::class, 'showJoinForm'])
+Route::get('/design_factor/cobit_home', [DesignToolkitController::class, 'showJoinForm'])
     ->name('cobit.home')
     ->middleware(['auth', 'permission:cobit.view']);
 
 // Target capability routes
 Route::middleware(['auth', 'permission:design-factors.view'])->group(function () {
-    Route::get('/cobit2019/target-capability/{id?}', [TargetCapabilityController::class, 'edit'])
+    Route::get('/design_factor/target-capability/{id?}', [TargetCapabilityController::class, 'edit'])
         ->name('target-capability.edit');
 });
 
 Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
-    Route::post('/cobit2019/target-capability/save', [TargetCapabilityController::class, 'save'])
+    Route::post('/design_factor/target-capability/save', [TargetCapabilityController::class, 'save'])
         ->name('target-capability.save');
     Route::post('target-capability/add-year', [TargetCapabilityController::class, 'addYear'])->name('target-capability.addYear');
 });
@@ -320,7 +324,7 @@ Route::get('/akses-df/toggle', function () {
 })->name('akses-df.toggle');
 
 // Roadmap Capability Routes
-Route::prefix('cobit2019/roadmap')
+Route::prefix('design_factor/roadmap')
     ->middleware(['auth', 'approved.user'])
     ->name('roadmap.')
     ->group(function () {

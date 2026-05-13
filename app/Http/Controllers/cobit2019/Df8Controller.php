@@ -32,7 +32,7 @@ class Df8Controller extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df8.design_factor8', [
+        return view('design_factor.df8.design_factor8', [
             'id' => $id,
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
@@ -101,7 +101,7 @@ class Df8Controller extends Controller
         }
         $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
-        return view('cobit2019.df8.df8_output', compact('designFactor8', 'designFactorRelativeImportance', 'id'));
+        return view('design_factor.df8.df8_output', compact('designFactor8', 'designFactorRelativeImportance', 'id'));
     }
 
     private function loadUsers(array $userIds): array

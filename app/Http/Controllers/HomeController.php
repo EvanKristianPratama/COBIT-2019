@@ -33,7 +33,7 @@ class HomeController extends Controller
             [
                 'title' => 'Governance System Component',
                 'description' => 'Kamus Governance System Component.',
-                'route' => route('cobit2019.objectives.show', 'APO01'),
+                'route' => route('cobit_component.show', 'APO01'),
                 'icon' => 'fas fa-puzzle-piece',
                 'icon_class' => 'bg-soft-amber',
                 'visible' => $this->hasAccess($user, PermissionCatalog::CobitView),

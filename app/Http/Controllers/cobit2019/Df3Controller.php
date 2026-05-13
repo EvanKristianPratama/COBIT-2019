@@ -32,7 +32,7 @@ class Df3Controller extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df3.design_factor3', [
+        return view('design_factor.df3.design_factor3', [
             'id' => $id,
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
@@ -100,7 +100,7 @@ class Df3Controller extends Controller
         }
         $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
-        return view('cobit2019.df3.df3_output', compact('designFactor3', 'designFactorRelativeImportance'));
+        return view('design_factor.df3.df3_output', compact('designFactor3', 'designFactorRelativeImportance'));
     }
 
     private function loadUsers(array $userIds): array

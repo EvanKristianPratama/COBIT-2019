@@ -32,7 +32,7 @@ class Df7Controller extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df7.design_factor7', [
+        return view('design_factor.df7.design_factor7', [
             'id' => $id,
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
@@ -103,7 +103,7 @@ class Df7Controller extends Controller
         }
         $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
-        return view('cobit2019.df7.df7_output', compact('designFactor7', 'designFactorRelativeImportance'));
+        return view('design_factor.df7.df7_output', compact('designFactor7', 'designFactorRelativeImportance'));
     }
 
     private function loadUsers(array $userIds): array

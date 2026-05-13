@@ -28,7 +28,7 @@ class TargetMaturityController extends Controller
 
         $targets = $this->targetMaturityService->getTargetsForUser(Auth::id(), $selectedOrganizationId);
 
-        return view('cobit2019.targetMaturity', compact('targets', 'organizationOptions', 'selectedOrganizationId'));
+        return view('design_factor.targetMaturity', compact('targets', 'organizationOptions', 'selectedOrganizationId'));
     }
 
     public function store(StoreTargetMaturityRequest $request)

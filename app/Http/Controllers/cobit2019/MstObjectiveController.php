@@ -42,13 +42,13 @@ class MstObjectiveController extends Controller
         'keyculture',
         'keyculture.guidances',
         's_i_a',
+        'practices.infoflowoutput',
     ];
 
     /**
      * Additional relations that are only required when rendering the detailed show view.
      */
     protected array $showExtraRelations = [
-        'practices.infoflowoutput',
         'guidance',
     ];
 
@@ -88,7 +88,7 @@ class MstObjectiveController extends Controller
         // load master roles
         $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
 
-        return view('cobit2019.objectives.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles'));
+        return view('cobit_component.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles'));
     }
 
     /**
@@ -206,13 +206,21 @@ class MstObjectiveController extends Controller
         $masterAlignGoals = \App\Models\MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
         $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
 
-        return view('cobit2019.objectives.show', [
+        return view('cobit_component.show', [
             'component' => $component,
             'items' => $items,
             'masterEnterGoals' => $masterEnterGoals,
             'masterAlignGoals' => $masterAlignGoals,
             'masterRoles' => $masterRoles,
         ]);
+    }
+
+    /**
+     * Render the interactive GAMO Information and RACI Flow analysis.
+     */
+    public function gamoAnalysis()
+    {
+        return view('cobit_component.gamoanalisis');
     }
 
     /**

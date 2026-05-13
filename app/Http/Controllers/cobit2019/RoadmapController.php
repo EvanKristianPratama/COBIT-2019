@@ -72,7 +72,7 @@ class RoadmapController extends Controller
 
         $selectedAssessmentId = $request->query('assessment_id') ?: $assessmentId;
 
-        return view('cobit2019.roadmap.index', compact(
+        return view('design_factor.roadmap.index', compact(
             'objectives',
             'mappedRoadmaps',
             'years',
@@ -185,7 +185,7 @@ class RoadmapController extends Controller
         $years = array_unique($availableYears);
         sort($years);
 
-        return view('cobit2019.roadmap.report', compact('objectives', 'mappedRoadmaps', 'years'));
+        return view('design_factor.roadmap.report', compact('objectives', 'mappedRoadmaps', 'years'));
     }
 
     public function store(Request $request)

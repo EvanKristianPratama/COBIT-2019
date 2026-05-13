@@ -46,7 +46,7 @@ class Df10Controller extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df10.design_factor10', [
+        return view('design_factor.df10.design_factor10', [
             'id' => $id,
             'historyInputs' => $history['inputs'],
             'historyScoreArray' => $history['scores'],
@@ -135,7 +135,7 @@ class Df10Controller extends Controller
         }
         $designFactorRelativeImportance = (object) $designFactorRelativeImportanceData;
 
-        return view('cobit2019.df10.df10_output', compact(
+        return view('design_factor.df10.df10_output', compact(
             'designFactor10',
             'designFactorRelativeImportance'
         ));

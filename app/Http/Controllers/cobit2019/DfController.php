@@ -31,7 +31,7 @@ class DfController extends Controller
         $userIds = session('respondent_ids', []);
         $users = $this->loadUsers($userIds);
 
-        return view('cobit2019.df1.design_factor', [
+        return view('design_factor.df1.design_factor', [
             'id' => $id,
             'history' => null, 
             'historyInputs' => $history['inputs'],
@@ -114,7 +114,7 @@ class DfController extends Controller
             return redirect()->route('home')->with('error', 'Data tidak ditemukan.');
         }
 
-        return view('cobit2019.df1.df1_output', compact('designFactor', 'designFactorScore', 'designFactorRelativeImportance'));
+        return view('design_factor.df1.df1_output', compact('designFactor', 'designFactorScore', 'designFactorRelativeImportance'));
     }
 
     private function loadUsers(array $userIds): array
