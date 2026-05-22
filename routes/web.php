@@ -55,6 +55,7 @@ Route::bind('evalId', function ($value) {
 });
 
 // Public routes
+Route::get('/api/cobit/roles-matrix', [MstObjectiveController::class, 'getRolesMatrix'])->name('cobit.roles-matrix');
 
 Route::get('/assessment/join', [DesignToolkitController::class, 'showJoinForm'])
     ->name('assessment.join')

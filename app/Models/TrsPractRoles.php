@@ -11,24 +11,23 @@ class TrsPractRoles extends Model
 
     protected $table = 'trs_practroles';
 
-    protected $primaryKey = ['objective_id', 'guidance_id'];
+    protected $primaryKey = ['practice_id', 'role_id'];
 
     public $incrementing = false;
 
     // protected $keyType = 'int';
 
     protected $casts = [
-        'objective_id' => 'string',
-        'guidance_id' => 'integer',
+        'practice_id' => 'string',
+        'role_id' => 'integer',
+        'r_a' => 'string',
     ];
 
     public $timestamps = false;
 
     protected $fillable = [
-        'objective_id',
-        'guidance_id',
-        'component'
-        // 'skill',
-        // 'objective_purpose',
+        'practice_id',
+        'role_id',
+        'r_a',
     ];
 }

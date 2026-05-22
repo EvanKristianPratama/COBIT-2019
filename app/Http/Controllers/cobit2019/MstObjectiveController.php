@@ -632,4 +632,60 @@ class MstObjectiveController extends Controller
             'objective_purpose' => 'sometimes|nullable|string',
         ]);
     }
+
+    /**
+     * Get the COBIT RACI matrix of roles and practices.
+     * Accessible by other apps.
+     */
+    public function getRolesMatrix(Request $request)
+    {
+        $objectiveId = $request->query('objective_id');
+
+        // Query practices with their objective and roles
+        $query = \App\Models\MstPractice::with(['objective', 'roles']);
+
+        if ($objectiveId) {
+            $query->where('objective_id', $objectiveId);
+        }
+
+        $preferredOrderSql = "CASE WHEN UPPER(objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, objective_id, practice_id";
+        $practices = $query->orderByRaw($preferredOrderSql)->get();
+
+        // Fetch all master roles in correct order
+        $roles = \App\Models\MstRoles::orderBy('role_id')->get();
+
+        // Transform the data for easy ingestion by external apps
+        $matrix = $practices->map(function ($practice) {
+            // Map roles of this practice into an associative array role_id => r_a
+            $mappedRoles = [];
+            foreach ($practice->roles as $role) {
+                $mappedRoles[$role->role_id] = $role->pivot->r_a;
+            }
+
+            return [
+                'practice_id' => $practice->practice_id,
+                'practice_name' => $practice->practice_name,
+                'practice_description' => $practice->practice_description,
+                'objective_id' => $practice->objective_id,
+                'objective_name' => $practice->objective?->objective,
+                'role_assignments' => $mappedRoles,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'roles' => $roles->map(function ($role) {
+                return [
+                    'role_id' => $role->role_id,
+                    'role_name' => $role->role,
+                    'description' => $role->description,
+                ];
+            }),
+            'matrix' => $matrix,
+        ], 200, [
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Headers' => 'Content-Type, X-Requested-With, Authorization',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS'
+        ]);
+    }
 }
