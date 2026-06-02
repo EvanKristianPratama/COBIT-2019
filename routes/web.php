@@ -80,6 +80,10 @@ Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
     // View aggregated data per component (server-side)
     Route::get('/objectives/component/{component}', [MstObjectiveController::class, 'byComponent'])
         ->name('cobit_component.bycomponent');
+
+    // Get practices list for infoflow dropdown
+    Route::get('/objectives/practices-list', [MstObjectiveController::class, 'getPracticesList'])
+        ->name('cobit_component.practices-list');
 });
 
 Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
@@ -87,10 +91,14 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit_component.infoflow-input.store');
     Route::put('/objectives/infoflow-input/{inputId}', [MstObjectiveController::class, 'updateInfoflowInput'])
         ->name('cobit_component.infoflow-input.update');
+    Route::delete('/objectives/infoflow-input/{inputId}', [MstObjectiveController::class, 'deleteInfoflowInput'])
+        ->name('cobit_component.infoflow-input.destroy');
     Route::post('/objectives/infoflow-output', [MstObjectiveController::class, 'createInfoflowOutput'])
         ->name('cobit_component.infoflow-output.store');
     Route::put('/objectives/infoflow-output/{outputId}', [MstObjectiveController::class, 'updateInfoflowOutput'])
         ->name('cobit_component.infoflow-output.update');
+    Route::delete('/objectives/infoflow-output/{outputId}', [MstObjectiveController::class, 'deleteInfoflowOutput'])
+        ->name('cobit_component.infoflow-output.destroy');
     Route::post('/objectives/policies', [MstObjectiveController::class, 'createPolicy'])
         ->name('cobit_component.policies.store');
     Route::put('/objectives/policies/{policyId}', [MstObjectiveController::class, 'updatePolicy'])

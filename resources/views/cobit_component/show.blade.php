@@ -557,6 +557,39 @@
         </div>
     </div>
 
+    <!-- Modal Pilih Practice (To) -->
+    <div class="modal fade" id="toPracticeModal" tabindex="-1" aria-labelledby="toPracticeModalLabel" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-primary text-white py-2 px-3">
+                    <h5 class="modal-title" id="toPracticeModalLabel" style="font-size: 16px;">
+                        <i class="bi bi-check2-square"></i> Pilih Penerima Alur Informasi (To)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="mb-3">
+                        <input type="text" id="modalToSearch" class="form-control form-control-sm" placeholder="Cari preset atau practice...">
+                    </div>
+                    
+                    <div class="fw-bold mb-1 border-bottom pb-1 text-secondary" style="font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;">Presets</div>
+                    <div class="mb-3" id="modalToPresetsList">
+                        <!-- Presets populated dynamically in JS -->
+                    </div>
+                    
+                    <div class="fw-bold mb-1 border-bottom pb-1 text-secondary" style="font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;">Practice Codes</div>
+                    <div id="modalToPracticesList" style="max-height: 250px; overflow-y: auto;">
+                        <!-- Practices populated dynamically in JS -->
+                    </div>
+                </div>
+                <div class="modal-footer py-2 px-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" id="modalToSaveBtn" class="btn btn-sm btn-primary px-3">Pilih</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         (function() {
             'use strict';
@@ -586,7 +619,8 @@
                 searchTerm: '',
                 capAllRows: [], // store all capability rows for filtering
                 objectiveMap: new Map(), // safeId -> objective_id mapping untuk tab filter
-                inputMode: false
+                inputMode: false,
+                showCreateRowForPractice: {}
             };
 
 
@@ -594,7 +628,8 @@
             const MASTER_DATA = {
                 enterGoals: @json($masterEnterGoals ?? []),
                 alignGoals: @json($masterAlignGoals ?? []),
-                roles: @json($masterRoles ?? [])
+                roles: @json($masterRoles ?? []),
+                practices: @json($masterPractices ?? [])
             };
 
             const AUTHZ = {
@@ -712,6 +747,25 @@
                     return STATE.cacheAll;
                 },
 
+                async fetchPracticesList() {
+                    if (STATE.practicesList) return STATE.practicesList;
+
+                    const url = '{{ url('/objectives/practices-list') }}';
+                    const response = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Fetch error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    STATE.practicesList = data.practices || [];
+                    return STATE.practicesList;
+                },
+
                 async parseJsonResponse(response) {
                     let payload = null;
 
@@ -785,6 +839,32 @@
                             'X-CSRF-TOKEN': this.getCsrfToken()
                         },
                         body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async deleteInfoflowInput(inputId) {
+                    const response = await fetch(`{{ url('/objectives/infoflow-input') }}/${encodeURIComponent(inputId)}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        }
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async deleteInfoflowOutput(outputId) {
+                    const response = await fetch(`{{ url('/objectives/infoflow-output') }}/${encodeURIComponent(outputId)}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        }
                     });
 
                     STATE.cacheAll = null;
@@ -1884,7 +1964,8 @@
                                     input: '',
                                     output: '',
                                     to: '',
-                                    isNoInputRow: true
+                                    isNoInputRow: true,
+                                    showForm: STATE.inputMode ? !!STATE.showCreateRowForPractice[practice.practice_id] : false
                                 });
                                 return;
                             }
@@ -1924,11 +2005,40 @@
                                     });
                                 }
                             });
+
+                            if (STATE.inputMode) {
+                                rows.push({
+                                    gamo: obj.objective_id || '',
+                                    practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
+                                        .trim(),
+                                    practiceId: practice.practice_id || '',
+                                    inputId: null,
+                                    outputId: null,
+                                    from: '',
+                                    input: '',
+                                    output: '',
+                                    to: '',
+                                    isNoInputRow: true,
+                                    showForm: !!STATE.showCreateRowForPractice[practice.practice_id]
+                                });
+                            }
                         });
                     });
 
                     if (!rows.length) {
                         return '<div class="text-muted">No information flows found.</div>';
+                    }
+
+                    const practiceRowspanMap = {};
+
+                    for (let i = 0; i < rows.length;) {
+                        const currentPracticeId = rows[i].practiceId;
+                        let j = i + 1;
+                        while (j < rows.length && rows[j].practiceId === currentPracticeId) {
+                            j++;
+                        }
+                        practiceRowspanMap[i] = j - i;
+                        i = j;
                     }
 
                     const editable = STATE.inputMode;
@@ -1948,6 +2058,9 @@
                         .replaceAll('>', '&gt;');
 
                     const tbody = rows.map((r, rowIndex) => {
+                        const practiceCell = practiceRowspanMap[rowIndex] ? 
+                            `<td class="small align-middle" rowspan="${practiceRowspanMap[rowIndex]}">${Utils.formatText(r.practice)}</td>` : '';
+
                         if (!editable) {
                             const inputText = r.inputId ?
                                 (r.input || '') :
@@ -1958,8 +2071,7 @@
 
                             return `
         <tr>
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
-          <td class="small">${Utils.formatText(r.practice)}</td>
+          ${practiceCell}
           <td class="small">${Utils.formatText(r.from)}</td>
           <td class="small">${Utils.formatText(inputText)}</td>
           <td class="small">${Utils.formatText(outputText)}</td>
@@ -1968,12 +2080,26 @@
       `;
                         }
 
+                         if (r.isNoInputRow && !r.showForm) {
+                            return `
+      <tr class="js-infoflow-row" data-row-index="${rowIndex}">
+        ${practiceCell}
+        <td colspan="4" class="text-center py-2 bg-light align-middle">
+          <button type="button" class="btn btn-xs btn-outline-success js-trigger-add-infoflow" data-practice-id="${escapeAttr(r.practiceId)}" style="font-size: 12px; padding: 2px 10px;">
+            <i class="bi bi-plus-circle"></i> + Tambah Alur Informasi
+          </button>
+        </td>
+        <td class="small text-center align-middle"></td>
+      </tr>
+    `;
+                        }
+
                         const canCreateInput = !r.inputId && Boolean(r.practiceId);
                         const hasInputContext = Boolean(r.inputId) || canCreateInput;
                         const canCreateOrUpdateOutput = hasInputContext;
 
                         const fromEditor = hasInputContext ?
-                            `<input type="text" class="form-control form-control-sm infoflow-edit-control js-infoflow-field" data-field="from" value="${escapeAttr(r.from || '')}">` :
+                            `<input type="text" list="practices-list" class="form-control form-control-sm infoflow-edit-control js-infoflow-field" data-field="from" value="${escapeAttr(r.from || '')}" placeholder="Ketik/Pilih...">` :
                             `<span class="small text-muted">-</span>`;
 
                         const inputEditor = hasInputContext ?
@@ -1985,21 +2111,41 @@
                             `<span class="small text-muted">${Utils.formatText(r.output || '(No Output)')}</span>`;
 
                         const toEditor = canCreateOrUpdateOutput ?
-                            `<input type="text" class="form-control form-control-sm infoflow-edit-control js-infoflow-field" data-field="to" value="${escapeAttr(r.to || '')}">` :
+                            `
+                            <div class="position-relative w-100">
+                                <input type="text" 
+                                       class="form-control form-control-sm infoflow-edit-control js-infoflow-field js-to-input" 
+                                       data-field="to" 
+                                       value="${escapeAttr(r.to || '')}" 
+                                       placeholder="Pilih Practice..." 
+                                       readonly 
+                                       style="cursor: pointer; background-color: #fff; padding-right: 25px;">
+                                <span class="position-absolute end-0 top-50 translate-middle-y me-2 pointer-events-none text-muted" style="font-size: 10px;">
+                                    <i class="bi bi-chevron-down"></i>
+                                </span>
+                            </div>
+                            ` :
                             `<span class="small text-muted">${Utils.formatText(r.to || '-')}</span>`;
 
                         let actionCell = `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>Practice tidak valid</button>`;
 
                         if (hasInputContext) {
                             const buttonLabel = r.inputId ? 'Simpan' : 'Tambah';
+                            let cancelButton = '';
+                            if (!r.inputId) {
+                                cancelButton = `<button type="button" class="btn btn-sm btn-outline-secondary ms-1 js-cancel-add-infoflow" data-practice-id="${escapeAttr(r.practiceId)}">Batal</button>`;
+                            }
+                            let deleteButton = '';
+                            if (r.inputId || r.outputId) {
+                                deleteButton = `<button type="button" class="btn btn-sm btn-danger ms-1 js-delete-infoflow-row" data-input-id="${escapeAttr(r.inputId || '')}" data-output-id="${escapeAttr(r.outputId || '')}">Hapus</button>`;
+                            }
                             actionCell =
-                                `<button type="button" class="btn btn-sm btn-primary js-save-infoflow-row" data-input-id="${escapeAttr(r.inputId || '')}" data-output-id="${escapeAttr(r.outputId || '')}" data-practice-id="${escapeAttr(r.practiceId || '')}" data-row-index="${rowIndex}" data-create-mode="${canCreateInput ? '1' : '0'}">${buttonLabel}</button>`;
+                                `<button type="button" class="btn btn-sm btn-primary js-save-infoflow-row" data-input-id="${escapeAttr(r.inputId || '')}" data-output-id="${escapeAttr(r.outputId || '')}" data-practice-id="${escapeAttr(r.practiceId || '')}" data-row-index="${rowIndex}" data-create-mode="${canCreateInput ? '1' : '0'}">${buttonLabel}</button>${deleteButton}${cancelButton}`;
                         }
 
                         return `
       <tr class="js-infoflow-row" data-row-index="${rowIndex}">
-        <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
-        <td class="small">${Utils.formatText(r.practice)}</td>
+        ${practiceCell}
         <td class="small">${fromEditor}</td>
         <td class="small">${inputEditor}</td>
         <td class="small">${outputEditor}</td>
@@ -2011,11 +2157,18 @@
 
                     return `
         ${editHint}
+        <datalist id="practices-list">
+          <option value="Outside COBIT">
+          <option value="All APO">
+          <option value="All BAI">
+          <option value="All DSS">
+          <option value="All MEA">
+          ${(MASTER_DATA.practices || []).map(p => `<option value="${escapeAttr(p.practice_id)}">`).join('')}
+        </datalist>
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered table-striped mb-0" style="table-layout:fixed;width:100%">
             <thead class="table-primary text-white">
               <tr>
-                <th style="width:110px">GAMO</th>
                 <th>Management Practice</th>
                 <th>From</th>
                 <th>Input Description</th>
@@ -3517,12 +3670,55 @@
                             isCreateRow ? 'Data infoflow baru berhasil ditambahkan.' :
                             'Data infoflow berhasil diperbarui.'
                         );
+                        if (isCreateRow) {
+                            STATE.showCreateRowForPractice[practiceId] = false;
+                        }
                         await this.refreshActiveComponentView();
                     } catch (err) {
                         console.error('Failed to save infoflow row:', err);
                         button.textContent = 'Gagal';
                         NotificationController.show('danger',
                             `Gagal menyimpan data infoflow: ${err.message}`);
+                    } finally {
+                        window.setTimeout(() => {
+                            button.disabled = false;
+                            button.textContent = originalLabel;
+                        }, 900);
+                    }
+                },
+
+                async deleteInfoflowRow(button) {
+                    if (!button || !AUTHZ.canInputMode) return;
+
+                    const inputId = (button.getAttribute('data-input-id') || '').trim();
+                    const outputId = (button.getAttribute('data-output-id') || '').trim();
+
+                    if (!inputId && !outputId) {
+                        NotificationController.show('danger', 'ID tidak ditemukan. Data tidak bisa dihapus.');
+                        return;
+                    }
+
+                    if (!confirm('Apakah Anda yakin ingin menghapus baris alur informasi ini?')) {
+                        return;
+                    }
+
+                    const originalLabel = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Menghapus...';
+
+                    try {
+                        if (outputId) {
+                            await DataService.deleteInfoflowOutput(outputId);
+                        } else if (inputId) {
+                            await DataService.deleteInfoflowInput(inputId);
+                        }
+
+                        NotificationController.show('success', 'Data alur informasi berhasil dihapus.');
+                        await this.refreshActiveComponentView();
+                    } catch (err) {
+                        console.error('Failed to delete infoflow row:', err);
+                        button.textContent = 'Gagal';
+                        NotificationController.show('danger', `Gagal menghapus data: ${err.message}`);
                     } finally {
                         window.setTimeout(() => {
                             button.disabled = false;
@@ -3693,7 +3889,10 @@
                     this.setupMasterToggle();
                     this.setupInputModeToggle();
                     this.setupInfoflowRowSaveHandler();
+                    this.setupInfoflowRowAddCancelHandlers();
+                    this.setupInfoflowRowDeleteHandler();
                     this.setupEntityRowSaveHandler();
+                    this.setupToModalHandler();
                     this.initializeComponent();
                     InputModeController.syncButton();
                 },
@@ -3736,12 +3935,162 @@
                     });
                 },
 
+                setupInfoflowRowDeleteHandler() {
+                    document.addEventListener('click', (event) => {
+                        const targetBtn = event.target.closest('.js-delete-infoflow-row');
+                        if (!targetBtn) return;
+                        InputModeController.deleteInfoflowRow(targetBtn);
+                    });
+                },
+
+                setupInfoflowRowAddCancelHandlers() {
+                    document.addEventListener('click', (event) => {
+                        const addBtn = event.target.closest('.js-trigger-add-infoflow');
+                        if (addBtn) {
+                            const practiceId = addBtn.getAttribute('data-practice-id');
+                            if (practiceId) {
+                                STATE.showCreateRowForPractice[practiceId] = true;
+                                InputModeController.refreshActiveComponentView();
+                            }
+                            return;
+                        }
+
+                        const cancelBtn = event.target.closest('.js-cancel-add-infoflow');
+                        if (cancelBtn) {
+                            const practiceId = cancelBtn.getAttribute('data-practice-id');
+                            if (practiceId) {
+                                STATE.showCreateRowForPractice[practiceId] = false;
+                                InputModeController.refreshActiveComponentView();
+                            }
+                        }
+                    });
+                },
+
                 setupEntityRowSaveHandler() {
                     document.addEventListener('click', (event) => {
                         const targetBtn = event.target.closest('.js-save-entity-row');
                         if (!targetBtn) return;
                         InputModeController.saveEntityRow(targetBtn);
                     });
+                },
+
+                setupToModalHandler() {
+                    // Click on the 'To' input triggers opening the modal
+                    document.addEventListener('click', (event) => {
+                        const toInput = event.target.closest('.js-to-input');
+                        if (!toInput) return;
+
+                        // Save reference to the active input
+                        STATE.activeToInput = toInput;
+
+                        // Parse the current values
+                        const currentValues = toInput.value.split(';').map(v => v.trim()).filter(Boolean);
+
+                        // Populate the modal choices
+                        this.populateModalChoices(currentValues);
+
+                        // Open the modal using Bootstrap API
+                        const modalEl = document.getElementById('toPracticeModal');
+                        if (modalEl) {
+                            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                            modal.show();
+                        }
+                    });
+
+                    // Search input inside the modal
+                    const searchInput = document.getElementById('modalToSearch');
+                    if (searchInput) {
+                        searchInput.addEventListener('input', (event) => {
+                            const query = event.target.value.toLowerCase().trim();
+                            const items = document.querySelectorAll('#toPracticeModal .form-check');
+                            items.forEach(item => {
+                                const searchText = item.getAttribute('data-search-text') || item.textContent.toLowerCase();
+                                if (searchText.includes(query)) {
+                                    item.style.setProperty('display', '', 'important');
+                                } else {
+                                    item.style.setProperty('display', 'none', 'important');
+                                }
+                            });
+                        });
+                    }
+
+                    // Reset search and focus when modal is shown
+                    const modalEl = document.getElementById('toPracticeModal');
+                    if (modalEl) {
+                        modalEl.addEventListener('shown.bs.modal', () => {
+                            if (searchInput) {
+                                searchInput.value = '';
+                                searchInput.focus();
+                            }
+                            const items = document.querySelectorAll('#toPracticeModal .form-check');
+                            items.forEach(item => {
+                                item.style.setProperty('display', '', 'important');
+                            });
+                        });
+                    }
+
+                    // Save button in modal
+                    const saveBtn = document.getElementById('modalToSaveBtn');
+                    if (saveBtn) {
+                        saveBtn.addEventListener('click', () => {
+                            if (!STATE.activeToInput) return;
+
+                            const checkedCheckboxes = Array.from(document.querySelectorAll('#toPracticeModal .js-modal-to-checkbox:checked'));
+                            const selectedValues = checkedCheckboxes.map(cb => cb.value);
+
+                            // Update the active input and trigger input event so it registers as edited
+                            STATE.activeToInput.value = selectedValues.join('; ');
+                            STATE.activeToInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+                            // Close the modal
+                            const modal = bootstrap.Modal.getInstance(modalEl);
+                            if (modal) {
+                                modal.hide();
+                            }
+                        });
+                    }
+                },
+
+                populateModalChoices(currentValues) {
+                    const presetsContainer = document.getElementById('modalToPresetsList');
+                    const practicesContainer = document.getElementById('modalToPracticesList');
+
+                    if (!presetsContainer || !practicesContainer) return;
+
+                    // 1. Populate Presets
+                    const presets = [
+                        'Outside COBIT',
+                        'All EDM',
+                        'All APO',
+                        'All BAI',
+                        'All DSS',
+                        'All MEA'
+                    ];
+
+                    presetsContainer.innerHTML = presets.map((preset, idx) => {
+                        const isChecked = currentValues.includes(preset) ? 'checked' : '';
+                        return `
+                            <div class="form-check py-0.5">
+                                <input class="form-check-input js-modal-to-checkbox" type="checkbox" value="${Utils.escapeHtml(preset)}" id="modal_to_preset_${idx}" ${isChecked}>
+                                <label class="form-check-label fw-semibold text-dark" for="modal_to_preset_${idx}">${Utils.escapeHtml(preset)}</label>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // 2. Populate Practice Codes
+                    practicesContainer.innerHTML = (MASTER_DATA.practices || []).map((p, idx) => {
+                        const v = p.practice_id;
+                        const name = p.practice_name || '';
+                        const isChecked = currentValues.includes(v) ? 'checked' : '';
+                        return `
+                            <div class="form-check py-0.5" data-search-text="${Utils.escapeHtml((v + ' ' + name).toLowerCase())}">
+                                <input class="form-check-input js-modal-to-checkbox" type="checkbox" value="${Utils.escapeHtml(v)}" id="modal_to_practice_${idx}" ${isChecked}>
+                                <label class="form-check-label" for="modal_to_practice_${idx}" title="${Utils.escapeHtml(name)}">
+                                    <strong>${Utils.escapeHtml(v)}</strong> - <span class="text-muted small">${Utils.escapeHtml(name)}</span>
+                                </label>
+                            </div>
+                        `;
+                    }).join('');
                 },
 
                 initializeComponent() {

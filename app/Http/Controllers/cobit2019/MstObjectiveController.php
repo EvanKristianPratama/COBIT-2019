@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\cobit2019;
 
 use App\Http\Controllers\Controller;
-use App\Models\MstAligngoals;
+use App\Models\MstAlignGoals;
 use App\Models\MstInfoflowInput;
 use App\Models\MstInfoflowOutput;
 use App\Models\MstKeyCulture;
@@ -11,6 +11,7 @@ use App\Models\MstEntergoals;
 use App\Models\MstGuidance;
 use App\Models\MstObjective;
 use App\Models\MstPolicy;
+use App\Models\MstPractice;
 use App\Models\MstSIA;
 use App\Models\MstSkill;
 use Illuminate\Http\Request;
@@ -87,8 +88,10 @@ class MstObjectiveController extends Controller
         $masterAlignGoals = MstAligngoals::with('aligngoalsmetr')->orderBy('aligngoals_id')->get();
         // load master roles
         $masterRoles = \App\Models\MstRoles::orderBy('role_id')->get();
+        // load master practices
+        $masterPractices = \App\Models\MstPractice::orderBy('practice_id')->get();
 
-        return view('cobit_component.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles'));
+        return view('cobit_component.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles', 'masterPractices'));
     }
 
     /**
@@ -634,6 +637,35 @@ class MstObjectiveController extends Controller
     }
 
     /**
+     * Get all practices for dropdown selection in infoflow.
+     * Returns practices grouped by their objective for better organization.
+     */
+    public function getPracticesList()
+    {
+        $preferredOrderSql = "CASE WHEN UPPER(o.objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(o.objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(o.objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(o.objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(o.objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, o.objective_id, p.practice_id";
+
+        $practices = DB::table('mst_practice as p')
+            ->join('mst_objective as o', 'p.objective_id', '=', 'o.objective_id')
+            ->select('p.practice_id', 'p.practice_name', 'p.practice_description', 'p.objective_id', 'o.objective')
+            ->orderByRaw($preferredOrderSql)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'practices' => $practices->map(function ($practice) {
+                return [
+                    'practice_id' => $practice->practice_id,
+                    'practice_name' => $practice->practice_name,
+                    'practice_description' => $practice->practice_description,
+                    'objective_id' => $practice->objective_id,
+                    'objective_name' => $practice->objective,
+                    'label' => "{$practice->practice_id} - {$practice->practice_name}",
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * Get the COBIT RACI matrix of roles and practices.
      * Accessible by other apps.
      */
@@ -687,5 +719,25 @@ class MstObjectiveController extends Controller
             'Access-Control-Allow-Headers' => 'Content-Type, X-Requested-With, Authorization',
             'Access-Control-Allow-Methods' => 'GET, OPTIONS'
         ]);
+    }
+
+    public function deleteInfoflowInput($inputId)
+    {
+        $input = MstInfoflowInput::findOrFail($inputId);
+        DB::transaction(function () use ($input) {
+            $input->connectedoutputs()->detach();
+            $input->delete();
+        });
+        return response()->json(['success' => true]);
+    }
+
+    public function deleteInfoflowOutput($outputId)
+    {
+        $output = MstInfoflowOutput::findOrFail($outputId);
+        DB::transaction(function () use ($output) {
+            DB::table('trs_infoflowio')->where('output_id', $output->output_id)->delete();
+            $output->delete();
+        });
+        return response()->json(['success' => true]);
     }
 }
