@@ -17,6 +17,7 @@ class TrsDomain extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'focus_area_id',
         'area',
         'objective_id',
         'domain',
@@ -25,11 +26,11 @@ class TrsDomain extends Model
 
     public function area()
     {
-        return $this->belongsTo(MstArea::class, 'area');
+        return $this->belongsTo(MstArea::class, 'area', 'area');
     }
 
     public function objective()
     {
-        return $this->belongsTo(MstObjective::class, 'objective_id');
+        return $this->belongsTo(MstObjective::class, 'objective_id', 'objective_id');
     }
 }

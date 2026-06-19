@@ -20,6 +20,7 @@ class MstSIA extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'focus_area_id',
         'sia_id',
         'objective_id',
         'description',
@@ -27,6 +28,6 @@ class MstSIA extends Model
 
     public function objective()
     {
-        return $this->belongsTo(MstObjective::class, 'objective_id');
+        return $this->belongsTo(MstObjective::class, 'objective_id', 'objective_id');
     }
 }

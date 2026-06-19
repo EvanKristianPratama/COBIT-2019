@@ -17,17 +17,18 @@ class TrsAligngoals extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'focus_area_id',
         'objective_id',
         'aligngoals_id',
     ];
 
     public function objective()
     {
-        return $this->belongsTo(MstObjective::class, 'objective_id');
+        return $this->belongsTo(MstObjective::class, 'objective_id', 'objective_id');
     }
 
     public function aligngoals()
     {
-        return $this->belongsTo(MstAligngoals::class, 'aligngoals_id');
+        return $this->belongsTo(MstAligngoals::class, 'aligngoals_id', 'aligngoals_id');
     }
 }

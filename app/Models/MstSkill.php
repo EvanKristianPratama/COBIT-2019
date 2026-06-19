@@ -20,6 +20,7 @@ class MstSkill extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'focus_area_id',
         'skill_id',
         'objective_id',
         'skill',
@@ -28,7 +29,7 @@ class MstSkill extends Model
 
     public function objective()
     {
-        return $this->belongsTo(MstObjective::class, 'objective_id');
+        return $this->belongsTo(MstObjective::class, 'objective_id', 'objective_id');
     }
 
     public function guidances()

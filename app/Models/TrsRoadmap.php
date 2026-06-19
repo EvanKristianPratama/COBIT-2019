@@ -12,6 +12,7 @@ class TrsRoadmap extends Model
     protected $table = 'trs_roadmap';
 
     protected $fillable = [
+        'focus_area_id',
         'objective_id',
         'year',
         'level',

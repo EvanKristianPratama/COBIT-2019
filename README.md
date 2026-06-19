@@ -91,6 +91,17 @@ Kami sangat menghargai kontribusi dari komunitas. Jika Anda ingin berkontribusi 
    ```
 5. Buat Pull Request.
 
+## Public API
+
+Dokumentasi lengkap mengenai endpoint API publik (tanpa autentikasi) dapat dilihat pada:
+* **[API.md](file:///Users/mac/Desktop/MAGANG/cbioo/docs/API.md)**
+
+API ini mencakup:
+1. **RACI Roles Matrix API** (`GET /api/cobit/roles-matrix`)
+2. **GAMO Information Flow API** (`GET /api/cobit/gamo-infoflow`)
+3. **10 COBIT 2019 Components API** (`GET /api/cobit/components/{component}` dan alias routes)
+
+---
 
 ## Contact
 

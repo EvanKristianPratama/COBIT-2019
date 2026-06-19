@@ -20,6 +20,7 @@ class MstPractice extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'focus_area_id',
         'practice_id',
         'objective_id',
         'practice_name',
@@ -28,7 +29,7 @@ class MstPractice extends Model
 
     public function objective()
     {
-        return $this->belongsTo(MstObjective::class, 'objective_id');
+        return $this->belongsTo(MstObjective::class, 'objective_id', 'objective_id');
     }
 
     public function guidances()

@@ -20,6 +20,7 @@ class MstPolicy extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'focus_area_id',
         'policy_id',
         'objective_id',
         'policy',
@@ -29,7 +30,7 @@ class MstPolicy extends Model
 
     public function objective()
     {
-        return $this->belongsTo(MstObjective::class, 'objective_id');
+        return $this->belongsTo(MstObjective::class, 'objective_id', 'objective_id');
     }
 
     public function guidances()

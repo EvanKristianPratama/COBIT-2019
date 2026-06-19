@@ -185,6 +185,33 @@
             color: #7a5d07;
         }
 
+        .model-focus-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .model-focus-core {
+            background: #7a2433;
+            color: #fff;
+        }
+
+        .model-focus-info {
+            background: #1f6f43;
+            color: #fff;
+        }
+
+        .model-focus-default {
+            background: #1a3665;
+            color: #fff;
+        }
+
         .stat-label {
             font-size: 0.85rem;
             text-transform: uppercase;
@@ -370,10 +397,31 @@
 
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h4 mb-0">Kamus Component</h1>
-            <a href="{{ route('cobit_component.gamoanalysis') }}" class="btn btn-sm btn-outline-info shadow-sm fw-bold" style="border-width: 2px;">
-                <i class="fas fa-project-diagram me-2"></i>Buka Analisis Alur
-            </a>
+            <div>
+                <h1 class="h4 mb-0">Kamus Component</h1>
+                @if($objective->focusArea)
+                    @php
+                        $focusAreaName = strtolower(trim((string) $objective->focusArea->name));
+                        $focusAreaClass = str_contains($focusAreaName, 'information security')
+                            ? 'model-focus-info'
+                            : (str_contains($focusAreaName, 'core model') ? 'model-focus-core' : 'model-focus-default');
+                    @endphp
+                    <div class="small text-muted mt-1">
+                        Focus Area:
+                        <span class="model-focus-chip {{ $focusAreaClass }}">
+                            {{ $objective->focusArea->name }}
+                        </span>
+                    </div>
+                @endif
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ route('focus-areas.index') }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
+                    <i class="fas fa-bullseye me-2"></i>Models
+                </a>
+                <a href="{{ route('cobit_component.gamoanalysis') }}" class="btn btn-sm btn-outline-info shadow-sm fw-bold" style="border-width: 2px;">
+                    <i class="fas fa-project-diagram me-2"></i>Buka Analisis Alur
+                </a>
+            </div>
         </div>
 
         <!-- Mode Selector -->
@@ -636,6 +684,8 @@
                 canInputMode: @json(auth()->check() && auth()->user()->can('design-factors.input'))
             };
 
+            const CURRENT_FOCUS_AREA_ID = @json((int) ($focusAreaId ?? ($objective->focus_area_id ?? 0)));
+
             // ===================================================================
             // DOM REFERENCES
             // ===================================================================
@@ -700,6 +750,43 @@
                     }
                 },
 
+                displayObjectiveId(value) {
+                    return String(value ?? '').replace(/\.(?:M|FA)\d+(?:\.\d+)?$/i, '');
+                },
+
+                displayGamoId(value) {
+                    return this.displayObjectiveId(value);
+                },
+
+                displayFocusArea(value) {
+                    if (!value) return 'COBIT Core Model';
+                    if (typeof value === 'string') return value;
+                    if (typeof value === 'object') {
+                        return String(value.name || value.code || value.label || 'COBIT Core Model');
+                    }
+                    return String(value);
+                },
+
+                focusAreaTheme(value) {
+                    const name = String(this.displayFocusArea(value)).toLowerCase();
+                    if (name.includes('information security')) {
+                        return {
+                            chipClass: 'model-focus-info',
+                            headerBg: '#1f6f43',
+                        };
+                    }
+                    if (name.includes('core model')) {
+                        return {
+                            chipClass: 'model-focus-core',
+                            headerBg: '#7a2433',
+                        };
+                    }
+                    return {
+                        chipClass: 'model-focus-default',
+                        headerBg: '#1a3665',
+                    };
+                },
+
                 sortById(arr) {
                     return arr.slice().sort((a, b) =>
                         String(a.id || '').localeCompare(String(b.id || ''))
@@ -732,7 +819,8 @@
                 async fetchAllObjectives() {
                     if (STATE.cacheAll) return STATE.cacheAll;
 
-                    const url = '{{ url('/objectives') }}';
+                    const baseUrl = '{{ url('/objectives') }}';
+                    const url = CURRENT_FOCUS_AREA_ID ? `${baseUrl}?focus_area=${encodeURIComponent(CURRENT_FOCUS_AREA_ID)}` : baseUrl;
                     const response = await fetch(url, {
                         headers: {
                             'Accept': 'application/json'
@@ -750,7 +838,8 @@
                 async fetchPracticesList() {
                     if (STATE.practicesList) return STATE.practicesList;
 
-                    const url = '{{ url('/objectives/practices-list') }}';
+                    const baseUrl = '{{ url('/objectives/practices-list') }}';
+                    const url = CURRENT_FOCUS_AREA_ID ? `${baseUrl}?focus_area=${encodeURIComponent(CURRENT_FOCUS_AREA_ID)}` : baseUrl;
                     const response = await fetch(url, {
                         headers: {
                             'Accept': 'application/json'
@@ -1480,7 +1569,7 @@
 
             const Renderers = {
                 renderCardWrapper(opts) {
-                    const title = opts.title || '';
+                    const title = typeof opts.title === 'string' ? opts.title : String(opts.title ?? '');
                     const subtitle = opts.subtitle ? `<div class="small text-white-50">${opts.subtitle}</div>` : '';
                     const smallNote = opts.smallNote ? `<div class="small text-white-50">${opts.smallNote}</div>` :
                         '';
@@ -1518,6 +1607,10 @@
                         .replaceAll('&', '&amp;')
                         .replaceAll('<', '&lt;')
                         .replaceAll('>', '&gt;');
+                },
+
+                displayObjectiveId(value) {
+                    return String(value ?? '').replace(/\.(?:M|FA)\d+(?:\.\d+)?$/i, '');
                 },
 
                 renderOverview(objectives) {
@@ -1587,8 +1680,9 @@
                     const name = Utils.escapeHtml(domainMap[code] || 'Unknown Domain');
 
                     const mgmtTitle =
-                        `${Utils.escapeHtml(obj.objective_id || '')} — ${Utils.formatText(obj.objective || '')}`;
-                    const focus = Utils.formatText(obj.focus_area || 'COBIT Core Model');
+                        `${Utils.escapeHtml(Utils.displayObjectiveId(obj.objective_id || ''))} — ${Utils.formatText(obj.objective || '')}`;
+                    const focusAreaTheme = Utils.focusAreaTheme(obj.focus_area || obj.focusArea);
+                    const focus = Utils.escapeHtml(Utils.displayFocusArea(obj.focus_area || obj.focusArea));
 
                     const egListHtml = this.renderGoalsList(obj.entergoals, 'entergoals_id');
                     const agListHtml = this.renderGoalsList(obj.aligngoals, 'aligngoals_id');
@@ -1599,11 +1693,11 @@
     <div style="border:1px solid #bdbdbd;border-radius:4px;overflow:hidden;font-family:Helvetica,Arial,sans-serif;background:#fff;margin-bottom:1.25rem;">
       <!-- header -->
       <div style="display:flex;align-items:stretch;border-bottom:1px solid #e6e6e6;height:64px;">
-        <div style="flex:1;background:#7a2433;color:#fff;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;">
+        <div style="flex:1;background:${focusAreaTheme.headerBg};color:#fff;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;">
           <div style="font-size:15px;font-weight:700;letter-spacing:0.2px;">Domain: ${name}  </div>
           <div style="margin-top:6px;font-size:14px;font-weight:700;">${domainLabel} Objective: ${mgmtTitle}</div>
         </div>
-        <div style="width:320px;background:#7a2433;color:#fff;display:flex;align-items:center;justify-content:center;padding:8px;border-left:4px solid #fff;">
+        <div style="width:320px;background:${focusAreaTheme.headerBg};color:#fff;display:flex;align-items:center;justify-content:center;padding:8px;border-left:4px solid #fff;">
           <div style="text-align:center;font-weight:700;font-size:13px;">${focus}</div>
         </div>
       </div>
@@ -1686,7 +1780,7 @@
 
                         return `
           <div class="mb-3">
-            <div class="fw-semibold mb-1">${Utils.escapeHtml(goal[idField] || '')}</div>
+            <div class="fw-semibold mb-1">${Utils.escapeHtml(Utils.displayObjectiveId(goal[idField] || ''))}</div>
             <ul class="ps-3 mb-0 small text-muted">
               ${metrics.map(m => `<li class="mb-1">${Utils.formatText(m)}</li>`).join('')}
             </ul>
@@ -1816,7 +1910,7 @@
                             '';
 
                         let html =
-                            `<h4 class="mb-3">${Utils.escapeHtml(obj.objective_id)} — ${Utils.formatText(obj.objective || '')}</h4>`;
+                            `<h4 class="mb-3">${Utils.escapeHtml(Utils.displayObjectiveId(obj.objective_id))} — ${Utils.formatText(obj.objective || '')}</h4>`;
                         html += summaryTableHtml;
 
                         (obj.practices || []).forEach(practice => {
@@ -2283,7 +2377,7 @@
                         if (!editable) {
                             return `
         <tr>
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">${Utils.formatText(r.policy)}</td>
           <td class="small">${Utils.formatText(r.desc)}</td>
           <td class="small">${r.guidance}</td>
@@ -2295,7 +2389,7 @@
                         const label = r.policyId ? (r.guidanceId ? 'Simpan' : 'Tambah Guidance') : 'Tambah';
                         return `
         <tr class="js-entity-row" data-entity-type="policy">
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">
             <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="policy">${Renderers.escapeTextarea(r.policy || '')}</textarea>
           </td>
@@ -2430,7 +2524,7 @@
                         if (!editable) {
                             return `
         <tr>
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">${Utils.formatText(r.skill)}</td>
           <td class="small">${r.guidance}</td>
           <td class="small">${r.refs}</td>
@@ -2441,7 +2535,7 @@
                         const label = r.skillId ? (r.guidanceId ? 'Simpan' : 'Tambah Guidance') : 'Tambah';
                         return `
         <tr class="js-entity-row" data-entity-type="skill">
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">
             <input type="text" class="form-control form-control-sm infoflow-edit-control js-entity-field" data-field="skill" value="${Renderers.escapeAttr(r.skill || '')}">
           </td>
@@ -2572,7 +2666,7 @@
                         if (!editable) {
                             return `
         <tr>
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">${Utils.formatText(r.element)}</td>
           <td class="small">${r.guidance}</td>
           <td class="small">${r.refs}</td>
@@ -2583,7 +2677,7 @@
                         const label = r.keyCultureId ? (r.guidanceId ? 'Simpan' : 'Tambah Guidance') : 'Tambah';
                         return `
         <tr class="js-entity-row" data-entity-type="key-culture">
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">
             <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="element">${Renderers.escapeTextarea(r.element || '')}</textarea>
           </td>
@@ -2658,7 +2752,7 @@
                         if (!editable) {
                             return `
         <tr>
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">${Utils.formatText(r.desc)}</td>
         </tr>
       `;
@@ -2667,7 +2761,7 @@
                         const label = r.siaId ? 'Simpan' : 'Tambah';
                         return `
         <tr class="js-entity-row" data-entity-type="sia">
-          <td class="small fw-semibold">${Utils.escapeHtml(r.gamo)}</td>
+          <td class="small fw-semibold">${Utils.escapeHtml(Utils.displayGamoId(r.gamo))}</td>
           <td class="small">
             <textarea class="form-control form-control-sm infoflow-edit-control textarea js-entity-field" data-field="description">${Renderers.escapeTextarea(r.desc || '')}</textarea>
           </td>
@@ -2712,7 +2806,7 @@
 
                         let html = `
           <div class="mb-0 fw-bold bg-secondary text-white p-2">
-            B. Component: Organizational Structures for ${Utils.escapeHtml(obj.objective_id)} — ${Utils.formatText(obj.objective)}
+            B. Component: Organizational Structures for ${Utils.escapeHtml(Utils.displayObjectiveId(obj.objective_id))} — ${Utils.formatText(obj.objective)}
           </div>
           <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped mb-0">
@@ -2906,7 +3000,7 @@
                         tabsHtml += `
       <li class="nav-item" role="presentation">
         <a href="#" class="nav-link" data-filter="${safeId}" id="comp_tab_${safeId}">
-          ${Utils.escapeHtml(rawId)}
+          ${Utils.escapeHtml(Utils.displayObjectiveId(rawId))}
         </a>
       </li>
     `;
@@ -3084,7 +3178,7 @@
                         tabsHtml += `
     <li class="nav-item" role="presentation">
       <a href="#" class="nav-link" data-filter="${safeId}" id="comp_obj_tab_${safeId}">
-        ${Utils.escapeHtml(rawId)}
+        ${Utils.escapeHtml(Utils.displayObjectiveId(rawId))}
       </a>
     </li>
   `;
@@ -3108,7 +3202,7 @@
                 selectDefaultTab(objectives) {
                     for (let prefix of CONFIG.PREFERRED_ORDER) {
                         const found = objectives.find(obj =>
-                            String(obj.objective_id || '').toUpperCase().startsWith(prefix)
+                            String(Utils.displayObjectiveId(obj.objective_id || '')).toUpperCase().startsWith(prefix)
                         );
 
                         if (found) {
@@ -3233,11 +3327,11 @@
                     objectiveList.forEach((obj, idx) => {
                         const active = idx === 0 ? 'active' : '';
                         const safeId = Utils.idify(obj.objective_id);
-                        const objId = Utils.escapeHtml(obj.objective_id || '');
+                        const objId = Utils.escapeHtml(Utils.displayObjectiveId(obj.objective_id || ''));
 
                         tabsHtml += `
           <li class="nav-item" role="presentation">
-            <a href="#" class="nav-link ${active}" data-obj="${objId}" id="gamo_tab_${safeId}">
+            <a href="#" class="nav-link ${active}" data-obj="${Utils.escapeHtml(obj.objective_id || '')}" id="gamo_tab_${safeId}">
               ${objId}
             </a>
           </li>
@@ -3278,7 +3372,11 @@
 
                     try {
                         const objectives = await DataService.fetchAllObjectives();
-                        const obj = objectives.find(x => String(x.objective_id) === String(id));
+                        const normalizedTarget = Utils.displayObjectiveId(id);
+                        const obj = objectives.find(x =>
+                            String(x.objective_id) === String(id) ||
+                            Utils.displayObjectiveId(x.objective_id || '') === normalizedTarget
+                        );
 
                         if (!obj) {
                             DOM.gamoResults.innerHTML = '<div class="text-muted">Objective not found</div>';
@@ -3299,10 +3397,10 @@
                 },
 
                 updateBreadcrumbs(obj) {
-                    const infoEl = document.getElementById('gamoObjSelectedInfo');
+                        const infoEl = document.getElementById('gamoObjSelectedInfo');
                     if (infoEl) {
                         infoEl.innerHTML =
-                            `<div class="small text-muted">Objective selected: ${Utils.escapeHtml(obj.objective_id || '')}</div>`;
+                            `<div class="small text-muted">Objective selected: ${Utils.escapeHtml(Utils.displayObjectiveId(obj.objective_id || ''))}</div>`;
                     }
                 },
 
@@ -3326,7 +3424,7 @@
                     const initialBody = Renderers.renderOverview([obj]);
 
                     const cardHtml = Renderers.renderCardWrapper({
-                        title: `${Utils.escapeHtml(obj.objective_id)} — ${Utils.escapeHtml(obj.objective || '')}`,
+                        title: `${Utils.escapeHtml(Utils.displayObjectiveId(obj.objective_id))} — ${Utils.escapeHtml(obj.objective || '')}`,
                         subtitle: '',
                         smallNote: '', // removed "(GAMO)" and other small note text per request
                         tabsHtml,

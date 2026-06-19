@@ -11,9 +11,10 @@ class MstObjective extends Model
     
     protected $table = 'mst_objective';
 
+    // The primary key is a string (objective_id) defined in the table
     protected $primaryKey = 'objective_id';
 
-    public $incrementing = false;
+    public $incrementing = false; // not auto-incrementing
 
     protected $keyType = 'string';
 
@@ -21,6 +22,7 @@ class MstObjective extends Model
 
     protected $fillable = [
         'objective_id',
+        'focus_area_id',
         'objective',
         'objective_description',
         'objective_purpose',
@@ -31,6 +33,8 @@ class MstObjective extends Model
         return $this->belongsToMany(
             MstArea::class,
             'trs_domain',
+            'objective_id',
+            'area',
             'objective_id',
             'area'
         )->withPivot('domain');
@@ -46,17 +50,12 @@ class MstObjective extends Model
         return $this->hasMany(MstPolicy::class, 'objective_id', 'objective_id');
     }
 
-    // public function SIA()
-    // {
-    //     return $this->hasMany(MstSIA::class, 'objective_id', 'objective_id');
-    // }
-
     public function s_i_a()
     {
         return $this->hasMany(
-            MstSIA::class,        // your SIA model
-            'objective_id',       // foreign key on the MstSia table
-            'objective_id'        // local key on this model
+            MstSIA::class,
+            'objective_id',
+            'objective_id'
         );
     }
 
@@ -65,6 +64,8 @@ class MstObjective extends Model
         return $this->belongsToMany(
             MstEntergoals::class,
             'trs_entergoals',
+            'objective_id',
+            'entergoals_id',
             'objective_id',
             'entergoals_id'
         );
@@ -75,6 +76,8 @@ class MstObjective extends Model
         return $this->belongsToMany(
             MstAligngoals::class,
             'trs_aligngoals',
+            'objective_id',
+            'aligngoals_id',
             'objective_id',
             'aligngoals_id'
         );
@@ -111,5 +114,14 @@ class MstObjective extends Model
     public function roadmaps()
     {
         return $this->hasMany(TrsRoadmap::class, 'objective_id', 'objective_id');
+    }
+
+    /**
+     * The focus area that this objective belongs to.
+     * Now direct FK, not through pivot.
+     */
+    public function focusArea()
+    {
+        return $this->belongsTo(MstFocusArea::class, 'focus_area_id', 'id');
     }
 }

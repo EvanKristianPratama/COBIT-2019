@@ -26,6 +26,7 @@ use App\Http\Controllers\cobit2019\Df7Controller;
 use App\Http\Controllers\cobit2019\Df8Controller;
 use App\Http\Controllers\cobit2019\Df9Controller;
 use App\Http\Controllers\cobit2019\DfController;
+use App\Http\Controllers\cobit2019\FocusAreaController;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
 use App\Http\Controllers\cobit2019\RoadmapController;
 use App\Http\Controllers\cobit2019\Step2Controller;
@@ -56,6 +57,29 @@ Route::bind('evalId', function ($value) {
 
 // Public routes
 Route::get('/api/cobit/roles-matrix', [MstObjectiveController::class, 'getRolesMatrix'])->name('cobit.roles-matrix');
+Route::get('/api/cobit/gamo-infoflow', [MstObjectiveController::class, 'getGamoInfoflow'])->name('cobit.gamo-infoflow');
+
+// Public component API routes
+Route::get('/api/cobit/components', [MstObjectiveController::class, 'getComponentsList'])->name('cobit.components.list');
+Route::get('/api/cobit/components/{component}', [MstObjectiveController::class, 'getComponentApi'])->name('cobit.components.show');
+
+// Component API route aliases
+Route::get('/api/cobit/overview', [MstObjectiveController::class, 'getOverviewApi'])->name('cobit.api.overview');
+Route::get('/api/cobit/goals', [MstObjectiveController::class, 'getGoalsApi'])->name('cobit.api.goals');
+Route::get('/api/cobit/domains', [MstObjectiveController::class, 'getDomainsApi'])->name('cobit.api.domains');
+Route::get('/api/cobit/practices', [MstObjectiveController::class, 'getPracticesApi'])->name('cobit.api.practices');
+Route::get('/api/cobit/processes', [MstObjectiveController::class, 'getPracticesApi'])->name('cobit.api.processes');
+Route::get('/api/cobit/organizational', [MstObjectiveController::class, 'getOrganizationalApi'])->name('cobit.api.organizational');
+Route::get('/api/cobit/infoflows', [MstObjectiveController::class, 'getInfoflowsApi'])->name('cobit.api.infoflows');
+Route::get('/api/cobit/information-flows', [MstObjectiveController::class, 'getInfoflowsApi'])->name('cobit.api.information-flows');
+Route::get('/api/cobit/policies', [MstObjectiveController::class, 'getPoliciesApi'])->name('cobit.api.policies');
+Route::get('/api/cobit/skills', [MstObjectiveController::class, 'getSkillsApi'])->name('cobit.api.skills');
+Route::get('/api/cobit/culture', [MstObjectiveController::class, 'getCultureApi'])->name('cobit.api.culture');
+Route::get('/api/cobit/services', [MstObjectiveController::class, 'getServicesApi'])->name('cobit.api.services');
+
+// Public Focus Area API routes
+Route::get('/api/cobit/focus-areas', [FocusAreaController::class, 'apiList'])->name('cobit.api.focus-areas');
+Route::get('/api/cobit/focus-areas/{id}', [FocusAreaController::class, 'apiShow'])->name('cobit.api.focus-areas.show');
 
 Route::get('/assessment/join', [DesignToolkitController::class, 'showJoinForm'])
     ->name('assessment.join')
@@ -84,6 +108,24 @@ Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
     // Get practices list for infoflow dropdown
     Route::get('/objectives/practices-list', [MstObjectiveController::class, 'getPracticesList'])
         ->name('cobit_component.practices-list');
+
+    // Focus Area pages
+    Route::get('/focus-areas', [FocusAreaController::class, 'index'])->name('focus-areas.index');
+    Route::get('/focus-areas/{id}', [FocusAreaController::class, 'show'])->name('focus-areas.show');
+});
+
+Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
+    // Focus Area CRUD
+    Route::post('/focus-areas', [FocusAreaController::class, 'store'])->name('focus-areas.store');
+    Route::put('/focus-areas/{id}', [FocusAreaController::class, 'update'])->name('focus-areas.update');
+    Route::delete('/focus-areas/{id}', [FocusAreaController::class, 'destroy'])->name('focus-areas.destroy');
+    // Store a new objective within a focus area
+    Route::post('/focus-areas/{id}/objectives', [FocusAreaController::class, 'storeObjective'])->name('focus-areas.objectives.store');
+    // Focus Area objective CRUD (update & destroy)
+    Route::put('/focus-areas/{id}/objectives/{objectiveId}', [FocusAreaController::class, 'updateObjective'])
+        ->name('focus-areas.objectives.update');
+    Route::delete('/focus-areas/{id}/objectives/{objectiveId}', [FocusAreaController::class, 'destroyObjective'])
+        ->name('focus-areas.objectives.destroy');
 });
 
 Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
@@ -103,6 +145,18 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit_component.policies.store');
     Route::put('/objectives/policies/{policyId}', [MstObjectiveController::class, 'updatePolicy'])
         ->name('cobit_component.policies.update');
+    Route::put('/objectives/entergoals/{entergoalsId}', [MstObjectiveController::class, 'updateEnterGoal'])
+        ->name('cobit_component.entergoals.update');
+    Route::put('/objectives/entergoals-metrics/{metricId}', [MstObjectiveController::class, 'updateEnterGoalMetric'])
+        ->name('cobit_component.entergoals.metrics.update');
+    Route::put('/objectives/aligngoals/{aligngoalsId}', [MstObjectiveController::class, 'updateAlignGoal'])
+        ->name('cobit_component.aligngoals.update');
+    Route::put('/objectives/aligngoals-metrics/{metricId}', [MstObjectiveController::class, 'updateAlignGoalMetric'])
+        ->name('cobit_component.aligngoals.metrics.update');
+    Route::put('/objectives/practices/{practiceId}', [MstObjectiveController::class, 'updatePractice'])
+        ->name('cobit_component.practices.update');
+    Route::put('/objectives/practices/{practiceId}/roles/{roleId}', [MstObjectiveController::class, 'updatePracticeRole'])
+        ->name('cobit_component.practices.roles.update');
     Route::post('/objectives/policies/{policyId}/guidance', [MstObjectiveController::class, 'createPolicyGuidance'])
         ->name('cobit_component.policies.guidance.store');
     Route::post('/objectives/skills', [MstObjectiveController::class, 'createSkill'])

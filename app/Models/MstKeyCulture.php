@@ -20,6 +20,7 @@ class MstKeyCulture extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'focus_area_id',
         'keyculture_id',
         'objective_id',
         'element',
@@ -28,7 +29,7 @@ class MstKeyCulture extends Model
 
     public function objective()
     {
-        return $this->belongsTo(MstObjective::class, 'objective_id');
+        return $this->belongsTo(MstObjective::class, 'objective_id', 'objective_id');
     }
 
     public function guidances()
