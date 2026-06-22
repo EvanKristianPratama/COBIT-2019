@@ -188,12 +188,6 @@
         <div class="fa-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
                 <h1><i class="fas fa-bullseye me-2"></i>COBIT Model</h1>
-                <p>Kelola model governance dan mapping-nya ke objectives COBIT 2019.</p>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('cobit_component.show', 'APO01') }}" class="btn btn-sm btn-outline-light fw-bold" style="border-width: 2px;">
-                    <i class="fas fa-book me-1"></i>Kamus Component
-                </a>
             </div>
         </div>
 
@@ -201,7 +195,13 @@
         <div class="row g-3" id="faGrid">
             @foreach($focusAreas as $fa)
                 <div class="col-md-6 col-xl-4" data-fa-id="{{ $fa->id }}">
-                    <a href="{{ route('focus-areas.show', $fa->id) }}" class="fa-card" id="faCard{{ $fa->id }}">
+                    @php
+                        $firstObj = \App\Models\MstObjective::where('focus_area_id', $fa->id)
+                            ->orderByRaw("CASE WHEN UPPER(objective_id) LIKE 'EDM%' THEN 0 WHEN UPPER(objective_id) LIKE 'APO%' THEN 1 WHEN UPPER(objective_id) LIKE 'BAI%' THEN 2 WHEN UPPER(objective_id) LIKE 'DSS%' THEN 3 WHEN UPPER(objective_id) LIKE 'MEA%' THEN 4 ELSE 5 END, objective_id")
+                            ->first();
+                        $objRoute = $firstObj ? route('cobit_component.show', ['id' => $firstObj->objective_id, 'focus_area' => $fa->id]) : route('focus-areas.show', $fa->id);
+                    @endphp
+                    <a href="{{ $objRoute }}" class="fa-card" id="faCard{{ $fa->id }}">
                         <span class="fa-card-code">{{ $fa->code }}</span>
                         <h3>{{ $fa->name }}</h3>
                         <p>{{ $fa->description ?: 'Tidak ada deskripsi.' }}</p>
@@ -214,9 +214,11 @@
                                 <button class="btn btn-outline-secondary btn-sm" onclick="openEditModal({{ $fa->id }}, '{{ addslashes($fa->code) }}', '{{ addslashes($fa->name) }}', `{{ addslashes($fa->description ?? '') }}`)">
                                     <i class="fas fa-pen"></i> Edit
                                 </button>
+                                @if($fa->id != 1)
                                 <button class="btn btn-outline-danger btn-sm" onclick="deleteFocusArea({{ $fa->id }}, '{{ addslashes($fa->name) }}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                @endif
                             </div>
                         @endif
                     </a>

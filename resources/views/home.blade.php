@@ -4,7 +4,9 @@
 <div class="container-fluid home-clean-wrap">
   <section class="home-clean-card home-main-card">
     <header class="home-main-head">
-      <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo" class="home-brand-logo">
+      <h1 class="m-0 p-0 fw-bold" style="font-size: 2.2rem; letter-spacing: -0.02em;">
+        <strong><span style="color: #0f2b5c;">IT</span> <span style="color: #a50537;">Governance</span></strong>
+      </h1>
     </header>
 
     @if ($approvalPending)

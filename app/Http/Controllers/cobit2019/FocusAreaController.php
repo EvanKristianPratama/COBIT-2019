@@ -163,15 +163,15 @@ class FocusAreaController extends Controller
         return $this->nextNumericId('mst_aligngoalsmetr', 'aligngoalsmetr_id');
     }
 
-    protected function cloneObjectiveFromBaseline(MstObjective $baseline, MstFocusArea $focusArea): MstObjective
+    protected function cloneObjectiveFromBaseline(MstObjective $baseline, MstFocusArea $focusArea, ?string $customId = null, ?string $customName = null): MstObjective
     {
-        return DB::transaction(function () use ($baseline, $focusArea) {
-            $newObjectiveId = $this->uniqueObjectiveId($baseline->objective_id, $focusArea->id);
+        return DB::transaction(function () use ($baseline, $focusArea, $customId, $customName) {
+            $newObjectiveId = $this->uniqueObjectiveId($customId ?: $baseline->objective_id, $focusArea->id);
 
             $objective = MstObjective::create([
                 'objective_id' => $newObjectiveId,
                 'focus_area_id' => $focusArea->id,
-                'objective' => $baseline->objective,
+                'objective' => $customName ?: $baseline->objective,
                 'objective_description' => $baseline->objective_description,
                 'objective_purpose' => $baseline->objective_purpose,
             ]);
@@ -494,6 +494,10 @@ class FocusAreaController extends Controller
      */
     public function destroy($id)
     {
+        if ($id == 1) {
+            return response()->json(['message' => 'COBIT Core Model tidak bisa dihapus.'], 403);
+        }
+
         $focusArea = MstFocusArea::findOrFail($id);
         // Cascade delete will remove all objectives with this focus_area_id
         // and their child data (practices, policies, etc) via FK cascade
@@ -524,7 +528,12 @@ class FocusAreaController extends Controller
                 'baseline_objective_id' => 'nullable|string|exists:mst_objective,objective_id',
                 'baseline_objective_ids' => 'nullable|array|min:1',
                 'baseline_objective_ids.*' => 'string|exists:mst_objective,objective_id',
+                'custom_objective_id' => 'nullable|string|max:50',
+                'custom_objective_name' => 'nullable|string|max:255',
             ]);
+
+            $customId = $request->input('custom_objective_id');
+            $customName = $request->input('custom_objective_name');
 
             $baselines = MstObjective::with([
                 'domains',
@@ -549,13 +558,13 @@ class FocusAreaController extends Controller
             $reusedCount = 0;
             $createdCount = 0;
             foreach ($baselines as $baseline) {
-                if ($existingClone = $this->findExistingObjectiveClone($baseline->objective_id, $focusArea->id)) {
+                if (!$customId && $existingClone = $this->findExistingObjectiveClone($baseline->objective_id, $focusArea->id)) {
                     $cloned[] = $existingClone->objective_id;
                     $reusedCount++;
                     continue;
                 }
 
-                $clonedObjective = $this->cloneObjectiveFromBaseline($baseline, $focusArea);
+                $clonedObjective = $this->cloneObjectiveFromBaseline($baseline, $focusArea, $customId, $customName);
                 $cloned[] = $clonedObjective->objective_id;
                 $createdCount++;
             }
@@ -591,6 +600,79 @@ class FocusAreaController extends Controller
     /**
      * Update an objective within this focus area.
      */
+    /**
+     * Generate COBIT 5 processes automatically for a Focus Area.
+     */
+    public function generateCobit5($id)
+    {
+        $focusArea = MstFocusArea::findOrFail($id);
+        $mapping = config('cobit-mappings.cobit5', []);
+
+        if (empty($mapping)) {
+            return response()->json(['success' => false, 'message' => 'Mapping COBIT 5 tidak ditemukan di config.'], 404);
+        }
+
+        $result = $this->bulkCloneObjectives($focusArea, $mapping);
+
+        return response()->json([
+            'success' => true,
+            'added' => $result['added'],
+            'reused' => $result['reused'],
+            'message' => "COBIT 5 template generated. {$result['added']} process created, {$result['reused']} skipped."
+        ]);
+    }
+
+    /**
+     * Generic function to bulk clone objectives based on a mapping array.
+     * Mapping format: ['Baseline_ID' => 'Custom Name']
+     */
+    protected function bulkCloneObjectives(MstFocusArea $focusArea, array $mapping): array
+    {
+        $baselines = MstObjective::with([
+            'domains',
+            'entergoals',
+            'aligngoals',
+            'guidance',
+            'policies',
+            'skill.guidances',
+            'keyculture.guidances',
+            's_i_a',
+            'practices.practicemetr',
+            'practices.activities',
+            'practices.roles',
+            'practices.guidances',
+            'practices.infoflowinput.connectedoutputs',
+            'practices.infoflowinput',
+            'practices.infoflowoutput',
+            'roadmaps',
+        ])->whereIn('objective_id', array_keys($mapping))->get()->keyBy('objective_id');
+
+        $createdCount = 0;
+        $reusedCount = 0;
+
+        foreach ($mapping as $baselineId => $customName) {
+            $baseline = $baselines->get($baselineId);
+            if (!$baseline) {
+                continue;
+            }
+
+            // check if custom already exists
+            if ($existingClone = $this->findExistingObjectiveClone($baseline->objective_id, $focusArea->id)) {
+                $reusedCount++;
+                continue;
+            }
+
+            // Clone with custom ID/Name
+            $this->cloneObjectiveFromBaseline($baseline, $focusArea, $baseline->objective_id, $customName);
+            $createdCount++;
+        }
+
+        return [
+            'added' => $createdCount,
+            'reused' => $reusedCount,
+        ];
+    }
+
     public function updateObjective(Request $request, $id, $objectiveId)
     {
         $focusArea = MstFocusArea::findOrFail($id);

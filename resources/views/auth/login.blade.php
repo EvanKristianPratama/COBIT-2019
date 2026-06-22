@@ -20,13 +20,14 @@
         <div class="flex-1 min-h-0 flex items-center justify-center px-6 py-5 lg:px-8 bg-white">
             <div class="w-full max-w-md">
                 <div class="mb-6 flex flex-col items-center text-center">
-                    <img src="{{ asset('images/cobitColour.png') }}" alt="COBIT Logo"
-                        class="h-16 w-auto object-contain mb-4" />
+                    <h1 class="m-0 p-0 mb-4 font-bold" style="font-size: 2.5rem; letter-spacing: -0.02em;">
+                        <strong><span style="color: #0f2b5c;">IT</span> <span style="color: #a50537;">Governance</span></strong>
+                    </h1>
                 </div>
 
                 <div class="mb-6 text-center">
                     <h1 class="text-2xl font-bold text-gray-900">Selamat Datang</h1>
-                    <p class="text-gray-500 mt-2">Masuk dengan akun Anda untuk mengakses COBIT 2019 tools.</p>
+                    <p class="text-gray-500 mt-2">Masuk dengan akun Anda untuk mengakses IT Governance tools.</p>
                 </div>
 
                 @if ($errorMessage)

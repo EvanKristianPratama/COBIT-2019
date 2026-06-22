@@ -196,6 +196,9 @@
                     <p>{{ $focusArea->description ?: 'Tidak ada deskripsi.' }}</p>
                 </div>
                 <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm fw-semibold" onclick="createObjModal.show()">
+                        <i class="fas fa-plus me-1"></i>Tambah Objective
+                    </button>
                     <a href="{{ route('focus-areas.index') }}" class="btn btn-sm btn-outline-light fw-bold">
                         <i class="fas fa-arrow-left me-1"></i>Kembali
                     </a>
@@ -205,26 +208,12 @@
 
         <!-- Toolbar -->
         <div class="fa-toolbar">
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-primary dropdown-toggle fw-bold" data-bs-toggle="dropdown">
-                    <i class="fas fa-filter me-1"></i>Pilih Model Lain
-                </button>
-                <ul class="dropdown-menu">
-                    @foreach($allFocusAreas as $fa)
-                        <li>
-                            <a class="dropdown-item {{ $fa->id == $focusArea->id ? 'active' : '' }}"
-                               href="{{ route('focus-areas.show', $fa->id) }}">
-                                <strong>{{ $fa->code }}</strong> — {{ $fa->name }}
-                                <span class="badge bg-secondary ms-1">{{ $fa->objectives_count }}</span>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-
             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                 <button class="btn btn-sm btn-primary fw-bold" onclick="openCreateObjective()">
                     <i class="fas fa-plus me-1"></i>Tambah Objective
+                </button>
+                <button class="btn btn-sm btn-info text-white fw-bold" onclick="generateCobit5()">
+                    <i class="fas fa-magic me-1"></i>Generate COBIT 5
                 </button>
                 <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="openEditFaModal()">
                     <i class="fas fa-pen me-1"></i>Edit Model
@@ -313,12 +302,12 @@
                                 @forelse($obj->entergoals as $eg)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
-                                            <span>{{ $eg->entergoals_id }}</span>
+                                            <span>{{ $displayObjectiveId($eg->entergoals_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     data-child-type="entergoal"
-                                                    data-child-id="{{ e($eg->entergoals_id) }}"
-                                                    data-child-description="{{ e($eg->description) }}"
+                                                    data-child-id="{{ $eg->entergoals_id }}"
+                                                    data-child-description="{{ $eg->description }}"
                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                     <i class="fas fa-pen"></i>
@@ -334,8 +323,8 @@
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                             <button type="button" class="btn btn-sm btn-outline-secondary mini-edit-btn"
                                                                 data-child-type="entergoalmetric"
-                                                                data-child-id="{{ e($metr->entergoalsmetr_id) }}"
-                                                                data-child-field1="{{ e($metr->description) }}"
+                                                                data-child-id="{{ $metr->entergoalsmetr_id }}"
+                                                                data-child-field1="{{ $metr->description }}"
                                                                 data-child-focus-area-id="{{ $focusArea->id }}"
                                                                 onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                 <i class="fas fa-pen" style="font-size:0.7rem;"></i>
@@ -356,12 +345,12 @@
                                 @forelse($obj->aligngoals as $ag)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
-                                            <span>{{ $ag->aligngoals_id }}</span>
+                                            <span>{{ $displayObjectiveId($ag->aligngoals_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     data-child-type="aligngoal"
-                                                    data-child-id="{{ e($ag->aligngoals_id) }}"
-                                                    data-child-description="{{ e($ag->description) }}"
+                                                    data-child-id="{{ $ag->aligngoals_id }}"
+                                                    data-child-description="{{ $ag->description }}"
                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                     <i class="fas fa-pen"></i>
@@ -377,8 +366,8 @@
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                             <button type="button" class="btn btn-sm btn-outline-secondary mini-edit-btn"
                                                                 data-child-type="aligngoalmetric"
-                                                                data-child-id="{{ e($metr->aligngoalsmetr_id) }}"
-                                                                data-child-field1="{{ e($metr->description) }}"
+                                                                data-child-id="{{ $metr->aligngoalsmetr_id }}"
+                                                                data-child-field1="{{ $metr->description }}"
                                                                 data-child-focus-area-id="{{ $focusArea->id }}"
                                                                 onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                 <i class="fas fa-pen" style="font-size:0.7rem;"></i>
@@ -399,13 +388,13 @@
                                 @forelse($obj->practices as $practice)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
-                                            <span>{{ $practice->practice_id }} — {{ $practice->practice_name }}</span>
+                                            <span>{{ $displayObjectiveId($practice->practice_id) }} — {{ $practice->practice_name }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     data-child-type="practice"
-                                                    data-child-id="{{ e($practice->practice_id) }}"
-                                                    data-child-field1="{{ e($practice->practice_name) }}"
-                                                    data-child-field2="{{ e($practice->practice_description) }}"
+                                                    data-child-id="{{ $practice->practice_id }}"
+                                                    data-child-field1="{{ $practice->practice_name }}"
+                                                    data-child-field2="{{ $practice->practice_description }}"
                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                     <i class="fas fa-pen"></i>
@@ -467,15 +456,15 @@
                                                     <tr>
                                                         <td>
                                                             <div class="fw-semibold">
-                                                                {{ $practice->practice_id }}{{ $practice->practice_name ? ' - ' . $practice->practice_name : '' }}
+                                                                {{ $displayObjectiveId($practice->practice_id) }}{{ $practice->practice_name ? ' - ' . $practice->practice_name : '' }}
                                                             </div>
                                                             <div class="text-muted small">{{ $practice->practice_description }}</div>
                                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                                 <button type="button" class="btn btn-sm btn-outline-primary mt-1 py-0 px-2"
                                                                     data-child-type="practice"
-                                                                    data-child-id="{{ e($practice->practice_id) }}"
-                                                                    data-child-field1="{{ e($practice->practice_name) }}"
-                                                                    data-child-field2="{{ e($practice->practice_description) }}"
+                                                                    data-child-id="{{ $practice->practice_id }}"
+                                                                    data-child-field1="{{ $practice->practice_name }}"
+                                                                    data-child-field2="{{ $practice->practice_description }}"
                                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                     <i class="fas fa-pen me-1"></i>Edit Practice
@@ -493,11 +482,11 @@
                                                                     @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                                         <button type="button" class="btn btn-sm btn-outline-secondary mini-edit-btn"
                                                                             data-child-type="practicerole"
-                                                                            data-child-id="{{ e($practice->practice_id) }}"
-                                                                            data-child-role-id="{{ e($role->role_id) }}"
-                                                                            data-child-field1="{{ e($currentRaci) }}"
-                                                                            data-child-practice-name="{{ e($practice->practice_name) }}"
-                                                                            data-child-role-name="{{ e($role->role) }}"
+                                                                            data-child-id="{{ $practice->practice_id }}"
+                                                                            data-child-role-id="{{ $role->role_id }}"
+                                                                            data-child-field1="{{ $currentRaci }}"
+                                                                            data-child-practice-name="{{ $practice->practice_name }}"
+                                                                            data-child-role-name="{{ $role->role }}"
                                                                             data-child-focus-area-id="{{ $focusArea->id }}"
                                                                             onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                             <i class="fas fa-pen" style="font-size:0.7rem;"></i>
@@ -519,13 +508,13 @@
                                 @forelse($obj->policies as $policy)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
-                                            <span>{{ $policy->policy_id }}</span>
+                                            <span>{{ $displayObjectiveId($policy->policy_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     data-child-type="policy"
-                                                    data-child-id="{{ e($policy->policy_id) }}"
-                                                    data-child-field1="{{ e($policy->policy) }}"
-                                                    data-child-field2="{{ e($policy->description) }}"
+                                                    data-child-id="{{ $policy->policy_id }}"
+                                                    data-child-field1="{{ $policy->policy }}"
+                                                    data-child-field2="{{ $policy->description }}"
                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                     <i class="fas fa-pen"></i>
@@ -542,9 +531,9 @@
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                             <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
                                                                 data-child-type="guidance"
-                                                                data-child-id="{{ e($g->guidance_id) }}"
-                                                                data-child-field1="{{ e($g->guidance) }}"
-                                                                data-child-field2="{{ e($g->reference) }}"
+                                                                data-child-id="{{ $g->guidance_id }}"
+                                                                data-child-field1="{{ $g->guidance }}"
+                                                                data-child-field2="{{ $g->reference }}"
                                                                 data-child-focus-area-id="{{ $focusArea->id }}"
                                                                 onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                 <i class="fas fa-pen"></i>
@@ -565,12 +554,12 @@
                                 @forelse($obj->skill as $sk)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
-                                            <span>{{ $sk->skill_id }}</span>
+                                            <span>{{ $displayObjectiveId($sk->skill_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     data-child-type="skill"
-                                                    data-child-id="{{ e($sk->skill_id) }}"
-                                                    data-child-field1="{{ e($sk->skill) }}"
+                                                    data-child-id="{{ $sk->skill_id }}"
+                                                    data-child-field1="{{ $sk->skill }}"
                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                     <i class="fas fa-pen"></i>
@@ -586,9 +575,9 @@
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                             <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
                                                                 data-child-type="guidance"
-                                                                data-child-id="{{ e($g->guidance_id) }}"
-                                                                data-child-field1="{{ e($g->guidance) }}"
-                                                                data-child-field2="{{ e($g->reference) }}"
+                                                                data-child-id="{{ $g->guidance_id }}"
+                                                                data-child-field1="{{ $g->guidance }}"
+                                                                data-child-field2="{{ $g->reference }}"
                                                                 data-child-focus-area-id="{{ $focusArea->id }}"
                                                                 onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                 <i class="fas fa-pen"></i>
@@ -609,12 +598,12 @@
                                 @forelse($obj->keyculture as $cul)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
-                                            <span>{{ $cul->keyculture_id }}</span>
+                                            <span>{{ $displayObjectiveId($cul->keyculture_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     data-child-type="culture"
-                                                    data-child-id="{{ e($cul->keyculture_id) }}"
-                                                    data-child-field1="{{ e($cul->element) }}"
+                                                    data-child-id="{{ $cul->keyculture_id }}"
+                                                    data-child-field1="{{ $cul->element }}"
                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                     <i class="fas fa-pen"></i>
@@ -630,9 +619,9 @@
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                             <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
                                                                 data-child-type="guidance"
-                                                                data-child-id="{{ e($g->guidance_id) }}"
-                                                                data-child-field1="{{ e($g->guidance) }}"
-                                                                data-child-field2="{{ e($g->reference) }}"
+                                                                data-child-id="{{ $g->guidance_id }}"
+                                                                data-child-field1="{{ $g->guidance }}"
+                                                                data-child-field2="{{ $g->reference }}"
                                                                 data-child-focus-area-id="{{ $focusArea->id }}"
                                                                 onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                 <i class="fas fa-pen"></i>
@@ -653,12 +642,12 @@
                                 @forelse($obj->s_i_a as $sia)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
-                                            <span>{{ $sia->sia_id }}</span>
+                                            <span>{{ $displayObjectiveId($sia->sia_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
                                                     data-child-type="sia"
-                                                    data-child-id="{{ e($sia->sia_id) }}"
-                                                    data-child-field1="{{ e($sia->description) }}"
+                                                    data-child-id="{{ $sia->sia_id }}"
+                                                    data-child-field1="{{ $sia->description }}"
                                                     data-child-focus-area-id="{{ $focusArea->id }}"
                                                     onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                     <i class="fas fa-pen"></i>
@@ -775,10 +764,40 @@
             const body = document.getElementById('accordion_' + safeId);
             const header = body?.previousElementSibling;
             if (body) {
-                body.classList.toggle('open');
+                const isOpen = body.classList.toggle('open');
                 header?.classList.toggle('open');
+                
+                let openAccordions = JSON.parse(sessionStorage.getItem('openAccordions') || '[]');
+                if (isOpen) {
+                    if (!openAccordions.includes(safeId)) openAccordions.push(safeId);
+                } else {
+                    openAccordions = openAccordions.filter(id => id !== safeId);
+                }
+                sessionStorage.setItem('openAccordions', JSON.stringify(openAccordions));
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const openAccordions = JSON.parse(sessionStorage.getItem('openAccordions') || '[]');
+            openAccordions.forEach(safeId => {
+                const body = document.getElementById('accordion_' + safeId);
+                const header = body?.previousElementSibling;
+                if (body && header) {
+                    body.classList.add('open');
+                    header.classList.add('open');
+                }
+            });
+            
+            const scrollPos = sessionStorage.getItem('scrollPos');
+            if (scrollPos) {
+                setTimeout(() => window.scrollTo(0, parseInt(scrollPos)), 50);
+                sessionStorage.removeItem('scrollPos');
+            }
+            
+            window.addEventListener('beforeunload', () => {
+                sessionStorage.setItem('scrollPos', window.scrollY);
+            });
+        });
 
         function openEditFaModal() {
             new bootstrap.Modal(document.getElementById('editFaModal')).show();
@@ -860,6 +879,7 @@
             window.editObjForm = editObjForm;
             window.openChildEditorFromButton = function(button) {
                 if (!button) return;
+                window.currentEditButton = button;
                 window.openChildEditor(button.dataset.childType, {
                     id: button.dataset.childId || '',
                     role_id: button.dataset.childRoleId || '',
@@ -1077,6 +1097,19 @@
                         throw new Error(await extractErrorMessage(res));
                     }
 
+                    if (type === 'practicerole' && window.currentEditButton) {
+                        const btn = window.currentEditButton;
+                        btn.dataset.childField1 = payload.r_a;
+                        const badge = btn.parentElement.querySelector('.raci-badge');
+                        if (badge) {
+                            badge.textContent = payload.r_a;
+                            badge.className = 'raci-badge raci-' + (['R','A','C','I'].includes(payload.r_a) ? payload.r_a : 'I');
+                        }
+                        childEditModal.hide();
+                        queueFlashNotif('Data berhasil disimpan.');
+                        return; // Prevent reload for instant UI update
+                    }
+
                     childEditModal.hide();
                     queueFlashNotif('Data berhasil disimpan.');
                     location.reload();
@@ -1112,6 +1145,10 @@
                 const payload = {};
                 if (selectedBaselineId) {
                     payload.baseline_objective_id = selectedBaselineId;
+                    const customCode = document.getElementById('customObjCode')?.value.trim();
+                    const customName = document.getElementById('customObjName')?.value.trim();
+                    if (customCode) payload.custom_objective_id = customCode;
+                    if (customName) payload.custom_objective_name = customName;
                 } else {
                     showNotif('Pilih 1 baseline objective dulu.', 'warning');
                     return;
@@ -1191,6 +1228,28 @@
                 showNotif(e.message, 'danger');
             }
         }
+        async function generateCobit5() {
+            if (!confirm('Apakah Anda yakin ingin melakukan bulk clone 37 proses COBIT 5 ke dalam model ini?\nProses ini mungkin memerlukan waktu beberapa detik.')) return;
+            
+            const url = `{{ route('focus-areas.generate-cobit5', $focusArea->id) }}`;
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                });
+                if (!res.ok) {
+                    throw new Error(await extractErrorMessage(res));
+                }
+                const data = await res.json();
+                queueFlashNotif(data.message);
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        }
     </script>
 
     <!-- Create Objective Modal -->
@@ -1215,7 +1274,22 @@
                                 @endforeach
                             </select>
                             <div class="form-text">
-                                Pilih satu baseline objective untuk dikopi ke model ini. Sistem akan membuat objective baru dengan ID unik.
+                                Pilih satu baseline objective untuk dikopi relasinya ke model ini.
+                            </div>
+                        </div>
+
+                        <div class="mb-3 mt-4">
+                            <label class="form-label fw-semibold">Kustomisasi Nama/Kode (Opsional)</label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <input type="text" id="customObjCode" class="form-control" placeholder="Kode (Cth: PO1)">
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" id="customObjName" class="form-control" placeholder="Nama (Cth: Define a Strategic IT Plan)">
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                Jika ingin membuat objective custom (seperti COBIT 4/5), isikan kode dan nama di sini. Jika kosong, akan menggunakan bawaan dari baseline yang dipilih.
                             </div>
                         </div>
                     </form>

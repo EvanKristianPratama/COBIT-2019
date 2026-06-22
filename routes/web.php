@@ -121,6 +121,8 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
     Route::delete('/focus-areas/{id}', [FocusAreaController::class, 'destroy'])->name('focus-areas.destroy');
     // Store a new objective within a focus area
     Route::post('/focus-areas/{id}/objectives', [FocusAreaController::class, 'storeObjective'])->name('focus-areas.objectives.store');
+    // Generate COBIT 5 objectives
+    Route::post('/focus-areas/{id}/generate-cobit5', [FocusAreaController::class, 'generateCobit5'])->name('focus-areas.generate-cobit5');
     // Focus Area objective CRUD (update & destroy)
     Route::put('/focus-areas/{id}/objectives/{objectiveId}', [FocusAreaController::class, 'updateObjective'])
         ->name('focus-areas.objectives.update');

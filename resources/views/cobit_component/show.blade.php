@@ -415,10 +415,15 @@
                 @endif
             </div>
             <div class="d-flex gap-2">
+                @if(isset($focusAreaId) && $focusAreaId != 1)
+                    <a href="{{ route('focus-areas.show', $focusAreaId) }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
+                        <i class="fas fa-pen me-2"></i>Edit
+                    </a>
+                @endif
                 <a href="{{ route('focus-areas.index') }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
                     <i class="fas fa-bullseye me-2"></i>Models
                 </a>
-                <a href="{{ route('cobit_component.gamoanalysis') }}" class="btn btn-sm btn-outline-info shadow-sm fw-bold" style="border-width: 2px;">
+                <a href="{{ route('cobit_component.gamoanalysis') }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
                     <i class="fas fa-project-diagram me-2"></i>Buka Analisis Alur
                 </a>
             </div>
@@ -433,11 +438,7 @@
             </div>
         </div>
 
-        <div class="mb-3 d-flex justify-content-end">
-            <button id="inputModeBtn" type="button" class="btn btn-outline-secondary btn-sm">
-                Input Mode: OFF
-            </button>
-        </div>
+
 
         <!-- Component Selector -->
         <div class="mb-3 row g-2 align-items-center">
