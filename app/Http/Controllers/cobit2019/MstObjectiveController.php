@@ -555,6 +555,38 @@ class MstObjectiveController extends Controller
         return response()->json($practice->fresh());
     }
 
+    public function destroyPractice(Request $request, $practiceId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $practice = MstPractice::findOrFail($practiceId);
+
+            // Cascade delete related entities manually to ensure safety
+            $practice->activities()->delete();
+            $practice->practicemetr()->delete();
+            $practice->infoflowinput()->delete();
+            $practice->infoflowoutput()->delete();
+            $practice->roles()->detach();
+            $practice->guidances()->detach();
+
+            $practice->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Practice deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting practice: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function updateEnterGoal(Request $request, $entergoalsId)
     {
         $data = $request->validate([
@@ -686,6 +718,24 @@ class MstObjectiveController extends Controller
             'role_id' => $roleId,
             'r_a' => $raci,
         ]);
+    }
+
+    public function updateActivity(Request $request, $activityId)
+    {
+        $data = $request->validate([
+            'focus_area_id' => 'nullable|integer|exists:mst_focusarea,id',
+            'description' => 'required|string',
+            'capability_lvl' => 'nullable|string',
+        ]);
+
+        $activity = \App\Models\MstActivities::findOrFail($activityId);
+        
+        $activity->update([
+            'description' => $data['description'],
+            'capability_lvl' => $data['capability_lvl'] ?? $activity->capability_lvl,
+        ]);
+
+        return response()->json($activity->fresh());
     }
 
     public function createPolicyGuidance(Request $request, $policyId)

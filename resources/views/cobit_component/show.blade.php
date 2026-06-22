@@ -2002,7 +2002,10 @@
 
       <div class="d-flex border border-top-0 border-secondary-subtle">
         <div class="flex-fill p-3 border-end border-secondary-subtle" style="width:50%; vertical-align:top;">
-          <div class="fw-bold mb-1">${Utils.escapeHtml(practice.practice_id || '')} ${Utils.escapeHtml(practice.practice_name || '')}</div>
+          <div class="fw-bold mb-1 d-flex justify-content-between align-items-center">
+            <span>${Utils.escapeHtml(practice.practice_id || '')} ${Utils.escapeHtml(practice.practice_name || '')}</span>
+            ${STATE.inputMode ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 js-delete-practice" data-practice-id="${Utils.escapeHtml(practice.practice_id || '')}"><i class="bi bi-trash"></i> Hapus Practice</button>` : ''}
+          </div>
           <div>${Utils.formatText(practice.practice_description || '')}</div>
         </div>
         <div class="flex-fill p-3 bg-light" style="width:50%;">
@@ -3786,6 +3789,52 @@
                     }
                 },
 
+                async deletePractice(button) {
+                    if (!button || !AUTHZ.canInputMode) return;
+
+                    const practiceId = (button.getAttribute('data-practice-id') || '').trim();
+                    if (!practiceId) {
+                        NotificationController.show('danger', 'Practice ID tidak valid.');
+                        return;
+                    }
+
+                    if (!confirm(`Apakah Anda yakin ingin menghapus practice ${practiceId}? Semua data terkait (Activities, Metrics, Infoflow, Roles, Guidances) akan ikut terhapus.`)) {
+                        return;
+                    }
+
+                    const originalLabel = button.innerHTML;
+                    button.disabled = true;
+                    button.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Menghapus...';
+
+                    try {
+                        const url = `{{ url('/objectives/practices') }}/${encodeURIComponent(practiceId)}`;
+                        const response = await fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            const errData = await response.json();
+                            throw new Error(errData.message || 'Server error');
+                        }
+
+                        NotificationController.show('success', `Practice ${practiceId} berhasil dihapus.`);
+                        
+                        // Refresh active view
+                        await this.refreshActiveComponentView();
+
+                    } catch (err) {
+                        console.error('Failed to delete practice:', err);
+                        NotificationController.show('danger', `Gagal menghapus practice: ${err.message}`);
+                    } finally {
+                        button.disabled = false;
+                        button.innerHTML = originalLabel;
+                    }
+                },
+
                 async deleteInfoflowRow(button) {
                     if (!button || !AUTHZ.canInputMode) return;
 
@@ -3990,6 +4039,7 @@
                     this.setupInfoflowRowSaveHandler();
                     this.setupInfoflowRowAddCancelHandlers();
                     this.setupInfoflowRowDeleteHandler();
+                    this.setupPracticeDeleteHandler();
                     this.setupEntityRowSaveHandler();
                     this.setupToModalHandler();
                     this.initializeComponent();
@@ -4039,6 +4089,14 @@
                         const targetBtn = event.target.closest('.js-delete-infoflow-row');
                         if (!targetBtn) return;
                         InputModeController.deleteInfoflowRow(targetBtn);
+                    });
+                },
+
+                setupPracticeDeleteHandler() {
+                    document.addEventListener('click', (event) => {
+                        const targetBtn = event.target.closest('.js-delete-practice');
+                        if (!targetBtn) return;
+                        InputModeController.deletePractice(targetBtn);
                     });
                 },
 

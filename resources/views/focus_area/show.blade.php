@@ -390,15 +390,21 @@
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
                                             <span>{{ $displayObjectiveId($practice->practice_id) }} — {{ $practice->practice_name }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
-                                                    data-child-type="practice"
-                                                    data-child-id="{{ $practice->practice_id }}"
-                                                    data-child-field1="{{ $practice->practice_name }}"
-                                                    data-child-field2="{{ $practice->practice_description }}"
-                                                    data-child-focus-area-id="{{ $focusArea->id }}"
-                                                    onclick="event.stopPropagation(); openChildEditorFromButton(this)">
-                                                    <i class="fas fa-pen"></i>
-                                                </button>
+                                                <div>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                        data-child-type="practice"
+                                                        data-child-id="{{ $practice->practice_id }}"
+                                                        data-child-field1="{{ $practice->practice_name }}"
+                                                        data-child-field2="{{ $practice->practice_description }}"
+                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 ms-1"
+                                                        onclick="event.stopPropagation(); deletePractice('{{ $practice->practice_id }}')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             @endif
                                         </div>
                                         <p style="font-size:0.84rem; color:#6b7392;">{{ $practice->practice_description }}</p>
@@ -417,12 +423,33 @@
 
                                         @if($practice->activities->isNotEmpty())
                                             <table class="comp-table">
-                                                <thead><tr><th>Activity</th><th style="width:80px">Level</th></tr></thead>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Activity</th>
+                                                        <th style="width:80px">Level</th>
+                                                        @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                                            <th style="width:40px"></th>
+                                                        @endif
+                                                    </tr>
+                                                </thead>
                                                 <tbody>
                                                     @foreach($practice->activities as $act)
                                                         <tr>
                                                             <td>{{ $act->description }}</td>
                                                             <td>{{ $act->capability_lvl }}</td>
+                                                            @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                                                <td class="text-end">
+                                                                    <button type="button" class="btn btn-sm btn-outline-secondary mini-edit-btn"
+                                                                        data-child-type="activity"
+                                                                        data-child-id="{{ $act->activity_id }}"
+                                                                        data-child-field1="{{ $act->description }}"
+                                                                        data-child-field2="{{ $act->capability_lvl }}"
+                                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                        <i class="fas fa-pen" style="font-size:0.7rem;"></i>
+                                                                    </button>
+                                                                </td>
+                                                            @endif
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
@@ -794,6 +821,29 @@
                 sessionStorage.removeItem('scrollPos');
             }
             
+            // Restore active tabs
+            document.querySelectorAll('.obj-accordion-body').forEach(body => {
+                const activeTabHref = sessionStorage.getItem('activeTab_' + body.id);
+                if (activeTabHref) {
+                    const tabTrigger = body.querySelector(`a[href="${activeTabHref}"]`);
+                    if (tabTrigger) {
+                        const tab = new bootstrap.Tab(tabTrigger);
+                        tab.show();
+                    }
+                }
+            });
+
+            // Listen for tab changes
+            document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', event => {
+                    const targetId = event.target.getAttribute('href');
+                    const parent = event.target.closest('.obj-accordion-body');
+                    if (parent) {
+                        sessionStorage.setItem('activeTab_' + parent.id, targetId);
+                    }
+                });
+            });
+
             window.addEventListener('beforeunload', () => {
                 sessionStorage.setItem('scrollPos', window.scrollY);
             });
@@ -931,6 +981,12 @@
                         field2Label: 'Practice Description',
                         route: `{{ url('/objectives/practices') }}`,
                     },
+                    activity: {
+                        title: 'Edit Activity',
+                        field1Label: 'Activity Description',
+                        field2Label: 'Level',
+                        route: `{{ url('/objectives/activities') }}`,
+                    },
                     practicerole: {
                         title: 'Edit Practice Role',
                         field1Label: 'RACI',
@@ -996,6 +1052,9 @@
                 } else if (type === 'practice') {
                     childEditField1.value = payload.practice_name || payload.field1 || '';
                     childEditField2.value = payload.practice_description || payload.field2 || '';
+                } else if (type === 'activity') {
+                    childEditField1.value = payload.field1 || '';
+                    childEditField2.value = payload.field2 || '';
                 } else if (type === 'practicerole') {
                     childEditField1Select.value = (payload.raci || payload.field1 || '-').toUpperCase();
                 } else if (type === 'policy') {
@@ -1044,6 +1103,9 @@
                 } else if (type === 'practice') {
                     payload.practice_name = childEditField1.value.trim();
                     payload.practice_description = childEditField2.value.trim();
+                } else if (type === 'activity') {
+                    payload.description = childEditField1.value.trim();
+                    payload.capability_lvl = childEditField2.value.trim();
                 } else if (type === 'practicerole') {
                     payload.r_a = childEditField1Select.value.trim().toUpperCase();
                 } else if (type === 'policy') {
@@ -1223,6 +1285,25 @@
                 });
                 if (!res.ok) throw new Error('Gagal menghapus.');
                 queueFlashNotif('Objective berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        }
+        
+        async function deletePractice(practiceId) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus practice ${practiceId}? Semua data terkait (Activities, Metrics, Roles, dll) akan ikut terhapus.`)) return;
+            const url = `{{ url('/objectives/practices') }}/${encodeURIComponent(practiceId)}`;
+            try {
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                });
+                if (!res.ok) throw new Error('Gagal menghapus practice.');
+                queueFlashNotif('Practice berhasil dihapus.');
                 location.reload();
             } catch (e) {
                 showNotif(e.message, 'danger');
