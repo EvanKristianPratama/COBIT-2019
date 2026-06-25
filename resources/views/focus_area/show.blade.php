@@ -385,12 +385,8 @@
 
                             <!-- Practices -->
                             <div class="tab-pane fade" id="practices_{{ $safeId }}">
-                                <div class="mb-3 d-flex justify-content-between align-items-center">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input toggle-activity-level" type="checkbox" id="toggleLevel_{{ $safeId }}" checked onchange="toggleLevelColumn('{{ $safeId }}', this.checked)">
-                                        <label class="form-check-label" for="toggleLevel_{{ $safeId }}" style="font-size:0.85rem; font-weight:600; color:#4b5563;">Tampilkan Kolom Level (2-5)</label>
-                                    </div>
-                                    @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                    <div class="mb-3 text-end">
                                         <button type="button" class="btn btn-sm btn-primary"
                                             data-child-type="practice"
                                             data-child-objective-id="{{ $obj->objective_id }}"
@@ -398,8 +394,8 @@
                                             onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                             <i class="fas fa-plus me-1"></i>Tambah Practices
                                         </button>
-                                    @endif
-                                </div>
+                                    </div>
+                                @endif
                                 @forelse($obj->practices as $practice)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
@@ -767,6 +763,10 @@
                         <label for="editFaDesc" class="form-label fw-semibold">Description</label>
                         <textarea id="editFaDesc" class="form-control" rows="3">{{ $focusArea->description }}</textarea>
                     </div>
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="editFaShowLevel" checked>
+                        <label class="form-check-label fw-semibold" for="editFaShowLevel">Tampilkan Kolom Level (2-5) di semua Tabel Activity</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
@@ -909,11 +909,14 @@
             const code = document.getElementById('editFaCode').value.trim().toUpperCase();
             const name = document.getElementById('editFaName').value.trim();
             const description = document.getElementById('editFaDesc').value.trim();
+            const showLevel = document.getElementById('editFaShowLevel').checked;
 
             if (!code || !name) {
                 showNotif('Code dan Name wajib diisi.', 'warning');
                 return;
             }
+            
+            localStorage.setItem('showLevel_FA_' + FOCUS_AREA_ID, showLevel ? '1' : '0');
 
                 try {
                     const response = await fetch(`{{ url('/focus-areas') }}/${FOCUS_AREA_ID}`, {
@@ -941,6 +944,14 @@
         // Auto-open first accordion if only 1 objective
         // ===== CREATE / EDIT OBJECTIVE MODAL =====
         document.addEventListener('DOMContentLoaded', () => {
+            const showLevel = localStorage.getItem('showLevel_FA_' + FOCUS_AREA_ID) !== '0';
+            const editFaShowLevel = document.getElementById('editFaShowLevel');
+            if (editFaShowLevel) editFaShowLevel.checked = showLevel;
+            
+            document.querySelectorAll('th[class^="activity-level-col-"], td[class^="activity-level-col-"]').forEach(col => {
+                col.style.display = showLevel ? 'table-cell' : 'none';
+            });
+            
             const flashNotif = consumeFlashNotif();
             if (flashNotif?.message) {
                 showNotif(flashNotif.message, flashNotif.type || 'success');
@@ -1598,19 +1609,5 @@
                 showNotif(e.message, 'danger');
             }
         };
-
-        window.toggleLevelColumn = function(safeId, isChecked) {
-            const cols = document.querySelectorAll('.activity-level-col-' + safeId);
-            cols.forEach(col => {
-                col.style.display = isChecked ? 'table-cell' : 'none';
-            });
-        };
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.toggle-activity-level').forEach(cb => {
-                const safeId = cb.id.replace('toggleLevel_', '');
-                window.toggleLevelColumn(safeId, cb.checked);
-            });
-        });
     </script>
 @endsection
