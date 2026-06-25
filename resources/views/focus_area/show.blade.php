@@ -266,14 +266,14 @@
                         <!-- Component Tabs -->
                         <ul class="nav nav-pills component-tabs mb-3" id="compTabs_{{ $safeId }}">
                             <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#overview_{{ $safeId }}">Overview</a></li>
-                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#entergoals_{{ $safeId }}">Enterprise Goals</a></li>
-                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#aligngoals_{{ $safeId }}">Alignment Goals</a></li>
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#entergoals_{{ $safeId }}" data-tab-name="entergoals">Enterprise Goals</a></li>
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#aligngoals_{{ $safeId }}" data-tab-name="aligngoals">Alignment Goals</a></li>
                             <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#practices_{{ $safeId }}">Practices</a></li>
                             <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#organizational_{{ $safeId }}">Organizational</a></li>
-                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#policies_{{ $safeId }}">Policies</a></li>
-                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#skills_{{ $safeId }}">Skills</a></li>
-                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#culture_{{ $safeId }}">Culture</a></li>
-                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#sia_{{ $safeId }}">Services</a></li>
+                            <li class="nav-item li-tab-policies"><a class="nav-link" data-bs-toggle="pill" href="#policies_{{ $safeId }}">Policies</a></li>
+                            <li class="nav-item li-tab-skills"><a class="nav-link" data-bs-toggle="pill" href="#skills_{{ $safeId }}">Skills</a></li>
+                            <li class="nav-item li-tab-culture"><a class="nav-link" data-bs-toggle="pill" href="#culture_{{ $safeId }}">Culture</a></li>
+                            <li class="nav-item li-tab-services"><a class="nav-link" data-bs-toggle="pill" href="#sia_{{ $safeId }}">Services</a></li>
                         </ul>
 
                         <div class="tab-content">
@@ -763,9 +763,34 @@
                         <label for="editFaDesc" class="form-label fw-semibold">Description</label>
                         <textarea id="editFaDesc" class="form-control" rows="3">{{ $focusArea->description }}</textarea>
                     </div>
+                    <hr>
+                    <h6 class="fw-semibold mb-3">Pengaturan Khusus (Disimpan di Browser)</h6>
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="editFaIsCobit5">
+                        <label class="form-check-label fw-semibold" for="editFaIsCobit5">Mode COBIT 5 (Ubah Nama Tab Goals)</label>
+                    </div>
                     <div class="mb-3 form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="editFaShowLevel" checked>
                         <label class="form-check-label fw-semibold" for="editFaShowLevel">Tampilkan Kolom Level (2-5) di semua Tabel Activity</label>
+                    </div>
+                    
+                    <div id="cobit5TabSettings" style="background:#f8f9fa; padding:1rem; border-radius:0.5rem; margin-bottom:1rem;">
+                        <div class="mb-2 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editFaShowPolicies" checked>
+                            <label class="form-check-label" for="editFaShowPolicies">Tampilkan Tab Policies</label>
+                        </div>
+                        <div class="mb-2 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editFaShowSkills" checked>
+                            <label class="form-check-label" for="editFaShowSkills">Tampilkan Tab Skills</label>
+                        </div>
+                        <div class="mb-2 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editFaShowCulture" checked>
+                            <label class="form-check-label" for="editFaShowCulture">Tampilkan Tab Culture</label>
+                        </div>
+                        <div class="mb-1 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editFaShowServices" checked>
+                            <label class="form-check-label" for="editFaShowServices">Tampilkan Tab Services & Infra</label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -910,6 +935,11 @@
             const name = document.getElementById('editFaName').value.trim();
             const description = document.getElementById('editFaDesc').value.trim();
             const showLevel = document.getElementById('editFaShowLevel').checked;
+            const isCobit5 = document.getElementById('editFaIsCobit5').checked;
+            const showPolicies = document.getElementById('editFaShowPolicies').checked;
+            const showSkills = document.getElementById('editFaShowSkills').checked;
+            const showCulture = document.getElementById('editFaShowCulture').checked;
+            const showServices = document.getElementById('editFaShowServices').checked;
 
             if (!code || !name) {
                 showNotif('Code dan Name wajib diisi.', 'warning');
@@ -917,6 +947,11 @@
             }
             
             localStorage.setItem('showLevel_FA_' + FOCUS_AREA_ID, showLevel ? '1' : '0');
+            localStorage.setItem('isCobit5_FA_' + FOCUS_AREA_ID, isCobit5 ? '1' : '0');
+            localStorage.setItem('showPolicies_FA_' + FOCUS_AREA_ID, showPolicies ? '1' : '0');
+            localStorage.setItem('showSkills_FA_' + FOCUS_AREA_ID, showSkills ? '1' : '0');
+            localStorage.setItem('showCulture_FA_' + FOCUS_AREA_ID, showCulture ? '1' : '0');
+            localStorage.setItem('showServices_FA_' + FOCUS_AREA_ID, showServices ? '1' : '0');
 
                 try {
                     const response = await fetch(`{{ url('/focus-areas') }}/${FOCUS_AREA_ID}`, {
@@ -945,12 +980,39 @@
         // ===== CREATE / EDIT OBJECTIVE MODAL =====
         document.addEventListener('DOMContentLoaded', () => {
             const showLevel = localStorage.getItem('showLevel_FA_' + FOCUS_AREA_ID) !== '0';
+            const isCobit5 = localStorage.getItem('isCobit5_FA_' + FOCUS_AREA_ID) === '1';
+            const showPolicies = localStorage.getItem('showPolicies_FA_' + FOCUS_AREA_ID) !== '0';
+            const showSkills = localStorage.getItem('showSkills_FA_' + FOCUS_AREA_ID) !== '0';
+            const showCulture = localStorage.getItem('showCulture_FA_' + FOCUS_AREA_ID) !== '0';
+            const showServices = localStorage.getItem('showServices_FA_' + FOCUS_AREA_ID) !== '0';
+
             const editFaShowLevel = document.getElementById('editFaShowLevel');
+            const editFaIsCobit5 = document.getElementById('editFaIsCobit5');
+            const editFaShowPolicies = document.getElementById('editFaShowPolicies');
+            const editFaShowSkills = document.getElementById('editFaShowSkills');
+            const editFaShowCulture = document.getElementById('editFaShowCulture');
+            const editFaShowServices = document.getElementById('editFaShowServices');
+            
             if (editFaShowLevel) editFaShowLevel.checked = showLevel;
+            if (editFaIsCobit5) editFaIsCobit5.checked = isCobit5;
+            if (editFaShowPolicies) editFaShowPolicies.checked = showPolicies;
+            if (editFaShowSkills) editFaShowSkills.checked = showSkills;
+            if (editFaShowCulture) editFaShowCulture.checked = showCulture;
+            if (editFaShowServices) editFaShowServices.checked = showServices;
             
             document.querySelectorAll('th[class^="activity-level-col-"], td[class^="activity-level-col-"]').forEach(col => {
                 col.style.display = showLevel ? 'table-cell' : 'none';
             });
+            
+            if (isCobit5) {
+                document.querySelectorAll('a[data-tab-name="entergoals"]').forEach(el => el.textContent = 'IT-related Goal');
+                document.querySelectorAll('a[data-tab-name="aligngoals"]').forEach(el => el.textContent = 'Process Goals and Metrics');
+            }
+            
+            document.querySelectorAll('.li-tab-policies').forEach(el => el.style.display = showPolicies ? 'block' : 'none');
+            document.querySelectorAll('.li-tab-skills').forEach(el => el.style.display = showSkills ? 'block' : 'none');
+            document.querySelectorAll('.li-tab-culture').forEach(el => el.style.display = showCulture ? 'block' : 'none');
+            document.querySelectorAll('.li-tab-services').forEach(el => el.style.display = showServices ? 'block' : 'none');
             
             const flashNotif = consumeFlashNotif();
             if (flashNotif?.message) {
