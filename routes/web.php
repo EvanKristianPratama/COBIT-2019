@@ -161,6 +161,10 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit_component.practices.destroy');
     Route::put('/objectives/practices/{practiceId}/roles/{roleId}', [MstObjectiveController::class, 'updatePracticeRole'])
         ->name('cobit_component.practices.roles.update');
+    Route::delete('/objectives/{objectiveId}/roles/{roleId}', [MstObjectiveController::class, 'destroyObjectiveRole'])
+        ->name('cobit_component.objectives.roles.destroy');
+    Route::put('/objectives/roles/{roleId}', [MstObjectiveController::class, 'updateMasterRole'])
+        ->name('cobit_component.master_roles.update');
     Route::put('/objectives/activities/{activityId}', [MstObjectiveController::class, 'updateActivity'])
         ->name('cobit_component.activities.update');
     Route::post('/objectives/policies/{policyId}/guidance', [MstObjectiveController::class, 'createPolicyGuidance'])

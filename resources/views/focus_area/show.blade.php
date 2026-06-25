@@ -472,8 +472,24 @@
                                                 <tr>
                                                     <th>Key Management Practice</th>
                                                     @foreach($masterRoles as $role)
-                                                        <th class="text-center" style="width:64px;">
-                                                            <div class="vertical-text">{{ $role->role }}</div>
+                                                        <th class="text-center position-relative" style="width:64px; vertical-align: top; padding-bottom: 65px !important;">
+                                                            <div class="vertical-text mx-auto">{{ $role->role }}</div>
+                                                            @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                                                <div class="position-absolute bottom-0 start-50 translate-middle-x w-100 pb-2">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 mt-1 mx-auto d-block"
+                                                                        data-child-type="masterrole"
+                                                                        data-child-id="{{ $role->role_id }}"
+                                                                        data-child-field1="{{ $role->role }}"
+                                                                        data-child-field2="{{ $role->description }}"
+                                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                        <i class="fas fa-pen" style="font-size:0.7rem;"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 mt-1 mx-auto d-block"
+                                                                        onclick="event.stopPropagation(); deleteObjectiveRole('{{ $obj->objective_id }}', '{{ $role->role_id }}', '{{ addslashes($role->role) }}')">
+                                                                        <i class="fas fa-trash" style="font-size:0.7rem;"></i>
+                                                                    </button>
+                                                                </div>
+                                                            @endif
                                                         </th>
                                                     @endforeach
                                                 </tr>
@@ -487,15 +503,21 @@
                                                             </div>
                                                             <div class="text-muted small">{{ $practice->practice_description }}</div>
                                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                                                <button type="button" class="btn btn-sm btn-outline-primary mt-1 py-0 px-2"
-                                                                    data-child-type="practice"
-                                                                    data-child-id="{{ $practice->practice_id }}"
-                                                                    data-child-field1="{{ $practice->practice_name }}"
-                                                                    data-child-field2="{{ $practice->practice_description }}"
-                                                                    data-child-focus-area-id="{{ $focusArea->id }}"
-                                                                    onclick="event.stopPropagation(); openChildEditorFromButton(this)">
-                                                                    <i class="fas fa-pen me-1"></i>Edit Practice
-                                                                </button>
+                                                                <div class="mt-2">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                                        data-child-type="practice"
+                                                                        data-child-id="{{ $practice->practice_id }}"
+                                                                        data-child-field1="{{ $practice->practice_name }}"
+                                                                        data-child-field2="{{ $practice->practice_description }}"
+                                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                        <i class="fas fa-pen me-1"></i>Edit
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 ms-1"
+                                                                        onclick="event.stopPropagation(); deletePractice('{{ $practice->practice_id }}')">
+                                                                        <i class="fas fa-trash me-1"></i>Hapus
+                                                                    </button>
+                                                                </div>
                                                             @endif
                                                         </td>
                                                         @foreach($masterRoles as $role)
@@ -975,6 +997,14 @@
                         field2Hidden: true,
                         route: `{{ url('/objectives/aligngoals-metrics') }}`,
                     },
+                    masterrole: {
+                        title: 'Edit Master Role',
+                        field1Label: 'Role Name',
+                        field2Label: 'Description',
+                        field2Hidden: false,
+                        route: `{{ url('/objectives/roles') }}`,
+                        isMasterRole: true
+                    },
                     practice: {
                         title: 'Edit Practice',
                         field1Label: 'Practice Name',
@@ -1067,15 +1097,27 @@
                 } else if (type === 'guidance') {
                     childEditField1.value = payload.guidance || payload.field1 || '';
                     childEditField2.value = payload.reference || payload.field2 || '';
+                } else if (type === 'masterrole') {
+                    childEditField1.value = payload.field1 || '';
+                    childEditField2.value = payload.field2 || '';
                 }
 
                 childEditHelpText.textContent = config.field2Hidden
                     ? 'Perubahan akan diterapkan hanya pada clone di model ini.'
                     : 'Perubahan akan diterapkan hanya pada clone di model ini.';
 
-                childEditHelpText.textContent = type === 'practicerole'
-                    ? `Edit RACI untuk ${payload.practice_name || 'practice'}${payload.role_name ? ' · ' + payload.role_name : ''}.`
-                    : childEditHelpText.textContent;
+                if (config.isMasterRole) {
+                    childEditHelpText.textContent = 'Perhatian: Mengubah nama Role ini akan mengubah master data dan berdampak pada SELURUH komponen GAMO.';
+                    childEditHelpText.classList.add('text-danger');
+                    childEditHelpText.classList.remove('text-muted');
+                } else {
+                    childEditHelpText.classList.remove('text-danger');
+                    childEditHelpText.classList.add('text-muted');
+                }
+
+                if (type === 'practicerole') {
+                    childEditHelpText.textContent = `Edit RACI untuk ${payload.practice_name || 'practice'}${payload.role_name ? ' · ' + payload.role_name : ''}.`;
+                }
 
                 childEditSaveBtn.dataset.endpoint = config.route;
                 childEditModal.show();
@@ -1118,6 +1160,9 @@
                 } else if (type === 'guidance') {
                     payload.guidance = childEditField1.value.trim();
                     payload.reference = childEditField2.value.trim();
+                } else if (type === 'masterrole') {
+                    payload.role = childEditField1.value.trim();
+                    payload.description = childEditField2.value.trim();
                 }
 
                 if (type === 'practice' && !payload.practice_name) {
@@ -1126,6 +1171,10 @@
                 }
                 if (type === 'practicerole' && !['R', 'A', 'C', 'I', '-'].includes(payload.r_a)) {
                     showNotif('RACI harus R, A, C, I, atau -.', 'warning');
+                    return;
+                }
+                if (type === 'masterrole' && !payload.role) {
+                    showNotif('Role name wajib diisi.', 'warning');
                     return;
                 }
                 if (type === 'policy' && !payload.policy) {
@@ -1285,6 +1334,25 @@
                 });
                 if (!res.ok) throw new Error('Gagal menghapus.');
                 queueFlashNotif('Objective berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        }
+
+        async function deleteObjectiveRole(objectiveId, roleId, roleName) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus role "${roleName}" dari objective ${objectiveId}? Semua data RACI terkait role ini akan ikut terhapus.`)) return;
+            const url = `{{ url('/objectives') }}/${encodeURIComponent(objectiveId)}/roles/${encodeURIComponent(roleId)}`;
+            try {
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                });
+                if (!res.ok) throw new Error('Gagal menghapus role.');
+                queueFlashNotif('Role berhasil dihapus.');
                 location.reload();
             } catch (e) {
                 showNotif(e.message, 'danger');

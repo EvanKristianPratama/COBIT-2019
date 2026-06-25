@@ -720,6 +720,35 @@ class MstObjectiveController extends Controller
         ]);
     }
 
+    public function destroyObjectiveRole(Request $request, $objectiveId, $roleId)
+    {
+        $objective = \App\Models\MstObjective::findOrFail($objectiveId);
+        $practiceIds = \App\Models\MstPractice::where('objective_id', $objectiveId)->pluck('practice_id');
+
+        DB::table('trs_practroles')
+            ->whereIn('practice_id', $practiceIds)
+            ->where('role_id', $roleId)
+            ->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateMasterRole(Request $request, $roleId)
+    {
+        $data = $request->validate([
+            'role' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $role = \App\Models\MstRoles::findOrFail($roleId);
+        $role->update([
+            'role' => $data['role'],
+            'description' => $data['description'] ?? $role->description,
+        ]);
+
+        return response()->json($role->fresh());
+    }
+
     public function updateActivity(Request $request, $activityId)
     {
         $data = $request->validate([

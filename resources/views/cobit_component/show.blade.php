@@ -2799,14 +2799,16 @@
                     }
 
                     return objectives.map(obj => {
-                        const rolesSet = new Set();
+                        const rolesMap = new Map();
                         (obj.practices || []).forEach(practice => {
                             (practice.roles || []).forEach(role => {
-                                rolesSet.add(role.role);
+                                if (!rolesMap.has(role.role)) {
+                                    rolesMap.set(role.role, role.role_id);
+                                }
                             });
                         });
 
-                        const roleNames = Array.from(rolesSet);
+                        const roleNames = Array.from(rolesMap.keys());
 
                         let html = `
           <div class="mb-0 fw-bold bg-secondary text-white p-2">
@@ -2817,11 +2819,35 @@
               <thead class="table-light">
                 <tr>
                   <th style="min-width:300px; max-width:500px;">Key Management Practice</th>
-                  ${roleNames.map(r => `
-                            <th class="text-center small" style="width:30px;">
+                  ${roleNames.map(r => {
+                      const roleId = rolesMap.get(r);
+                      let deleteBtn = '';
+                      if (window.inputMode && roleId) {
+                          deleteBtn = `
+                            <div class="position-absolute bottom-0 start-50 translate-middle-x w-100 pb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 mt-1 mx-auto d-block"
+                                    data-child-type="masterrole"
+                                    data-child-id="${Utils.escapeAttr(roleId)}"
+                                    data-child-field1="${Utils.escapeAttr(r)}"
+                                    onclick="openChildEditorFromButton(this)">
+                                    <i class="fas fa-pen" style="font-size:0.7rem;"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 mt-1 d-block mx-auto js-delete-role"
+                                  data-objective-id="${Utils.escapeAttr(obj.objective_id || '')}"
+                                  data-role-id="${Utils.escapeAttr(roleId)}"
+                                  data-role-name="${Utils.escapeAttr(r)}">
+                                  <i class="fas fa-trash" style="font-size:0.7rem;"></i>
+                                </button>
+                            </div>
+                          `;
+                      }
+                      return `
+                            <th class="text-center small position-relative" style="width:30px; padding-bottom: 65px !important;">
                               <div class="vertical-text">${Utils.escapeHtml(r)}</div>
+                              ${deleteBtn}
                             </th>
-                          `).join('')}
+                      `;
+                  }).join('')}
                 </tr>
               </thead>
               <tbody>
@@ -2848,18 +2874,65 @@
                         (obj.practices || []).forEach(practice => {
                             const mapRole = {};
                             (practice.roles || []).forEach(role => {
-                                mapRole[role.role] = role.pivot ? (role.pivot.r_a ?? '') :
-                                    '';
+                                mapRole[role.role] = {
+                                    r_a: role.pivot ? (role.pivot.r_a ?? '') : '',
+                                    role_id: role.role_id
+                                };
                             });
+
+                            let actionButtons = '';
+                            if (window.inputMode) {
+                                actionButtons = `
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                            data-child-type="practice"
+                                            data-child-id="${Utils.escapeAttr(practice.practice_id || '')}"
+                                            data-child-field1="${Utils.escapeAttr(practice.practice_name || '')}"
+                                            data-child-field2="${Utils.escapeAttr(practice.practice_description || '')}"
+                                            onclick="openChildEditorFromButton(this)">
+                                            <i class="fas fa-pen"></i> Edit
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 ms-1 js-delete-practice"
+                                            data-practice-id="${Utils.escapeAttr(practice.practice_id || '')}">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </button>
+                                    </div>
+                                `;
+                            }
 
                             html += `
             <tr>
               <td class="small fw-semibold text-truncate" style="max-width:500px;" title="${Utils.escapeHtml(practice.practice_id || '')}${practice.practice_name ? ' ' + Utils.escapeHtml(practice.practice_name) : ''}">
                 ${Utils.escapeHtml(practice.practice_id || '')}${practice.practice_name ? ' ' + Utils.escapeHtml(practice.practice_name) : ''}
+                ${actionButtons}
               </td>
-              ${roleNames.map(rn => `
-                        <td class="text-center small fw-bold" style="width:40px;">${Utils.escapeHtml(mapRole[rn] || '')}</td>
-                      `).join('')}
+              ${roleNames.map(rn => {
+                  const roleData = mapRole[rn] || { r_a: '', role_id: '' };
+                  const r_a = roleData.r_a;
+                  const roleId = roleData.role_id;
+                  
+                  let roleEditBtn = '';
+                  if (window.inputMode && roleId) {
+                      roleEditBtn = `
+                          <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 mt-1 d-block mx-auto"
+                              data-child-type="practicerole"
+                              data-child-id="${Utils.escapeAttr(practice.practice_id || '')}"
+                              data-child-role-id="${Utils.escapeAttr(roleId)}"
+                              data-child-field1="${Utils.escapeAttr(r_a)}"
+                              data-child-practice-name="${Utils.escapeAttr(practice.practice_name || '')}"
+                              onclick="openChildEditorFromButton(this)">
+                              <i class="fas fa-pen" style="font-size:0.7rem;"></i>
+                          </button>
+                      `;
+                  }
+                  
+                  return `
+                        <td class="text-center small fw-bold" style="width:40px;">
+                            ${Utils.escapeHtml(r_a)}
+                            ${roleEditBtn}
+                        </td>
+                  `;
+              }).join('')}
             </tr>
           `;
                         });
@@ -3789,6 +3862,54 @@
                     }
                 },
 
+                async deleteObjectiveRole(button) {
+                    if (!button || !AUTHZ.canInputMode) return;
+
+                    const objectiveId = (button.getAttribute('data-objective-id') || '').trim();
+                    const roleId = (button.getAttribute('data-role-id') || '').trim();
+                    const roleName = (button.getAttribute('data-role-name') || '').trim();
+                    
+                    if (!objectiveId || !roleId) {
+                        NotificationController.show('danger', 'Data role tidak valid.');
+                        return;
+                    }
+
+                    if (!confirm(`Apakah Anda yakin ingin menghapus role "${roleName}" dari objective ${objectiveId}? Semua data RACI terkait role ini akan ikut terhapus.`)) {
+                        return;
+                    }
+
+                    const originalLabel = button.innerHTML;
+                    button.disabled = true;
+                    button.innerHTML = '<i class="spinner-border spinner-border-sm"></i>';
+
+                    try {
+                        const url = `{{ url('/objectives') }}/${encodeURIComponent(objectiveId)}/roles/${encodeURIComponent(roleId)}`;
+                        const response = await fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            const errData = await response.json();
+                            throw new Error(errData.message || 'Server error');
+                        }
+
+                        NotificationController.show('success', 'Role berhasil dihapus.');
+                        await this.refreshActiveComponentView();
+                    } catch (err) {
+                        console.error('Failed to delete role:', err);
+                        NotificationController.show('danger', `Gagal menghapus role: ${err.message}`);
+                    } finally {
+                        window.setTimeout(() => {
+                            button.disabled = false;
+                            button.innerHTML = originalLabel;
+                        }, 900);
+                    }
+                },
+
                 async deletePractice(button) {
                     if (!button || !AUTHZ.canInputMode) return;
 
@@ -4039,6 +4160,7 @@
                     this.setupInfoflowRowSaveHandler();
                     this.setupInfoflowRowAddCancelHandlers();
                     this.setupInfoflowRowDeleteHandler();
+                    this.setupRoleDeleteHandler();
                     this.setupPracticeDeleteHandler();
                     this.setupEntityRowSaveHandler();
                     this.setupToModalHandler();
@@ -4089,6 +4211,14 @@
                         const targetBtn = event.target.closest('.js-delete-infoflow-row');
                         if (!targetBtn) return;
                         InputModeController.deleteInfoflowRow(targetBtn);
+                    });
+                },
+
+                setupRoleDeleteHandler() {
+                    document.addEventListener('click', (event) => {
+                        const targetBtn = event.target.closest('.js-delete-role');
+                        if (!targetBtn) return;
+                        InputModeController.deleteObjectiveRole(targetBtn);
                     });
                 },
 
