@@ -385,6 +385,17 @@
 
                             <!-- Practices -->
                             <div class="tab-pane fade" id="practices_{{ $safeId }}">
+                                @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                    <div class="mb-3 text-end">
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                            data-child-type="practice"
+                                            data-child-objective-id="{{ $obj->objective_id }}"
+                                            data-child-focus-area-id="{{ $focusArea->id }}"
+                                            onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                            <i class="fas fa-plus me-1"></i>Tambah Practices
+                                        </button>
+                                    </div>
+                                @endif
                                 @forelse($obj->practices as $practice)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
@@ -426,9 +437,8 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Activity</th>
-                                                        <th style="width:80px">Level</th>
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                                            <th style="width:40px"></th>
+                                                            <th style="width:70px"></th>
                                                         @endif
                                                     </tr>
                                                 </thead>
@@ -436,7 +446,6 @@
                                                     @foreach($practice->activities as $act)
                                                         <tr>
                                                             <td>{{ $act->description }}</td>
-                                                            <td>{{ $act->capability_lvl }}</td>
                                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                                 <td class="text-end">
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary mini-edit-btn"
@@ -448,12 +457,27 @@
                                                                         onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                                         <i class="fas fa-pen" style="font-size:0.7rem;"></i>
                                                                     </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger mini-edit-btn ms-1"
+                                                                        onclick="event.stopPropagation(); deleteActivity('{{ $act->activity_id }}')">
+                                                                        <i class="fas fa-trash" style="font-size:0.7rem;"></i>
+                                                                    </button>
                                                                 </td>
                                                             @endif
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
                                             </table>
+                                        @endif
+                                        @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                            <div class="mt-2 mb-3 text-end">
+                                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2"
+                                                    data-child-type="activity"
+                                                    data-child-practice-id="{{ $practice->practice_id }}"
+                                                    data-child-focus-area-id="{{ $focusArea->id }}"
+                                                    onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                    <i class="fas fa-plus me-1"></i>Tambah Activity
+                                                </button>
+                                            </div>
                                         @endif
                                     </div>
                                 @empty
@@ -959,6 +983,8 @@
                     field1: button.dataset.childField1 || '',
                     field2: button.dataset.childField2 || '',
                     focus_area_id: button.dataset.childFocusAreaId || FOCUS_AREA_ID,
+                    objective_id: button.dataset.childObjectiveId || '',
+                    practice_id: button.dataset.childPracticeId || '',
                     practice_name: button.dataset.childPracticeName || '',
                     role_name: button.dataset.childRoleName || '',
                     raci: button.dataset.childField1 || '',
@@ -1082,9 +1108,15 @@
                 } else if (type === 'practice') {
                     childEditField1.value = payload.practice_name || payload.field1 || '';
                     childEditField2.value = payload.practice_description || payload.field2 || '';
+                    if (!payload.id) {
+                        document.getElementById('childEditObjectiveId').value = payload.objective_id;
+                    }
                 } else if (type === 'activity') {
                     childEditField1.value = payload.field1 || '';
                     childEditField2.value = payload.field2 || '';
+                    if (!payload.id) {
+                        document.getElementById('childEditPracticeId').value = payload.practice_id;
+                    }
                 } else if (type === 'practicerole') {
                     childEditField1Select.value = (payload.raci || payload.field1 || '-').toUpperCase();
                 } else if (type === 'policy') {
@@ -1145,9 +1177,11 @@
                 } else if (type === 'practice') {
                     payload.practice_name = childEditField1.value.trim();
                     payload.practice_description = childEditField2.value.trim();
+                    if (!id) payload.objective_id = document.getElementById('childEditObjectiveId').value;
                 } else if (type === 'activity') {
                     payload.description = childEditField1.value.trim();
                     payload.capability_lvl = childEditField2.value.trim();
+                    if (!id) payload.practice_id = document.getElementById('childEditPracticeId').value;
                 } else if (type === 'practicerole') {
                     payload.r_a = childEditField1Select.value.trim().toUpperCase();
                 } else if (type === 'policy') {
@@ -1191,12 +1225,19 @@
                 }
 
                 try {
-                    const saveUrl = type === 'practicerole'
-                        ? `${endpoint}/${encodeURIComponent(id)}/roles/${encodeURIComponent(roleId)}`
-                        : `${endpoint}/${encodeURIComponent(id)}`;
+                    let saveUrl = endpoint;
+                    let method = 'PUT';
+
+                    if (!id) {
+                        method = 'POST';
+                    } else if (type === 'practicerole') {
+                        saveUrl = `${endpoint}/${encodeURIComponent(id)}/roles/${encodeURIComponent(roleId)}`;
+                    } else {
+                        saveUrl = `${endpoint}/${encodeURIComponent(id)}`;
+                    }
 
                     const res = await fetch(saveUrl, {
-                        method: 'PUT',
+                        method: method,
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1498,6 +1539,8 @@
                     <input type="hidden" id="childEditId">
                     <input type="hidden" id="childEditRoleId">
                     <input type="hidden" id="childEditFocusAreaId">
+                    <input type="hidden" id="childEditObjectiveId">
+                    <input type="hidden" id="childEditPracticeId">
 
                     <div class="mb-3" id="childEditField1InputWrap">
                         <label for="childEditField1" class="form-label fw-semibold" id="childEditField1Label">Field 1</label>
@@ -1531,4 +1574,23 @@
             </div>
         </div>
     </div>
+    <script>
+        window.deleteActivity = async function(activityId) {
+            if (!confirm('Apakah anda yakin ingin menghapus activity ini?')) return;
+            try {
+                const res = await fetch(`{{ url('/objectives/activities') }}/${activityId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error(await extractErrorMessage(res));
+                queueFlashNotif('Activity berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        };
+    </script>
 @endsection

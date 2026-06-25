@@ -587,6 +587,50 @@ class MstObjectiveController extends Controller
         }
     }
 
+    public function createPractice(Request $request)
+    {
+        $data = $request->validate([
+            'objective_id' => 'required|string|exists:mst_objective,objective_id',
+            'practice_name' => 'required|string|max:255',
+            'practice_description' => 'nullable|string',
+        ]);
+
+        $focusAreaId = $this->focusAreaIdForObjective($data['objective_id']);
+
+        $practice = DB::transaction(function () use ($data, $focusAreaId) {
+            $latest = DB::table('mst_practice')
+                ->where('objective_id', $data['objective_id'])
+                ->orderByRaw('LENGTH(practice_id) DESC')
+                ->orderBy('practice_id', 'desc')
+                ->lockForUpdate()
+                ->first();
+
+            if ($latest) {
+                $parts = explode('.', $latest->practice_id);
+                if (count($parts) > 1) {
+                    $num = (int) array_pop($parts);
+                    $nextNum = str_pad($num + 1, 2, '0', STR_PAD_LEFT);
+                    $parts[] = $nextNum;
+                    $nextId = implode('.', $parts);
+                } else {
+                    $nextId = $data['objective_id'] . '.01';
+                }
+            } else {
+                $nextId = $data['objective_id'] . '.01';
+            }
+
+            return \App\Models\MstPractice::create([
+                'practice_id' => $nextId,
+                'objective_id' => $data['objective_id'],
+                'focus_area_id' => $focusAreaId,
+                'practice_name' => $data['practice_name'],
+                'practice_description' => $data['practice_description'] ?? null,
+            ]);
+        });
+
+        return response()->json($practice->fresh(), 201);
+    }
+
     public function updateEnterGoal(Request $request, $entergoalsId)
     {
         $data = $request->validate([
@@ -765,6 +809,66 @@ class MstObjectiveController extends Controller
         ]);
 
         return response()->json($activity->fresh());
+    }
+
+    public function createActivity(Request $request)
+    {
+        $data = $request->validate([
+            'practice_id' => 'required|string|exists:mst_practice,practice_id',
+            'description' => 'required|string',
+            'capability_lvl' => 'nullable|string',
+        ]);
+
+        $activity = DB::transaction(function () use ($data) {
+            $latest = DB::table('mst_activities')
+                ->where('practice_id', $data['practice_id'])
+                ->orderByRaw('LENGTH(activity_id) DESC')
+                ->orderBy('activity_id', 'desc')
+                ->lockForUpdate()
+                ->first();
+
+            if ($latest) {
+                $parts = explode('.', $latest->activity_id);
+                if (count($parts) > 2) {
+                    $num = (int) array_pop($parts);
+                    $nextNum = $num + 1;
+                    $parts[] = $nextNum;
+                    $nextId = implode('.', $parts);
+                } else {
+                    $nextId = $data['practice_id'] . '.1';
+                }
+            } else {
+                $nextId = $data['practice_id'] . '.1';
+            }
+
+            return \App\Models\MstActivities::create([
+                'activity_id' => $nextId,
+                'practice_id' => $data['practice_id'],
+                'description' => $data['description'],
+                'capability_lvl' => $data['capability_lvl'] ?? null,
+            ]);
+        });
+
+        return response()->json($activity->fresh(), 201);
+    }
+
+    public function destroyActivity(Request $request, $activityId)
+    {
+        try {
+            $activity = \App\Models\MstActivities::findOrFail($activityId);
+            $activity->evaluations()->delete(); // cascade delete evaluations if any
+            $activity->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Activity deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting activity: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function createPolicyGuidance(Request $request, $policyId)
