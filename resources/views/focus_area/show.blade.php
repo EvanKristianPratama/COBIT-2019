@@ -385,8 +385,12 @@
 
                             <!-- Practices -->
                             <div class="tab-pane fade" id="practices_{{ $safeId }}">
-                                @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                    <div class="mb-3 text-end">
+                                <div class="mb-3 d-flex justify-content-between align-items-center">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input toggle-activity-level" type="checkbox" id="toggleLevel_{{ $safeId }}" checked onchange="toggleLevelColumn('{{ $safeId }}', this.checked)">
+                                        <label class="form-check-label" for="toggleLevel_{{ $safeId }}" style="font-size:0.85rem; font-weight:600; color:#4b5563;">Tampilkan Kolom Level (2-5)</label>
+                                    </div>
+                                    @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                         <button type="button" class="btn btn-sm btn-primary"
                                             data-child-type="practice"
                                             data-child-objective-id="{{ $obj->objective_id }}"
@@ -394,8 +398,8 @@
                                             onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                             <i class="fas fa-plus me-1"></i>Tambah Practices
                                         </button>
-                                    </div>
-                                @endif
+                                    @endif
+                                </div>
                                 @forelse($obj->practices as $practice)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
@@ -437,6 +441,7 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Activity</th>
+                                                        <th class="activity-level-col-{{ $safeId }}" style="width:80px">Level</th>
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                             <th style="width:70px"></th>
                                                         @endif
@@ -446,6 +451,7 @@
                                                     @foreach($practice->activities as $act)
                                                         <tr>
                                                             <td>{{ $act->description }}</td>
+                                                            <td class="activity-level-col-{{ $safeId }}">{{ $act->capability_lvl }}</td>
                                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
                                                                 <td class="text-end">
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary mini-edit-btn"
@@ -1592,5 +1598,19 @@
                 showNotif(e.message, 'danger');
             }
         };
+
+        window.toggleLevelColumn = function(safeId, isChecked) {
+            const cols = document.querySelectorAll('.activity-level-col-' + safeId);
+            cols.forEach(col => {
+                col.style.display = isChecked ? 'table-cell' : 'none';
+            });
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.toggle-activity-level').forEach(cb => {
+                const safeId = cb.id.replace('toggleLevel_', '');
+                window.toggleLevelColumn(safeId, cb.checked);
+            });
+        });
     </script>
 @endsection
