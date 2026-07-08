@@ -108,11 +108,18 @@ class AssessmentAccessService
             return;
         }
 
-        $query->orWhereIn('organization_id', $organizationIds)
-            ->orWhereHas('user', function (Builder $ownerQuery) use ($organizationIds) {
-                $ownerQuery->whereIn('organization_id', $organizationIds)
-                    ->orWhereHas('organizations', fn (Builder $organizationQuery) => $organizationQuery->whereIn('mst_organization.organization_id', $organizationIds));
-            });
+        $query->where(function (Builder $scopeQuery) use ($organizationIds) {
+            // Evaluasi milik organisasi user
+            $scopeQuery->whereIn('organization_id', $organizationIds)
+                ->orWhere(function (Builder $fallbackQuery) use ($organizationIds) {
+                    // Fallback: Jika evaluasi tidak punya organization_id spesifik, cek organisasi pembuatnya
+                    $fallbackQuery->whereNull('organization_id')
+                        ->whereHas('user', function (Builder $ownerQuery) use ($organizationIds) {
+                            $ownerQuery->whereIn('organization_id', $organizationIds)
+                                ->orWhereHas('organizations', fn (Builder $organizationQuery) => $organizationQuery->whereIn('mst_organization.organization_id', $organizationIds));
+                        });
+                });
+        });
     }
 
     private function belongsToUserOrganizations(User $user, MstEval $evaluation): bool
@@ -149,6 +156,10 @@ class AssessmentAccessService
 
         if ($evaluation->organization_id) {
             $organizationIds->push((int) $evaluation->organization_id);
+            
+            // Jika evaluation sudah memiliki organization_id yang jelas, 
+            // jangan tambahkan semua organisasi milik pembuatnya (mencegah kebocoran akses lintas organisasi).
+            return $organizationIds->unique()->values()->all();
         }
 
         $owner = $evaluation->relationLoaded('user')
@@ -182,6 +193,11 @@ class AssessmentAccessService
 
         if (filled($organizationName)) {
             $organizationNames->push((string) $organizationName);
+        }
+        
+        if ($evaluation->organization_id) {
+            // Jika sudah ada organization_id spesifik, jangan meluaskan ke instansi milik pembuat
+            return $organizationNames->unique()->values()->all();
         }
 
         $owner = $evaluation->relationLoaded('user')

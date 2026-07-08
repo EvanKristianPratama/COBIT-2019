@@ -813,43 +813,26 @@ class MstObjectiveController extends Controller
 
     public function createActivity(Request $request)
     {
-        $data = $request->validate([
-            'practice_id' => 'required|string|exists:mst_practice,practice_id',
-            'description' => 'required|string',
-            'capability_lvl' => 'nullable|string',
-        ]);
+        try {
+            $data = $request->validate([
+                'practice_id' => 'required|string|exists:mst_practice,practice_id',
+                'description' => 'required|string',
+                'capability_lvl' => 'nullable|string',
+            ]);
 
-        $activity = DB::transaction(function () use ($data) {
-            $latest = DB::table('mst_activities')
-                ->where('practice_id', $data['practice_id'])
-                ->orderByRaw('LENGTH(activity_id) DESC')
-                ->orderBy('activity_id', 'desc')
-                ->lockForUpdate()
-                ->first();
-
-            if ($latest) {
-                $parts = explode('.', $latest->activity_id);
-                if (count($parts) > 2) {
-                    $num = (int) array_pop($parts);
-                    $nextNum = $num + 1;
-                    $parts[] = $nextNum;
-                    $nextId = implode('.', $parts);
-                } else {
-                    $nextId = $data['practice_id'] . '.1';
-                }
-            } else {
-                $nextId = $data['practice_id'] . '.1';
-            }
-
-            return \App\Models\MstActivities::create([
-                'activity_id' => $nextId,
+            $activity = \App\Models\MstActivities::create([
                 'practice_id' => $data['practice_id'],
                 'description' => $data['description'],
                 'capability_lvl' => $data['capability_lvl'] ?? null,
             ]);
-        });
 
-        return response()->json($activity->fresh(), 201);
+            return response()->json($activity->fresh(), 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error on server: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+            ], 500);
+        }
     }
 
     public function destroyActivity(Request $request, $activityId)

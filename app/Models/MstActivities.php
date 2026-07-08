@@ -13,9 +13,9 @@ class MstActivities extends Model
 
     protected $primaryKey = 'activity_id';
 
-    public $incrementing = false;
+    public $incrementing = true;
 
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     public $timestamps = false;
 

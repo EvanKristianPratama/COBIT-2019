@@ -1555,7 +1555,13 @@
                         columns.forEach((col, idx) => {
                             const td = document.createElement('td');
                             if (idx === 0) td.className = 'fw-semibold';
-                            td.innerHTML = Utils.formatText(item[col] || '');
+                            
+                            let val = item[col] || '';
+                            if (col === 'id' && (tableId === 'masterEgTable' || tableId === 'masterAgTable')) {
+                                val = Utils.displayObjectiveId(val);
+                            }
+                            
+                            td.innerHTML = Utils.formatText(val);
                             tr.appendChild(td);
                         });
 
@@ -1758,13 +1764,15 @@
                         return '<div class="text-muted small">(no goals)</div>';
                     }
 
-                    return goals.map(goal => `
+                    return goals.map(goal => {
+                        const displayId = goal[idField] ? Utils.displayObjectiveId(goal[idField]) : '';
+                        const text = displayId + (goal.description ? ': ' + goal.description : '');
+                        return `
         <div class="mb-2">
-          <div class="fw-semibold">${Utils.formatText(
-            (goal[idField] || '') + (goal.description ? ': ' + goal.description : '')
-          )}</div>
+          <div class="fw-semibold">${Utils.formatText(text)}</div>
         </div>
-      `).join('');
+      `;
+                    }).join('');
                 },
 
                 renderMetrics(goals, idField, metricsField) {
@@ -1882,7 +1890,7 @@
                     <tbody>
                       ${practiceSummaries.map(ps => `
                                 <tr>
-                                  <td class="small fw-bold">${Utils.escapeHtml(ps.practice_id || '')}${ps.practice_name ? ' — ' + Utils.escapeHtml(ps.practice_name) : ''}</td>
+                                  <td class="small fw-bold">${Utils.escapeHtml(Utils.displayObjectiveId(ps.practice_id || ''))}${ps.practice_name ? ' — ' + Utils.escapeHtml(ps.practice_name) : ''}</td>
                                   <td class="text-center small">${(ps.counts['2'] || 0) ? Utils.formatText(String(ps.counts['2'])) : '-'}</td>
                                   <td class="text-center small">${(ps.counts['3'] || 0) ? Utils.formatText(String(ps.counts['3'])) : '-'}</td>
                                   <td class="text-center small">${(ps.counts['4'] || 0) ? Utils.formatText(String(ps.counts['4'])) : '-'}</td>
@@ -2003,7 +2011,7 @@
       <div class="d-flex border border-top-0 border-secondary-subtle">
         <div class="flex-fill p-3 border-end border-secondary-subtle" style="width:50%; vertical-align:top;">
           <div class="fw-bold mb-1 d-flex justify-content-between align-items-center">
-            <span>${Utils.escapeHtml(practice.practice_id || '')} ${Utils.escapeHtml(practice.practice_name || '')}</span>
+            <span>${Utils.escapeHtml(Utils.displayObjectiveId(practice.practice_id || ''))} ${Utils.escapeHtml(practice.practice_name || '')}</span>
             ${STATE.inputMode ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 js-delete-practice" data-practice-id="${Utils.escapeHtml(practice.practice_id || '')}"><i class="bi bi-trash"></i> Hapus Practice</button>` : ''}
           </div>
           <div>${Utils.formatText(practice.practice_description || '')}</div>

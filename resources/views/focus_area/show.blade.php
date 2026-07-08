@@ -626,6 +626,17 @@
 
                             <!-- Skills -->
                             <div class="tab-pane fade" id="skills_{{ $safeId }}">
+                                @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                    <div class="mb-3 text-end">
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                            data-child-type="skill"
+                                            data-child-objective-id="{{ $obj->objective_id }}"
+                                            data-child-focus-area-id="{{ $focusArea->id }}"
+                                            onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                            <i class="fas fa-plus"></i> Tambah Skill
+                                        </button>
+                                    </div>
+                                @endif
                                 @forelse($obj->skill as $sk)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
@@ -1203,6 +1214,9 @@
                     childEditField2.value = payload.description || payload.field2 || '';
                 } else if (type === 'skill') {
                     childEditField1.value = payload.skill || payload.field1 || '';
+                    if (!payload.id) {
+                        document.getElementById('childEditObjectiveId').value = payload.objective_id;
+                    }
                 } else if (type === 'culture') {
                     childEditField1.value = payload.element || payload.field1 || '';
                 } else if (type === 'guidance') {
@@ -1241,7 +1255,7 @@
                 const focusAreaId = childEditFocusAreaIdInput.value || FOCUS_AREA_ID;
                 const endpoint = childEditSaveBtn.dataset.endpoint;
 
-                if (!type || !id || !endpoint) {
+                if (!type || !endpoint) {
                     showNotif('Data edit belum lengkap.', 'warning');
                     return;
                 }
@@ -1268,6 +1282,7 @@
                     payload.description = childEditField2.value.trim();
                 } else if (type === 'skill') {
                     payload.skill = childEditField1.value.trim();
+                    if (!id) payload.objective_id = document.getElementById('childEditObjectiveId').value;
                 } else if (type === 'culture') {
                     payload.element = childEditField1.value.trim();
                 } else if (type === 'guidance') {
