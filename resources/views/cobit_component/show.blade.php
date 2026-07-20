@@ -1139,6 +1139,49 @@
 
                     STATE.cacheAll = null;
                     return this.parseJsonResponse(response);
+                },
+
+                async createPracticeMetric(practiceId, data) {
+                    const response = await fetch(`{{ url('/objectives/practices') }}/${encodeURIComponent(practiceId)}/metrics`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async updatePracticeMetric(metricId, data) {
+                    const response = await fetch(`{{ url('/objectives/practices/metrics') }}/${encodeURIComponent(metricId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        },
+                        body: JSON.stringify(data || {})
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
+                },
+
+                async deletePracticeMetric(metricId) {
+                    const response = await fetch(`{{ url('/objectives/practices/metrics') }}/${encodeURIComponent(metricId)}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.getCsrfToken()
+                        }
+                    });
+
+                    STATE.cacheAll = null;
+                    return this.parseJsonResponse(response);
                 }
             };
 
@@ -1932,11 +1975,41 @@
 
                 // --- GANTI renderSinglePractice (hapus ringkasan per-practice di dalamnya) ---
                 renderSinglePractice(practice) {
-                    const metricsHtml = (practice.practicemetr || [])
-                        .map((m, i) =>
-                            `<li class="mb-1">${String.fromCharCode(97 + i)}. ${Utils.formatText(m.description || '')}</li>`
-                        )
-                        .join('');
+                    let metricsContentHtml = '';
+                    if (STATE.inputMode) {
+                        const listHtml = (practice.practicemetr || [])
+                            .map((m, i) => {
+                                const labelChar = String.fromCharCode(97 + i);
+                                return `
+                                    <div class="d-flex align-items-start gap-2 mb-2 js-practice-metric-item" data-metric-id="${m.id}">
+                                        <span class="mt-1 fw-semibold small text-muted" style="width: 20px;">${labelChar}.</span>
+                                        <textarea class="form-control form-control-sm js-practice-metric-desc" rows="1" style="resize: vertical; font-size: 13px;">${Utils.escapeHtml(m.description || '')}</textarea>
+                                        <button type="button" class="btn btn-sm btn-primary py-0 px-2 js-save-practice-metric" title="Simpan Metric"><i class="bi bi-check-lg"></i></button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 js-delete-practice-metric" title="Hapus Metric"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                `;
+                            })
+                            .join('');
+
+                        metricsContentHtml = `
+                            <div class="fw-bold mb-2 small text-secondary text-uppercase" style="font-size: 11px; letter-spacing: 0.05em;">Example Metrics Editor</div>
+                            <div class="js-practice-metrics-list" data-practice-id="${Utils.escapeHtml(practice.practice_id || '')}">
+                                ${listHtml}
+                            </div>
+                            <div class="mt-2 text-end">
+                                <button type="button" class="btn btn-sm btn-outline-success py-1 px-3 js-add-practice-metric" data-practice-id="${Utils.escapeHtml(practice.practice_id || '')}">
+                                    <i class="bi bi-plus-circle"></i> + Tambah Metric
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        const listHtml = (practice.practicemetr || [])
+                            .map((m, i) =>
+                                `<li class="mb-1">${String.fromCharCode(97 + i)}. ${Utils.formatText(m.description || '')}</li>`
+                            )
+                            .join('');
+                        metricsContentHtml = listHtml ? `<ul class="mb-0 small ps-3">${listHtml}</ul>` : '<div class="text-muted small ps-2">(no example metrics)</div>';
+                    }
 
                     const _acts = (practice.activities || []).map((ac, i) => ({
                         idx: i + 1,
@@ -2017,7 +2090,7 @@
           <div>${Utils.formatText(practice.practice_description || '')}</div>
         </div>
         <div class="flex-fill p-3 bg-light" style="width:50%;">
-          <ul class="mb-0 small ps-3">${metricsHtml}</ul>
+          ${metricsContentHtml}
         </div>
       </div>
 
@@ -4152,6 +4225,81 @@
                             button.textContent = originalLabel;
                         }, 900);
                     }
+                },
+
+                async savePracticeMetric(button) {
+                    if (!button || !AUTHZ.canInputMode) return;
+
+                    const item = button.closest('.js-practice-metric-item');
+                    const list = button.closest('.js-practice-metrics-list');
+                    if (!item || !list) return;
+
+                    const practiceId = (list.getAttribute('data-practice-id') || '').trim();
+                    const metricId = (item.getAttribute('data-metric-id') || '').trim();
+                    const descField = item.querySelector('.js-practice-metric-desc');
+                    const description = (descField ? descField.value : '').trim();
+
+                    if (!description) {
+                        NotificationController.show('warning', 'Deskripsi metric tidak boleh kosong.');
+                        return;
+                    }
+
+                    const originalLabel = button.innerHTML;
+                    button.disabled = true;
+                    button.innerHTML = '<i class="spinner-border spinner-border-sm"></i>';
+
+                    try {
+                        if (metricId) {
+                            // Update
+                            await DataService.updatePracticeMetric(metricId, { description });
+                            NotificationController.show('success', 'Example metric berhasil diperbarui.');
+                        } else {
+                            // Create
+                            if (!practiceId) {
+                                NotificationController.show('danger', 'Practice ID tidak valid.');
+                                return;
+                            }
+                            await DataService.createPracticeMetric(practiceId, { description });
+                            NotificationController.show('success', 'Example metric baru berhasil ditambahkan.');
+                        }
+                        await this.refreshActiveComponentView();
+                    } catch (err) {
+                        console.error('Failed to save practice metric:', err);
+                        NotificationController.show('danger', `Gagal menyimpan example metric: ${err.message}`);
+                    } finally {
+                        button.disabled = false;
+                        button.innerHTML = originalLabel;
+                    }
+                },
+
+                async deletePracticeMetric(button) {
+                    if (!button || !AUTHZ.canInputMode) return;
+
+                    const item = button.closest('.js-practice-metric-item');
+                    if (!item) return;
+
+                    const metricId = (item.getAttribute('data-metric-id') || '').trim();
+                    if (!metricId) return;
+
+                    if (!confirm('Apakah Anda yakin ingin menghapus example metric ini?')) {
+                        return;
+                    }
+
+                    const originalLabel = button.innerHTML;
+                    button.disabled = true;
+                    button.innerHTML = '<i class="spinner-border spinner-border-sm"></i>';
+
+                    try {
+                        await DataService.deletePracticeMetric(metricId);
+                        NotificationController.show('success', 'Example metric berhasil dihapus.');
+                        await this.refreshActiveComponentView();
+                    } catch (err) {
+                        console.error('Failed to delete practice metric:', err);
+                        NotificationController.show('danger', `Gagal menghapus example metric: ${err.message}`);
+                    } finally {
+                        button.disabled = false;
+                        button.innerHTML = originalLabel;
+                    }
                 }
             };
 
@@ -4171,6 +4319,10 @@
                     this.setupRoleDeleteHandler();
                     this.setupPracticeDeleteHandler();
                     this.setupEntityRowSaveHandler();
+                    this.setupPracticeMetricSaveHandler();
+                    this.setupPracticeMetricDeleteHandler();
+                    this.setupPracticeMetricAddHandler();
+                    this.setupDraftMetricRemoveHandler();
                     this.setupToModalHandler();
                     this.initializeComponent();
                     InputModeController.syncButton();
@@ -4266,6 +4418,61 @@
                         const targetBtn = event.target.closest('.js-save-entity-row');
                         if (!targetBtn) return;
                         InputModeController.saveEntityRow(targetBtn);
+                    });
+                },
+
+                setupPracticeMetricSaveHandler() {
+                    document.addEventListener('click', (event) => {
+                        const targetBtn = event.target.closest('.js-save-practice-metric');
+                        if (!targetBtn) return;
+                        InputModeController.savePracticeMetric(targetBtn);
+                    });
+                },
+
+                setupPracticeMetricDeleteHandler() {
+                    document.addEventListener('click', (event) => {
+                        const targetBtn = event.target.closest('.js-delete-practice-metric');
+                        if (!targetBtn) return;
+                        InputModeController.deletePracticeMetric(targetBtn);
+                    });
+                },
+
+                setupPracticeMetricAddHandler() {
+                    document.addEventListener('click', (event) => {
+                        const addBtn = event.target.closest('.js-add-practice-metric');
+                        if (!addBtn) return;
+
+                        const practiceId = addBtn.getAttribute('data-practice-id');
+                        const card = addBtn.closest('.bg-light');
+                        if (!card) return;
+
+                        const listContainer = card.querySelector('.js-practice-metrics-list');
+                        if (!listContainer) return;
+
+                        const newIdx = listContainer.children.length;
+                        const labelChar = String.fromCharCode(97 + newIdx); // 'a', 'b', 'c', ...
+
+                        const newRowHtml = `
+                            <div class="d-flex align-items-start gap-2 mb-2 js-practice-metric-item" data-metric-id="">
+                                <span class="mt-1 fw-semibold small text-muted" style="width: 20px;">${labelChar}.</span>
+                                <textarea class="form-control form-control-sm js-practice-metric-desc" rows="1" style="resize: vertical; font-size: 13px;" placeholder="Tulis deskripsi metric baru..."></textarea>
+                                <button type="button" class="btn btn-sm btn-primary py-0 px-2 js-save-practice-metric" title="Simpan Metric"><i class="bi bi-check-lg"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 js-remove-draft-metric" title="Batal"><i class="bi bi-trash"></i></button>
+                            </div>
+                        `;
+                        listContainer.insertAdjacentHTML('beforeend', newRowHtml);
+                    });
+                },
+
+                setupDraftMetricRemoveHandler() {
+                    document.addEventListener('click', (event) => {
+                        const removeBtn = event.target.closest('.js-remove-draft-metric');
+                        if (!removeBtn) return;
+
+                        const item = removeBtn.closest('.js-practice-metric-item');
+                        if (item) {
+                            item.remove();
+                        }
                     });
                 },
 

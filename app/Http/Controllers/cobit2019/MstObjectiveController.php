@@ -14,6 +14,7 @@ use App\Models\MstGuidance;
 use App\Models\MstObjective;
 use App\Models\MstPolicy;
 use App\Models\MstPractice;
+use App\Models\MstPracticeMetr;
 use App\Models\MstSIA;
 use App\Models\MstSkill;
 use Illuminate\Http\Request;
@@ -316,9 +317,23 @@ class MstObjectiveController extends Controller
         $data = $request->validate([
             'to' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'input_id' => 'nullable|integer|exists:mst_infoflowinput,input_id',
         ]);
 
-        $output->update($data);
+        DB::transaction(function () use ($output, $data) {
+            $output->update([
+                'to' => $data['to'] ?? $output->to,
+                'description' => $data['description'] ?? $output->description,
+            ]);
+
+            DB::table('trs_infoflowio')->where('output_id', $output->output_id)->delete();
+            if (!empty($data['input_id'])) {
+                DB::table('trs_infoflowio')->insert([
+                    'input_id' => $data['input_id'],
+                    'output_id' => $output->output_id,
+                ]);
+            }
+        });
 
         return response()->json($output->fresh());
     }
@@ -422,6 +437,18 @@ class MstObjectiveController extends Controller
         return response()->json($policy->fresh());
     }
 
+    public function destroyPolicy(Request $request, $policyId)
+    {
+        $policy = MstPolicy::findOrFail($policyId);
+        DB::transaction(function () use ($policy) {
+            // Delete pivot guidances relations
+            DB::table('trs_policyguidance')->where('policy_id', $policy->policy_id)->delete();
+            $policy->delete();
+        });
+
+        return response()->json(['message' => 'Policy deleted successfully.']);
+    }
+
     public function createSkill(Request $request)
     {
         $data = $request->validate([
@@ -452,6 +479,18 @@ class MstObjectiveController extends Controller
         ]);
 
         return response()->json($skill->fresh());
+    }
+
+    public function destroySkill(Request $request, $skillId)
+    {
+        $skill = MstSkill::findOrFail($skillId);
+        DB::transaction(function () use ($skill) {
+            // Delete pivot relations
+            DB::table('trs_skillguidance')->where('skill_id', $skill->skill_id)->delete();
+            $skill->delete();
+        });
+
+        return response()->json(['message' => 'Skill deleted successfully.']);
     }
 
     public function createKeyCulture(Request $request)
@@ -854,6 +893,68 @@ class MstObjectiveController extends Controller
         }
     }
 
+    public function createPracticeMetric(Request $request, $practiceId)
+    {
+        try {
+            $data = $request->validate([
+                'description' => 'required|string',
+            ]);
+
+            $practice = MstPractice::where('practice_id', $practiceId)->firstOrFail();
+
+            $metric = MstPracticeMetr::create([
+                'practice_id' => $practice->practice_id,
+                'description' => $data['description'],
+            ]);
+
+            return response()->json($metric->fresh(), 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error on server: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+            ], 500);
+        }
+    }
+
+    public function updatePracticeMetric(Request $request, $metricId)
+    {
+        try {
+            $data = $request->validate([
+                'description' => 'required|string',
+            ]);
+
+            $metric = MstPracticeMetr::findOrFail($metricId);
+            $metric->update([
+                'description' => $data['description'],
+            ]);
+
+            return response()->json($metric->fresh());
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating metric: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyPracticeMetric($metricId)
+    {
+        try {
+            $metric = MstPracticeMetr::findOrFail($metricId);
+            $metric->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Example metric deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting example metric: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function createPolicyGuidance(Request $request, $policyId)
     {
         $policy = MstPolicy::findOrFail($policyId);
@@ -938,6 +1039,19 @@ class MstObjectiveController extends Controller
         $guidance->update($data);
 
         return response()->json($guidance->fresh());
+    }
+
+    public function destroyGuidance($guidanceId)
+    {
+        $guidance = MstGuidance::findOrFail($guidanceId);
+        DB::transaction(function () use ($guidance) {
+            DB::table('trs_policyguidance')->where('guidance_id', $guidance->guidance_id)->delete();
+            DB::table('trs_skillguidance')->where('guidance_id', $guidance->guidance_id)->delete();
+            DB::table('trs_keycultureguidance')->where('guidance_id', $guidance->guidance_id)->delete();
+            $guidance->delete();
+        });
+
+        return response()->json(['message' => 'Guidance deleted successfully.']);
     }
 
     protected function nextPolicyId(): int

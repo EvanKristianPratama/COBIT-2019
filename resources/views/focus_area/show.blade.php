@@ -270,6 +270,7 @@
                             <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#aligngoals_{{ $safeId }}" data-tab-name="aligngoals">Alignment Goals</a></li>
                             <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#practices_{{ $safeId }}">Practices</a></li>
                             <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#organizational_{{ $safeId }}">Organizational</a></li>
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#infoflows_{{ $safeId }}">Information Flows</a></li>
                             <li class="nav-item li-tab-policies"><a class="nav-link" data-bs-toggle="pill" href="#policies_{{ $safeId }}">Policies</a></li>
                             <li class="nav-item li-tab-skills"><a class="nav-link" data-bs-toggle="pill" href="#skills_{{ $safeId }}">Skills</a></li>
                             <li class="nav-item li-tab-culture"><a class="nav-link" data-bs-toggle="pill" href="#culture_{{ $safeId }}">Culture</a></li>
@@ -408,6 +409,9 @@
                                                         data-child-field1="{{ $practice->practice_name }}"
                                                         data-child-field2="{{ $practice->practice_description }}"
                                                         data-child-focus-area-id="{{ $focusArea->id }}"
+                                                        data-child-metrics="{{ json_encode($practice->practicemetr) }}"
+                                                        data-child-inputs="{{ json_encode($practice->infoflowinput->map(function($inp) { return ['input_id' => $inp->input_id, 'from' => $inp->from, 'description' => $inp->description, 'connected_output_ids' => $inp->connectedoutputs->pluck('output_id')->toArray()]; })) }}"
+                                                        data-child-outputs="{{ json_encode($practice->infoflowoutput) }}"
                                                         onclick="event.stopPropagation(); openChildEditorFromButton(this)">
                                                         <i class="fas fa-pen"></i>
                                                     </button>
@@ -429,6 +433,91 @@
                                                         <span class="raci-badge raci-{{ $raci }}">{{ $role->role }}: {{ $raci }}</span>
                                                     @endif
                                                 @endforeach
+                                            </div>
+                                        @endif
+
+                                        @if($practice->practicemetr->isNotEmpty())
+                                            <div class="mb-2">
+                                                <strong style="font-size:0.8rem; color:#4b5563;">Example Metrics:</strong>
+                                                <ul class="mb-0 small ps-3 text-secondary" style="font-size:0.82rem; list-style-type: lower-alpha;">
+                                                    @foreach($practice->practicemetr as $metr)
+                                                        <li>{{ $metr->description }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
+
+                                        @php
+                                            $infoflowRows = [];
+                                            foreach ($practice->infoflowinput as $inp) {
+                                                if ($inp->connectedoutputs->isNotEmpty()) {
+                                                    foreach ($inp->connectedoutputs as $out) {
+                                                        $infoflowRows[] = [
+                                                            'input_from' => $inp->from,
+                                                            'input_desc' => $inp->description,
+                                                            'output_desc' => $out->description,
+                                                            'output_to' => $out->to,
+                                                        ];
+                                                    }
+                                                } else {
+                                                    $infoflowRows[] = [
+                                                        'input_from' => $inp->from,
+                                                        'input_desc' => $inp->description,
+                                                        'output_desc' => '',
+                                                        'output_to' => '',
+                                                    ];
+                                                }
+                                            }
+
+                                            $connectedOutputIds = $practice->infoflowinput->flatMap(function($inp) {
+                                                return $inp->connectedoutputs->pluck('output_id');
+                                            })->unique()->toArray();
+
+                                            foreach ($practice->infoflowoutput as $out) {
+                                                if (!in_array($out->output_id, $connectedOutputIds)) {
+                                                    $infoflowRows[] = [
+                                                        'input_from' => '',
+                                                        'input_desc' => '',
+                                                        'output_desc' => $out->description,
+                                                        'output_to' => $out->to,
+                                                    ];
+                                                }
+                                            }
+                                        @endphp
+
+                                        @if(!empty($infoflowRows))
+                                            <div class="mb-2">
+                                                <strong style="font-size:0.8rem; color:#4b5563;">Information Flow:</strong>
+                                                <div class="table-responsive mt-1">
+                                                    <table class="table table-sm table-bordered mb-0" style="font-size:0.78rem; color:#4b5563; border-color: #e5e7eb;">
+                                                        <thead class="bg-light">
+                                                            <tr>
+                                                                <th style="width: 50%;">Input (Dari)</th>
+                                                                <th style="width: 50%;">Output (Ke)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach($infoflowRows as $row)
+                                                                <tr>
+                                                                    <td>
+                                                                        @if(!empty($row['input_desc']))
+                                                                            <strong>{{ $row['input_from'] }}</strong>: {{ $row['input_desc'] }}
+                                                                        @else
+                                                                            <span class="text-muted">-</span>
+                                                                        @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        @if(!empty($row['output_desc']))
+                                                                            {{ $row['output_desc'] }} &rarr; <strong>{{ $row['output_to'] }}</strong>
+                                                                        @else
+                                                                            <span class="text-muted">-</span>
+                                                                        @endif
+                                                                    </td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         @endif
 
@@ -578,22 +667,223 @@
                                 @endif
                             </div>
 
+                            <!-- Information Flows -->
+                            <div class="tab-pane fade" id="infoflows_{{ $safeId }}">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0" style="font-size: 0.85rem; border-color: #e5e7eb;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 25%;">Key Management Practice</th>
+                                                <th style="width: 37.5%;">Inputs (Dari)</th>
+                                                <th style="width: 37.5%;">Outputs (Ke)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($obj->practices as $practice)
+                                                @php
+                                                    $infoflowRows = [];
+                                                    foreach ($practice->infoflowinput as $inp) {
+                                                        if ($inp->connectedoutputs->isNotEmpty()) {
+                                                            foreach ($inp->connectedoutputs as $out) {
+                                                                $infoflowRows[] = [
+                                                                    'input_id' => $inp->input_id,
+                                                                    'input_from' => $inp->from,
+                                                                    'input_desc' => $inp->description,
+                                                                    'output_id' => $out->output_id,
+                                                                    'output_desc' => $out->description,
+                                                                    'output_to' => $out->to,
+                                                                ];
+                                                            }
+                                                        } else {
+                                                            $infoflowRows[] = [
+                                                                'input_id' => $inp->input_id,
+                                                                'input_from' => $inp->from,
+                                                                'input_desc' => $inp->description,
+                                                                'output_id' => '',
+                                                                'output_desc' => '',
+                                                                'output_to' => '',
+                                                            ];
+                                                        }
+                                                    }
+
+                                                    $connectedOutputIds = $practice->infoflowinput->flatMap(function($inp) {
+                                                        return $inp->connectedoutputs->pluck('output_id');
+                                                    })->unique()->toArray();
+
+                                                    foreach ($practice->infoflowoutput as $out) {
+                                                        if (!in_array($out->output_id, $connectedOutputIds)) {
+                                                            $infoflowRows[] = [
+                                                                'input_id' => '',
+                                                                'input_from' => '',
+                                                                'input_desc' => '',
+                                                                'output_id' => $out->output_id,
+                                                                'output_desc' => $out->description,
+                                                                'output_to' => $out->to,
+                                                            ];
+                                                        }
+                                                    }
+
+                                                    $rowCount = count($infoflowRows);
+                                                @endphp
+
+                                                @if($rowCount > 0)
+                                                    @foreach($infoflowRows as $idx => $row)
+                                                        <tr>
+                                                            @if($idx === 0)
+                                                                <td rowspan="{{ $rowCount }}" style="vertical-align: top;">
+                                                                    <div class="fw-bold">{{ $displayObjectiveId($practice->practice_id) }}</div>
+                                                                    <div class="text-muted small">{{ $practice->practice_name }}</div>
+                                                                    @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                                                        <div class="mt-2 d-flex flex-column gap-1">
+                                                                            <button type="button" class="btn btn-xs btn-outline-success py-0 px-1 text-start" style="font-size: 0.7rem;"
+                                                                                data-child-type="infoflowinput"
+                                                                                data-child-practice-id="{{ $practice->practice_id }}"
+                                                                                data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                                onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                                <i class="fas fa-plus me-1"></i>Input
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-xs btn-outline-success py-0 px-1 text-start" style="font-size: 0.7rem;"
+                                                                                data-child-type="infoflowoutput"
+                                                                                data-child-practice-id="{{ $practice->practice_id }}"
+                                                                                data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                                onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                                <i class="fas fa-plus me-1"></i>Output
+                                                                            </button>
+                                                                        </div>
+                                                                    @endif
+                                                                </td>
+                                                            @endif
+                                                            <td class="position-relative" style="padding-right: 60px !important;">
+                                                                @if(!empty($row['input_desc']))
+                                                                    <strong>{{ $row['input_from'] }}</strong> &rarr; {{ $row['input_desc'] }}
+                                                                    @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                                                        <div class="position-absolute end-0 top-50 translate-middle-y pe-2 d-flex gap-1">
+                                                                            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size: 0.7rem;"
+                                                                                data-child-type="infoflowinput"
+                                                                                data-child-id="{{ $row['input_id'] }}"
+                                                                                data-child-field1="{{ $row['input_from'] }}"
+                                                                                data-child-field2="{{ $row['input_desc'] }}"
+                                                                                data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                                onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                                <i class="fas fa-pen"></i>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1" style="font-size: 0.7rem;"
+                                                                                onclick="event.stopPropagation(); deleteInfoflowInput('{{ $row['input_id'] }}')">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    @endif
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="position-relative" style="padding-right: 60px !important;">
+                                                                @if(!empty($row['output_desc']))
+                                                                    {{ $row['output_desc'] }} &rarr; <strong>{{ $row['output_to'] }}</strong>
+                                                                    @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                                                        <div class="position-absolute end-0 top-50 translate-middle-y pe-2 d-flex gap-1">
+                                                                            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size: 0.7rem;"
+                                                                                data-child-type="infoflowoutput"
+                                                                                data-child-id="{{ $row['output_id'] }}"
+                                                                                data-child-field1="{{ $row['output_to'] }}"
+                                                                                data-child-field2="{{ $row['output_desc'] }}"
+                                                                                data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                                onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                                <i class="fas fa-pen"></i>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1" style="font-size: 0.7rem;"
+                                                                                onclick="event.stopPropagation(); deleteInfoflowOutput('{{ $row['output_id'] }}')">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    @endif
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                @else
+                                                    <tr>
+                                                        <td style="vertical-align: top;">
+                                                            <div class="fw-bold">{{ $displayObjectiveId($practice->practice_id) }}</div>
+                                                            <div class="text-muted small">{{ $practice->practice_name }}</div>
+                                                            @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                                                <div class="mt-2 d-flex flex-column gap-1">
+                                                                    <button type="button" class="btn btn-xs btn-outline-success py-0 px-1 text-start" style="font-size: 0.7rem;"
+                                                                        data-child-type="infoflowinput"
+                                                                        data-child-practice-id="{{ $practice->practice_id }}"
+                                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                        <i class="fas fa-plus me-1"></i>Input
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-xs btn-outline-success py-0 px-1 text-start" style="font-size: 0.7rem;"
+                                                                        data-child-type="infoflowoutput"
+                                                                        data-child-practice-id="{{ $practice->practice_id }}"
+                                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                        <i class="fas fa-plus me-1"></i>Output
+                                                                    </button>
+                                                                </div>
+                                                            @endif
+                                                        </td>
+                                                        <td colspan="2" class="text-center text-muted py-2">
+                                                            Tidak ada data information flows.
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            @empty
+                                                <tr>
+                                                    <td colspan="3" class="text-center text-muted py-3">
+                                                        Tidak ada practices.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             <!-- Policies -->
                             <div class="tab-pane fade" id="policies_{{ $safeId }}">
+                                @if(auth()->check() && auth()->user()->can('design-factors.input'))
+                                    <div class="mb-3 text-end">
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                            data-child-type="policy"
+                                            data-child-objective-id="{{ $obj->objective_id }}"
+                                            data-child-focus-area-id="{{ $focusArea->id }}"
+                                            onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                            <i class="fas fa-plus"></i> Tambah Policy
+                                        </button>
+                                    </div>
+                                @endif
                                 @forelse($obj->policies as $policy)
                                     <div class="comp-section">
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
                                             <span>{{ $displayObjectiveId($policy->policy_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
-                                                    data-child-type="policy"
-                                                    data-child-id="{{ $policy->policy_id }}"
-                                                    data-child-field1="{{ $policy->policy }}"
-                                                    data-child-field2="{{ $policy->description }}"
-                                                    data-child-focus-area-id="{{ $focusArea->id }}"
-                                                    onclick="event.stopPropagation(); openChildEditorFromButton(this)">
-                                                    <i class="fas fa-pen"></i>
-                                                </button>
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2"
+                                                        data-child-type="guidance"
+                                                        data-child-policy-id="{{ $policy->policy_id }}"
+                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                        <i class="fas fa-plus me-1"></i>Guidance
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                        data-child-type="policy"
+                                                        data-child-id="{{ $policy->policy_id }}"
+                                                        data-child-field1="{{ $policy->policy }}"
+                                                        data-child-field2="{{ $policy->description }}"
+                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                        onclick="event.stopPropagation(); deletePolicy('{{ $policy->policy_id }}')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             @endif
                                         </div>
                                         <div class="mb-1 fw-semibold">{{ $policy->policy }}</div>
@@ -604,15 +894,21 @@
                                                     <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
                                                         <small class="text-muted d-block">📖 {{ $g->guidance }} — {{ $g->reference }}</small>
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                                            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
-                                                                data-child-type="guidance"
-                                                                data-child-id="{{ $g->guidance_id }}"
-                                                                data-child-field1="{{ $g->guidance }}"
-                                                                data-child-field2="{{ $g->reference }}"
-                                                                data-child-focus-area-id="{{ $focusArea->id }}"
-                                                                onclick="event.stopPropagation(); openChildEditorFromButton(this)">
-                                                                <i class="fas fa-pen"></i>
-                                                            </button>
+                                                            <div class="d-flex gap-1">
+                                                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
+                                                                    data-child-type="guidance"
+                                                                    data-child-id="{{ $g->guidance_id }}"
+                                                                    data-child-field1="{{ $g->guidance }}"
+                                                                    data-child-field2="{{ $g->reference }}"
+                                                                    data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                    onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                    <i class="fas fa-pen"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1"
+                                                                    onclick="event.stopPropagation(); deleteGuidance('{{ $g->guidance_id }}')">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                 @endforeach
@@ -642,14 +938,27 @@
                                         <div class="comp-section-title d-flex justify-content-between align-items-center gap-2">
                                             <span>{{ $displayObjectiveId($sk->skill_id) }}</span>
                                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
-                                                    data-child-type="skill"
-                                                    data-child-id="{{ $sk->skill_id }}"
-                                                    data-child-field1="{{ $sk->skill }}"
-                                                    data-child-focus-area-id="{{ $focusArea->id }}"
-                                                    onclick="event.stopPropagation(); openChildEditorFromButton(this)">
-                                                    <i class="fas fa-pen"></i>
-                                                </button>
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2"
+                                                        data-child-type="guidance"
+                                                        data-child-skill-id="{{ $sk->skill_id }}"
+                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                        <i class="fas fa-plus me-1"></i>Guidance
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                        data-child-type="skill"
+                                                        data-child-id="{{ $sk->skill_id }}"
+                                                        data-child-field1="{{ $sk->skill }}"
+                                                        data-child-focus-area-id="{{ $focusArea->id }}"
+                                                        onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                        onclick="event.stopPropagation(); deleteSkill('{{ $sk->skill_id }}')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             @endif
                                         </div>
                                         <div style="font-size:0.88rem; color:#374151;">{{ $sk->skill }}</div>
@@ -659,15 +968,21 @@
                                                     <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
                                                         <small class="text-muted d-block">📖 {{ $g->guidance }} — {{ $g->reference }}</small>
                                                         @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                                                            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
-                                                                data-child-type="guidance"
-                                                                data-child-id="{{ $g->guidance_id }}"
-                                                                data-child-field1="{{ $g->guidance }}"
-                                                                data-child-field2="{{ $g->reference }}"
-                                                                data-child-focus-area-id="{{ $focusArea->id }}"
-                                                                onclick="event.stopPropagation(); openChildEditorFromButton(this)">
-                                                                <i class="fas fa-pen"></i>
-                                                            </button>
+                                                            <div class="d-flex gap-1">
+                                                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
+                                                                    data-child-type="guidance"
+                                                                    data-child-id="{{ $g->guidance_id }}"
+                                                                    data-child-field1="{{ $g->guidance }}"
+                                                                    data-child-field2="{{ $g->reference }}"
+                                                                    data-child-focus-area-id="{{ $focusArea->id }}"
+                                                                    onclick="event.stopPropagation(); openChildEditorFromButton(this)">
+                                                                    <i class="fas fa-pen"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1"
+                                                                    onclick="event.stopPropagation(); deleteGuidance('{{ $g->guidance_id }}')">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                 @endforeach
@@ -1048,6 +1363,9 @@
             const childEditTypeInput = document.getElementById('childEditType');
             const childEditIdInput = document.getElementById('childEditId');
             const childEditRoleIdInput = document.getElementById('childEditRoleId');
+            const childEditPolicyIdInput = document.getElementById('childEditPolicyId');
+            const childEditSkillIdInput = document.getElementById('childEditSkillId');
+            const childEditKeyCultureIdInput = document.getElementById('childEditKeyCultureId');
             const childEditFocusAreaIdInput = document.getElementById('childEditFocusAreaId');
             const childEditTitle = document.getElementById('childEditModalTitle');
             const childEditField1 = document.getElementById('childEditField1');
@@ -1084,6 +1402,12 @@
                     element: button.dataset.childField1 || '',
                     guidance: button.dataset.childField1 || '',
                     reference: button.dataset.childField2 || '',
+                    policy_id: button.dataset.childPolicyId || '',
+                    skill_id: button.dataset.childSkillId || '',
+                    key_culture_id: button.dataset.childKeyCultureId || '',
+                    metrics: button.dataset.childMetrics ? JSON.parse(button.dataset.childMetrics) : [],
+                    inputs: button.dataset.childInputs ? JSON.parse(button.dataset.childInputs) : [],
+                    outputs: button.dataset.childOutputs ? JSON.parse(button.dataset.childOutputs) : []
                 });
             };
             window.openChildEditor = function(type, data) {
@@ -1169,6 +1493,18 @@
                         field1Label: 'Guidance',
                         field2Label: 'Reference',
                         route: `{{ url('/objectives/guidance') }}`,
+                    },
+                    infoflowinput: {
+                        title: 'Edit Information Flow Input',
+                        field1Label: 'Dari',
+                        field2Label: 'Deskripsi Input',
+                        route: `{{ url('/objectives/infoflow-input') }}`,
+                    },
+                    infoflowoutput: {
+                        title: 'Edit Information Flow Output',
+                        field1Label: 'Ke',
+                        field2Label: 'Deskripsi Output',
+                        route: `{{ url('/objectives/infoflow-output') }}`,
                     }
                 }[type];
 
@@ -1180,6 +1516,11 @@
                 childEditTypeInput.value = type;
                 childEditIdInput.value = payload.id || '';
                 childEditRoleIdInput.value = payload.role_id || '';
+                childEditPolicyIdInput.value = payload.policy_id || '';
+                childEditSkillIdInput.value = payload.skill_id || '';
+                childEditKeyCultureIdInput.value = payload.key_culture_id || '';
+                document.getElementById('childEditObjectiveId').value = payload.objective_id || '';
+                document.getElementById('childEditPracticeId').value = payload.practice_id || '';
                 childEditFocusAreaIdInput.value = payload.focus_area_id || FOCUS_AREA_ID;
                 childEditTitle.textContent = config.title;
                 childEditField1Label.textContent = config.field1Label || 'Field 1';
@@ -1190,6 +1531,8 @@
                 childEditField2Label.textContent = config.field2Label || 'Field 2';
                 childEditField1InputWrap.style.display = config.field1Select ? 'none' : '';
                 childEditField1SelectWrap.style.display = config.field1Select ? '' : 'none';
+                document.getElementById('childEditMetricsWrap').style.display = 'none';
+                document.getElementById('childEditInfoflowWrap').style.display = 'none';
 
                 if (type === 'entergoal' || type === 'aligngoal' || type === 'sia') {
                     childEditField1.value = payload.description || payload.field1 || '';
@@ -1201,7 +1544,105 @@
                     if (!payload.id) {
                         document.getElementById('childEditObjectiveId').value = payload.objective_id;
                     }
+                    const metricsWrap = document.getElementById('childEditMetricsWrap');
+                    const infoflowWrap = document.getElementById('childEditInfoflowWrap');
+                    if (payload.id) {
+                        metricsWrap.style.display = '';
+                        infoflowWrap.style.display = '';
+                        
+                        // Metrics
+                        const metricsList = document.getElementById('childEditMetricsList');
+                        metricsList.innerHTML = '';
+                        const metrics = payload.metrics || [];
+                        metrics.forEach((m, idx) => {
+                            const labelChar = String.fromCharCode(97 + idx);
+                            const row = document.createElement('div');
+                            row.className = 'd-flex align-items-start gap-2 mb-2 child-edit-metric-row';
+                            row.dataset.metricId = m.id;
+                            row.innerHTML = `
+                                <span class="mt-1 fw-semibold small text-muted" style="width: 20px;">${labelChar}.</span>
+                                <textarea class="form-control form-control-sm child-edit-metric-desc" rows="1" style="resize: vertical;">${m.description || ''}</textarea>
+                                <button type="button" class="btn btn-sm btn-primary py-0 px-2 child-save-metric-btn" title="Simpan Metric"><i class="fas fa-check"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 child-delete-metric-btn" title="Hapus Metric"><i class="fas fa-trash"></i></button>
+                            `;
+                            metricsList.appendChild(row);
+                        });
+
+                        // Information Flow Inputs & Outputs
+                        const inputsList = document.getElementById('childEditInputsList');
+                        const outputsList = document.getElementById('childEditOutputsList');
+                        inputsList.innerHTML = '';
+                        outputsList.innerHTML = '';
+                        
+                        const inputs = payload.inputs || [];
+                        const outputs = payload.outputs || [];
+                        
+                        inputs.forEach((inp) => {
+                            const row = document.createElement('div');
+                            row.className = 'child-edit-input-row border-bottom pb-2 mb-2';
+                            row.dataset.inputId = inp.input_id;
+                            row.innerHTML = `
+                                <div class="mb-1">
+                                    <input type="text" class="form-control form-control-sm child-input-from" value="${inp.from || ''}" placeholder="Dari (contoh: APO01.01)">
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <textarea class="form-control form-control-sm child-input-desc" rows="1" placeholder="Deskripsi input...">${inp.description || ''}</textarea>
+                                    <button type="button" class="btn btn-sm btn-primary py-0 px-2 child-save-input-btn" title="Simpan Input"><i class="fas fa-check"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 child-delete-input-btn" title="Hapus Input"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `;
+                            inputsList.appendChild(row);
+                        });
+
+                        const getInputsOptionsHtml = (selectedInputId) => {
+                            let html = '<option value="">(Tidak terhubung)</option>';
+                            inputs.forEach(inp => {
+                                const selected = String(inp.input_id) === String(selectedInputId) ? 'selected' : '';
+                                const label = `[${inp.from || '?'}] ${inp.description ? inp.description.substring(0, 30) + '...' : ''}`;
+                                html += `<option value="${inp.input_id}" ${selected}>${label}</option>`;
+                            });
+                            return html;
+                        };
+
+                        outputs.forEach((out) => {
+                            let connectedInputId = '';
+                            inputs.forEach(inp => {
+                                if (inp.connected_output_ids && inp.connected_output_ids.includes(out.output_id)) {
+                                    connectedInputId = inp.input_id;
+                                }
+                            });
+
+                            const row = document.createElement('div');
+                            row.className = 'child-edit-output-row border-bottom pb-2 mb-2';
+                            row.dataset.outputId = out.output_id;
+                            row.innerHTML = `
+                                <div class="mb-1 d-flex gap-1 align-items-center">
+                                    <input type="text" class="form-control form-control-sm child-output-to" style="width: 100px;" value="${out.to || ''}" placeholder="Ke (contoh: APO02.03)">
+                                    <select class="form-select form-select-sm child-output-connection" style="flex: 1; font-size: 0.75rem;">
+                                        ${getInputsOptionsHtml(connectedInputId)}
+                                    </select>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <textarea class="form-control form-control-sm child-output-desc" rows="1" placeholder="Deskripsi output...">${out.description || ''}</textarea>
+                                    <button type="button" class="btn btn-sm btn-primary py-0 px-2 child-save-output-btn" title="Simpan Output"><i class="fas fa-check"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 child-delete-output-btn" title="Hapus Output"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `;
+                            outputsList.appendChild(row);
+                        });
+
+                        window.currentPracticeInputs = inputs;
+                    } else {
+                        metricsWrap.style.display = 'none';
+                        infoflowWrap.style.display = 'none';
+                    }
                 } else if (type === 'activity') {
+                    childEditField1.value = payload.field1 || '';
+                    childEditField2.value = payload.field2 || '';
+                    if (!payload.id) {
+                        document.getElementById('childEditPracticeId').value = payload.practice_id;
+                    }
+                } else if (type === 'infoflowinput' || type === 'infoflowoutput') {
                     childEditField1.value = payload.field1 || '';
                     childEditField2.value = payload.field2 || '';
                     if (!payload.id) {
@@ -1280,6 +1721,7 @@
                 } else if (type === 'policy') {
                     payload.policy = childEditField1.value.trim();
                     payload.description = childEditField2.value.trim();
+                    if (!id) payload.objective_id = document.getElementById('childEditObjectiveId').value;
                 } else if (type === 'skill') {
                     payload.skill = childEditField1.value.trim();
                     if (!id) payload.objective_id = document.getElementById('childEditObjectiveId').value;
@@ -1291,6 +1733,14 @@
                 } else if (type === 'masterrole') {
                     payload.role = childEditField1.value.trim();
                     payload.description = childEditField2.value.trim();
+                } else if (type === 'infoflowinput') {
+                    payload.from = childEditField1.value.trim();
+                    payload.description = childEditField2.value.trim();
+                    if (!id) payload.practice_id = document.getElementById('childEditPracticeId').value;
+                } else if (type === 'infoflowoutput') {
+                    payload.to = childEditField1.value.trim();
+                    payload.description = childEditField2.value.trim();
+                    if (!id) payload.practice_id = document.getElementById('childEditPracticeId').value;
                 }
 
                 if (type === 'practice' && !payload.practice_name) {
@@ -1313,6 +1763,10 @@
                     showNotif('Field utama wajib diisi.', 'warning');
                     return;
                 }
+                if ((type === 'infoflowinput' || type === 'infoflowoutput') && !payload.description) {
+                    showNotif('Deskripsi wajib diisi.', 'warning');
+                    return;
+                }
                 if (type === 'guidance' && !payload.guidance) {
                     showNotif('Guidance wajib diisi.', 'warning');
                     return;
@@ -1324,6 +1778,22 @@
 
                     if (!id) {
                         method = 'POST';
+                        if (type === 'guidance') {
+                            const policyId = document.getElementById('childEditPolicyId').value;
+                            const skillId = document.getElementById('childEditSkillId').value;
+                            const keyCultureId = document.getElementById('childEditKeyCultureId').value;
+                            
+                            if (policyId) {
+                                saveUrl = `{{ url('/objectives/policies') }}/${encodeURIComponent(policyId)}/guidance`;
+                            } else if (skillId) {
+                                saveUrl = `{{ url('/objectives/skills') }}/${encodeURIComponent(skillId)}/guidance`;
+                            } else if (keyCultureId) {
+                                saveUrl = `{{ url('/objectives/key-culture') }}/${encodeURIComponent(keyCultureId)}/guidance`;
+                            } else {
+                                showNotif('Parent ID (Policy/Skill/Culture) tidak valid.', 'danger');
+                                return;
+                            }
+                        }
                     } else if (type === 'practicerole') {
                         saveUrl = `${endpoint}/${encodeURIComponent(id)}/roles/${encodeURIComponent(roleId)}`;
                     } else {
@@ -1453,6 +1923,560 @@
                     location.reload();
                 } catch (e) {
                     showNotif(e.message, 'danger');
+                }
+            });
+
+            // Add click listener for "+ Tambah Metric" button in modal
+            const addMetricBtn = document.getElementById('childEditAddMetricBtn');
+            if (addMetricBtn) {
+                addMetricBtn.addEventListener('click', () => {
+                    const listContainer = document.getElementById('childEditMetricsList');
+                    if (!listContainer) return;
+
+                    const newIdx = listContainer.children.length;
+                    const labelChar = String.fromCharCode(97 + newIdx); // 'a', 'b', 'c', ...
+
+                    const newRow = document.createElement('div');
+                    newRow.className = 'd-flex align-items-start gap-2 mb-2 child-edit-metric-row';
+                    newRow.dataset.metricId = '';
+                    newRow.innerHTML = `
+                        <span class="mt-1 fw-semibold small text-muted" style="width: 20px;">${labelChar}.</span>
+                        <textarea class="form-control form-control-sm child-edit-metric-desc" rows="1" style="resize: vertical;" placeholder="Tulis deskripsi metric baru..."></textarea>
+                        <button type="button" class="btn btn-sm btn-primary py-0 px-2 child-save-metric-btn" title="Simpan Metric"><i class="fas fa-check"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 child-remove-draft-btn" title="Batal"><i class="fas fa-trash"></i></button>
+                    `;
+                    listContainer.appendChild(newRow);
+                });
+            }
+
+            const getInputsOptionsHtml = (selectedInputId) => {
+                let html = '<option value="">(Tidak terhubung)</option>';
+                const inputs = window.currentPracticeInputs || [];
+                inputs.forEach(inp => {
+                    const selected = String(inp.input_id) === String(selectedInputId) ? 'selected' : '';
+                    const label = `[${inp.from || '?'}] ${inp.description ? inp.description.substring(0, 30) + '...' : ''}`;
+                    html += `<option value="${inp.input_id}" ${selected}>${label}</option>`;
+                });
+                return html;
+            };
+
+            // Add click listener for "+ Tambah Input" button
+            const addInputBtn = document.getElementById('childEditAddInputBtn');
+            if (addInputBtn) {
+                addInputBtn.addEventListener('click', () => {
+                    const listContainer = document.getElementById('childEditInputsList');
+                    if (!listContainer) return;
+
+                    const newRow = document.createElement('div');
+                    newRow.className = 'child-edit-input-row border-bottom pb-2 mb-2';
+                    newRow.dataset.inputId = '';
+                    newRow.innerHTML = `
+                        <div class="mb-1">
+                            <input type="text" class="form-control form-control-sm child-input-from" placeholder="Dari (contoh: APO01.01)">
+                        </div>
+                        <div class="d-flex gap-1">
+                            <textarea class="form-control form-control-sm child-input-desc" rows="1" placeholder="Deskripsi input..."></textarea>
+                            <button type="button" class="btn btn-sm btn-primary py-0 px-2 child-save-input-btn" title="Simpan Input"><i class="fas fa-check"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 child-remove-draft-input-btn" title="Batal"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    listContainer.appendChild(newRow);
+                });
+            }
+
+            // Add click listener for "+ Tambah Output" button
+            const addOutputBtn = document.getElementById('childEditAddOutputBtn');
+            if (addOutputBtn) {
+                addOutputBtn.addEventListener('click', () => {
+                    const listContainer = document.getElementById('childEditOutputsList');
+                    if (!listContainer) return;
+
+                    const newRow = document.createElement('div');
+                    newRow.className = 'child-edit-output-row border-bottom pb-2 mb-2';
+                    newRow.dataset.outputId = '';
+                    newRow.innerHTML = `
+                        <div class="mb-1 d-flex gap-1 align-items-center">
+                            <input type="text" class="form-control form-control-sm child-output-to" style="width: 100px;" placeholder="Ke (contoh: APO02.03)">
+                            <select class="form-select form-select-sm child-output-connection" style="flex: 1; font-size: 0.75rem;">
+                                ${getInputsOptionsHtml('')}
+                            </select>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <textarea class="form-control form-control-sm child-output-desc" rows="1" placeholder="Deskripsi output..."></textarea>
+                            <button type="button" class="btn btn-sm btn-primary py-0 px-2 child-save-output-btn" title="Simpan Output"><i class="fas fa-check"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 child-remove-draft-output-btn" title="Batal"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    listContainer.appendChild(newRow);
+                });
+            }
+
+            // Delegated click listener for child-edit-metric-row buttons
+            document.addEventListener('click', async (event) => {
+                // Save/update metric action
+                const saveBtn = event.target.closest('.child-save-metric-btn');
+                if (saveBtn) {
+                    const row = saveBtn.closest('.child-edit-metric-row');
+                    if (!row) return;
+
+                    const practiceId = document.getElementById('childEditId').value;
+                    const metricId = row.dataset.metricId;
+                    const descField = row.querySelector('.child-edit-metric-desc');
+                    const description = (descField ? descField.value : '').trim();
+
+                    if (!description) {
+                        showNotif('Deskripsi metric tidak boleh kosong.', 'warning');
+                        return;
+                    }
+
+                    const originalHTML = saveBtn.innerHTML;
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    try {
+                        let url = '';
+                        let method = '';
+                        if (metricId) {
+                            // Update
+                            url = `{{ url('/objectives/practices/metrics') }}/${encodeURIComponent(metricId)}`;
+                            method = 'PUT';
+                        } else {
+                            // Create
+                            if (!practiceId) {
+                                showNotif('Practice ID tidak valid.', 'danger');
+                                return;
+                            }
+                            url = `{{ url('/objectives/practices') }}/${encodeURIComponent(practiceId)}/metrics`;
+                            method = 'POST';
+                        }
+
+                        const res = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ description })
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(await extractErrorMessage(res));
+                        }
+
+                        const data = await res.json();
+                        if (!metricId && data.id) {
+                            row.dataset.metricId = data.id;
+                            // Change draft delete button to DB delete button
+                            const draftDelBtn = row.querySelector('.child-remove-draft-btn');
+                            if (draftDelBtn) {
+                                draftDelBtn.classList.remove('child-remove-draft-btn');
+                                draftDelBtn.classList.add('child-delete-metric-btn');
+                                draftDelBtn.title = 'Hapus Metric';
+                            }
+                        }
+
+                        showNotif('Example metric berhasil disimpan.', 'success');
+                    } catch (err) {
+                        console.error('Failed to save practice metric:', err);
+                        showNotif(`Gagal menyimpan metric: ${err.message}`, 'danger');
+                    } finally {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalHTML;
+                    }
+                    return;
+                }
+
+                // Delete metric action
+                const delBtn = event.target.closest('.child-delete-metric-btn');
+                if (delBtn) {
+                    const row = delBtn.closest('.child-edit-metric-row');
+                    if (!row) return;
+
+                    const metricId = row.dataset.metricId;
+                    if (!metricId) return;
+
+                    if (!confirm('Apakah Anda yakin ingin menghapus example metric ini?')) {
+                        return;
+                    }
+
+                    const originalHTML = delBtn.innerHTML;
+                    delBtn.disabled = true;
+                    delBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    try {
+                        const url = `{{ url('/objectives/practices/metrics') }}/${encodeURIComponent(metricId)}`;
+                        const res = await fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(await extractErrorMessage(res));
+                        }
+
+                        row.remove();
+                        showNotif('Example metric berhasil dihapus.', 'success');
+                        
+                        // Re-index characters (a, b, c...) of remaining rows
+                        const listContainer = document.getElementById('childEditMetricsList');
+                        if (listContainer) {
+                            Array.from(listContainer.children).forEach((child, i) => {
+                                const indicator = child.querySelector('span');
+                                if (indicator) {
+                                    indicator.textContent = String.fromCharCode(97 + i) + '.';
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to delete practice metric:', err);
+                        showNotif(`Gagal menghapus metric: ${err.message}`, 'danger');
+                    } finally {
+                        delBtn.disabled = false;
+                        delBtn.innerHTML = originalHTML;
+                    }
+                    return;
+                }
+
+                // Remove draft action
+                const removeDraftBtn = event.target.closest('.child-remove-draft-btn');
+                if (removeDraftBtn) {
+                    const row = removeDraftBtn.closest('.child-edit-metric-row');
+                    if (row) {
+                        row.remove();
+                        // Re-index remaining
+                        const listContainer = document.getElementById('childEditMetricsList');
+                        if (listContainer) {
+                            Array.from(listContainer.children).forEach((child, i) => {
+                                const indicator = child.querySelector('span');
+                                if (indicator) {
+                                    indicator.textContent = String.fromCharCode(97 + i) + '.';
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // Save/update input action
+                const saveInputBtn = event.target.closest('.child-save-input-btn');
+                if (saveInputBtn) {
+                    const row = saveInputBtn.closest('.child-edit-input-row');
+                    if (!row) return;
+
+                    const practiceId = document.getElementById('childEditId').value;
+                    const inputId = row.dataset.inputId;
+                    const fromField = row.querySelector('.child-input-from');
+                    const descField = row.querySelector('.child-input-desc');
+                    
+                    const from = (fromField ? fromField.value : '').trim();
+                    const description = (descField ? descField.value : '').trim();
+
+                    if (!from && !description) {
+                        showNotif('Isi minimal satu field (Dari / Deskripsi).', 'warning');
+                        return;
+                    }
+
+                    const originalHTML = saveInputBtn.innerHTML;
+                    saveInputBtn.disabled = true;
+                    saveInputBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    try {
+                        let url = '';
+                        let method = '';
+                        const payload = { from, description };
+                        
+                        if (inputId) {
+                            // Update
+                            url = `{{ url('/objectives/infoflow-input') }}/${encodeURIComponent(inputId)}`;
+                            method = 'PUT';
+                        } else {
+                            // Create
+                            if (!practiceId) {
+                                showNotif('Practice ID tidak valid.', 'danger');
+                                return;
+                            }
+                            url = `{{ url('/objectives/infoflow-input') }}`;
+                            method = 'POST';
+                            payload.practice_id = practiceId;
+                        }
+
+                        const res = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(await extractErrorMessage(res));
+                        }
+
+                        const data = await res.json();
+                        if (!inputId && data.input_id) {
+                            row.dataset.inputId = data.input_id;
+                            const draftDelBtn = row.querySelector('.child-remove-draft-input-btn');
+                            if (draftDelBtn) {
+                                draftDelBtn.classList.remove('child-remove-draft-input-btn');
+                                draftDelBtn.classList.add('child-delete-input-btn');
+                                draftDelBtn.title = 'Hapus Input';
+                            }
+                            
+                            window.currentPracticeInputs = window.currentPracticeInputs || [];
+                            window.currentPracticeInputs.push(data);
+                            
+                            document.querySelectorAll('.child-output-connection').forEach(select => {
+                                const selectedVal = select.value;
+                                select.innerHTML = getInputsOptionsHtml(selectedVal);
+                            });
+                        } else if (inputId) {
+                            if (window.currentPracticeInputs) {
+                                const cacheIdx = window.currentPracticeInputs.findIndex(inp => String(inp.input_id) === String(inputId));
+                                if (cacheIdx > -1) {
+                                    window.currentPracticeInputs[cacheIdx].from = from;
+                                    window.currentPracticeInputs[cacheIdx].description = description;
+                                }
+                            }
+                            document.querySelectorAll('.child-output-connection').forEach(select => {
+                                const selectedVal = select.value;
+                                select.innerHTML = getInputsOptionsHtml(selectedVal);
+                            });
+                        }
+
+                        showNotif('Information Flow Input berhasil disimpan.', 'success');
+                    } catch (err) {
+                        console.error('Failed to save infoflow input:', err);
+                        showNotif(`Gagal menyimpan input: ${err.message}`, 'danger');
+                    } finally {
+                        saveInputBtn.disabled = false;
+                        saveInputBtn.innerHTML = originalHTML;
+                    }
+                    return;
+                }
+
+                // Delete input action
+                const deleteInputBtn = event.target.closest('.child-delete-input-btn');
+                if (deleteInputBtn) {
+                    const row = deleteInputBtn.closest('.child-edit-input-row');
+                    if (!row) return;
+
+                    const inputId = row.dataset.inputId;
+                    if (!inputId) return;
+
+                    if (!confirm('Apakah Anda yakin ingin menghapus input ini? Data terkait di trs_infoflowio akan terhapus.')) {
+                        return;
+                    }
+
+                    const originalHTML = deleteInputBtn.innerHTML;
+                    deleteInputBtn.disabled = true;
+                    deleteInputBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    try {
+                        const url = `{{ url('/objectives/infoflow-input') }}/${encodeURIComponent(inputId)}`;
+                        const res = await fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(await extractErrorMessage(res));
+                        }
+
+                        row.remove();
+                        showNotif('Information Flow Input berhasil dihapus.', 'success');
+                        
+                        if (window.currentPracticeInputs) {
+                            window.currentPracticeInputs = window.currentPracticeInputs.filter(inp => String(inp.input_id) !== String(inputId));
+                        }
+                        
+                        document.querySelectorAll('.child-output-connection').forEach(select => {
+                            let selectedVal = select.value;
+                            if (String(selectedVal) === String(inputId)) selectedVal = '';
+                            select.innerHTML = getInputsOptionsHtml(selectedVal);
+                        });
+                    } catch (err) {
+                        console.error('Failed to delete infoflow input:', err);
+                        showNotif(`Gagal menghapus input: ${err.message}`, 'danger');
+                    } finally {
+                        deleteInputBtn.disabled = false;
+                        deleteInputBtn.innerHTML = originalHTML;
+                    }
+                    return;
+                }
+
+                // Remove draft input
+                const removeDraftInputBtn = event.target.closest('.child-remove-draft-input-btn');
+                if (removeDraftInputBtn) {
+                    const row = removeDraftInputBtn.closest('.child-edit-input-row');
+                    if (row) row.remove();
+                    return;
+                }
+
+                // Save/update output action
+                const saveOutputBtn = event.target.closest('.child-save-output-btn');
+                if (saveOutputBtn) {
+                    const row = saveOutputBtn.closest('.child-edit-output-row');
+                    if (!row) return;
+
+                    const practiceId = document.getElementById('childEditId').value;
+                    const outputId = row.dataset.outputId;
+                    const toField = row.querySelector('.child-output-to');
+                    const descField = row.querySelector('.child-output-desc');
+                    const connectionSelect = row.querySelector('.child-output-connection');
+                    
+                    const to = (toField ? toField.value : '').trim();
+                    const description = (descField ? descField.value : '').trim();
+                    const inputId = connectionSelect ? connectionSelect.value : '';
+
+                    if (!to && !description) {
+                        showNotif('Isi minimal satu field (Ke / Deskripsi).', 'warning');
+                        return;
+                    }
+
+                    const originalHTML = saveOutputBtn.innerHTML;
+                    saveOutputBtn.disabled = true;
+                    saveOutputBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    try {
+                        let url = '';
+                        let method = '';
+                        const payload = { to, description };
+                        if (inputId) {
+                            payload.input_id = Number(inputId);
+                        }
+                        
+                        if (outputId) {
+                            // Update
+                            url = `{{ url('/objectives/infoflow-output') }}/${encodeURIComponent(outputId)}`;
+                            method = 'PUT';
+                        } else {
+                            // Create
+                            if (!practiceId) {
+                                showNotif('Practice ID tidak valid.', 'danger');
+                                return;
+                            }
+                            url = `{{ url('/objectives/infoflow-output') }}`;
+                            method = 'POST';
+                            payload.practice_id = practiceId;
+                        }
+
+                        const res = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(await extractErrorMessage(res));
+                        }
+
+                        const data = await res.json();
+                        if (!outputId && data.output_id) {
+                            row.dataset.outputId = data.output_id;
+                            const draftDelBtn = row.querySelector('.child-remove-draft-output-btn');
+                            if (draftDelBtn) {
+                                draftDelBtn.classList.remove('child-remove-draft-output-btn');
+                                draftDelBtn.classList.add('child-delete-output-btn');
+                                draftDelBtn.title = 'Hapus Output';
+                            }
+                        }
+
+                        if (window.currentPracticeInputs) {
+                            const currentOutId = outputId || data.output_id;
+                            window.currentPracticeInputs.forEach(inp => {
+                                if (inp.connected_output_ids) {
+                                    inp.connected_output_ids = inp.connected_output_ids.filter(id => String(id) !== String(currentOutId));
+                                }
+                            });
+                            if (inputId) {
+                                const selectedInp = window.currentPracticeInputs.find(inp => String(inp.input_id) === String(inputId));
+                                if (selectedInp) {
+                                    selectedInp.connected_output_ids = selectedInp.connected_output_ids || [];
+                                    selectedInp.connected_output_ids.push(currentOutId);
+                                }
+                            }
+                        }
+
+                        showNotif('Information Flow Output berhasil disimpan.', 'success');
+                    } catch (err) {
+                        console.error('Failed to save infoflow output:', err);
+                        showNotif(`Gagal menyimpan output: ${err.message}`, 'danger');
+                    } finally {
+                        saveOutputBtn.disabled = false;
+                        saveOutputBtn.innerHTML = originalHTML;
+                    }
+                    return;
+                }
+
+                // Delete output action
+                const deleteOutputBtn = event.target.closest('.child-delete-output-btn');
+                if (deleteOutputBtn) {
+                    const row = deleteOutputBtn.closest('.child-edit-output-row');
+                    if (!row) return;
+
+                    const outputId = row.dataset.outputId;
+                    if (!outputId) return;
+
+                    if (!confirm('Apakah Anda yakin ingin menghapus output ini? Data terkait di trs_infoflowio akan terhapus.')) {
+                        return;
+                    }
+
+                    const originalHTML = deleteOutputBtn.innerHTML;
+                    deleteOutputBtn.disabled = true;
+                    deleteOutputBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    try {
+                        const url = `{{ url('/objectives/infoflow-output') }}/${encodeURIComponent(outputId)}`;
+                        const res = await fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(await extractErrorMessage(res));
+                        }
+
+                        row.remove();
+                        showNotif('Information Flow Output berhasil dihapus.', 'success');
+                        
+                        if (window.currentPracticeInputs) {
+                            window.currentPracticeInputs.forEach(inp => {
+                                if (inp.connected_output_ids) {
+                                    inp.connected_output_ids = inp.connected_output_ids.filter(id => String(id) !== String(outputId));
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to delete infoflow output:', err);
+                        showNotif(`Gagal menghapus output: ${err.message}`, 'danger');
+                    } finally {
+                        deleteOutputBtn.disabled = false;
+                        deleteOutputBtn.innerHTML = originalHTML;
+                    }
+                    return;
+                }
+
+                // Remove draft output
+                const removeDraftOutputBtn = event.target.closest('.child-remove-draft-output-btn');
+                if (removeDraftOutputBtn) {
+                    const row = removeDraftOutputBtn.closest('.child-edit-output-row');
+                    if (row) row.remove();
+                    return;
                 }
             });
         });
@@ -1635,6 +2659,9 @@
                     <input type="hidden" id="childEditFocusAreaId">
                     <input type="hidden" id="childEditObjectiveId">
                     <input type="hidden" id="childEditPracticeId">
+                    <input type="hidden" id="childEditPolicyId">
+                    <input type="hidden" id="childEditSkillId">
+                    <input type="hidden" id="childEditKeyCultureId">
 
                     <div class="mb-3" id="childEditField1InputWrap">
                         <label for="childEditField1" class="form-label fw-semibold" id="childEditField1Label">Field 1</label>
@@ -1655,6 +2682,46 @@
                     <div class="mb-3" id="childEditField2Wrap">
                         <label for="childEditField2" class="form-label fw-semibold" id="childEditField2Label">Field 2</label>
                         <textarea id="childEditField2" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <!-- Example Metrics Section for Practice -->
+                    <div class="mb-3 border-top pt-3" id="childEditMetricsWrap" style="display:none;">
+                        <label class="form-label fw-semibold">Example Metrics</label>
+                        <div id="childEditMetricsList" class="mb-2"></div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-success" id="childEditAddMetricBtn">
+                                <i class="fas fa-plus me-1"></i>Tambah Metric
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Information Flow Section for Practice -->
+                    <div class="mb-3 border-top pt-3" id="childEditInfoflowWrap" style="display:none;">
+                        <label class="form-label fw-semibold">Information Flow</label>
+                        
+                        <div class="row">
+                            <!-- Inputs Column -->
+                            <div class="col-md-6 border-end">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold small text-primary">Inputs (Dari)</span>
+                                    <button type="button" class="btn btn-xs btn-outline-success py-0 px-2" id="childEditAddInputBtn" style="font-size: 0.75rem;">
+                                        <i class="fas fa-plus me-1"></i>Tambah Input
+                                    </button>
+                                </div>
+                                <div id="childEditInputsList" class="mb-2" style="max-height: 250px; overflow-y: auto;"></div>
+                            </div>
+                            
+                            <!-- Outputs Column -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold small text-primary">Outputs (Ke)</span>
+                                    <button type="button" class="btn btn-xs btn-outline-success py-0 px-2" id="childEditAddOutputBtn" style="font-size: 0.75rem;">
+                                        <i class="fas fa-plus me-1"></i>Tambah Output
+                                    </button>
+                                </div>
+                                <div id="childEditOutputsList" class="mb-2" style="max-height: 250px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="small text-muted" id="childEditHelpText"></div>
@@ -1681,6 +2748,96 @@
                 });
                 if (!res.ok) throw new Error(await extractErrorMessage(res));
                 queueFlashNotif('Activity berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        };
+
+        window.deleteInfoflowInput = async function(inputId) {
+            if (!confirm('Apakah anda yakin ingin menghapus input ini? Data terkait di trs_infoflowio akan terhapus.')) return;
+            try {
+                const res = await fetch(`{{ url('/objectives/infoflow-input') }}/${inputId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error(await extractErrorMessage(res));
+                queueFlashNotif('Information Flow Input berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        };
+
+        window.deleteInfoflowOutput = async function(outputId) {
+            if (!confirm('Apakah anda yakin ingin menghapus output ini? Data terkait di trs_infoflowio akan terhapus.')) return;
+            try {
+                const res = await fetch(`{{ url('/objectives/infoflow-output') }}/${outputId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error(await extractErrorMessage(res));
+                queueFlashNotif('Information Flow Output berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        };
+
+        window.deletePolicy = async function(policyId) {
+            if (!confirm('Apakah anda yakin ingin menghapus policy ini beserta semua guidances terkait?')) return;
+            try {
+                const res = await fetch(`{{ url('/objectives/policies') }}/${policyId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error(await extractErrorMessage(res));
+                queueFlashNotif('Policy berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        };
+
+        window.deleteSkill = async function(skillId) {
+            if (!confirm('Apakah anda yakin ingin menghapus skill ini beserta semua guidances terkait?')) return;
+            try {
+                const res = await fetch(`{{ url('/objectives/skills') }}/${skillId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error(await extractErrorMessage(res));
+                queueFlashNotif('Skill berhasil dihapus.');
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        };
+
+        window.deleteGuidance = async function(guidanceId) {
+            if (!confirm('Apakah anda yakin ingin menghapus guidance ini?')) return;
+            try {
+                const res = await fetch(`{{ url('/objectives/guidance') }}/${guidanceId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error(await extractErrorMessage(res));
+                queueFlashNotif('Guidance berhasil dihapus.');
                 location.reload();
             } catch (e) {
                 showNotif(e.message, 'danger');

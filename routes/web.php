@@ -147,6 +147,8 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit_component.policies.store');
     Route::put('/objectives/policies/{policyId}', [MstObjectiveController::class, 'updatePolicy'])
         ->name('cobit_component.policies.update');
+    Route::delete('/objectives/policies/{policyId}', [MstObjectiveController::class, 'destroyPolicy'])
+        ->name('cobit_component.policies.destroy');
     Route::put('/objectives/entergoals/{entergoalsId}', [MstObjectiveController::class, 'updateEnterGoal'])
         ->name('cobit_component.entergoals.update');
     Route::put('/objectives/entergoals-metrics/{metricId}', [MstObjectiveController::class, 'updateEnterGoalMetric'])
@@ -161,6 +163,12 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit_component.practices.update');
     Route::delete('/objectives/practices/{practiceId}', [MstObjectiveController::class, 'destroyPractice'])
         ->name('cobit_component.practices.destroy');
+    Route::post('/objectives/practices/{practiceId}/metrics', [MstObjectiveController::class, 'createPracticeMetric'])
+        ->name('cobit_component.practices.metrics.store');
+    Route::put('/objectives/practices/metrics/{metricId}', [MstObjectiveController::class, 'updatePracticeMetric'])
+        ->name('cobit_component.practices.metrics.update');
+    Route::delete('/objectives/practices/metrics/{metricId}', [MstObjectiveController::class, 'destroyPracticeMetric'])
+        ->name('cobit_component.practices.metrics.destroy');
     Route::put('/objectives/practices/{practiceId}/roles/{roleId}', [MstObjectiveController::class, 'updatePracticeRole'])
         ->name('cobit_component.practices.roles.update');
     Route::delete('/objectives/{objectiveId}/roles/{roleId}', [MstObjectiveController::class, 'destroyObjectiveRole'])
@@ -179,6 +187,8 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit_component.skills.store');
     Route::put('/objectives/skills/{skillId}', [MstObjectiveController::class, 'updateSkill'])
         ->name('cobit_component.skills.update');
+    Route::delete('/objectives/skills/{skillId}', [MstObjectiveController::class, 'destroySkill'])
+        ->name('cobit_component.skills.destroy');
     Route::post('/objectives/skills/{skillId}/guidance', [MstObjectiveController::class, 'createSkillGuidance'])
         ->name('cobit_component.skills.guidance.store');
     Route::post('/objectives/key-culture', [MstObjectiveController::class, 'createKeyCulture'])
@@ -193,6 +203,8 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
         ->name('cobit_component.sia.update');
     Route::put('/objectives/guidance/{guidanceId}', [MstObjectiveController::class, 'updateGuidance'])
         ->name('cobit_component.guidance.update');
+    Route::delete('/objectives/guidance/{guidanceId}', [MstObjectiveController::class, 'destroyGuidance'])
+        ->name('cobit_component.guidance.destroy');
 });
 
 // Admin routes (auth + role check di controller)
