@@ -366,13 +366,18 @@
                                 @if($canAccessCobit)
                                     <li class="breadcrumb-item">
                                         <a
-                                            href="{{ $disableBreadcrumbClick ? '#' : route('cobit_component.show', 'APO01') }}"
-                                            class="{{ Route::is('cobit_component.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('focus-areas.index') }}"
+                                            class="{{ (Route::is('cobit_component.*') || Route::is('focus-areas.*')) && !Route::is('cobit.evolution') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
                                             @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
                                         >
                                             <i class="fas fa-book"></i> Governance System Component
                                         </a>
                                     </li>
+                                    @if(Route::is('cobit.evolution'))
+                                        <li class="breadcrumb-item active" aria-current="page">
+                                            <i class="fas fa-code-branch"></i> GAMO Mapping Evolution
+                                        </li>
+                                    @endif
                                     <li class="breadcrumb-item">
                                         <a
                                             href="{{ $disableBreadcrumbClick ? '#' : route('cobit.home') }}"
@@ -457,8 +462,13 @@
                         </li>
                         @if($canAccessCobit)
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('cobit_component.show', 'APO01') }}">
+                                <a class="nav-link {{ (Route::is('focus-areas.*') || Route::is('cobit_component.*')) && !Route::is('cobit.evolution') ? 'active' : '' }}" href="{{ route('focus-areas.index') }}">
                                     <i class="fas fa-book me-2"></i> Governance System Component
+                                </a>
+                            </li>
+                            <li class="nav-item ps-3">
+                                <a class="nav-link {{ Route::is('cobit.evolution') ? 'active' : '' }}" href="{{ route('cobit.evolution') }}" style="font-size: 0.88rem;">
+                                    <i class="fas fa-code-branch me-2 text-warning"></i> COBIT GAMO Mapping Evolution
                                 </a>
                             </li>
                             <li class="nav-item">

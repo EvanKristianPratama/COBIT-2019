@@ -124,4 +124,12 @@ class MstObjective extends Model
     {
         return $this->belongsTo(MstFocusArea::class, 'focus_area_id', 'id');
     }
+
+    /**
+     * Get framework version from focus area.
+     */
+    public function getVersionAttribute(): string
+    {
+        return (string) ($this->focusArea?->version ?? '2019');
+    }
 }

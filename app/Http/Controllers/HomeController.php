@@ -39,6 +39,14 @@ class HomeController extends Controller
                 'visible' => $this->hasAccess($user, PermissionCatalog::CobitView),
             ],
             [
+                'title' => 'COBIT GAMO Mapping Evolution',
+                'description' => 'Matriks silsilah & evolusi objektif COBIT 4.1, 5, dan 2019.',
+                'route' => route('cobit.evolution'),
+                'icon' => 'fas fa-code-branch',
+                'icon_class' => 'bg-soft-purple',
+                'visible' => $this->hasAccess($user, PermissionCatalog::CobitView),
+            ],
+            [
                 'title' => 'Design I&T Tailored Governance System',
                 'description' => 'Perancangan tata kelola TI.',
                 'route' => route('cobit.home'),

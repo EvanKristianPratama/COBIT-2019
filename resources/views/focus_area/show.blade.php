@@ -191,7 +191,12 @@
         <div class="fa-detail-hero">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
-                    <span class="fa-code-badge">{{ $focusArea->code }}</span>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="fa-code-badge">{{ $focusArea->code }}</span>
+                        <span class="badge bg-light text-dark fw-bold border">
+                            <i class="fas fa-tag me-1"></i> COBIT {{ $focusArea->version ?? '2019' }}
+                        </span>
+                    </div>
                     <h1>{{ $focusArea->name }}</h1>
                     <p>{{ $focusArea->description ?: 'Tidak ada deskripsi.' }}</p>
                 </div>
@@ -199,7 +204,7 @@
                     <button class="btn btn-outline-primary btn-sm fw-semibold" onclick="createObjModal.show()">
                         <i class="fas fa-plus me-1"></i>Tambah Objective
                     </button>
-                    <a href="{{ route('focus-areas.index') }}" class="btn btn-sm btn-outline-light fw-bold">
+                    <a href="{{ route('focus-areas.index', ['version' => $focusArea->version ?? '2019']) }}" class="btn btn-sm btn-outline-light fw-bold">
                         <i class="fas fa-arrow-left me-1"></i>Kembali
                     </a>
                 </div>
@@ -212,9 +217,19 @@
                 <button class="btn btn-sm btn-primary fw-bold" onclick="openCreateObjective()">
                     <i class="fas fa-plus me-1"></i>Tambah Objective
                 </button>
-                <button class="btn btn-sm btn-info text-white fw-bold" onclick="generateCobit5()">
-                    <i class="fas fa-magic me-1"></i>Generate COBIT 5
-                </button>
+                @if(($focusArea->version ?? '2019') === '5')
+                    <button class="btn btn-sm btn-success text-white fw-bold" onclick="generateCobit5()">
+                        <i class="fas fa-magic me-1"></i>Generate COBIT 5
+                    </button>
+                @elseif(($focusArea->version ?? '2019') === '4.1')
+                    <button class="btn btn-sm btn-warning text-dark fw-bold" onclick="generateCobit4()">
+                        <i class="fas fa-magic me-1"></i>Generate COBIT 4.1
+                    </button>
+                @else
+                    <button class="btn btn-sm btn-info text-white fw-bold" onclick="generateCobit5()">
+                        <i class="fas fa-magic me-1"></i>Generate COBIT 5
+                    </button>
+                @endif
                 <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="openEditFaModal()">
                     <i class="fas fa-pen me-1"></i>Edit Model
                 </button>
@@ -1078,6 +1093,14 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3">
+                        <label for="editFaVersion" class="form-label fw-semibold">Versi Model Framework</label>
+                        <select id="editFaVersion" class="form-select">
+                            <option value="2019" {{ ($focusArea->version ?? '2019') === '2019' ? 'selected' : '' }}>COBIT 2019 (Focus Area)</option>
+                            <option value="5" {{ ($focusArea->version ?? '2019') === '5' ? 'selected' : '' }}>COBIT 5</option>
+                            <option value="4.1" {{ ($focusArea->version ?? '2019') === '4.1' ? 'selected' : '' }}>COBIT 4.1</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="editFaCode" class="form-label fw-semibold">Code</label>
                         <input type="text" id="editFaCode" class="form-control" value="{{ $focusArea->code }}" maxlength="10" style="text-transform:uppercase;">
                     </div>
@@ -1257,6 +1280,7 @@
         }
 
         async function saveEditFa() {
+            const version = document.getElementById('editFaVersion').value;
             const code = document.getElementById('editFaCode').value.trim().toUpperCase();
             const name = document.getElementById('editFaName').value.trim();
             const description = document.getElementById('editFaDesc').value.trim();
@@ -1287,7 +1311,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': CSRF_TOKEN
                     },
-                    body: JSON.stringify({ code, name, description })
+                    body: JSON.stringify({ version, code, name, description })
                     });
 
                     if (!response.ok) {
@@ -2540,6 +2564,29 @@
             if (!confirm('Apakah Anda yakin ingin melakukan bulk clone 37 proses COBIT 5 ke dalam model ini?\nProses ini mungkin memerlukan waktu beberapa detik.')) return;
             
             const url = `{{ route('focus-areas.generate-cobit5', $focusArea->id) }}`;
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                });
+                if (!res.ok) {
+                    throw new Error(await extractErrorMessage(res));
+                }
+                const data = await res.json();
+                queueFlashNotif(data.message);
+                location.reload();
+            } catch (e) {
+                showNotif(e.message, 'danger');
+            }
+        }
+
+        async function generateCobit4() {
+            if (!confirm('Apakah Anda yakin ingin melakukan bulk clone template 34 proses COBIT 4.1 ke dalam model ini?\nProses ini mungkin memerlukan waktu beberapa detik.')) return;
+            
+            const url = `{{ route('focus-areas.generate-cobit4', $focusArea->id) }}`;
             try {
                 const res = await fetch(url, {
                     method: 'POST',

@@ -101,6 +101,10 @@ Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
     Route::get('/objectives/analysis/gamo', [MstObjectiveController::class, 'gamoAnalysis'])
         ->name('cobit_component.gamoanalysis');
 
+    // COBIT GAMO Mapping Evolution matrix (COBIT 4.1 -> COBIT 5 -> COBIT 2019)
+    Route::get('/objectives/evolution/gamo', [MstObjectiveController::class, 'gamoEvolution'])
+        ->name('cobit.evolution');
+
     // View aggregated data per component (server-side)
     Route::get('/objectives/component/{component}', [MstObjectiveController::class, 'byComponent'])
         ->name('cobit_component.bycomponent');
@@ -123,6 +127,8 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
     Route::post('/focus-areas/{id}/objectives', [FocusAreaController::class, 'storeObjective'])->name('focus-areas.objectives.store');
     // Generate COBIT 5 objectives
     Route::post('/focus-areas/{id}/generate-cobit5', [FocusAreaController::class, 'generateCobit5'])->name('focus-areas.generate-cobit5');
+    // Generate COBIT 4.1 objectives
+    Route::post('/focus-areas/{id}/generate-cobit4', [FocusAreaController::class, 'generateCobit4'])->name('focus-areas.generate-cobit4');
     // Focus Area objective CRUD (update & destroy)
     Route::put('/focus-areas/{id}/objectives/{objectiveId}', [FocusAreaController::class, 'updateObjective'])
         ->name('focus-areas.objectives.update');

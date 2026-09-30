@@ -56,6 +56,39 @@ return [
         'MEA03' => 'Monitor, Evaluate and Assess Compliance with External Requirements',
     ],
 
-    // Anda bisa tambahkan mapping lain di sini (misal: 'cobit4', 'itil', dll)
-    // Format: 'Baseline_ID_2019' => 'Nama_Custom'
+    'cobit4' => [
+        // Plan and Organize (PO)
+        'EDM01' => 'PO1 Define a Strategic IT Plan',
+        'APO02' => 'PO2 Define the Information Architecture',
+        'APO04' => 'PO3 Determine Technological Direction',
+        'APO01' => 'PO4 Define the IT Processes, Organisation and Relationships',
+        'APO06' => 'PO5 Manage the IT Investment',
+        'APO07' => 'PO7 Manage IT Human Resources',
+        'APO11' => 'PO8 Manage Quality',
+        'APO12' => 'PO9 Assess and Manage IT Risks',
+        'BAI01' => 'PO10 Manage Projects',
+        // Acquire and Implement (AI)
+        'BAI02' => 'AI1 Identify Automated Solutions',
+        'BAI03' => 'AI2 Acquire and Maintain Application Software',
+        'BAI04' => 'AI3 Acquire and Maintain Technology Infrastructure',
+        'BAI05' => 'AI4 Enable Operation and Use',
+        'APO10' => 'AI5 Procure IT Resources',
+        'BAI06' => 'AI6 Manage Changes',
+        'BAI07' => 'AI7 Install and Accredit Solutions and Changes',
+        // Deliver and Support (DS)
+        'APO09' => 'DS1 Define and Manage Service Levels',
+        'DSS04' => 'DS4 Ensure Continuous Service',
+        'DSS05' => 'DS5 Ensure Systems Security',
+        'DSS02' => 'DS8 Manage Service Desk and Incidents',
+        'BAI10' => 'DS9 Manage the Configuration',
+        'DSS03' => 'DS10 Manage Problems',
+        'DSS06' => 'DS11 Manage Data',
+        'DSS01' => 'DS13 Manage Operations',
+        // Monitor and Evaluate (ME)
+        'MEA01' => 'ME1 Monitor and Evaluate IT Performance',
+        'MEA02' => 'ME2 Monitor and Evaluate Internal Control',
+        'MEA03' => 'ME3 Ensure Regulatory Compliance',
+        'EDM05' => 'ME4 Provide IT Governance',
+    ],
 ];
+

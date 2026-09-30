@@ -396,35 +396,127 @@
         <div id="infoflowNotifWrap" class="infoflow-notif-wrap" aria-live="polite" aria-atomic="true"></div>
 
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <div>
                 <h1 class="h4 mb-0">Kamus Component</h1>
                 @if($objective->focusArea)
                     @php
-                        $focusAreaName = strtolower(trim((string) $objective->focusArea->name));
+                        $curFa = $objective->focusArea;
+                        $curVer = (string) ($curFa->version ?? '2019');
+                        $focusAreaName = strtolower(trim((string) $curFa->name));
                         $focusAreaClass = str_contains($focusAreaName, 'information security')
                             ? 'model-focus-info'
                             : (str_contains($focusAreaName, 'core model') ? 'model-focus-core' : 'model-focus-default');
                     @endphp
-                    <div class="small text-muted mt-1">
-                        Focus Area:
-                        <span class="model-focus-chip {{ $focusAreaClass }}">
-                            {{ $objective->focusArea->name }}
-                        </span>
+                    <div class="small text-muted mt-1 d-flex align-items-center gap-2 flex-wrap">
+                        @if($curVer === '2019')
+                            <span>Model: <strong class="text-dark">COBIT 2019</strong></span>
+                            <span>&middot;</span>
+                            <span>Focus Area:</span>
+                            <span class="model-focus-chip {{ $focusAreaClass }}">
+                                {{ $curFa->name }}
+                            </span>
+                        @elseif($curVer === '5')
+                            <span>Model:</span>
+                            <span class="badge bg-success-subtle text-success border border-success fw-bold px-2 py-1">
+                                <i class="fas fa-sitemap me-1"></i> COBIT 5
+                            </span>
+                        @elseif($curVer === '4.1')
+                            <span>Model:</span>
+                            <span class="badge bg-warning-subtle text-dark border border-warning fw-bold px-2 py-1">
+                                <i class="fas fa-clipboard-check me-1"></i> COBIT 4.1
+                            </span>
+                        @else
+                            <span>Model: <strong class="text-dark">{{ $curFa->framework_label }}</strong></span>
+                            <span class="model-focus-chip {{ $focusAreaClass }}">
+                                {{ $curFa->name }}
+                            </span>
+                        @endif
                     </div>
                 @endif
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                @php
+                    $switcherModels = $allFocusAreas ?? \App\Models\MstFocusArea::orderBy('version', 'desc')->get();
+                    $groupedModels = $switcherModels->groupBy(fn($m) => $m->version ?: '2019');
+                @endphp
+                <!-- Quick Model / Focus Area Switcher Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle shadow-sm fw-bold" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-exchange-alt me-1"></i> Ganti Model
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 240px; font-size: 0.88rem;">
+                        <li class="dropdown-header fw-bold text-uppercase text-primary small">
+                            <i class="fas fa-cubes me-1"></i> COBIT 2019 Focus Areas
+                        </li>
+                        @foreach($groupedModels->get('2019', collect()) as $m2019)
+                            @php
+                                $firstObjM = \App\Models\MstObjective::where('focus_area_id', $m2019->id)->first();
+                                $mRoute = $firstObjM ? route('cobit_component.show', ['id' => $firstObjM->objective_id, 'focus_area' => $m2019->id]) : route('focus-areas.show', $m2019->id);
+                            @endphp
+                            <li>
+                                <a class="dropdown-item d-flex justify-content-between align-items-center {{ ($focusAreaId ?? 1) == $m2019->id ? 'active' : '' }}" href="{{ $mRoute }}">
+                                    <span>{{ $m2019->name }}</span>
+                                    @if(($focusAreaId ?? 1) == $m2019->id)
+                                        <i class="fas fa-check small text-white"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header fw-bold text-uppercase text-success small">
+                            <i class="fas fa-sitemap me-1"></i> COBIT 5
+                        </li>
+                        @foreach($groupedModels->get('5', collect()) as $m5)
+                            @php
+                                $firstObjM5 = \App\Models\MstObjective::where('focus_area_id', $m5->id)->first();
+                                $m5Route = $firstObjM5 ? route('cobit_component.show', ['id' => $firstObjM5->objective_id, 'focus_area' => $m5->id]) : route('focus-areas.show', $m5->id);
+                            @endphp
+                            <li>
+                                <a class="dropdown-item d-flex justify-content-between align-items-center {{ ($focusAreaId ?? 1) == $m5->id ? 'active' : '' }}" href="{{ $m5Route }}">
+                                    <span>{{ $m5->name }}</span>
+                                    @if(($focusAreaId ?? 1) == $m5->id)
+                                        <i class="fas fa-check small text-white"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header fw-bold text-uppercase text-warning small">
+                            <i class="fas fa-clipboard-check me-1"></i> COBIT 4.1
+                        </li>
+                        @foreach($groupedModels->get('4.1', collect()) as $m4)
+                            @php
+                                $firstObjM4 = \App\Models\MstObjective::where('focus_area_id', $m4->id)->first();
+                                $m4Route = $firstObjM4 ? route('cobit_component.show', ['id' => $firstObjM4->objective_id, 'focus_area' => $m4->id]) : route('focus-areas.show', $m4->id);
+                            @endphp
+                            <li>
+                                <a class="dropdown-item d-flex justify-content-between align-items-center {{ ($focusAreaId ?? 1) == $m4->id ? 'active' : '' }}" href="{{ $m4Route }}">
+                                    <span>{{ $m4->name }}</span>
+                                    @if(($focusAreaId ?? 1) == $m4->id)
+                                        <i class="fas fa-check small text-white"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
                 @if(isset($focusAreaId) && $focusAreaId != 1)
                     <a href="{{ route('focus-areas.show', $focusAreaId) }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
                         <i class="fas fa-pen me-2"></i>Edit
                     </a>
                 @endif
-                <a href="{{ route('focus-areas.index') }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
+                <a href="{{ route('focus-areas.index', ['version' => $objective->focusArea->version ?? '2019']) }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
                     <i class="fas fa-bullseye me-2"></i>Models
                 </a>
                 <a href="{{ route('cobit_component.gamoanalysis') }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
                     <i class="fas fa-project-diagram me-2"></i>Buka Analisis Alur
+                </a>
+                <a href="{{ route('cobit.evolution') }}" class="btn btn-sm btn-outline-primary shadow-sm fw-bold" style="border-width: 2px;">
+                    <i class="fas fa-code-branch me-2"></i>Mapping Evolution
                 </a>
             </div>
         </div>

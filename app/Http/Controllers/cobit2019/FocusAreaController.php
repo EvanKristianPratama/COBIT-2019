@@ -419,14 +419,48 @@ class FocusAreaController extends Controller
     /**
      * Display a listing of focus areas (page).
      */
-    public function index()
+    public function index(Request $request)
     {
         $focusAreas = MstFocusArea::withCount('objectives')->get();
         $allObjectives = MstObjective::select('objective_id', 'objective')
             ->orderByRaw($this->objectiveOrderSql())
             ->get();
 
-        return view('focus_area.index', compact('focusAreas', 'allObjectives'));
+        // Get distinct versions available in DB
+        $dbVersions = MstFocusArea::select('version')
+            ->distinct()
+            ->pluck('version')
+            ->filter()
+            ->values()
+            ->toArray();
+
+        // Standard versions order
+        $knownOrder = ['2019', '5', '4.1'];
+        $availableVersions = array_values(array_unique(array_merge(
+            array_intersect($knownOrder, $dbVersions),
+            $dbVersions,
+            ['2019', '5', '4.1']
+        )));
+
+        // Group focus areas by version (defaulting null/empty to '2019')
+        $focusAreasByVersion = $focusAreas->groupBy(function ($fa) {
+            $v = trim((string) ($fa->version ?? '2019'));
+            return $v !== '' ? $v : '2019';
+        });
+
+        // Determine selected/active version for tabs / view
+        $selectedVersion = (string) $request->query('version', '2019');
+        if (!in_array($selectedVersion, $availableVersions)) {
+            $selectedVersion = '2019';
+        }
+
+        return view('focus_area.index', compact(
+            'focusAreas',
+            'availableVersions',
+            'focusAreasByVersion',
+            'selectedVersion',
+            'allObjectives'
+        ));
     }
 
     /**
@@ -463,8 +497,13 @@ class FocusAreaController extends Controller
         $data = $request->validate([
             'code' => 'required|string|max:10|unique:mst_focusarea,code',
             'name' => 'required|string|max:100',
+            'version' => 'nullable|string|max:20',
             'description' => 'nullable|string',
         ]);
+
+        if (empty($data['version'])) {
+            $data['version'] = '2019';
+        }
 
         $focusArea = MstFocusArea::create($data);
 
@@ -481,8 +520,13 @@ class FocusAreaController extends Controller
         $data = $request->validate([
             'code' => 'sometimes|required|string|max:10|unique:mst_focusarea,code,' . $focusArea->id,
             'name' => 'sometimes|required|string|max:100',
+            'version' => 'nullable|string|max:20',
             'description' => 'nullable|string',
         ]);
+
+        if (array_key_exists('version', $data) && empty($data['version'])) {
+            $data['version'] = '2019';
+        }
 
         $focusArea->update($data);
 
@@ -623,6 +667,28 @@ class FocusAreaController extends Controller
     }
 
     /**
+     * Generate COBIT 4.1 processes automatically for a Focus Area / Model.
+     */
+    public function generateCobit4($id)
+    {
+        $focusArea = MstFocusArea::findOrFail($id);
+        $mapping = config('cobit-mappings.cobit4', []);
+
+        if (empty($mapping)) {
+            return response()->json(['success' => false, 'message' => 'Mapping COBIT 4.1 tidak ditemukan di config.'], 404);
+        }
+
+        $result = $this->bulkCloneObjectives($focusArea, $mapping);
+
+        return response()->json([
+            'success' => true,
+            'added' => $result['added'],
+            'reused' => $result['reused'],
+            'message' => "COBIT 4.1 template generated. {$result['added']} process created, {$result['reused']} skipped."
+        ]);
+    }
+
+    /**
      * Generic function to bulk clone objectives based on a mapping array.
      * Mapping format: ['Baseline_ID' => 'Custom Name']
      */
@@ -722,6 +788,7 @@ class FocusAreaController extends Controller
                 'id' => $fa->id,
                 'code' => $fa->code,
                 'name' => $fa->name,
+                'version' => $fa->version ?? '2019',
                 'description' => $fa->description,
                 'objectives_count' => $fa->objectives->count(),
                 'objectives' => $fa->objectives->map(function ($o) {
@@ -755,6 +822,7 @@ class FocusAreaController extends Controller
             'id' => $focusArea->id,
             'code' => $focusArea->code,
             'name' => $focusArea->name,
+            'version' => $focusArea->version ?? '2019',
             'description' => $focusArea->description,
             'objectives' => $objectives->map(function ($o) {
                 return [

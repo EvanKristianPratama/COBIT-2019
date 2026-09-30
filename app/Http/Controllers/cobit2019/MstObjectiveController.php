@@ -87,7 +87,11 @@ class MstObjectiveController extends Controller
     {
         $relations = array_merge($this->commonRelations, $this->showExtraRelations);
 
-        $focusAreaId = request()->query('focus_area', 1);
+        $focusAreaId = request()->query('focus_area');
+        if (! $focusAreaId) {
+            $matchingObj = MstObjective::where('objective_id', $objectiveId)->first();
+            $focusAreaId = $matchingObj ? $matchingObj->focus_area_id : 1;
+        }
 
         // Load objective yang sesuai dengan focus_area
         $objective = MstObjective::with($relations)
@@ -98,6 +102,9 @@ class MstObjectiveController extends Controller
         $allObjectives = MstObjective::select('objective_id', 'objective')
             ->where('focus_area_id', $focusAreaId)
             ->get();
+
+        // load all focus areas / models for model switcher
+        $allFocusAreas = \App\Models\MstFocusArea::orderBy('version', 'desc')->orderBy('id')->get();
 
         // allow an optional ?component=... query param so the show view can preselect a component
         $component = request()->query('component', '');
@@ -110,7 +117,7 @@ class MstObjectiveController extends Controller
         // load master practices
         $masterPractices = \App\Models\MstPractice::orderBy('practice_id')->get();
 
-        return view('cobit_component.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles', 'masterPractices', 'focusAreaId'));
+        return view('cobit_component.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles', 'masterPractices', 'focusAreaId', 'allFocusAreas'));
     }
 
     /**
@@ -243,6 +250,31 @@ class MstObjectiveController extends Controller
     public function gamoAnalysis()
     {
         return view('cobit_component.gamoanalisis');
+    }
+
+    /**
+     * Render the COBIT GAMO Mapping Evolution matrix and comparison view.
+     */
+    public function gamoEvolution()
+    {
+        $evolutionConfig = config('cobit-evolution', []);
+        $domains = $evolutionConfig['domains'] ?? [];
+        $gamoList = collect($evolutionConfig['gamo'] ?? []);
+
+        // Calculate summary statistics
+        $stats = [
+            'total_2019' => $gamoList->count(),
+            'total_5' => 37,
+            'total_4' => 34,
+            'new_2019' => $gamoList->where('status', 'new')->count(),
+            'restructured' => $gamoList->where('status', 'restructured')->count(),
+            'evolved' => $gamoList->where('status', 'evolved')->count(),
+        ];
+
+        // Load models for quick model switching if needed
+        $allFocusAreas = \App\Models\MstFocusArea::orderBy('version', 'desc')->orderBy('id')->get();
+
+        return view('cobit_component.gamo_evolution', compact('domains', 'gamoList', 'stats', 'allFocusAreas'));
     }
 
     /**
