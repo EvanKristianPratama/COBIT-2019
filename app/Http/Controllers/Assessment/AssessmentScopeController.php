@@ -73,6 +73,7 @@ class AssessmentScopeController extends Controller
     }
 
     public function getObjectives() {
-        return response()->json(MstObjective::select('objective_id', 'objective')->get());
+        $focusAreaId = request()->integer('focus_area_id') ?: 1;
+        return response()->json(MstObjective::where('focus_area_id', $focusAreaId)->select('objective_id', 'objective')->get());
     }
 }

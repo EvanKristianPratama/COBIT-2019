@@ -214,9 +214,13 @@ class DesignToolkitController extends Controller
             ];
         }
 
+        $activeOrgId = $user->activeOrganizationId();
+        $activeOrgName = $user->activeOrganizationName();
+
         [$assessmentsSame, $assessmentsOther] = $assessments->partition(
-            fn (Assessment $assessment): bool => $user->hasOrganizationId((int) $assessment->organization_id)
-                || $user->hasOrganizationAccess($assessment->instansi)
+            fn (Assessment $assessment): bool => $activeOrgId
+                ? ((int) $assessment->organization_id === $activeOrgId || OrganizationNameNormalizer::key($assessment->instansi) === OrganizationNameNormalizer::key($activeOrgName))
+                : ($user->hasOrganizationId((int) $assessment->organization_id) || $user->hasOrganizationAccess($assessment->instansi))
         );
 
         return [
@@ -280,10 +284,10 @@ class DesignToolkitController extends Controller
         }
 
         $newCode = 'AUTO-' . strtoupper(substr(md5(uniqid()), 0, 6));
-        $organizationId = $user->organization_id ? (int) $user->organization_id : null;
+        $organizationId = $user->activeOrganizationId() ?: ($user->organization_id ? (int) $user->organization_id : null);
         $organizationName = $this->organizationRegistryService->resolveName(
             $organizationId,
-            $user->organisasi ?? ($user->name ?? 'User Assessment')
+            $user->activeOrganizationName() ?: ($user->organisasi ?? ($user->name ?? 'User Assessment'))
         );
 
         $assessment = Assessment::create([

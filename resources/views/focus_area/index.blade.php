@@ -108,6 +108,17 @@
             color: var(--fa-cobit4);
         }
 
+        .icon-evolution {
+            background: rgba(124, 58, 237, 0.12);
+            color: #7c3aed;
+        }
+
+        .badge-evolution {
+            background: #ede9fe;
+            color: #6d28d9;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+
         .model-title {
             font-size: 1.45rem;
             font-weight: 800;
@@ -397,7 +408,7 @@
 
             <div class="row g-4">
                 <!-- COBIT 2019 -->
-                <div class="col-md-4">
+                <div class="col-md-6 col-xl-3">
                     <div class="wizard-model-card" onclick="selectFramework('2019')">
                         <div>
                             <div class="d-flex justify-content-between align-items-start">
@@ -428,7 +439,7 @@
                 </div>
 
                 <!-- COBIT 5 -->
-                <div class="col-md-4">
+                <div class="col-md-6 col-xl-3">
                     <div class="wizard-model-card" onclick="selectFramework('5')">
                         <div>
                             <div class="d-flex justify-content-between align-items-start">
@@ -459,7 +470,7 @@
                 </div>
 
                 <!-- COBIT 4.1 -->
-                <div class="col-md-4">
+                <div class="col-md-6 col-xl-3">
                     <div class="wizard-model-card" onclick="selectFramework('4.1')">
                         <div>
                             <div class="d-flex justify-content-between align-items-start">
@@ -487,6 +498,39 @@
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- COBIT GAMO MAPPING EVOLUTION -->
+                <div class="col-md-6 col-xl-3">
+                    <a href="{{ route('cobit.evolution') }}" class="text-decoration-none">
+                        <div class="wizard-model-card h-100" style="cursor: pointer; border-color: rgba(124, 58, 237, 0.25);">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="model-icon-wrap icon-evolution">
+                                        <i class="fas fa-code-branch"></i>
+                                    </div>
+                                    <span class="model-badge badge-evolution">
+                                        <i class="fas fa-layer-group me-1"></i> 3 Generasi
+                                    </span>
+                                </div>
+                                <div class="model-title text-dark">
+                                    GAMO Evolution
+                                </div>
+                                <div class="model-desc">
+                                    Matriks silsilah & evolusi objektif komparatif lintas generasi COBIT 4.1, COBIT 5, dan COBIT 2019.
+                                </div>
+                            </div>
+                            <div>
+                                <div class="small text-muted fw-semibold mb-2">
+                                    <i class="fas fa-network-wired me-1" style="color: #7c3aed;"></i> 40 Relasi Objektif
+                                </div>
+                                <div class="btn text-white model-cta-btn w-100 d-flex justify-content-between align-items-center" style="background: #7c3aed; border-color: #7c3aed;">
+                                    <span>Buka Matriks Evolusi</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>

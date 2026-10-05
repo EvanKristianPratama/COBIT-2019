@@ -129,24 +129,203 @@
             white-space: nowrap;
         }
 
+        /* Organization Pill & User Trigger matching user screenshot */
         .top-org-chip {
             display: inline-flex;
             align-items: center;
-            padding: 0.26rem 0.68rem;
-            max-width: 240px;
+            padding: 0.38rem 1.05rem;
+            max-width: 280px;
             border-radius: 999px;
-            background: #f59e0b;
-            border: 1px solid #fbbf24;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            outline: none;
+        }
+
+        .top-org-chip:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            transform: translateY(-1px);
         }
 
         .top-org-text {
-            color: #3b1f00;
-            font-size: 0.73rem;
-            font-weight: 700;
-            line-height: 1;
+            color: #0f172a;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            line-height: 1.2;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .top-user-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px 4px 5px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            text-decoration: none;
+        }
+
+        .top-user-btn:hover, .top-user-btn:focus, .top-user-btn[aria-expanded="true"] {
+            background: #f8fafc;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .top-user-avatar-sq {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+        }
+
+        .top-user-name {
+            color: #0f172a;
+            font-weight: 600;
+            font-size: 0.88rem;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .top-user-chevron {
+            font-size: 0.72rem;
+            color: #64748b;
+            transition: transform 0.2s ease;
+        }
+
+        .top-user-btn[aria-expanded="true"] .top-user-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* User & Company Dropdown Modal matching screenshot */
+        .user-company-dropdown {
+            position: absolute !important;
+            top: calc(100% + 10px) !important;
+            right: 0 !important;
+            left: auto !important;
+            min-width: 320px !important;
+            max-width: 360px !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            border: 2px solid #818cf8 !important;
+            border-radius: 18px !important;
+            box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.25), 0 10px 20px -8px rgba(0, 0, 0, 0.12) !important;
+            z-index: 99999 !important;
+            display: none !important;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            pointer-events: none;
+        }
+
+        .user-company-dropdown.show {
+            display: block !important;
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            pointer-events: auto !important;
+        }
+
+        @keyframes fadeInDropdown {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-select-company-label {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #4f46e5;
+            line-height: 1.15;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .org-checklist-container {
+            max-height: 240px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .org-checklist-item {
+            background: #f8fafc;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            user-select: none;
+        }
+
+        .org-checklist-item:hover {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+            transform: translateX(2px);
+        }
+
+        .org-checklist-item.active {
+            background: #eef2ff;
+            border-color: #818cf8;
+        }
+
+        .org-checkbox {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+            transition: all 0.18s ease;
+        }
+
+        .org-checklist-item:hover .org-checkbox {
+            border-color: #818cf8;
+        }
+
+        .org-checkbox.checked {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.35);
+        }
+
+        .org-name-text {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: #334155;
+            transition: color 0.15s ease;
+        }
+
+        .org-checklist-item.active .org-name-text {
+            color: #312e81;
         }
 
         .breadcrumb-wrapper {
@@ -306,17 +485,95 @@
                                 </li>
                             @endif
                         @else
+                            @php
+                                $assignedOrgs = Auth::user()->assignedOrganizations();
+                                $activeOrgId = Auth::user()->activeOrganizationId();
+                                $activeOrgName = Auth::user()->activeOrganizationName();
+                            @endphp
                             <li class="nav-item d-flex align-items-center gap-2">
-                                <span class="top-org-chip d-none d-lg-inline-flex" title="{{ Auth::user()->displayOrganizationSummary() }}">
-                                    <span class="top-org-text">{{ Auth::user()->displayOrganizationSummary() }}</span>
-                                </span>
-                                <a class="nav-link p-0" href="#" role="button" data-bs-toggle="offcanvas"
-                                    data-bs-target="#sidebarOffcanvas">
-                                    <div class="top-user-trigger">
-                                        <span class="top-user-avatar">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                                <!-- Active PT Pill -->
+                                <button class="top-org-chip d-none d-sm-inline-flex" id="topOrgChip" title="Perusahaan Aktif: {{ $activeOrgName }} (Klik untuk ubah)" type="button">
+                                    <span class="top-org-text" id="topOrgChipText">{{ strtoupper($activeOrgName) }}</span>
+                                </button>
+
+                                <!-- User Trigger & Dropdown -->
+                                <div class="dropdown position-relative">
+                                    <button class="top-user-btn" id="userMenuDropdown" type="button" aria-expanded="false">
+                                        <span class="top-user-avatar-sq">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                                         <span class="top-user-name d-none d-lg-inline">{{ Auth::user()->name }}</span>
+                                        <i class="fas fa-chevron-down top-user-chevron"></i>
+                                    </button>
+
+                                    <div class="user-company-dropdown" id="userCompanyDropdownMenu" aria-labelledby="userMenuDropdown">
+                                        <!-- Header: User Profile Info -->
+                                        <div class="px-3 py-2 pt-3">
+                                            <div class="fw-bold text-dark fs-6" style="letter-spacing: -0.01em;">{{ Auth::user()->name }}</div>
+                                            <div class="text-muted small">{{ Auth::user()->email }}</div>
+                                        </div>
+
+                                        <hr class="my-1 border-light-subtle">
+
+                                        <!-- Section: PILIH PERUSAHAAN -->
+                                        <div class="px-3 py-2">
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="fas fa-building" style="color: #4f46e5; font-size: 1.05rem;"></i>
+                                                    <div class="user-select-company-label">
+                                                        <div>PILIH</div>
+                                                        <div>PERUSAHAAN</div>
+                                                    </div>
+                                                </div>
+                                                <span class="badge rounded-pill text-primary-emphasis" style="background: #eef2ff; font-weight: 600; font-size: 0.72rem; color: #4f46e5 !important;">
+                                                    {{ $assignedOrgs->count() }} tersedia
+                                                </span>
+                                            </div>
+
+                                            <div class="org-checklist-container">
+                                                @forelse($assignedOrgs as $assignedOrg)
+                                                    @php
+                                                        $isCurrent = (int) $assignedOrg->organization_id === (int) $activeOrgId;
+                                                    @endphp
+                                                    <div class="org-checklist-item d-flex align-items-center gap-2 p-2 px-3 rounded-3 mb-2 {{ $isCurrent ? 'active' : '' }}"
+                                                         data-org-id="{{ $assignedOrg->organization_id }}"
+                                                         data-org-name="{{ $assignedOrg->organization_name }}"
+                                                         role="button"
+                                                         title="Pilih {{ $assignedOrg->organization_name }}">
+                                                        <div class="org-checkbox {{ $isCurrent ? 'checked' : '' }}">
+                                                            @if($isCurrent)
+                                                                <i class="fas fa-check"></i>
+                                                            @endif
+                                                        </div>
+                                                        <div class="org-name-text text-truncate">{{ $assignedOrg->organization_name }}</div>
+                                                    </div>
+                                                @empty
+                                                    <div class="text-muted small py-2 text-center fst-italic">
+                                                        Belum ada perusahaan yang di-assign.
+                                                    </div>
+                                                @endforelse
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-1 border-light-subtle">
+
+                                        <!-- Menu Actions -->
+                                        <div class="p-2">
+                                            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" href="#" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                                                <i class="fas fa-bars text-secondary" style="width: 18px;"></i>
+                                                <span class="small fw-semibold">Menu Navigasi Lengkap</span>
+                                            </a>
+                                            @if(Auth::user()->isAdmin())
+                                                <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" href="{{ route('admin.dashboard') }}">
+                                                    <i class="fas fa-shield-alt text-secondary" style="width: 18px;"></i>
+                                                    <span class="small fw-semibold">Admin Console</span>
+                                                </a>
+                                            @endif
+                                            <a class="dropdown-item rounded-2 py-2 text-danger d-flex align-items-center gap-2 logout-btn" href="{{ route('logout') }}">
+                                                <i class="fas fa-sign-out-alt text-danger" style="width: 18px;"></i>
+                                                <span class="small fw-semibold">Logout</span>
+                                            </a>
+                                        </div>
                                     </div>
-                                </a>
+                                </div>
                             </li>
                         @endguest
                     </ul>
@@ -446,7 +703,7 @@
                         <h6 class="mb-0">{{ Auth::user()->name }}</h6>
                         <small class="text-white-50">{{ Auth::user()->email }}</small>
                         <div class="sidebar-user-meta">
-                            <span class="sidebar-meta-badge">{{ Auth::user()->displayOrganizationSummary() }}</span>
+                            <span class="sidebar-meta-badge" id="sidebarOrgBadge">{{ Auth::user()->activeOrganizationName() }}</span>
                             <span class="sidebar-meta-badge">{{ Auth::user()->jabatan ?? 'Jabatan' }}</span>
                         </div>
                     </div>
@@ -543,6 +800,146 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Standalone reliable toggle for Company Dropdown
+            function toggleCompanyDropdown(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                const menu = document.getElementById('userCompanyDropdownMenu');
+                const btn = document.getElementById('userMenuDropdown');
+                if (!menu) return;
+
+                const isShown = menu.classList.contains('show');
+                if (isShown) {
+                    menu.classList.remove('show');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                } else {
+                    menu.classList.add('show');
+                    if (btn) btn.setAttribute('aria-expanded', 'true');
+                }
+            }
+
+            function closeCompanyDropdown() {
+                const menu = document.getElementById('userCompanyDropdownMenu');
+                const btn = document.getElementById('userMenuDropdown');
+                if (menu && menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            }
+
+            // Click listener for PT pill & User Profile button
+            const topOrgChip = document.getElementById('topOrgChip');
+            if (topOrgChip) {
+                topOrgChip.addEventListener('click', toggleCompanyDropdown);
+            }
+
+            const userMenuDropdown = document.getElementById('userMenuDropdown');
+            if (userMenuDropdown) {
+                userMenuDropdown.addEventListener('click', toggleCompanyDropdown);
+            }
+
+            // Prevent closing when clicking inside the dropdown content
+            const userCompanyDropdownMenu = document.getElementById('userCompanyDropdownMenu');
+            if (userCompanyDropdownMenu) {
+                userCompanyDropdownMenu.addEventListener('click', function(e) {
+                    if (!e.target.closest('[data-bs-toggle="offcanvas"]') && !e.target.closest('.logout-btn') && !e.target.closest('.org-checklist-item')) {
+                        e.stopPropagation();
+                    }
+                });
+            }
+
+            // Close on click outside
+            document.addEventListener('click', function(e) {
+                const menu = document.getElementById('userCompanyDropdownMenu');
+                const btn = document.getElementById('userMenuDropdown');
+                const chip = document.getElementById('topOrgChip');
+                if (!menu || !menu.classList.contains('show')) return;
+
+                if ((btn && btn.contains(e.target)) || (chip && chip.contains(e.target)) || menu.contains(e.target)) {
+                    return;
+                }
+                closeCompanyDropdown();
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeCompanyDropdown();
+                }
+            });
+
+            // Switch active organization via checklist
+            document.querySelectorAll('.org-checklist-item').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const orgId = this.getAttribute('data-org-id');
+                    const orgName = this.getAttribute('data-org-name');
+                    if (!orgId) return;
+
+                    // Visual updates immediately
+                    document.querySelectorAll('.org-checklist-item').forEach(function(el) {
+                        el.classList.remove('active');
+                        const cb = el.querySelector('.org-checkbox');
+                        if (cb) {
+                            cb.classList.remove('checked');
+                            cb.innerHTML = '';
+                        }
+                    });
+                    this.classList.add('active');
+                    const activeCb = this.querySelector('.org-checkbox');
+                    if (activeCb) {
+                        activeCb.classList.add('checked');
+                        activeCb.innerHTML = '<i class="fas fa-check"></i>';
+                    }
+
+                    const topPillText = document.getElementById('topOrgChipText');
+                    if (topPillText) {
+                        topPillText.textContent = orgName.toUpperCase();
+                    }
+                    const sidebarOrgBadge = document.getElementById('sidebarOrgBadge');
+                    if (sidebarOrgBadge) {
+                        sidebarOrgBadge.textContent = orgName;
+                    }
+
+                    // AJAX post to save active organization in session
+                    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+                    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+
+                    fetch('{{ route("user.active-organization") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ organization_id: orgId })
+                    })
+                    .then(function(res) {
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        if (data.success) {
+                            // Reload page so all queries/data update to the selected organization
+                            window.location.reload();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: data.message || 'Tidak dapat memilih perusahaan tersebut.'
+                            });
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Organization switch error:', err);
+                        window.location.reload();
+                    });
+                });
+            });
+
             // Logout confirmation
             document.querySelectorAll('.logout-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {

@@ -32,18 +32,10 @@ class HomeController extends Controller
         return [
             [
                 'title' => 'Governance System Component',
-                'description' => 'Kamus Governance System Component berdasarkan Model.',
+                'description' => 'Kamus Governance System Component & GAMO Mapping Evolution.',
                 'route' => route('focus-areas.index'),
                 'icon' => 'fas fa-puzzle-piece',
                 'icon_class' => 'bg-soft-amber',
-                'visible' => $this->hasAccess($user, PermissionCatalog::CobitView),
-            ],
-            [
-                'title' => 'COBIT GAMO Mapping Evolution',
-                'description' => 'Matriks silsilah & evolusi objektif COBIT 4.1, 5, dan 2019.',
-                'route' => route('cobit.evolution'),
-                'icon' => 'fas fa-code-branch',
-                'icon_class' => 'bg-soft-purple',
                 'visible' => $this->hasAccess($user, PermissionCatalog::CobitView),
             ],
             [
@@ -76,5 +68,39 @@ class HomeController extends Controller
     private function hasAccess(User $user, string $permission): bool
     {
         return $user->isAdmin() || $user->can($permission);
+    }
+
+    public function switchActiveOrganization(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $validated = $request->validate([
+            'organization_id' => 'required|integer',
+        ]);
+
+        $organizationId = (int) $validated['organization_id'];
+
+        if (! $user->isAdmin() && ! $user->hasOrganizationId($organizationId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses ke organisasi ini.',
+            ], 403);
+        }
+
+        $organization = \App\Models\MstOrganization::find($organizationId);
+        if (! $organization) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Organisasi tidak ditemukan.',
+            ], 404);
+        }
+
+        session(['active_organization_id' => $organizationId]);
+
+        return response()->json([
+            'success' => true,
+            'organization_id' => $organizationId,
+            'organization_name' => $organization->organization_name,
+        ]);
     }
 }

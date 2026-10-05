@@ -26,11 +26,7 @@ class AssessmentListService
      */
     public function getIndexData(User $user): array
     {
-        $organizationOptions = $user->organizations()
-            ->select('mst_organization.organization_id', 'organization_name')
-            ->orderByPivot('is_primary', 'desc')
-            ->orderBy('organization_name')
-            ->get();
+        $organizationOptions = $user->assignedOrganizations();
 
         $myQuery = $this->assessmentAccessService
             ->queryAccessible($user)
@@ -68,7 +64,7 @@ class AssessmentListService
             'finishedAssessments' => $finishedAssessments,
             'draftAssessments' => max(0, $totalAssessments - $finishedAssessments),
             'organizationOptions' => $organizationOptions,
-            'selectedOrganizationId' => $user->organization_id ?: $organizationOptions->first()?->organization_id,
+            'selectedOrganizationId' => $user->activeOrganizationId() ?: $organizationOptions->first()?->organization_id,
         ];
     }
 

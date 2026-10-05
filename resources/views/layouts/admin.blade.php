@@ -314,7 +314,7 @@
             <div class="admin-user-email">{{ auth()->user()->email }}</div>
             <div class="admin-user-chips">
                 <span class="admin-user-chip">{{ auth()->user()->displayRoleLabel() }}</span>
-                <span class="admin-user-chip">{{ auth()->user()->displayOrganizationSummary() }}</span>
+                <span class="admin-user-chip">{{ auth()->user()->activeOrganizationName() }}</span>
             </div>
         </div>
 

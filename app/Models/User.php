@@ -335,4 +335,73 @@ class User extends Authenticatable
 
         return $value;
     }
+
+    public function assignedOrganizations(): Collection
+    {
+        $orgs = $this->relationLoaded('organizations')
+            ? $this->organizations
+            : $this->organizations()->get();
+
+        if ($orgs->isNotEmpty()) {
+            return $orgs;
+        }
+
+        if ($this->isAdmin()) {
+            return MstOrganization::query()
+                ->where('is_active', true)
+                ->orderBy('organization_name')
+                ->get();
+        }
+
+        if ($this->primaryOrganization) {
+            return collect([$this->primaryOrganization]);
+        }
+
+        if ($this->rawOrganizationId()) {
+            $org = MstOrganization::find($this->rawOrganizationId());
+            if ($org) {
+                return collect([$org]);
+            }
+        }
+
+        return collect();
+    }
+
+    public function activeOrganizationId(): ?int
+    {
+        $sessionOrgId = session('active_organization_id');
+
+        if ($sessionOrgId !== null && $sessionOrgId !== '') {
+            $sessionOrgId = (int) $sessionOrgId;
+            if ($this->isAdmin() || $this->hasOrganizationId($sessionOrgId)) {
+                return $sessionOrgId;
+            }
+        }
+
+        $assigned = $this->assignedOrganizations();
+        $primary = $assigned->firstWhere('pivot.is_primary', 1)
+            ?? $this->primaryOrganization
+            ?? $assigned->first();
+
+        return $primary?->organization_id ?? $this->rawOrganizationId();
+    }
+
+    public function activeOrganization(): ?MstOrganization
+    {
+        $orgId = $this->activeOrganizationId();
+
+        if (! $orgId) {
+            return $this->primaryOrganization;
+        }
+
+        return $this->assignedOrganizations()->firstWhere('organization_id', $orgId)
+            ?? MstOrganization::find($orgId);
+    }
+
+    public function activeOrganizationName(): string
+    {
+        return $this->activeOrganization()?->organization_name
+            ?? $this->organisasi
+            ?? 'Nama Organisasi';
+    }
 }

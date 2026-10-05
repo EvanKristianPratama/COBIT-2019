@@ -672,19 +672,14 @@ class FocusAreaController extends Controller
     public function generateCobit4($id)
     {
         $focusArea = MstFocusArea::findOrFail($id);
-        $mapping = config('cobit-mappings.cobit4', []);
-
-        if (empty($mapping)) {
-            return response()->json(['success' => false, 'message' => 'Mapping COBIT 4.1 tidak ditemukan di config.'], 404);
-        }
-
-        $result = $this->bulkCloneObjectives($focusArea, $mapping);
+        $svc = app(\App\Services\Cobit4\Cobit4Service::class);
+        $result = $svc->ensureCobit4Objectives($focusArea->id);
 
         return response()->json([
             'success' => true,
             'added' => $result['added'],
-            'reused' => $result['reused'],
-            'message' => "COBIT 4.1 template generated. {$result['added']} process created, {$result['reused']} skipped."
+            'reused' => $result['existing'],
+            'message' => "COBIT 4.1 authentic template generated: {$result['added']} process created, {$result['existing']} verified."
         ]);
     }
 

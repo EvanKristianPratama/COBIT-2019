@@ -106,6 +106,30 @@ class MstObjectiveController extends Controller
         // load all focus areas / models for model switcher
         $allFocusAreas = \App\Models\MstFocusArea::orderBy('version', 'desc')->orderBy('id')->get();
 
+        // Check if viewing COBIT 4.1 framework
+        $curFa = \App\Models\MstFocusArea::find($focusAreaId);
+        $isCobit4 = ($curFa && $curFa->version === '4.1')
+            || ($focusAreaId == 27)
+            || ($objective->focusArea && $objective->focusArea->version === '4.1');
+
+        if ($isCobit4) {
+            $cobit4Svc = app(\App\Services\Cobit4\Cobit4Service::class);
+            $processCode = $cobit4Svc->resolveProcessCode($objective->objective_id);
+            $cobit4Data = $cobit4Svc->getProcessData($processCode, $objective);
+            $domains = $cobit4Svc->getDomains();
+
+            return view('cobit_component.cobit4_show', compact(
+                'objective',
+                'allObjectives',
+                'focusAreaId',
+                'allFocusAreas',
+                'curFa',
+                'cobit4Data',
+                'domains',
+                'processCode'
+            ));
+        }
+
         // allow an optional ?component=... query param so the show view can preselect a component
         $component = request()->query('component', '');
 
@@ -118,6 +142,52 @@ class MstObjectiveController extends Controller
         $masterPractices = \App\Models\MstPractice::orderBy('practice_id')->get();
 
         return view('cobit_component.show', compact('objective', 'allObjectives', 'component', 'masterEnterGoals', 'masterAlignGoals', 'masterRoles', 'masterPractices', 'focusAreaId', 'allFocusAreas'));
+    }
+
+    /**
+     * Save custom COBIT 4.1 process data (Input Mode).
+     */
+    public function saveCobit4Data(Request $request)
+    {
+        $processCode = $request->input('process_code');
+        $objectiveId = $request->input('objective_id');
+        $focusAreaId = $request->input('focus_area_id', 27);
+        $data = $request->input('data', []);
+
+        if (!$processCode || empty($data)) {
+            return response()->json(['success' => false, 'message' => 'Data tidak lengkap.'], 422);
+        }
+
+        $svc = app(\App\Services\Cobit4\Cobit4Service::class);
+        $svc->saveProcessData($processCode, $data, $objectiveId, (int)$focusAreaId);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Data {$processCode} berhasil disimpan!",
+            'data' => $data,
+        ]);
+    }
+
+    /**
+     * Reset COBIT 4.1 process data back to ISACA baseline.
+     */
+    public function resetCobit4Data(Request $request)
+    {
+        $processCode = $request->input('process_code');
+        $objectiveId = $request->input('objective_id');
+        $focusAreaId = $request->input('focus_area_id', 27);
+
+        if (!$processCode) {
+            return response()->json(['success' => false, 'message' => 'Kode proses tidak valid.'], 422);
+        }
+
+        $svc = app(\App\Services\Cobit4\Cobit4Service::class);
+        $svc->resetProcessData($processCode, $objectiveId, (int)$focusAreaId);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Data {$processCode} berhasil di-reset ke standar ISACA!",
+        ]);
     }
 
     /**

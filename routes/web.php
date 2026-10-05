@@ -95,6 +95,13 @@ Route::post('/assessment/request', [DesignToolkitController::class, 'requestAsse
 
 Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
     Route::get('/objectives', [MstObjectiveController::class, 'index']);
+    
+    // COBIT 4.1 Input Mode save & reset (must be defined before objectives/{id})
+    Route::post('/objectives/cobit4/save', [MstObjectiveController::class, 'saveCobit4Data'])
+        ->name('cobit4.save');
+    Route::post('/objectives/cobit4/reset', [MstObjectiveController::class, 'resetCobit4Data'])
+        ->name('cobit4.reset');
+
     Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('cobit_component.show');
 
     // Visual flow analysis for a selected GAMO (Information Flow & RACI)
@@ -286,6 +293,7 @@ Route::match(['get', 'post'], '/register', static function () {
 
 // Home route
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
+Route::post('/user/active-organization', [HomeController::class, 'switchActiveOrganization'])->name('user.active-organization')->middleware('auth');
 
 // Cobit Home view
 Route::get('/design_factor/cobit_home', [DesignToolkitController::class, 'showJoinForm'])

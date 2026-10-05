@@ -53,7 +53,8 @@ class ActivityReportService
             }
 
             if (empty($scopedObjectiveIds)) {
-                $scopedObjectiveIds = MstObjective::pluck('objective_id')->all();
+                $focusAreaId = $evaluation->focus_area_id ?: 1;
+                $scopedObjectiveIds = MstObjective::where('focus_area_id', $focusAreaId)->pluck('objective_id')->all();
             }
 
             // Sort them using the default order: EDM, APO, BAI, DSS, MEA

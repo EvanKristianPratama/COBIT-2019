@@ -50,8 +50,12 @@ class TargetMaturityController extends Controller
         $user = Auth::user();
         $requestedOrganizationId = $request->integer('organization_id');
 
-        if ($requestedOrganizationId && $user->hasOrganizationId($requestedOrganizationId)) {
+        if ($requestedOrganizationId && ($user->isAdmin() || $user->hasOrganizationId($requestedOrganizationId))) {
             return $requestedOrganizationId;
+        }
+
+        if ($user->activeOrganizationId()) {
+            return (int) $user->activeOrganizationId();
         }
 
         if ($user->organization_id) {

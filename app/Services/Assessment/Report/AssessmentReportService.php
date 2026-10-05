@@ -32,7 +32,7 @@ class AssessmentReportService
             ->values()
             ->all();
 
-        $objectives = $this->evaluationService->getSortedObjectives()
+        $objectives = $this->evaluationService->getSortedObjectives($evaluation->focus_area_id ?: 1)
             ->when(
                 $scopedObjectiveIds !== [],
                 fn ($collection) => $collection->filter(

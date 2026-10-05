@@ -449,11 +449,15 @@ class EvaluationService
             return 0;
         }
 
+        $eval = \App\Models\MstEval::find($evalId);
+        $focusAreaId = $eval?->focus_area_id ?: 1;
+
         // Fetch objectives that are relevant to this evaluation (based on activities)
         // This ensures we don't average in 0s for objectives that weren't selected
-        $objectives = \App\Models\MstObjective::whereHas('practices.activities', function ($q) use ($relevantActivityIds) {
-            $q->whereIn('activity_id', $relevantActivityIds);
-        })->with(['practices.activities'])->get();
+        $objectives = \App\Models\MstObjective::where('focus_area_id', $focusAreaId)
+            ->whereHas('practices.activities', function ($q) use ($relevantActivityIds) {
+                $q->whereIn('activity_id', $relevantActivityIds);
+            })->with(['practices.activities'])->get();
 
         if ($objectives->isEmpty()) {
             return 0;
@@ -582,27 +586,33 @@ class EvaluationService
         // If we only look at "activities with data", we might miss 0-scored objectives that are part of the scope
         // causing the average to be higher (smaller divisor).
 
+        $eval = \App\Models\MstEval::find($evalId);
+        $focusAreaId = $eval?->focus_area_id ?: 1;
+
         $selectedDomains = \App\Models\TrsEvalDetail::where('eval_id', $evalId)
             ->whereHas('scoping')
             ->pluck('domain_id')
             ->unique()
             ->toArray();
 
+        $objectivesQuery = \App\Models\MstObjective::where('focus_area_id', $focusAreaId)
+            ->with(['practices.activities']);
+
         if (! empty($selectedDomains)) {
-            $objectives = \App\Models\MstObjective::with(['practices.activities'])
-                ->where(function ($q) use ($selectedDomains) {
-                    foreach ($selectedDomains as $domain) {
-                        $domain = trim((string) $domain);
-                        if ($domain !== '') {
+            $objectives = $objectivesQuery->where(function ($q) use ($selectedDomains) {
+                foreach ($selectedDomains as $domain) {
+                    $domain = trim((string) $domain);
+                    if ($domain !== '') {
+                        if (in_array(strtoupper($domain), ['EDM', 'APO', 'BAI', 'DSS', 'MEA'])) {
                             $q->orWhere('objective_id', 'like', $domain.'%');
+                        } else {
+                            $q->orWhere('objective_id', $domain);
                         }
                     }
-                })->get();
+                }
+            })->get();
         } else {
-            // Fallback: If no scope defined, should we verify all?
-            // Or fallback to activities? Report falls back to ALL.
-            // Let's stick to ALL to match Report logic 1:1.
-            $objectives = \App\Models\MstObjective::with(['practices.activities'])->get();
+            $objectives = $objectivesQuery->get();
         }
 
         if ($objectives->isEmpty()) {
@@ -638,9 +648,10 @@ class EvaluationService
     /**
      * Helper: Get and sort objectives
      */
-    public function getSortedObjectives()
+    public function getSortedObjectives(?int $focusAreaId = 1)
     {
-        $objectives = \App\Models\MstObjective::with(['practices.activities'])->get();
+        $objectives = \App\Models\MstObjective::where('focus_area_id', $focusAreaId ?: 1)
+            ->with(['practices.activities'])->get();
         $domainOrder = ['EDM' => 1, 'APO' => 2, 'BAI' => 3, 'DSS' => 4, 'MEA' => 5];
 
         return $objectives->sortBy(function ($obj) use ($domainOrder) {

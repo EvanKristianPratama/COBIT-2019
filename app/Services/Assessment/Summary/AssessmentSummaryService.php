@@ -25,13 +25,15 @@ class AssessmentSummaryService
     {
         $evalId = $evaluation->eval_id;
         $scopedObjectiveIds = $this->getScopedObjectiveIds($evaluation);
+        $focusAreaId = $evaluation->focus_area_id ?: 1;
 
-        $objectivesQuery = MstObjective::with([
-            'practices.activities.evaluations' => function ($query) use ($evalId) {
-                $query->where('eval_id', $evalId);
-            },
-        ])->orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
-          ->orderBy('objective_id');
+        $objectivesQuery = MstObjective::where('focus_area_id', $focusAreaId)
+            ->with([
+                'practices.activities.evaluations' => function ($query) use ($evalId) {
+                    $query->where('eval_id', $evalId);
+                },
+            ])->orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
+              ->orderBy('objective_id');
 
         if ($objectiveId) {
             $objectivesQuery->where('objective_id', $objectiveId);
@@ -223,9 +225,11 @@ class AssessmentSummaryService
             ")
             ->get();
 
+        $focusAreaId = $evaluation->focus_area_id ?: 1;
+
         return [
             'reports' => $reports,
-            'objectives' => MstObjective::when(
+            'objectives' => MstObjective::where('focus_area_id', $focusAreaId)->when(
                 $scopedObjectiveIds !== [],
                 fn ($query) => $query->whereIn('objective_id', $scopedObjectiveIds)
             )->pluck('objective', 'objective_id'),
@@ -237,9 +241,10 @@ class AssessmentSummaryService
     /**
      * @return array<string, mixed>
      */
-    public function getRoadmapTargetCapability(?string $objectiveId = null): array
+    public function getRoadmapTargetCapability(?string $objectiveId = null, ?int $focusAreaId = 1): array
     {
-        $objectivesQuery = MstObjective::orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
+        $objectivesQuery = MstObjective::where('focus_area_id', $focusAreaId ?: 1)
+            ->orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
             ->orderBy('objective_id');
 
         if ($objectiveId) {

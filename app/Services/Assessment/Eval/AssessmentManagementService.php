@@ -51,18 +51,29 @@ class AssessmentManagementService
             ? TrsEvalDetail::where('scoping_id', $activeScope->id)->pluck('domain_id')->unique()->toArray()
             : TrsEvalDetail::whereIn('scoping_id', $allScopes->pluck('id'))->pluck('domain_id')->unique()->toArray();
 
-        $objectivesQuery = MstObjective::with(['practices.activities', 'practices.infoflowoutput']);
+        $focusAreaId = $evaluation->focus_area_id ?: 1;
+
+        $objectivesQuery = MstObjective::where('focus_area_id', $focusAreaId)
+            ->with(['practices.activities', 'practices.infoflowoutput']);
+
         if ($selectedDomains !== []) {
             $objectivesQuery->where(function ($query) use ($selectedDomains) {
                 foreach ($selectedDomains as $domain) {
-                    $query->orWhere('objective_id', 'like', trim((string) $domain).'%');
+                    $domain = trim((string) $domain);
+                    if ($domain !== '') {
+                        if (in_array(strtoupper($domain), ['EDM', 'APO', 'BAI', 'DSS', 'MEA'])) {
+                            $query->orWhere('objective_id', 'like', $domain . '%');
+                        } else {
+                            $query->orWhere('objective_id', $domain);
+                        }
+                    }
                 }
             });
         }
 
         return [
             'objectives' => $objectivesQuery->get(),
-            'allObjectives' => MstObjective::all(),
+            'allObjectives' => MstObjective::where('focus_area_id', $focusAreaId)->get(),
             'evalId' => $evaluation->eval_id,
             'evaluation' => $evaluation,
             'evidences' => MstEvidence::where('eval_id', $evaluation->eval_id)->orderBy('created_at', 'desc')->get(),

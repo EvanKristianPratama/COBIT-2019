@@ -266,7 +266,7 @@
                         </div>
                         <div class="d-flex gap-1 align-items-center">
                             @if(auth()->check() && auth()->user()->can('design-factors.input'))
-                <button class="btn btn-xs btn-outline-primary btn-sm py-0 px-1" onclick="event.stopPropagation(); openEditObjective('{{ $obj->objective_id }}', '{{ addslashes($obj->objective) }}', '{{ addslashes($obj->objective_description) }}', '{{ addslashes($obj->objective_purpose) }}')">
+                <button class="btn btn-xs btn-outline-primary btn-sm py-0 px-1" onclick="event.stopPropagation(); openEditObjective('{{ $obj->objective_id }}', '{{ addslashes($obj->objective ?? '') }}', '{{ addslashes($obj->objective_description ?? '') }}', '{{ addslashes($obj->objective_purpose ?? '') }}')">
                                     <i class="fas fa-pen"></i>
                                 </button>
                                 <button class="btn btn-xs btn-outline-danger btn-sm py-0 px-1" onclick="event.stopPropagation(); deleteObjective('{{ $obj->objective_id }}')">

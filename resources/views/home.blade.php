@@ -46,7 +46,7 @@
       <footer class="home-support-row">
 
         <span class="text-muted fw-bold">
-          {{ $user->displayOrganizationSummary() ?: 'Nama Organisasi' }}
+          {{ $user->activeOrganizationName() ?: 'Nama Organisasi' }}
         </span>
       </footer>
     @endunless
