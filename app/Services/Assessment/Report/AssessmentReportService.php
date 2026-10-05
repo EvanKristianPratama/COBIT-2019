@@ -91,11 +91,26 @@ class AssessmentReportService
      */
     public function buildOverviewReport(User $user): array
     {
-        $assessments = $this->assessmentAccessService
+        $assessmentsQuery = $this->assessmentAccessService
             ->queryAccessible($user)
             ->with(['user', 'organization', 'maturityScore'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+
+        $activeOrgId = $user->activeOrganizationId();
+        if ($activeOrgId) {
+            $assessmentsQuery->where(function ($builder) use ($activeOrgId) {
+                $builder->where('mst_eval.organization_id', $activeOrgId)
+                    ->orWhere(function ($fallbackQuery) use ($activeOrgId) {
+                        $fallbackQuery->whereNull('mst_eval.organization_id')
+                            ->whereHas('user', function ($ownerQuery) use ($activeOrgId) {
+                                $ownerQuery->where('organization_id', $activeOrgId)
+                                    ->orWhereHas('organizations', fn ($organizationQuery) => $organizationQuery->where('mst_organization.organization_id', $activeOrgId));
+                            });
+                    });
+            });
+        }
+
+        $assessments = $assessmentsQuery->get();
 
         if ($assessments->isEmpty()) {
             return ['error' => 'No assessments found.'];

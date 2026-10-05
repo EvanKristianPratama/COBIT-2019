@@ -165,10 +165,27 @@
                     <div>
                         <h4 class="section-title">
                             <i class="fas fa-share-alt me-2 text-info"></i>
-                            Assessment Ditugaskan ({{ $assignedAssessments->count() }})
+                            Assessment Ditugaskan ({{ $assignedAssessments->total() }})
                         </h4>
                     </div>
-                    <div></div>
+                    <div>
+                        @if($myAssessments->total() === 0)
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{{ route('assessment.report.all') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+                                    <i class="fas fa-chart-line me-2"></i> All Reports
+                                </a>
+                                @can('assessments.input')
+                                    <button type="button"
+                                            class="btn btn-primary rounded-pill px-3 fw-bold"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#assessorModal"
+                                            data-action="create">
+                                        <i class="fas fa-plus me-2"></i>Assessment Baru
+                                    </button>
+                                @endcan
+                            </div>
+                        @endif
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-sm align-middle shadow-sm bg-white assessment-list-table">

@@ -309,7 +309,7 @@ class EvaluationService
 
             $evaluation = MstEval::create([
                 'user_id' => $userId,
-                'organization_id' => $organizationId ?? User::where('id', $userId)->value('organization_id'),
+                'organization_id' => $organizationId ?? (User::find($userId)?->activeOrganizationId() ?? User::where('id', $userId)->value('organization_id')),
             ]);
 
             DB::commit();

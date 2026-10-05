@@ -27,18 +27,36 @@ class AssessmentListService
     public function getIndexData(User $user): array
     {
         $organizationOptions = $user->assignedOrganizations();
+        $activeOrgId = $user->activeOrganizationId();
+
+        $applyOrgFilter = function (Builder $query) use ($activeOrgId) {
+            if ($activeOrgId) {
+                $query->where(function (Builder $builder) use ($activeOrgId) {
+                    $builder->where('mst_eval.organization_id', $activeOrgId)
+                        ->orWhere(function (Builder $fallbackQuery) use ($activeOrgId) {
+                            $fallbackQuery->whereNull('mst_eval.organization_id')
+                                ->whereHas('user', function (Builder $ownerQuery) use ($activeOrgId) {
+                                    $ownerQuery->where('organization_id', $activeOrgId)
+                                        ->orWhereHas('organizations', fn (Builder $organizationQuery) => $organizationQuery->where('mst_organization.organization_id', $activeOrgId));
+                                });
+                        });
+                });
+            }
+        };
 
         $myQuery = $this->assessmentAccessService
             ->queryAccessible($user)
             ->with(['user', 'organization', 'maturityScore', 'accessAssignments'])
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc');
+            ->where('mst_eval.user_id', $user->id)
+            ->orderBy('mst_eval.created_at', 'desc');
+        $applyOrgFilter($myQuery);
 
         $assignedQuery = $this->assessmentAccessService
             ->queryAccessible($user)
             ->with(['user', 'organization', 'maturityScore', 'accessAssignments'])
-            ->where('user_id', '!=', $user->id)
-            ->orderBy('created_at', 'desc');
+            ->where('mst_eval.user_id', '!=', $user->id)
+            ->orderBy('mst_eval.created_at', 'desc');
+        $applyOrgFilter($assignedQuery);
 
         $myAssessments = $myQuery->paginate(10, ['*'], 'my_page');
         $assignedAssessments = $assignedQuery->paginate(10, ['*'], 'assigned_page');
@@ -51,11 +69,11 @@ class AssessmentListService
             $evaluation->can_manage = $this->assessmentAccessService->canManage($user, $evaluation);
         }
 
-        $totalAssessments = $myAssessments->total() + $assignedAssessments->total();
-
         $statsQuery = $this->assessmentAccessService->queryAccessible($user);
+        $applyOrgFilter($statsQuery);
 
-        $finishedAssessments = (clone $statsQuery)->where('status', 'finished')->count();
+        $totalAssessments = (clone $statsQuery)->count();
+        $finishedAssessments = (clone $statsQuery)->where('mst_eval.status', 'finished')->count();
 
         return [
             'myAssessments' => $myAssessments,
@@ -64,7 +82,7 @@ class AssessmentListService
             'finishedAssessments' => $finishedAssessments,
             'draftAssessments' => max(0, $totalAssessments - $finishedAssessments),
             'organizationOptions' => $organizationOptions,
-            'selectedOrganizationId' => $user->activeOrganizationId() ?: $organizationOptions->first()?->organization_id,
+            'selectedOrganizationId' => $activeOrgId ?: $organizationOptions->first()?->organization_id,
         ];
     }
 
