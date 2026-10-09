@@ -96,11 +96,17 @@ Route::post('/assessment/request', [DesignToolkitController::class, 'requestAsse
 Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
     Route::get('/objectives', [MstObjectiveController::class, 'index']);
     
-    // COBIT 4.1 Input Mode save & reset (must be defined before objectives/{id})
+    // COBIT 4.1 Input Mode save, reset, create, delete, and component data
+    Route::post('/objectives/cobit4/create', [MstObjectiveController::class, 'createCobit4Process'])
+        ->name('cobit4.create');
     Route::post('/objectives/cobit4/save', [MstObjectiveController::class, 'saveCobit4Data'])
         ->name('cobit4.save');
     Route::post('/objectives/cobit4/reset', [MstObjectiveController::class, 'resetCobit4Data'])
         ->name('cobit4.reset');
+    Route::delete('/objectives/cobit4/{code}', [MstObjectiveController::class, 'deleteCobit4Process'])
+        ->name('cobit4.destroy');
+    Route::get('/objectives/cobit4/component-data', [MstObjectiveController::class, 'getCobit4ComponentData'])
+        ->name('cobit4.component-data');
 
     Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('cobit_component.show');
 

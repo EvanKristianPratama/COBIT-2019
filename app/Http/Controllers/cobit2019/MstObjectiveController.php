@@ -90,14 +90,71 @@ class MstObjectiveController extends Controller
         $focusAreaId = request()->query('focus_area');
         if (! $focusAreaId) {
             $matchingObj = MstObjective::where('objective_id', $objectiveId)->first();
-            $focusAreaId = $matchingObj ? $matchingObj->focus_area_id : 1;
+            if ($matchingObj) {
+                $focusAreaId = $matchingObj->focus_area_id;
+            } else {
+                $normalizedCode = preg_replace('/^([A-Za-z]+)0*(\d+)/', '$1$2', strtoupper($objectiveId));
+                $c4Proc = \App\Models\Cobit4\Cobit4Process::where('code', $normalizedCode)
+                    ->orWhere('code', strtoupper($objectiveId))
+                    ->orWhere('objective_id', $objectiveId)
+                    ->first();
+                $focusAreaId = $c4Proc ? $c4Proc->focus_area_id : 1;
+            }
         }
 
         // Load objective yang sesuai dengan focus_area
         $objective = MstObjective::with($relations)
             ->where('objective_id', $objectiveId)
             ->where('focus_area_id', $focusAreaId)
-            ->firstOrFail();
+            ->first();
+
+        // Fallback resolution for COBIT 4 process codes (e.g. PO1, PO01, PO01.M27)
+        if (! $objective) {
+            $normalizedCode = preg_replace('/^([A-Za-z]+)0*(\d+)/', '$1$2', strtoupper($objectiveId));
+            $c4Proc = \App\Models\Cobit4\Cobit4Process::where('focus_area_id', $focusAreaId)
+                ->where(function($q) use ($objectiveId, $normalizedCode) {
+                    $q->where('code', $normalizedCode)
+                      ->orWhere('code', strtoupper($objectiveId))
+                      ->orWhere('objective_id', $objectiveId);
+                })->first();
+
+            if ($c4Proc) {
+                if ($c4Proc->objective_id) {
+                    $objective = MstObjective::with($relations)
+                        ->where('objective_id', $c4Proc->objective_id)
+                        ->where('focus_area_id', $focusAreaId)
+                        ->first();
+                }
+
+                if (! $objective) {
+                    $resolvedObjId = $c4Proc->objective_id ?: "{$c4Proc->code}.M{$focusAreaId}";
+                    $objective = MstObjective::firstOrCreate(
+                        [
+                            'objective_id' => $resolvedObjId,
+                            'focus_area_id' => $focusAreaId,
+                        ],
+                        [
+                            'objective' => $c4Proc->title,
+                            'description' => $c4Proc->description,
+                        ]
+                    );
+                    $c4Proc->update(['objective_id' => $resolvedObjId]);
+                    $objective->load($relations);
+                }
+            } else {
+                $objective = MstObjective::with($relations)
+                    ->where('focus_area_id', $focusAreaId)
+                    ->where(function($q) use ($objectiveId, $normalizedCode) {
+                        $q->where('objective_id', 'like', "{$normalizedCode}%")
+                          ->orWhere('objective_id', 'like', strtoupper($objectiveId) . '%');
+                    })
+                    ->first();
+            }
+        }
+
+        if (! $objective) {
+            abort(404, "Objective [{$objectiveId}] tidak ditemukan.");
+        }
 
         $allObjectives = MstObjective::select('objective_id', 'objective')
             ->where('focus_area_id', $focusAreaId)
@@ -115,12 +172,14 @@ class MstObjectiveController extends Controller
         if ($isCobit4) {
             $cobit4Svc = app(\App\Services\Cobit4\Cobit4Service::class);
             $processCode = $cobit4Svc->resolveProcessCode($objective->objective_id);
-            $cobit4Data = $cobit4Svc->getProcessData($processCode, $objective);
+            $cobit4Data = $cobit4Svc->getProcessData($processCode, $objective, (int)$focusAreaId);
             $domains = $cobit4Svc->getDomains();
+            $allCobit4Processes = $cobit4Svc->getAllProcesses((int)$focusAreaId);
 
             return view('cobit_component.cobit4_show', compact(
                 'objective',
                 'allObjectives',
+                'allCobit4Processes',
                 'focusAreaId',
                 'allFocusAreas',
                 'curFa',
@@ -145,6 +204,74 @@ class MstObjectiveController extends Controller
     }
 
     /**
+     * Create a new custom COBIT 4.1 GAMO/Process.
+     */
+    public function createCobit4Process(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:20',
+            'title' => 'required|string|max:255',
+            'domain_code' => 'required|string|in:PO,AI,DS,ME',
+            'description' => 'nullable|string',
+            'focus_area_id' => 'nullable|integer',
+        ]);
+
+        $focusAreaId = (int) ($validated['focus_area_id'] ?? 27);
+        $svc = app(\App\Services\Cobit4\Cobit4Service::class);
+        $process = $svc->createCustomProcess($validated, $focusAreaId);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Proses COBIT 4.1 {$process->code} - {$process->title} berhasil ditambahkan!",
+            'data' => $process,
+            'redirect_url' => route('cobit_component.show', [
+                'id' => $process->objective_id,
+                'focus_area' => $focusAreaId,
+            ]),
+        ]);
+    }
+
+    /**
+     * Delete a COBIT 4.1 process.
+     */
+    public function deleteCobit4Process(Request $request, $code)
+    {
+        $focusAreaId = (int) $request->input('focus_area_id', 27);
+        $svc = app(\App\Services\Cobit4\Cobit4Service::class);
+        $deleted = $svc->deleteProcess($code, $focusAreaId);
+
+        if ($deleted) {
+            return response()->json([
+                'success' => true,
+                'message' => "Proses {$code} berhasil dihapus.",
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => "Proses {$code} tidak ditemukan.",
+        ], 404);
+    }
+
+    /**
+     * Get aggregated COBIT 4 component data for View by Component.
+     */
+    public function getCobit4ComponentData(Request $request)
+    {
+        $component = $request->query('component', 'overview');
+        $focusAreaId = (int) $request->query('focus_area_id', 27);
+
+        $svc = app(\App\Services\Cobit4\Cobit4Service::class);
+        $data = $svc->getComponentData($component, $focusAreaId);
+
+        return response()->json([
+            'success' => true,
+            'component' => $component,
+            'data' => $data,
+        ]);
+    }
+
+    /**
      * Save custom COBIT 4.1 process data (Input Mode).
      */
     public function saveCobit4Data(Request $request)
@@ -163,7 +290,7 @@ class MstObjectiveController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Data {$processCode} berhasil disimpan!",
+            'message' => "Data {$processCode} berhasil disimpan ke database!",
             'data' => $data,
         ]);
     }

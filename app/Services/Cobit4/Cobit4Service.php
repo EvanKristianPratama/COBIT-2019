@@ -2,9 +2,17 @@
 
 namespace App\Services\Cobit4;
 
+use App\Models\Cobit4\Cobit4Process;
+use App\Models\Cobit4\Cobit4ControlObjective;
+use App\Models\Cobit4\Cobit4Input;
+use App\Models\Cobit4\Cobit4Output;
+use App\Models\Cobit4\Cobit4RaciActivity;
+use App\Models\Cobit4\Cobit4GoalsMetric;
+use App\Models\Cobit4\Cobit4MaturityLevel;
 use App\Models\MstObjective;
 use App\Models\MstFocusArea;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Cobit4Service
 {
@@ -58,57 +66,293 @@ class Cobit4Service
     }
 
     /**
-     * Get full authentic structured data for a process.
+     * Ensure all 34 authentic COBIT 4.1 processes exist in the database.
      */
-    public function getProcessData(string $processCode, ?MstObjective $objective = null): array
+    public function ensureCobit4Database(int $focusAreaId = 27): int
     {
-        $code = strtoupper(trim($processCode));
+        $focusArea = MstFocusArea::find($focusAreaId);
+        if (!$focusArea) {
+            return 0;
+        }
 
-        // 1. Check if user has saved custom data in storage
-        $overridePath = storage_path("app/cobit4/{$code}.json");
-        if (file_exists($overridePath)) {
-            $saved = json_decode(file_get_contents($overridePath), true);
-            if (is_array($saved) && !empty($saved['code'])) {
-                return $saved;
+        $masterList = $this->getMasterProcesses();
+        $countAdded = 0;
+
+        foreach ($masterList as $item) {
+            $code = strtoupper(trim($item['code']));
+            $existing = Cobit4Process::where('focus_area_id', $focusAreaId)
+                ->where('code', $code)
+                ->first();
+
+            if (!$existing) {
+                // Determine source data: check config baseline or fallback generator
+                $configData = config("cobit4-data.processes.{$code}");
+                $procData = $configData ?: $this->generateFallbackProcessData($code, null, $item['title'], $item['desc']);
+                
+                $this->createProcessFromData($procData, $item['id'], $focusAreaId);
+                $countAdded++;
             }
         }
 
-        // 2. Check if baseline authentic config exists
-        $configData = config("cobit4-data.processes.{$code}");
-        if ($configData) {
-            return $configData;
+        return $countAdded;
+    }
+
+    /**
+     * Create a Cobit4Process record with its relations from structured array.
+     */
+    public function createProcessFromData(array $data, ?string $objectiveId = null, int $focusAreaId = 27): Cobit4Process
+    {
+        return DB::transaction(function () use ($data, $objectiveId, $focusAreaId) {
+            $code = strtoupper(trim($data['code'] ?? 'PO1'));
+            $domainCode = strtoupper(trim($data['domain_code'] ?? substr($code, 0, 2)));
+            $domainMap = [
+                'PO' => 'Plan and Organise',
+                'AI' => 'Acquire and Implement',
+                'DS' => 'Deliver and Support',
+                'ME' => 'Monitor and Evaluate',
+            ];
+            $domainName = $data['domain_name'] ?? ($domainMap[$domainCode] ?? 'Plan and Organise');
+
+            $criteria = $data['information_criteria'] ?? [];
+            $controlStmt = $data['control_statement'] ?? [];
+            $govFocus = $data['it_governance_focus'] ?? [];
+            $res = $data['it_resources'] ?? [];
+            $maturityModel = $data['maturity_model'] ?? [];
+
+            $resolvedObjId = $objectiveId ?: "{$code}.M{$focusAreaId}";
+
+            // 1. Create or update Cobit4Process
+            $process = Cobit4Process::updateOrCreate(
+                [
+                    'focus_area_id' => $focusAreaId,
+                    'code' => $code,
+                ],
+                [
+                    'objective_id' => $resolvedObjId,
+                    'domain_code' => $domainCode,
+                    'domain_name' => $domainName,
+                    'title' => $data['title'] ?? "Process {$code}",
+                    'description' => $data['description'] ?? null,
+                    'criteria_effectiveness' => $criteria['effectiveness'] ?? null,
+                    'criteria_efficiency' => $criteria['efficiency'] ?? null,
+                    'criteria_confidentiality' => $criteria['confidentiality'] ?? null,
+                    'criteria_integrity' => $criteria['integrity'] ?? null,
+                    'criteria_availability' => $criteria['availability'] ?? null,
+                    'criteria_compliance' => $criteria['compliance'] ?? null,
+                    'criteria_reliability' => $criteria['reliability'] ?? null,
+                    'control_over' => $controlStmt['control_over'] ?? null,
+                    'satisfies_requirement' => $controlStmt['satisfies_requirement'] ?? null,
+                    'focusing_on' => $controlStmt['focusing_on'] ?? null,
+                    'achieved_by' => $controlStmt['achieved_by'] ?? [],
+                    'measured_by' => $controlStmt['measured_by'] ?? [],
+                    'gov_strategic_alignment' => $govFocus['strategic_alignment'] ?? null,
+                    'gov_value_delivery' => $govFocus['value_delivery'] ?? null,
+                    'gov_risk_management' => $govFocus['risk_management'] ?? null,
+                    'gov_resource_management' => $govFocus['resource_management'] ?? null,
+                    'gov_performance_measurement' => $govFocus['performance_measurement'] ?? null,
+                    'res_applications' => !empty($res['applications']),
+                    'res_information' => !empty($res['information']),
+                    'res_infrastructure' => !empty($res['infrastructure']),
+                    'res_people' => !empty($res['people']),
+                    'maturity_intro' => $maturityModel['intro'] ?? null,
+                ]
+            );
+
+            // 2. Control Objectives
+            $process->controlObjectives()->delete();
+            $coList = $data['control_objectives'] ?? [];
+            foreach ($coList as $idx => $co) {
+                Cobit4ControlObjective::create([
+                    'process_id' => $process->id,
+                    'code' => $co['code'] ?? "{$code}." . ($idx + 1),
+                    'title' => $co['title'] ?? 'Control Objective',
+                    'description' => $co['desc'] ?? ($co['description'] ?? ''),
+                    'order_no' => $idx + 1,
+                ]);
+            }
+
+            // 3. Inputs & Outputs
+            $process->inputs()->delete();
+            $process->outputs()->delete();
+            $inputs = $data['management_guidelines']['inputs'] ?? [];
+            foreach ($inputs as $idx => $inp) {
+                Cobit4Input::create([
+                    'process_id' => $process->id,
+                    'from_source' => $inp['from'] ?? '*',
+                    'input_description' => $inp['input'] ?? '',
+                    'order_no' => $idx + 1,
+                ]);
+            }
+
+            $outputs = $data['management_guidelines']['outputs'] ?? [];
+            foreach ($outputs as $idx => $out) {
+                Cobit4Output::create([
+                    'process_id' => $process->id,
+                    'output_description' => $out['output'] ?? '',
+                    'to_target' => $out['to'] ?? '',
+                    'order_no' => $idx + 1,
+                ]);
+            }
+
+            // 4. RACI Activities
+            $process->raciActivities()->delete();
+            $activities = $data['management_guidelines']['raci']['activities'] ?? [];
+            foreach ($activities as $idx => $act) {
+                Cobit4RaciActivity::create([
+                    'process_id' => $process->id,
+                    'activity' => $act['activity'] ?? '',
+                    'raci_matrix' => $act['raci'] ?? [],
+                    'order_no' => $idx + 1,
+                ]);
+            }
+
+            // 5. Goals & Metrics
+            $process->goalsMetrics()->delete();
+            $gm = $data['management_guidelines']['goals_and_metrics'] ?? [];
+            $categories = ['it_goals', 'it_metrics', 'process_goals', 'process_metrics', 'activities_goals', 'activities_metrics'];
+            foreach ($categories as $cat) {
+                $items = $gm[$cat] ?? [];
+                foreach ($items as $idx => $itemText) {
+                    Cobit4GoalsMetric::create([
+                        'process_id' => $process->id,
+                        'category' => $cat,
+                        'content' => $itemText,
+                        'order_no' => $idx + 1,
+                    ]);
+                }
+            }
+
+            // 6. Maturity Levels
+            $process->maturityLevels()->delete();
+            $levels = $maturityModel['levels'] ?? [];
+            foreach ($levels as $lvl => $levelData) {
+                Cobit4MaturityLevel::create([
+                    'process_id' => $process->id,
+                    'level' => (int) $lvl,
+                    'name' => $levelData['name'] ?? "Level {$lvl}",
+                    'description' => $levelData['desc'] ?? ($levelData['description'] ?? ''),
+                ]);
+            }
+
+            // 7. Sync mst_objective table
+            MstObjective::updateOrCreate(
+                [
+                    'objective_id' => $resolvedObjId,
+                    'focus_area_id' => $focusAreaId,
+                ],
+                [
+                    'objective' => $process->title,
+                    'objective_description' => $process->description,
+                    'objective_purpose' => 'COBIT 4.1 Control Objectives and Management Guidelines',
+                ]
+            );
+
+            return $process;
+        });
+    }
+
+    /**
+     * Get full authentic structured data for a process.
+     */
+    public function getProcessData(string $processCode, ?MstObjective $objective = null, int $focusAreaId = 27): array
+    {
+        $code = strtoupper(trim($processCode));
+
+        // 1. Query MySQL database first
+        $process = Cobit4Process::with([
+            'controlObjectives',
+            'inputs',
+            'outputs',
+            'raciActivities',
+            'goalsMetrics',
+            'maturityLevels',
+        ])
+        ->where('focus_area_id', $focusAreaId)
+        ->where('code', $code)
+        ->first();
+
+        if ($process) {
+            return $process->toStructuredArray();
         }
 
-        // 3. Fallback generator for other COBIT 4.1 processes
+        // 2. If not seeded yet, seed all 34 and retrieve
+        $this->ensureCobit4Database($focusAreaId);
+
+        $process = Cobit4Process::with([
+            'controlObjectives',
+            'inputs',
+            'outputs',
+            'raciActivities',
+            'goalsMetrics',
+            'maturityLevels',
+        ])
+        ->where('focus_area_id', $focusAreaId)
+        ->where('code', $code)
+        ->first();
+
+        if ($process) {
+            return $process->toStructuredArray();
+        }
+
+        // 3. Fallback generator if process is custom or completely new
         return $this->generateFallbackProcessData($code, $objective);
     }
 
     /**
-     * Save custom COBIT 4.1 process data.
+     * Save custom COBIT 4.1 process data directly to database.
      */
     public function saveProcessData(string $processCode, array $data, ?string $objectiveId = null, int $focusAreaId = 27): bool
     {
-        $code = strtoupper(trim($processCode));
-        $dir = storage_path('app/cobit4');
-        if (!file_exists($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        file_put_contents("{$dir}/{$code}.json", json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-
-        // Also update mst_objective table
-        if ($objectiveId) {
-            $obj = MstObjective::where('objective_id', $objectiveId)
-                ->where('focus_area_id', $focusAreaId)
-                ->first();
-            if ($obj) {
-                if (!empty($data['title'])) $obj->objective = $data['title'];
-                if (!empty($data['description'])) $obj->objective_description = $data['description'];
-                $obj->save();
-            }
-        }
-
+        $data['code'] = $processCode;
+        $this->createProcessFromData($data, $objectiveId, $focusAreaId);
         return true;
+    }
+
+    /**
+     * Create a new custom COBIT 4 GAMO/Process from user form.
+     * Inputs: code (e.g. PO11), title (Nama GAMO), domain_code (PO/AI/DS/ME), description (Isi).
+     */
+    public function createCustomProcess(array $input, int $focusAreaId = 27): Cobit4Process
+    {
+        $code = strtoupper(trim($input['code'] ?? ''));
+        $title = trim($input['title'] ?? '');
+        $domainCode = strtoupper(trim($input['domain_code'] ?? 'PO'));
+        $description = trim($input['description'] ?? '');
+
+        $domainMap = [
+            'PO' => 'Plan and Organise',
+            'AI' => 'Acquire and Implement',
+            'DS' => 'Deliver and Support',
+            'ME' => 'Monitor and Evaluate',
+        ];
+        $domainName = $domainMap[$domainCode] ?? 'Plan and Organise';
+
+        $resolvedObjId = "{$code}.M{$focusAreaId}";
+
+        // Build scaffold structure
+        $scaffoldData = $this->generateFallbackProcessData($code, null, $title, $description);
+        $scaffoldData['domain_code'] = $domainCode;
+        $scaffoldData['domain_name'] = $domainName;
+
+        return $this->createProcessFromData($scaffoldData, $resolvedObjId, $focusAreaId);
+    }
+
+    /**
+     * Delete a COBIT 4 process.
+     */
+    public function deleteProcess(string $processCode, int $focusAreaId = 27): bool
+    {
+        $code = strtoupper(trim($processCode));
+        $proc = Cobit4Process::where('focus_area_id', $focusAreaId)->where('code', $code)->first();
+        if ($proc) {
+            $objId = $proc->objective_id;
+            $proc->delete();
+            if ($objId) {
+                MstObjective::where('objective_id', $objId)->where('focus_area_id', $focusAreaId)->delete();
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -117,31 +361,151 @@ class Cobit4Service
     public function resetProcessData(string $processCode, ?string $objectiveId = null, int $focusAreaId = 27): bool
     {
         $code = strtoupper(trim($processCode));
-        $file = storage_path("app/cobit4/{$code}.json");
-        if (file_exists($file)) {
-            unlink($file);
-        }
-
-        // Reset mst_objective to baseline if available
-        $baseline = config("cobit4-data.processes.{$code}");
-        if ($baseline && $objectiveId) {
-            $obj = MstObjective::where('objective_id', $objectiveId)
-                ->where('focus_area_id', $focusAreaId)
-                ->first();
-            if ($obj) {
-                $obj->objective = $baseline['title'];
-                $obj->objective_description = $baseline['description'];
-                $obj->save();
-            }
+        
+        $configBaseline = config("cobit4-data.processes.{$code}");
+        if ($configBaseline) {
+            $this->createProcessFromData($configBaseline, $objectiveId, $focusAreaId);
+        } else {
+            // Re-generate default baseline
+            $masterList = collect($this->getMasterProcesses())->keyBy('code');
+            $masterItem = $masterList->get($code);
+            $title = $masterItem ? $masterItem['title'] : "Process {$code}";
+            $desc = $masterItem ? $masterItem['desc'] : null;
+            $scaffold = $this->generateFallbackProcessData($code, null, $title, $desc);
+            $this->createProcessFromData($scaffold, $objectiveId, $focusAreaId);
         }
 
         return true;
     }
 
     /**
+     * Get all processes for a focus area (ordered by domain & code).
+     */
+    public function getAllProcesses(int $focusAreaId = 27)
+    {
+        $this->ensureCobit4Database($focusAreaId);
+
+        $orderSql = "CASE 
+            WHEN domain_code = 'PO' THEN 1 
+            WHEN domain_code = 'AI' THEN 2 
+            WHEN domain_code = 'DS' THEN 3 
+            WHEN domain_code = 'ME' THEN 4 
+            ELSE 5 END, CAST(REGEXP_SUBSTR(code, '[0-9]+') AS UNSIGNED), code";
+
+        return Cobit4Process::with([
+            'controlObjectives',
+            'inputs',
+            'outputs',
+            'raciActivities',
+            'goalsMetrics',
+            'maturityLevels',
+        ])
+        ->where('focus_area_id', $focusAreaId)
+        ->orderByRaw($orderSql)
+        ->get();
+    }
+
+    /**
+     * Get aggregated data for "View by Component" in COBIT 4.
+     */
+    public function getComponentData(string $component, int $focusAreaId = 27): array
+    {
+        $processes = $this->getAllProcesses($focusAreaId);
+
+        return $processes->map(function ($proc) use ($component) {
+            $base = [
+                'id' => $proc->id,
+                'code' => $proc->code,
+                'domain_code' => $proc->domain_code,
+                'domain_name' => $proc->domain_name,
+                'title' => $proc->title,
+                'objective_id' => $proc->objective_id,
+            ];
+
+            switch ($component) {
+                case 'overview':
+                    $base['description'] = $proc->description;
+                    $base['criteria'] = [
+                        'effectiveness' => $proc->criteria_effectiveness,
+                        'efficiency' => $proc->criteria_efficiency,
+                        'confidentiality' => $proc->criteria_confidentiality,
+                        'integrity' => $proc->criteria_integrity,
+                        'availability' => $proc->criteria_availability,
+                        'compliance' => $proc->criteria_compliance,
+                        'reliability' => $proc->criteria_reliability,
+                    ];
+                    $base['control_statement'] = [
+                        'control_over' => $proc->control_over,
+                        'satisfies_requirement' => $proc->satisfies_requirement,
+                        'focusing_on' => $proc->focusing_on,
+                        'achieved_by' => $proc->achieved_by ?? [],
+                        'measured_by' => $proc->measured_by ?? [],
+                    ];
+                    $base['it_resources'] = [
+                        'applications' => $proc->res_applications,
+                        'information' => $proc->res_information,
+                        'infrastructure' => $proc->res_infrastructure,
+                        'people' => $proc->res_people,
+                    ];
+                    break;
+
+                case 'control_objectives':
+                    $base['control_objectives'] = $proc->controlObjectives->map(fn($co) => [
+                        'id' => $co->id,
+                        'code' => $co->code,
+                        'title' => $co->title,
+                        'description' => $co->description,
+                    ])->toArray();
+                    break;
+
+                case 'infoflows':
+                    $base['inputs'] = $proc->inputs->map(fn($i) => [
+                        'id' => $i->id,
+                        'from' => $i->from_source,
+                        'input' => $i->input_description,
+                    ])->toArray();
+                    $base['outputs'] = $proc->outputs->map(fn($o) => [
+                        'id' => $o->id,
+                        'output' => $o->output_description,
+                        'to' => $o->to_target,
+                    ])->toArray();
+                    break;
+
+                case 'organizational':
+                    $base['raci_activities'] = $proc->raciActivities->map(fn($ra) => [
+                        'id' => $ra->id,
+                        'activity' => $ra->activity,
+                        'raci' => $ra->raci_matrix ?? [],
+                    ])->toArray();
+                    break;
+
+                case 'goals_metrics':
+                    $base['it_goals'] = $proc->goalsMetrics->where('category', 'it_goals')->pluck('content')->values()->toArray();
+                    $base['it_metrics'] = $proc->goalsMetrics->where('category', 'it_metrics')->pluck('content')->values()->toArray();
+                    $base['process_goals'] = $proc->goalsMetrics->where('category', 'process_goals')->pluck('content')->values()->toArray();
+                    $base['process_metrics'] = $proc->goalsMetrics->where('category', 'process_metrics')->pluck('content')->values()->toArray();
+                    $base['activities_goals'] = $proc->goalsMetrics->where('category', 'activities_goals')->pluck('content')->values()->toArray();
+                    $base['activities_metrics'] = $proc->goalsMetrics->where('category', 'activities_metrics')->pluck('content')->values()->toArray();
+                    break;
+
+                case 'maturity':
+                    $base['maturity_intro'] = $proc->maturity_intro;
+                    $base['levels'] = $proc->maturityLevels->map(fn($m) => [
+                        'level' => $m->level,
+                        'name' => $m->name,
+                        'description' => $m->description,
+                    ])->toArray();
+                    break;
+            }
+
+            return $base;
+        })->toArray();
+    }
+
+    /**
      * Generate fallback authentic COBIT 4.1 structure when specific process data is not yet in config.
      */
-    protected function generateFallbackProcessData(string $code, ?MstObjective $objective = null): array
+    public function generateFallbackProcessData(string $code, ?MstObjective $objective = null, ?string $customTitle = null, ?string $customDesc = null): array
     {
         $domainPrefix = preg_replace('/[0-9]/', '', $code);
         $domainMap = [
@@ -152,10 +516,10 @@ class Cobit4Service
         ];
         $domainName = $domainMap[$domainPrefix] ?? 'Plan and Organise';
 
-        $title = $objective ? $objective->objective : "Process {$code}";
-        $desc = $objective && $objective->objective_description
+        $title = $customTitle ?: ($objective ? $objective->objective : "Process {$code}");
+        $desc = $customDesc ?: ($objective && $objective->objective_description
             ? $objective->objective_description
-            : "Management of the IT process of {$title} in accordance with COBIT 4.1 control and governance objectives.";
+            : "Management of the IT process of {$title} in accordance with COBIT 4.1 control and governance objectives.");
 
         return [
             'code' => $code,
@@ -336,52 +700,5 @@ class Cobit4Service
             ['id' => 'ME03.M27', 'domain' => 'ME', 'code' => 'ME3', 'title' => 'Ensure Regulatory Compliance', 'desc' => "Ensuring compliance of IT processes with applicable laws, statutory, and contractual requirements."],
             ['id' => 'ME04.M27', 'code' => 'ME4', 'domain' => 'ME', 'title' => 'Provide IT Governance', 'desc' => "Establishing an effective governance framework aligned with COBIT principles and board oversight."],
         ];
-    }
-
-    /**
-     * Ensure all 34 authentic COBIT 4.1 processes exist in Focus Area 27.
-     */
-    public function ensureCobit4Objectives(int $focusAreaId = 27): array
-    {
-        $focusArea = MstFocusArea::find($focusAreaId);
-        if (!$focusArea) {
-            return ['added' => 0, 'existing' => 0];
-        }
-
-        $masterList = $this->getMasterProcesses();
-        $added = 0;
-        $existing = 0;
-
-        foreach ($masterList as $item) {
-            // Check if objective already exists in focus area (by ID or prefix)
-            $obj = MstObjective::where('focus_area_id', $focusAreaId)
-                ->where(function ($q) use ($item) {
-                    $q->where('objective_id', $item['id'])
-                      ->orWhere('objective_id', $item['code'])
-                      ->orWhere('objective_id', 'LIKE', $item['code'] . '.%');
-                })->first();
-
-            if ($obj) {
-                $existing++;
-                // Ensure title and description are clean and authentic
-                if ($obj->objective !== $item['title']) {
-                    $obj->objective = $item['title'];
-                    $obj->objective_description = $item['desc'];
-                    $obj->save();
-                }
-                continue;
-            }
-
-            MstObjective::create([
-                'objective_id' => $item['id'],
-                'focus_area_id' => $focusAreaId,
-                'objective' => $item['title'],
-                'objective_description' => $item['desc'],
-                'objective_purpose' => 'COBIT 4.1 Control Objectives and Management Guidelines',
-            ]);
-            $added++;
-        }
-
-        return ['added' => $added, 'existing' => $existing];
     }
 }

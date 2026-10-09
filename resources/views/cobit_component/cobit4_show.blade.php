@@ -3,8 +3,7 @@
 @section('content')
 <style>
     /* ==========================================================================
-       COBIT 4.1 OFFICIAL MANUAL & INPUT MODE STYLING
-       Faithful recreation of ISACA COBIT 4.1 Process Specification + Live Editing
+       COBIT 4.1 AUTHENTIC MANUAL & DATABASE EDITING STYLING
        ========================================================================== */
 
     :root {
@@ -59,7 +58,7 @@
         display: flex;
     }
 
-    /* Tab Navigation */
+    /* Tab Navigation for Book Pages */
     .c4-nav-pills {
         display: flex;
         flex-wrap: wrap;
@@ -198,254 +197,256 @@
     /* Criteria Slanted Table */
     .c4-criteria-table-wrap {
         display: inline-block;
-        padding-top: 20px;
     }
 
     .c4-slanted-col-header {
-        height: 90px;
-        position: relative;
+        height: 85px;
+        width: 32px;
         vertical-align: bottom;
-        padding: 0;
-        width: 34px;
-        min-width: 34px;
+        padding: 0 4px 6px 0;
+        white-space: nowrap;
     }
 
     .c4-slanted-label {
-        transform: rotate(-45deg);
+        display: inline-block;
+        transform: rotate(-50deg);
         transform-origin: bottom left;
-        white-space: nowrap;
-        position: absolute;
-        bottom: 6px;
-        left: 14px;
-        font-size: 0.74rem;
-        font-weight: 600;
-        color: #1e293b;
-        letter-spacing: -0.01em;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #1e3a5f;
     }
 
     .c4-criteria-cell {
-        width: 34px;
-        height: 34px;
-        border: 1px solid #7da0c5;
-        background-color: var(--c4-neutral-box);
+        width: 32px;
+        height: 28px;
+        border: 1px solid #7099c2;
+        background: #f0f5fa;
         text-align: center;
         vertical-align: middle;
-        font-weight: 800;
+        font-weight: 900;
         font-size: 0.95rem;
-        transition: all 0.15s ease;
+        color: #072b4c;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s, color 0.15s;
     }
 
     .c4-criteria-cell.p-active {
-        background-color: var(--c4-primary-box);
+        background: #13467b;
         color: #ffffff;
     }
 
     .c4-criteria-cell.s-active {
-        background-color: var(--c4-secondary-box);
-        color: #ffffff;
+        background: #8bb4de;
+        color: #0a2540;
     }
 
-    /* Editable Criteria in Input Mode */
-    .input-mode-on .c4-criteria-cell {
-        cursor: pointer;
-        position: relative;
-    }
-    .input-mode-on .c4-criteria-cell:hover {
-        outline: 2px dashed #f59e0b;
-        filter: brightness(0.95);
-    }
-
-    /* 3D Domain Buttons */
+    /* Domain Buttons Stack */
     .c4-domain-btn-stack {
         display: flex;
         flex-direction: column;
-        gap: 0.45rem;
-        width: 170px;
+        gap: 0.5rem;
+        max-width: 175px;
         margin-left: auto;
     }
 
     .c4-domain-btn {
-        background: linear-gradient(180deg, #276497 0%, #154674 50%, #0d355b 100%);
-        border: 2px solid #5a8ab8;
-        border-radius: 7px;
-        padding: 0.55rem 0.6rem;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #1f5d94 0%, #0d3862 100%);
+        color: #ffffff;
         font-weight: 700;
         font-size: 0.82rem;
-        line-height: 1.15;
+        line-height: 1.25;
         text-align: center;
-        text-decoration: none;
-        box-shadow: inset 1px 1px 1px rgba(255,255,255,0.4), 0 3px 6px rgba(0,0,0,0.22);
-        display: block;
-        transition: transform 0.1s ease, filter 0.15s ease;
+        padding: 0.5rem 0.65rem;
+        border-radius: 8px;
+        border: 2px solid #5a8ab8;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: transform 0.1s, filter 0.15s;
     }
 
     .c4-domain-btn:hover {
-        filter: brightness(1.1);
-        transform: translateY(-1px);
+        filter: brightness(1.12);
     }
 
     .c4-domain-btn.active {
-        background: linear-gradient(180deg, #09335a 0%, #05213b 100%);
-        border-color: #84b3de;
-        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.5), 0 0 8px rgba(33, 115, 186, 0.6);
-        outline: 2px solid #9fc8f0;
+        border-color: #ffd166;
+        box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.65);
+        transform: scale(1.02);
     }
 
-    /* Waterfall Flow */
+    /* Control Statement / Waterfall Section */
     .c4-waterfall-box {
-        margin: 2rem 0;
-        font-size: 0.93rem;
+        margin: 1.75rem 0 2rem;
         line-height: 1.6;
+        font-size: 0.95rem;
     }
 
     .c4-waterfall-step {
-        margin-bottom: 0.85rem;
+        margin-bottom: 0.9rem;
     }
 
-    .c4-wf-lead {
+    .c4-waterfall-label {
         font-weight: 800;
         color: #111827;
-        margin-bottom: 0.2rem;
+        display: block;
+        margin-bottom: 0.15rem;
     }
 
-    .c4-wf-content {
+    .c4-waterfall-text {
+        color: #1f2937;
+        padding-left: 0.5rem;
+    }
+
+    .c4-waterfall-bullets {
+        margin: 0.35rem 0 0.5rem;
+        padding-left: 1.75rem;
         color: #1f2937;
     }
 
-    .c4-wf-indent-1 { padding-left: 1.75rem; }
-    .c4-wf-indent-2 { padding-left: 3.5rem; }
-    .c4-wf-indent-3 { padding-left: 5.25rem; }
-    .c4-wf-indent-4 { padding-left: 7rem; }
-    .c4-wf-indent-5 { padding-left: 8.75rem; }
-
-    .c4-wf-bullets {
-        list-style-type: none;
-        padding-left: 0;
-        margin: 0.25rem 0;
+    .c4-waterfall-bullets li {
+        margin-bottom: 0.25rem;
     }
 
-    .c4-wf-bullets li {
-        position: relative;
-        padding-left: 1.25rem;
-        margin-bottom: 0.4rem;
+    /* Bottom: IT Gov Focus (Pentagon) & IT Resources */
+    .c4-bottom-grid {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-top: 2rem;
+        gap: 1.5rem;
+        flex-wrap: wrap;
     }
 
-    .c4-wf-bullets li::before {
-        content: "•";
-        position: absolute;
-        left: 0;
-        font-weight: bold;
-        color: #111827;
-        font-size: 1.1rem;
+    /* Authentic IT Governance Pentagon Diagram Styling */
+    .c4-pentagon-wrap {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        background: #ffffff;
+        padding: 0.75rem 1rem 0.5rem;
+        border-radius: 8px;
+    }
+
+    .c4-pentagon-svg {
+        filter: drop-shadow(0px 8px 20px rgba(15, 23, 42, 0.28));
+        overflow: visible;
+        user-select: none;
+    }
+
+    .c4-seg-poly {
+        stroke: #1c2833;
+        stroke-width: 1.8;
+        stroke-linejoin: round;
+        transition: fill 0.2s ease, filter 0.15s ease;
+        cursor: default;
+    }
+
+    .input-mode-on .c4-seg-poly {
+        cursor: pointer;
+    }
+
+    .input-mode-on .c4-seg-poly:hover {
+        filter: brightness(1.1);
+    }
+
+    .c4-seg-text {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 8.5px;
+        font-weight: 800;
+        text-anchor: middle;
+        pointer-events: none;
+        letter-spacing: 0.03em;
         line-height: 1;
     }
 
-    /* Pentagon & Resources */
-    .c4-pentagon-wrap {
+    .c4-pentagon-legend {
         display: flex;
-        flex-direction: column;
+        gap: 1.8rem;
+        justify-content: center;
         align-items: center;
-    }
-
-    .c4-legend-row {
-        display: flex;
-        gap: 1.25rem;
-        margin-top: 0.75rem;
-        font-size: 0.78rem;
+        margin-top: 0.85rem;
+        font-size: 0.84rem;
         font-weight: 700;
-    }
-
-    .c4-legend-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
+        color: #1e293b;
     }
 
     .c4-legend-box {
-        width: 13px;
-        height: 13px;
+        width: 14px;
+        height: 14px;
         display: inline-block;
-        border: 1px solid #64748b;
+        border: 1px solid #0f172a;
+        border-radius: 2px;
     }
 
     .c4-resources-table-wrap {
         display: inline-block;
-        padding-top: 20px;
         margin-left: auto;
     }
 
-    .c4-resource-cell {
-        width: 34px;
-        height: 34px;
-        border: 1px solid #7da0c5;
-        background-color: var(--c4-primary-box);
-        color: #ffffff;
+    .c4-res-cell {
+        width: 32px;
+        height: 28px;
+        border: 1px solid #7099c2;
+        background: #f0f5fa;
         text-align: center;
         vertical-align: middle;
-        font-size: 0.95rem;
-        font-weight: bold;
-        transition: all 0.15s ease;
-    }
-
-    .input-mode-on .c4-resource-cell {
+        font-weight: 900;
+        font-size: 1rem;
+        color: #072b4c;
         cursor: pointer;
-    }
-    .input-mode-on .c4-resource-cell:hover {
-        outline: 2px dashed #f59e0b;
+        user-select: none;
     }
 
-    /* Page Footer */
-    .c4-page-footer {
-        border-top: 1px solid #1e293b;
-        margin-top: 2.5rem;
-        padding-top: 0.6rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.75rem;
-        color: #475569;
-        font-style: italic;
+    /* Page 2: Control Objectives List */
+    .c4-obj-item {
+        margin-bottom: 1.5rem;
     }
 
-    .c4-page-num {
+    .c4-obj-item-title {
         font-weight: 800;
-        font-size: 0.95rem;
-        font-style: normal;
-        color: #1e293b;
+        font-size: 1rem;
+        color: #111827;
+        margin-bottom: 0.25rem;
     }
 
-    /* Inputs/Outputs Tables */
-    .c4-inout-table {
+    .c4-obj-item-desc {
+        font-size: 0.92rem;
+        line-height: 1.55;
+        color: #1f2937;
+        text-align: justify;
+    }
+
+    /* Page 3: Inputs, Outputs, RACI, Goals & Metrics */
+    .c4-io-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.85rem;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.75rem;
     }
 
-    .c4-inout-table th {
-        background-color: var(--c4-navy);
+    .c4-io-table th {
+        background: #0a3d68;
         color: #ffffff;
-        padding: 0.45rem 0.75rem;
+        padding: 0.45rem 0.65rem;
         font-weight: 700;
         border: 1px solid #072b4c;
     }
 
-    .c4-inout-table td {
+    .c4-io-table td {
+        padding: 0.4rem 0.65rem;
         border: 1px solid #cbd5e1;
-        padding: 0.45rem 0.65rem;
         vertical-align: middle;
-        color: #1e293b;
+    }
+
+    .c4-io-table tr:nth-child(even) td {
         background: #f8fafc;
     }
 
-    .c4-inout-table tr:nth-child(even) td {
-        background: #ffffff;
-    }
-
-    /* RACI Table */
-    .c4-raci-section {
-        margin: 2rem 0;
+    /* RACI Chart Table */
+    .c4-raci-table-wrap {
+        overflow-x: auto;
+        margin-bottom: 2rem;
     }
 
     .c4-raci-table {
@@ -454,252 +455,170 @@
         font-size: 0.82rem;
     }
 
-    .c4-raci-th-activity {
-        width: 36%;
+    .c4-raci-table th.raci-header-role {
+        height: 130px;
+        width: 36px;
+        min-width: 36px;
         vertical-align: bottom;
-        font-weight: 800;
-        padding: 0.5rem;
-        border-bottom: 2px solid #334155;
+        padding: 0 4px 8px 0;
+        white-space: nowrap;
     }
 
-    .c4-raci-th-func {
-        text-align: center;
-        font-weight: 800;
-        font-style: italic;
-        padding: 0.35rem;
-        border-bottom: 1px solid #cbd5e1;
-    }
-
-    .c4-raci-slanted-th {
-        height: 125px;
-        position: relative;
-        vertical-align: bottom;
-        padding: 0;
-        width: 38px;
-        min-width: 38px;
-    }
-
-    .c4-raci-slanted-label {
+    .c4-raci-table th.raci-header-role span {
+        display: inline-block;
         transform: rotate(-60deg);
         transform-origin: bottom left;
-        white-space: nowrap;
-        position: absolute;
-        bottom: 8px;
-        left: 18px;
-        font-size: 0.73rem;
+        font-size: 0.78rem;
         font-weight: 700;
-        color: #1e293b;
-        letter-spacing: -0.01em;
-        width: 130px;
-        text-align: left;
+        color: #072b4c;
     }
 
     .c4-raci-activity-cell {
-        padding: 0.5rem 0.65rem;
-        border: 1px solid #cbd5e1;
+        padding: 0.45rem 0.75rem;
         font-weight: 500;
         color: #1e293b;
+        border: 1px solid #cbd5e1;
+        font-size: 0.84rem;
     }
 
     .c4-raci-val-cell {
-        border: 1px solid #cbd5e1;
+        width: 36px;
+        height: 32px;
         text-align: center;
         vertical-align: middle;
         font-weight: 800;
-        font-size: 0.85rem;
-        background-color: #ffffff;
-        transition: background-color 0.15s;
-    }
-
-    .c4-raci-val-cell.has-r { background-color: #f1f5f9; color: #0a3d68; }
-    .c4-raci-val-cell.has-a { background-color: #eff6ff; color: #1e40af; }
-    .c4-raci-val-cell.has-c { background-color: #f8fafc; color: #475569; }
-    .c4-raci-val-cell.has-i { background-color: #f8fafc; color: #64748b; }
-
-    .input-mode-on .c4-raci-val-cell {
+        font-size: 0.9rem;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
         cursor: pointer;
-    }
-    .input-mode-on .c4-raci-val-cell:hover {
-        background-color: #fef08a !important;
-        outline: 1px solid #ca8a04;
+        user-select: none;
     }
 
-    /* Goals & Metrics */
+    .c4-raci-val-cell:hover { background: #f1f5f9; }
+    .c4-raci-val-cell.has-r { background: #fee2e2; color: #991b1b; }
+    .c4-raci-val-cell.has-a { background: #fef3c7; color: #92400e; }
+    .c4-raci-val-cell.has-c { background: #e0f2fe; color: #075985; }
+    .c4-raci-val-cell.has-i { background: #dcfce7; color: #166534; }
+    .c4-raci-val-cell.has-ar { background: #fed7aa; color: #9a3412; }
+
+    /* Goals & Metrics Boxes */
     .c4-gm-grid {
         display: grid;
-        grid-template-columns: 36px 1fr 1fr 1fr;
-        gap: 0.65rem;
-        margin-top: 1.5rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+        margin-top: 1rem;
     }
 
-    .c4-gm-sidebar {
-        background-color: var(--c4-navy);
-        color: #ffffff;
-        writing-mode: vertical-rl;
-        transform: rotate(180deg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        letter-spacing: 0.1em;
-        font-size: 0.85rem;
-        border-radius: 4px;
-        padding: 0.5rem 0;
-    }
-
-    .c4-gm-card {
-        border: 1px solid #94a3b8;
-        border-radius: 4px;
+    .c4-gm-col {
         display: flex;
         flex-direction: column;
-        background: #ffffff;
-        position: relative;
+        gap: 1rem;
     }
 
-    .c4-gm-header {
-        background-color: var(--c4-navy);
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 0.82rem;
-        padding: 0.35rem 0.65rem;
-        text-align: center;
-    }
-
-    .c4-gm-body {
-        padding: 0.75rem;
-        font-size: 0.8rem;
-        line-height: 1.45;
-        flex-grow: 1;
-    }
-
-    .c4-gm-body ul {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-    }
-
-    .c4-gm-body li {
-        position: relative;
-        padding-left: 1rem;
-        margin-bottom: 0.4rem;
-    }
-
-    .c4-gm-body li::before {
-        content: "•";
-        position: absolute;
-        left: 0;
-        font-weight: bold;
-    }
-
-    .c4-gm-arrow-badge {
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: #0a3d68;
-        background: #e2e8f0;
-        padding: 0.1rem 0.4rem;
+    .c4-gm-box {
         border-radius: 4px;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.2rem;
+        padding: 0.85rem 1rem;
+        font-size: 0.82rem;
+        line-height: 1.45;
     }
 
-    /* Maturity Model */
-    .c4-maturity-preamble {
+    .c4-gm-box.goals-box {
+        background: #0a3d68;
+        color: #ffffff;
+        min-height: 140px;
+    }
+
+    .c4-gm-box.metrics-box {
+        background: #cbd8e6;
+        color: #072b4c;
+        min-height: 140px;
+        border: 1px solid #94b2d1;
+    }
+
+    .c4-gm-box-header {
+        font-weight: 800;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+        letter-spacing: 0.05em;
+    }
+
+    .c4-gm-box ul {
+        margin: 0;
+        padding-left: 1.15rem;
+    }
+
+    .c4-gm-box li {
+        margin-bottom: 0.35rem;
+    }
+
+    /* Page 4: Maturity Model */
+    .c4-maturity-intro {
         font-style: italic;
+        color: #1f2937;
+        margin-bottom: 1.75rem;
         font-size: 0.95rem;
-        line-height: 1.55;
-        color: #374151;
-        margin-bottom: 1.5rem;
     }
 
     .c4-maturity-level-item {
-        margin-bottom: 1.35rem;
-        font-size: 0.93rem;
-        line-height: 1.6;
+        margin-bottom: 1.4rem;
+        font-size: 0.92rem;
+        line-height: 1.55;
     }
 
     .c4-maturity-badge {
         font-weight: 800;
-        color: #111827;
+        color: #072b4c;
+        display: inline-block;
+        margin-bottom: 0.2rem;
     }
 
-    /* ==========================================================================
-       INPUT MODE CONTROLS (Form fields & buttons)
-       ========================================================================== */
-    .c4-edit-field {
-        display: none;
-    }
-    .input-mode-on .c4-edit-field {
-        display: block !important;
-    }
-    .input-mode-on .c4-view-field {
-        display: none !important;
-    }
-
+    /* Live Inline Edit Elements */
     .c4-inline-input {
         width: 100%;
         border: 1px solid #f59e0b;
-        background-color: #fffbeb;
-        padding: 0.35rem 0.6rem;
-        border-radius: 5px;
-        font-size: 0.92rem;
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-    .c4-inline-input:focus {
-        background-color: #ffffff;
-        border-color: #d97706;
-        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        background: #fffbeb;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.88rem;
+        color: #1e293b;
         outline: none;
     }
+    .c4-inline-input:focus {
+        border-color: #d97706;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+    .c4-edit-field { display: none; }
+    .c4-view-field { display: block; }
+    .input-mode-on .c4-edit-field { display: block !important; }
+    .input-mode-on .c4-view-field { display: none !important; }
 
     .c4-bullet-edit-row {
         display: flex;
-        gap: 0.4rem;
-        align-items: flex-start;
-        margin-bottom: 0.45rem;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 0.4rem;
     }
-
     .btn-action-del {
-        background: none;
-        border: none;
-        color: #ef4444;
-        cursor: pointer;
-        padding: 0.2rem 0.4rem;
-        border-radius: 4px;
-        transition: background 0.15s;
-    }
-    .btn-action-del:hover {
-        background-color: #fee2e2;
-    }
-
-    .btn-action-add {
-        font-size: 0.78rem;
-        font-weight: 700;
-        padding: 0.2rem 0.65rem;
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+        padding: 0.25rem 0.5rem;
         border-radius: 5px;
-        border: 1px dashed #f59e0b;
-        background-color: #fffbeb;
-        color: #b45309;
         cursor: pointer;
-        transition: all 0.15s;
     }
-    .btn-action-add:hover {
-        background-color: #fef3c7;
-        border-color: #d97706;
+    .btn-action-del:hover { background: #fecaca; }
+    .btn-action-add {
+        background: #dbeafe;
+        border: 1px dashed #3b82f6;
+        color: #1d4ed8;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
     }
-
-    /* Print Styles */
-    @media print {
-        body { background: #ffffff !important; color: #000000 !important; }
-        .navbar, .c4-toolbar, .c4-nav-pills, .c4-input-mode-banner, .btn, .btn-action-add, .btn-action-del {
-            display: none !important;
-        }
-        .c4-wrapper { padding: 0 !important; background: transparent !important; }
-        .c4-book-page { box-shadow: none !important; border: none !important; margin-bottom: 0 !important; page-break-after: always; }
-        .c4-edit-field { display: none !important; }
-        .c4-view-field { display: block !important; }
-    }
+    .btn-action-add:hover { background: #bfdbfe; }
 </style>
 
 <div class="c4-wrapper" id="c4Container">
@@ -718,100 +637,91 @@
                         <span class="text-primary">{{ $processCode }}</span> - 
                         <span id="displayHeaderTitle">{{ $cobit4Data['title'] }}</span>
                     </h5>
-                    <small class="text-muted">Domain: <strong>{{ $cobit4Data['domain_name'] }} ({{ $cobit4Data['domain_code'] }})</strong></small>
+
                 </div>
             </div>
 
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <!-- INPUT MODE TOGGLE BUTTON -->
+                <!-- BUTTON TAMBAH GAMO COBIT 4 -->
+                <button type="button" class="btn btn-primary fw-bold btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateCobit4Gamo">
+                    <i class="fas fa-plus me-1"></i> Tambah GAMO COBIT 4
+                </button>
+
+                <!-- BUTTON ACTION: EDIT -->
                 <button type="button" class="btn btn-outline-warning fw-bold btn-sm shadow-sm" id="btnInputModeToggle" onclick="toggleCobit4InputMode()">
-                    <i class="fas fa-pen-to-square me-1"></i> Input Mode: <span id="inputModeStatusText">OFF</span>
+                    <i class="fas fa-edit me-1"></i> Edit
                 </button>
 
-                <!-- Select Objective Dropdown -->
-                <div class="dropdown">
-                    <button class="btn btn-outline-primary btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-list me-1"></i> Pilih Objective COBIT 4.1
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" style="max-height: 420px; overflow-y: auto; min-width: 320px;">
-                        <li class="dropdown-header fw-bold text-primary small text-uppercase">Daftar 34 Proses COBIT 4.1</li>
-                        @foreach($allObjectives as $itemObj)
-                            @php
-                                $itemCode = app(\App\Services\Cobit4\Cobit4Service::class)->resolveProcessCode($itemObj->objective_id);
-                                $isActive = ($itemObj->objective_id === $objective->objective_id);
-                            @endphp
-                            <li>
-                                <a class="dropdown-item d-flex justify-content-between align-items-center {{ $isActive ? 'active' : '' }}" 
-                                   href="{{ route('cobit_component.show', ['id' => $itemObj->objective_id, 'focus_area' => $focusAreaId]) }}">
-                                    <span>
-                                        <strong class="font-monospace">{{ $itemCode }}</strong> - {{ Str::limit($itemObj->objective, 28) }}
-                                    </span>
-                                    @if($isActive) <i class="fas fa-check small ms-2"></i> @endif
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-
-                <!-- Model Switcher Dropdown -->
                 @php
-                    $switcherModels = $allFocusAreas ?? \App\Models\MstFocusArea::orderBy('version', 'desc')->get();
-                    $groupedModels = $switcherModels->groupBy(fn($m) => $m->version ?: '2019');
+                    $procList = $allCobit4Processes ?? [];
+                    $curObjId = $objective->objective_id;
+                    $allList = collect($procList)->values();
+                    $currentIndex = $allList->search(fn($p) => $p->code === $processCode || $p->objective_id === $curObjId);
+                    $prevProcess = ($currentIndex !== false && $currentIndex > 0) ? $allList[$currentIndex - 1] : null;
+                    $nextProcess = ($currentIndex !== false && $currentIndex < count($allList) - 1) ? $allList[$currentIndex + 1] : null;
                 @endphp
-                <div class="dropdown">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-exchange-alt me-1"></i> Ganti Model
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 260px;">
-                        <li class="dropdown-header fw-bold text-uppercase text-primary small">
-                            <i class="fas fa-cubes me-1"></i> COBIT 2019 Models
-                        </li>
-                        @foreach($groupedModels->get('2019', collect()) as $m2019)
-                            @php
-                                $firstObjM = \App\Models\MstObjective::where('focus_area_id', $m2019->id)->first();
-                                $mRoute = $firstObjM ? route('cobit_component.show', ['id' => $firstObjM->objective_id, 'focus_area' => $m2019->id]) : route('focus-areas.show', $m2019->id);
-                            @endphp
-                            <li>
-                                <a class="dropdown-item {{ ($focusAreaId ?? 1) == $m2019->id ? 'active' : '' }}" href="{{ $mRoute }}">
-                                    {{ $m2019->name }}
-                                </a>
-                            </li>
-                        @endforeach
 
-                        <li><hr class="dropdown-divider"></li>
-                        <li class="dropdown-header fw-bold text-uppercase text-success small">
-                            <i class="fas fa-sitemap me-1"></i> COBIT 5
-                        </li>
-                        @foreach($groupedModels->get('5', collect()) as $m5)
-                            @php
-                                $firstObjM5 = \App\Models\MstObjective::where('focus_area_id', $m5->id)->first();
-                                $m5Route = $firstObjM5 ? route('cobit_component.show', ['id' => $firstObjM5->objective_id, 'focus_area' => $m5->id]) : route('focus-areas.show', $m5->id);
-                            @endphp
-                            <li>
-                                <a class="dropdown-item {{ ($focusAreaId ?? 1) == $m5->id ? 'active' : '' }}" href="{{ $m5Route }}">
-                                    {{ $m5->name }}
-                                </a>
-                            </li>
-                        @endforeach
+                <!-- PILIH OBJECTIVE SELECTOR (INTERAKTIF & PASTI WORK) -->
+                <div class="d-flex align-items-center bg-light border border-primary-subtle rounded-3 p-1 shadow-sm gap-1">
+                    @if($prevProcess)
+                        <a href="{{ route('cobit_component.show', ['id' => $prevProcess->objective_id ?: $prevProcess->code, 'focus_area' => $focusAreaId]) }}" 
+                           class="btn btn-sm btn-white border shadow-xs text-primary px-2 py-1" 
+                           title="Sebelumnya: {{ $prevProcess->code }} - {{ $prevProcess->title }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    @else
+                        <button class="btn btn-sm btn-white border text-muted px-2 py-1" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    @endif
 
-                        <li><hr class="dropdown-divider"></li>
-                        <li class="dropdown-header fw-bold text-uppercase text-warning small">
-                            <i class="fas fa-certificate me-1"></i> COBIT 4.1
-                        </li>
-                        @foreach($groupedModels->get('4.1', collect()) as $m4)
-                            <li>
-                                <a class="dropdown-item active fw-bold" href="#">
-                                    {{ $m4->name }} <i class="fas fa-check small text-white ms-1"></i>
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
+                    <div class="d-flex align-items-center gap-1">
+                        <label for="selectCobit4Objective" class="form-label mb-0 fw-bold small text-dark px-1 text-nowrap d-none d-sm-inline">
+                            <i class="fas fa-list-check text-primary me-1"></i> Objective:
+                        </label>
+                        <select id="selectCobit4Objective" 
+                                class="form-select form-select-sm fw-bold border-0 bg-transparent text-primary" 
+                                style="min-width: 240px; max-width: 340px; cursor: pointer;" 
+                                onchange="handleCobit4ObjectiveSelect(this.value)">
+                            @php
+                                $domainGroups = [
+                                    'PO' => 'Plan & Organise (PO)',
+                                    'AI' => 'Acquire & Implement (AI)',
+                                    'DS' => 'Deliver & Support (DS)',
+                                    'ME' => 'Monitor & Evaluate (ME)',
+                                ];
+                                $grouped = collect($procList)->groupBy('domain_code');
+                            @endphp
+                            @foreach($domainGroups as $dKey => $dName)
+                                @if(isset($grouped[$dKey]) && count($grouped[$dKey]))
+                                    <optgroup label="{{ $dName }}">
+                                        @foreach($grouped[$dKey] as $p)
+                                             @php
+                                                $isSelected = ($p->code === $processCode || $p->objective_id === $curObjId);
+                                                $pUrl = route('cobit_component.show', ['id' => $p->objective_id ?: $p->code, 'focus_area' => $focusAreaId]);
+                                            @endphp
+                                            <option value="{{ $pUrl }}" {{ $isSelected ? 'selected' : '' }}>
+                                                {{ $p->code }} - {{ Str::limit($p->title, 32) }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+
+                    @if($nextProcess)
+                        <a href="{{ route('cobit_component.show', ['id' => $nextProcess->objective_id ?: $nextProcess->code, 'focus_area' => $focusAreaId]) }}" 
+                           class="btn btn-sm btn-white border shadow-xs text-primary px-2 py-1" 
+                           title="Selanjutnya: {{ $nextProcess->code }} - {{ $nextProcess->title }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    @else
+                        <button class="btn btn-sm btn-white border text-muted px-2 py-1" disabled>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    @endif
                 </div>
-
-                <!-- Print / PDF Button -->
-                <button class="btn btn-dark btn-sm fw-bold shadow-sm" onclick="window.print()">
-                    <i class="fas fa-print me-1"></i> Cetak / PDF
-                </button>
             </div>
         </div>
 
@@ -820,29 +730,26 @@
              ==================================================================== -->
         <div class="c4-input-mode-banner" id="c4InputModeBanner">
             <div class="d-flex align-items-center gap-2">
-                <i class="fas fa-exclamation-triangle text-warning fs-4"></i>
+                <i class="fas fa-pen-fancy text-warning fs-4"></i>
                 <div>
-                    <strong class="text-dark">Mode Input Aktif!</strong>
+                    <strong class="text-dark">Mode Edit Aktif</strong>
                     <div class="small text-muted">
-                        Anda dapat mengubah data proses secara langsung, mengklik sel kriteria (P/S), mengatur RACI, dan menambah/mengedit Control Objectives.
+                        Anda dapat mengubah data proses, kriteria informasi, control objectives, alur input/output, dan RACI.
                     </div>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-success btn-sm fw-bold shadow-sm px-3" onclick="saveCobit4Data()">
-                    <i class="fas fa-save me-1"></i> Simpan Perubahan
+                <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm px-3" onclick="saveCobit4Data()">
+                    <i class="fas fa-save me-1"></i> Simpan
                 </button>
-                <button class="btn btn-outline-danger btn-sm fw-bold" onclick="resetCobit4Data()">
-                    <i class="fas fa-undo me-1"></i> Reset ke Standar ISACA
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="toggleCobit4InputMode(false)">
-                    Selesai / Tutup
+                <button type="button" class="btn btn-danger btn-sm fw-bold shadow-sm px-3" onclick="deleteCurrentGamo()">
+                    <i class="fas fa-trash me-1"></i> Hapus
                 </button>
             </div>
         </div>
 
         <!-- ====================================================================
-             TAB SWITCHER BUTTONS (INTERACTIVE MODE OR ALL 4 PAGES)
+             TAB SWITCHER BUTTONS (4 BUKU HALAMAN COBIT 4.1)
              ==================================================================== -->
         <div class="c4-nav-pills">
             <button class="c4-nav-btn active" id="btnPage1" onclick="switchCobit4Page('page1', this)">
@@ -856,9 +763,6 @@
             </button>
             <button class="c4-nav-btn" id="btnPage4" onclick="switchCobit4Page('page4', this)">
                 <i class="fas fa-chart-line"></i> 4. Maturity Model
-            </button>
-            <button class="c4-nav-btn ms-auto bg-light text-primary border-primary" id="btnAllPages" onclick="switchCobit4Page('all', this)">
-                <i class="fas fa-book-open"></i> 📖 Tampilan Buku Lengkap (Semua 4 Halaman)
             </button>
         </div>
 
@@ -881,7 +785,7 @@
                 <div class="c4-process-title">
                     <span class="c4-view-field" id="viewProcessTitle">{{ $processCode }} {{ $cobit4Data['title'] }}</span>
                     <div class="c4-edit-field mb-2">
-                        <label class="form-label small fw-bold text-muted mb-1">Judul Proses:</label>
+                        <label class="form-label small fw-bold text-muted mb-1">Judul GAMO / Proses:</label>
                         <input type="text" class="c4-inline-input fw-bold fs-6" id="inputProcessTitle" 
                                value="{{ $cobit4Data['title'] }}" oninput="syncTitle(this.value)">
                     </div>
@@ -955,180 +859,156 @@
                     </div>
                 </div>
 
-                <!-- Control Statement Cascading Flow -->
+                <!-- Waterfall Control Statement -->
                 <div class="c4-waterfall-box">
                     <div class="c4-waterfall-step">
-                        <div class="c4-wf-lead">Control over the IT process of</div>
-                    </div>
-                    <div class="c4-waterfall-step c4-wf-indent-1">
-                        <div class="c4-wf-content c4-view-field" id="viewWfControlOver">
-                            {{ $cobit4Data['control_statement']['control_over'] ?? strtolower($cobit4Data['title']) }}
-                        </div>
-                        <div class="c4-edit-field">
-                            <input type="text" class="c4-inline-input" id="inputWfControlOver" 
-                                   value="{{ $cobit4Data['control_statement']['control_over'] ?? strtolower($cobit4Data['title']) }}"
-                                   oninput="DATA.control_statement.control_over = this.value">
+                        <span class="c4-waterfall-label">Control over the IT process of</span>
+                        <div class="c4-waterfall-text">
+                            <span class="c4-view-field" id="viewControlOver">{{ $cobit4Data['control_statement']['control_over'] ?? strtolower($cobit4Data['title']) }}</span>
+                            <div class="c4-edit-field">
+                                <input type="text" class="c4-inline-input" id="inputControlOver" 
+                                       value="{{ $cobit4Data['control_statement']['control_over'] ?? strtolower($cobit4Data['title']) }}"
+                                       oninput="DATA.control_statement.control_over = this.value">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="c4-waterfall-step c4-wf-indent-2">
-                        <div class="c4-wf-lead">that satisfies the business requirement for IT of</div>
-                    </div>
-                    <div class="c4-waterfall-step c4-wf-indent-3">
-                        <div class="c4-wf-content c4-view-field" id="viewWfSatisfies">
-                            {{ $cobit4Data['control_statement']['satisfies_requirement'] ?? '' }}
-                        </div>
-                        <div class="c4-edit-field">
-                            <textarea class="c4-inline-input" id="inputWfSatisfies" rows="2"
-                                      oninput="DATA.control_statement.satisfies_requirement = this.value">{{ $cobit4Data['control_statement']['satisfies_requirement'] ?? '' }}</textarea>
+                    <div class="c4-waterfall-step ps-3">
+                        <span class="c4-waterfall-label">that satisfies the business requirement for IT of</span>
+                        <div class="c4-waterfall-text">
+                            <span class="c4-view-field" id="viewSatisfies">{{ $cobit4Data['control_statement']['satisfies_requirement'] ?? '' }}</span>
+                            <div class="c4-edit-field">
+                                <textarea class="c4-inline-input" id="inputSatisfies" rows="2" 
+                                          oninput="DATA.control_statement.satisfies_requirement = this.value">{{ $cobit4Data['control_statement']['satisfies_requirement'] ?? '' }}</textarea>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="c4-waterfall-step c4-wf-indent-3">
-                        <div class="c4-wf-lead">by focusing on</div>
-                    </div>
-                    <div class="c4-waterfall-step c4-wf-indent-4">
-                        <div class="c4-wf-content c4-view-field" id="viewWfFocusing">
-                            {{ $cobit4Data['control_statement']['focusing_on'] ?? '' }}
-                        </div>
-                        <div class="c4-edit-field">
-                            <textarea class="c4-inline-input" id="inputWfFocusing" rows="2"
-                                      oninput="DATA.control_statement.focusing_on = this.value">{{ $cobit4Data['control_statement']['focusing_on'] ?? '' }}</textarea>
+                    <div class="c4-waterfall-step ps-5">
+                        <span class="c4-waterfall-label">by focusing on</span>
+                        <div class="c4-waterfall-text">
+                            <span class="c4-view-field" id="viewFocusing">{{ $cobit4Data['control_statement']['focusing_on'] ?? '' }}</span>
+                            <div class="c4-edit-field">
+                                <textarea class="c4-inline-input" id="inputFocusing" rows="2" 
+                                          oninput="DATA.control_statement.focusing_on = this.value">{{ $cobit4Data['control_statement']['focusing_on'] ?? '' }}</textarea>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="c4-waterfall-step c4-wf-indent-4">
-                        <div class="c4-wf-lead">is achieved by</div>
-                    </div>
-                    <div class="c4-waterfall-step c4-wf-indent-5">
-                        <ul class="c4-wf-bullets c4-view-field" id="viewAchievedList">
-                            @foreach($cobit4Data['control_statement']['achieved_by'] ?? [] as $achItem)
-                                <li>{{ $achItem }}</li>
-                            @endforeach
-                        </ul>
-                        <div class="c4-edit-field" id="editAchievedContainer">
-                            <!-- Populated dynamically via JS -->
-                        </div>
+                    <div class="c4-waterfall-step" style="padding-left: 5rem;">
+                        <span class="c4-waterfall-label">is achieved by</span>
+                        <ul class="c4-waterfall-bullets c4-view-field" id="viewAchievedList"></ul>
+                        <div class="c4-edit-field" id="editAchievedContainer"></div>
                     </div>
 
-                    <div class="c4-waterfall-step c4-wf-indent-5">
-                        <div class="c4-wf-lead">and is measured by</div>
-                    </div>
-                    <div class="c4-waterfall-step" style="padding-left: 10.5rem;">
-                        <ul class="c4-wf-bullets c4-view-field" id="viewMeasuredList">
-                            @foreach($cobit4Data['control_statement']['measured_by'] ?? [] as $measItem)
-                                <li>{{ $measItem }}</li>
-                            @endforeach
-                        </ul>
-                        <div class="c4-edit-field" id="editMeasuredContainer">
-                            <!-- Populated dynamically via JS -->
-                        </div>
+                    <div class="c4-waterfall-step" style="padding-left: 7rem;">
+                        <span class="c4-waterfall-label">and is measured by</span>
+                        <ul class="c4-waterfall-bullets c4-view-field" id="viewMeasuredList"></ul>
+                        <div class="c4-edit-field" id="editMeasuredContainer"></div>
                     </div>
                 </div>
 
-                <!-- Bottom Row: IT Governance Focus Pentagon & IT Resources Checklist -->
-                <div class="row align-items-end mt-4 pt-3 border-top">
-                    <!-- Left: Pentagon Diagram -->
-                    <div class="col-md-6 col-lg-5">
-                        <div class="c4-pentagon-wrap">
-                            <svg viewBox="0 0 280 260" width="250" height="230" style="overflow: visible;">
-                                <defs>
-                                    <filter id="c4-drop" x="-10%" y="-10%" width="130%" height="130%">
-                                        <feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.25"/>
-                                    </filter>
-                                </defs>
-                                <g filter="url(#c4-drop)">
-                                    <!-- Strategic Alignment -->
-                                    <polygon points="140,20 50,85 82,125 140,95" 
-                                             id="poly_strategic_alignment" onclick="cyclePentagon('strategic_alignment')"
-                                             stroke="#3b6998" stroke-width="1.5" style="cursor: pointer;" />
-                                    <!-- Value Delivery -->
-                                    <polygon points="140,20 230,85 198,125 140,95" 
-                                             id="poly_value_delivery" onclick="cyclePentagon('value_delivery')"
-                                             stroke="#3b6998" stroke-width="1.5" style="cursor: pointer;" />
-                                    <!-- Risk Management -->
-                                    <polygon points="230,85 195,195 175,160 198,125" 
-                                             id="poly_risk_management" onclick="cyclePentagon('risk_management')"
-                                             stroke="#94a3b8" stroke-width="1.5" style="cursor: pointer;" />
-                                    <!-- Resource Management -->
-                                    <polygon points="195,195 85,195 105,160 175,160" 
-                                             id="poly_resource_management" onclick="cyclePentagon('resource_management')"
-                                             stroke="#94a3b8" stroke-width="1.5" style="cursor: pointer;" />
-                                    <!-- Performance Measurement -->
-                                    <polygon points="85,195 50,85 82,125 105,160" 
-                                             id="poly_performance_measurement" onclick="cyclePentagon('performance_measurement')"
-                                             stroke="#94a3b8" stroke-width="1.5" style="cursor: pointer;" />
+                <!-- Bottom: IT Governance Focus & IT Resources -->
+                <div class="c4-bottom-grid">
+                    <!-- IT Governance Pentagon Diagram (Authentic ISACA COBIT 4.1) -->
+                    <div class="c4-pentagon-wrap">
+                        <div class="small fw-bold text-muted mb-2 text-uppercase text-center" style="letter-spacing: 0.05em;">
+                            IT Governance Focus:
+                        </div>
+                        <svg width="270" height="240" viewBox="35 15 230 215" id="pentagonSvg" class="c4-pentagon-svg">
+                            <defs>
+                                <!-- Shaded recessed inner pentagon gradient -->
+                                <radialGradient id="c4InnerGovGrad" cx="50%" cy="48%" r="55%">
+                                    <stop offset="0%" stop-color="#ffffff" />
+                                    <stop offset="60%" stop-color="#cbd5e1" />
+                                    <stop offset="100%" stop-color="#94a3b8" />
+                                </radialGradient>
+                            </defs>
 
-                                    <!-- Center Pentagon: IT Governance -->
-                                    <polygon points="140,95 198,125 175,160 105,160 82,125" 
-                                             fill="#e2e8f0" stroke="#475569" stroke-width="1.5" />
-                                </g>
+                            <!-- 1. Strategic Alignment (Top-Left) -->
+                            <polygon id="poly_strategic_alignment" class="c4-seg-poly"
+                                     points="54.9,99.1 150.0,30.0 150.0,88.0 110.1,117.0"
+                                     fill="#ffffff" onclick="cyclePentagon('strategic_alignment')" />
+                            <g transform="rotate(-36, 115, 83)">
+                                <text x="115" y="80" class="c4-seg-text c4-txt-strategic_alignment" fill="#0f2338">STRATEGIC</text>
+                                <text x="115" y="90" class="c4-seg-text c4-txt-strategic_alignment" fill="#0f2338">ALIGNMENT</text>
+                            </g>
 
-                                <text x="140" y="137" font-size="7.5" font-weight="800" text-anchor="middle" fill="#0f172a">IT GOVERNANCE</text>
+                            <!-- 2. Value Delivery (Top-Right) -->
+                            <polygon id="poly_value_delivery" class="c4-seg-poly"
+                                     points="150.0,30.0 245.1,99.1 189.9,117.0 150.0,88.0"
+                                     fill="#ffffff" onclick="cyclePentagon('value_delivery')" />
+                            <g transform="rotate(36, 185, 83)">
+                                <text x="185" y="80" class="c4-seg-text c4-txt-value_delivery" fill="#0f2338">VALUE</text>
+                                <text x="185" y="90" class="c4-seg-text c4-txt-value_delivery" fill="#0f2338">DELIVERY</text>
+                            </g>
 
-                                <text x="100" y="55" font-size="6.8" font-weight="800" text-anchor="middle" id="txt_strategic_alignment" transform="rotate(-35, 100, 55)" pointer-events="none">
-                                    <tspan x="100" dy="0">STRATEGIC</tspan>
-                                    <tspan x="100" dy="7.5">ALIGNMENT</tspan>
-                                </text>
+                            <!-- 3. Risk Management (Right) -->
+                            <polygon id="poly_risk_management" class="c4-seg-poly"
+                                     points="245.1,99.1 208.8,210.9 174.7,164.0 189.9,117.0"
+                                     fill="#ffffff" onclick="cyclePentagon('risk_management')" />
+                            <g transform="rotate(72, 204, 147)">
+                                <text x="204" y="144" class="c4-seg-text c4-txt-risk_management" fill="#0f2338">RISK</text>
+                                <text x="204" y="154" class="c4-seg-text c4-txt-risk_management" fill="#0f2338">MANAGEMENT</text>
+                            </g>
 
-                                <text x="180" y="55" font-size="6.8" font-weight="800" text-anchor="middle" id="txt_value_delivery" transform="rotate(35, 180, 55)" pointer-events="none">
-                                    <tspan x="180" dy="0">VALUE</tspan>
-                                    <tspan x="180" dy="7.5">DELIVERY</tspan>
-                                </text>
+                            <!-- 4. Resource Management (Bottom) -->
+                            <polygon id="poly_resource_management" class="c4-seg-poly"
+                                     points="208.8,210.9 91.2,210.9 125.3,164.0 174.7,164.0"
+                                     fill="#ffffff" onclick="cyclePentagon('resource_management')" />
+                            <g>
+                                <text x="150" y="185" class="c4-seg-text c4-txt-resource_management" fill="#0f2338">RESOURCE</text>
+                                <text x="150" y="196" class="c4-seg-text c4-txt-resource_management" fill="#0f2338">MANAGEMENT</text>
+                            </g>
 
-                                <text x="202" y="152" font-size="6.5" font-weight="700" text-anchor="middle" id="txt_risk_management" transform="rotate(80, 202, 152)" pointer-events="none">
-                                    <tspan x="202" dy="0">RISK MANAGEMENT</tspan>
-                                </text>
+                            <!-- 5. Performance Measurement (Left) -->
+                            <polygon id="poly_performance_measurement" class="c4-seg-poly"
+                                     points="91.2,210.9 54.9,99.1 110.1,117.0 125.3,164.0"
+                                     fill="#ffffff" onclick="cyclePentagon('performance_measurement')" />
+                            <g transform="rotate(-72, 96, 147)">
+                                <text x="96" y="144" class="c4-seg-text c4-txt-performance_measurement" fill="#0f2338">PERFORMANCE</text>
+                                <text x="96" y="154" class="c4-seg-text c4-txt-performance_measurement" fill="#0f2338">MEASUREMENT</text>
+                            </g>
 
-                                <text x="140" y="184" font-size="6.5" font-weight="700" text-anchor="middle" id="txt_resource_management" pointer-events="none">
-                                    RESOURCE MANAGEMENT
-                                </text>
+                            <!-- Center: Inner Pentagon (IT Governance) -->
+                            <polygon points="150.0,88.0 189.9,117.0 174.7,164.0 125.3,164.0 110.1,117.0"
+                                     fill="url(#c4InnerGovGrad)" stroke="#1c2833" stroke-width="1.8" stroke-linejoin="round" />
+                            <text x="150" y="133" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="8.8" font-weight="900" fill="#111827" text-anchor="middle" letter-spacing="-0.02em">IT GOVERNANCE</text>
+                        </svg>
 
-                                <text x="76" y="152" font-size="6" font-weight="700" text-anchor="middle" id="txt_performance_measurement" transform="rotate(-80, 76, 152)" pointer-events="none">
-                                    <tspan x="76" dy="0">PERFORMANCE</tspan>
-                                    <tspan x="76" dy="7">MEASUREMENT</tspan>
-                                </text>
-                            </svg>
-                            <div class="c4-legend-row">
-                                <div class="c4-legend-item">
-                                    <span class="c4-legend-box" style="background-color: #13467b;"></span> Primary
-                                </div>
-                                <div class="c4-legend-item">
-                                    <span class="c4-legend-box" style="background-color: #8bb4de;"></span> Secondary
-                                </div>
+                        <!-- Authentic ISACA Legend -->
+                        <div class="c4-pentagon-legend">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="c4-legend-box" style="background: #1b4b83;"></span>
+                                <span>Primary</span>
                             </div>
-                            <div class="c4-edit-field mt-1 small text-warning-emphasis">
-                                <i class="fas fa-hand-pointer me-1"></i> Klik segmen untuk beralih (Primary ➔ Secondary ➔ Netral).
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="c4-legend-box" style="background: #a6bdd7;"></span>
+                                <span>Secondary</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right: IT Resources Checklist -->
-                    <div class="col-md-6 col-lg-7 text-end">
-                        <div class="c4-resources-table-wrap">
-                            <table style="border-collapse: separate; border-spacing: 0;">
-                                <tr>
-                                    @php
-                                        $resKeys = ['applications', 'information', 'infrastructure', 'people'];
-                                        $resLabels = ['Applications', 'Information', 'Infrastructure', 'People'];
-                                    @endphp
-                                    @foreach($resKeys as $rkey)
-                                        <td class="c4-resource-cell" id="resCell_{{ $rkey }}" 
-                                            onclick="toggleResource('{{ $rkey }}')"
-                                            title="Klik untuk mengubah centang">
-                                            <span id="resCheck_{{ $rkey }}">✔</span>
-                                        </td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    @foreach($resLabels as $rlabel)
-                                        <th class="c4-slanted-col-header" style="height: 80px;">
-                                            <span class="c4-slanted-label">{{ $rlabel }}</span>
-                                        </th>
-                                    @endforeach
-                                </tr>
-                            </table>
-                        </div>
+                    <!-- IT Resources Checklist Table -->
+                    <div class="c4-resources-table-wrap">
+                        <table style="border-collapse: separate; border-spacing: 0;">
+                            <tr>
+                                <td class="c4-res-cell" id="resCell_applications" onclick="toggleResource('applications')"><span id="resCheck_applications">✔</span></td>
+                                <td class="c4-res-cell" id="resCell_information" onclick="toggleResource('information')"><span id="resCheck_information">✔</span></td>
+                                <td class="c4-res-cell" id="resCell_infrastructure" onclick="toggleResource('infrastructure')"><span id="resCheck_infrastructure">✔</span></td>
+                                <td class="c4-res-cell" id="resCell_people" onclick="toggleResource('people')"><span id="resCheck_people">✔</span></td>
+                            </tr>
+                            <tr>
+                                @php
+                                    $resLabels = ['Applications', 'Information', 'Infrastructure', 'People'];
+                                @endphp
+                                @foreach($resLabels as $rlabel)
+                                    <th class="c4-slanted-col-header" style="height: 75px;">
+                                        <span class="c4-slanted-label">{{ $rlabel }}</span>
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1137,7 +1017,7 @@
         <!-- ====================================================================
              PAGE 2: CONTROL OBJECTIVES
              ==================================================================== -->
-        <div class="c4-book-page c4-view-section" id="c4-section-page2">
+        <div class="c4-book-page c4-view-section" id="c4-section-page2" style="display: none;">
             <div class="c4-header-banner banner-left">
                 <div class="c4-banner-code">{{ $processCode }}</div>
                 <div class="c4-banner-info">
@@ -1150,20 +1030,12 @@
                 <div class="c4-serif-heading">Control Objectives</div>
                 <div class="c4-process-title" id="processTitlePage2">{{ $processCode }} {{ $cobit4Data['title'] }}</div>
 
-                <!-- Objectives Container (View Mode & Input Mode) -->
-                <div id="controlObjectivesContainer" class="c4-objectives-list">
-                    <!-- Populated via JS -->
-                </div>
+                <div id="controlObjectivesContainer" class="mt-4"></div>
 
                 <div class="c4-edit-field mt-3">
-                    <button class="btn btn-action-add py-2 px-3 fw-bold" onclick="addControlObjective()">
-                        <i class="fas fa-plus-circle me-1"></i> Tambah Control Objective Baru
+                    <button class="btn btn-outline-primary btn-sm fw-bold" onclick="addControlObjective()">
+                        <i class="fas fa-plus me-1"></i> Tambah Control Objective Baru
                     </button>
-                </div>
-
-                <div class="c4-page-footer">
-                    <div class="c4-page-num">30</div>
-                    <div>© 2007 IT Governance Institute. All rights reserved. www.itgi.org</div>
                 </div>
             </div>
         </div>
@@ -1171,7 +1043,7 @@
         <!-- ====================================================================
              PAGE 3: MANAGEMENT GUIDELINES
              ==================================================================== -->
-        <div class="c4-book-page c4-view-section" id="c4-section-page3">
+        <div class="c4-book-page c4-view-section" id="c4-section-page3" style="display: none;">
             <div class="c4-header-banner banner-right">
                 <div class="c4-banner-info">
                     <div class="c4-banner-domain" id="bannerDomainText3">{{ $cobit4Data['domain_name'] }}</div>
@@ -1184,144 +1056,110 @@
                 <div class="c4-serif-heading">Management Guidelines</div>
                 <div class="c4-process-title" id="processTitlePage3">{{ $processCode }} {{ $cobit4Data['title'] }}</div>
 
-                <!-- Dual Inputs & Outputs Table -->
+                <!-- Inputs & Outputs Row -->
                 <div class="row g-4 mb-4">
-                    <!-- Left: Inputs -->
-                    <div class="col-lg-6">
-                        <table class="c4-inout-table">
+                    <div class="col-md-6">
+                        <table class="c4-io-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 24%;">From</th>
+                                    <th style="width: 70px;">From</th>
                                     <th>Inputs</th>
-                                    <th class="c4-edit-field" style="width: 12%;">Aksi</th>
+                                    <th class="c4-edit-field" style="width: 40px;">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="inputsTableBody">
-                                <!-- Populated via JS -->
-                            </tbody>
+                            <tbody id="inputsTableBody"></tbody>
                         </table>
                         <div class="c4-edit-field mb-2">
-                            <button class="btn btn-action-add" onclick="addInputRow()">
-                                <i class="fas fa-plus me-1"></i> Tambah Baris Input
-                            </button>
+                            <button class="btn-action-add" onclick="addInputRow()"><i class="fas fa-plus me-1"></i> Tambah Input</button>
                         </div>
-                        <div class="small text-muted fst-italic mt-1">* Inputs from outside CobiT</div>
+                        <div class="small text-muted">* Inputs from outside COBIT</div>
                     </div>
 
-                    <!-- Right: Outputs -->
-                    <div class="col-lg-6">
-                        <table class="c4-inout-table">
+                    <div class="col-md-6">
+                        <table class="c4-io-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 50%;">Outputs</th>
-                                    <th>To</th>
-                                    <th class="c4-edit-field" style="width: 12%;">Aksi</th>
+                                    <th>Outputs</th>
+                                    <th style="width: 140px;">To</th>
+                                    <th class="c4-edit-field" style="width: 40px;">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="outputsTableBody">
-                                <!-- Populated via JS -->
-                            </tbody>
+                            <tbody id="outputsTableBody"></tbody>
                         </table>
                         <div class="c4-edit-field mb-2">
-                            <button class="btn btn-action-add" onclick="addOutputRow()">
-                                <i class="fas fa-plus me-1"></i> Tambah Baris Output
-                            </button>
+                            <button class="btn-action-add" onclick="addOutputRow()"><i class="fas fa-plus me-1"></i> Tambah Output</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- RACI Chart -->
-                <div class="c4-raci-section">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h6 class="fw-bold mb-0 text-dark">RACI Chart</h6>
-                        <div class="c4-edit-field">
-                            <button class="btn btn-action-add" onclick="addRaciActivity()">
-                                <i class="fas fa-plus me-1"></i> Tambah Baris Aktivitas RACI
-                            </button>
-                        </div>
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold fs-6">RACI Chart</span>
+                        <span class="fw-bold text-muted small text-uppercase">Functions</span>
                     </div>
-                    <div class="table-responsive">
+
+                    <div class="c4-raci-table-wrap">
                         <table class="c4-raci-table">
                             <thead>
                                 <tr>
-                                    <th rowspan="2" class="c4-raci-th-activity">Activities</th>
-                                    <th colspan="{{ count($cobit4Data['management_guidelines']['raci']['roles'] ?? []) }}" class="c4-raci-th-func">
-                                        Functions
-                                    </th>
-                                    <th rowspan="2" class="c4-edit-field" style="width: 40px; vertical-align: bottom;">Aksi</th>
-                                </tr>
-                                <tr>
-                                    @foreach($cobit4Data['management_guidelines']['raci']['roles'] ?? [] as $rRole)
-                                        <th class="c4-raci-slanted-th">
-                                            <span class="c4-raci-slanted-label">{{ $rRole }}</span>
-                                        </th>
+                                    <th style="vertical-align: bottom; padding-bottom: 8px; font-weight: 800;">Activities</th>
+                                    @php
+                                        $roles = [
+                                            'CEO', 'CFO', 'Business Executive', 'CIO', 'Business Process Owner',
+                                            'Head Operations', 'Chief Architect', 'Head Development',
+                                            'Head IT Administration', 'PMO', 'Compliance, Audit, Risk and Security'
+                                        ];
+                                    @endphp
+                                    @foreach($roles as $role)
+                                        <th class="raci-header-role"><span>{{ $role }}</span></th>
                                     @endforeach
+                                    <th class="c4-edit-field" style="width: 40px;"></th>
                                 </tr>
                             </thead>
-                            <tbody id="raciTableBody">
-                                <!-- Populated via JS -->
-                            </tbody>
+                            <tbody id="raciTableBody"></tbody>
                         </table>
                     </div>
-                    <div class="small text-muted fst-italic mt-2">
-                        A RACI chart identifies who is <strong>R</strong>esponsible, <strong>A</strong>ccountable, <strong>C</strong>onsulted and/or <strong>I</strong>nformed.
-                        <span class="c4-edit-field text-warning-emphasis ms-2">
-                            (Klik pada sel RACI untuk beralih: R ➔ A ➔ C ➔ I ➔ A/R ➔ Kosong)
-                        </span>
+                    <div class="small text-muted">A <strong>RACI chart</strong> identifies who is <strong>R</strong>esponsible, <strong>A</strong>ccountable, <strong>C</strong>onsulted and/or <strong>I</strong>nformed.</div>
+                    <div class="c4-edit-field mt-2">
+                        <button class="btn-action-add" onclick="addRaciActivity()"><i class="fas fa-plus me-1"></i> Tambah Aktivitas RACI</button>
                     </div>
                 </div>
 
-                <!-- Goals and Metrics Diagram -->
-                <div class="mt-4 pt-3 border-top">
-                    <h6 class="fw-bold mb-3 text-dark">Goals and Metrics</h6>
-
+                <!-- Goals and Metrics Flow -->
+                <div class="mt-4">
+                    <span class="fw-bold fs-6">Goals and Metrics</span>
                     <div class="c4-gm-grid">
-                        <div class="c4-gm-sidebar" style="grid-row: 1;">Goals</div>
-
-                        <!-- Top: IT Goals -->
-                        <div class="c4-gm-card">
-                            <div class="c4-gm-header">IT</div>
-                            <div class="c4-gm-body" id="itGoalsBox"></div>
-                        </div>
-
-                        <!-- Top: Process Goals -->
-                        <div class="c4-gm-card">
-                            <div class="c4-gm-header d-flex justify-content-between align-items-center">
-                                <span class="c4-gm-arrow-badge me-1"><i class="fas fa-arrow-left"></i> set</span>
-                                <span>Process</span>
-                                <span class="c4-gm-arrow-badge ms-1">set <i class="fas fa-arrow-right"></i></span>
+                        <div class="c4-gm-col">
+                            <div class="c4-gm-box goals-box">
+                                <div class="c4-gm-box-header text-center">IT</div>
+                                <div id="itGoalsBox"></div>
                             </div>
-                            <div class="c4-gm-body" id="processGoalsBox"></div>
+                            <div class="c4-gm-box metrics-box">
+                                <div id="itMetricsBox"></div>
+                            </div>
                         </div>
 
-                        <!-- Top: Activities Goals -->
-                        <div class="c4-gm-card">
-                            <div class="c4-gm-header">Activities</div>
-                            <div class="c4-gm-body" id="activitiesGoalsBox"></div>
+                        <div class="c4-gm-col">
+                            <div class="c4-gm-box goals-box">
+                                <div class="c4-gm-box-header text-center">Process</div>
+                                <div id="processGoalsBox"></div>
+                            </div>
+                            <div class="c4-gm-box metrics-box">
+                                <div id="processMetricsBox"></div>
+                            </div>
                         </div>
 
-                        <div class="c4-gm-sidebar" style="grid-row: 2;">Metrics</div>
-
-                        <!-- Bottom: IT Metrics -->
-                        <div class="c4-gm-card">
-                            <div class="c4-gm-body d-flex flex-column justify-content-between" id="itMetricsBox"></div>
-                        </div>
-
-                        <!-- Bottom: Process Metrics -->
-                        <div class="c4-gm-card">
-                            <div class="c4-gm-body d-flex flex-column justify-content-between" id="processMetricsBox"></div>
-                        </div>
-
-                        <!-- Bottom: Activities Metrics -->
-                        <div class="c4-gm-card">
-                            <div class="c4-gm-body d-flex flex-column justify-content-between" id="activitiesMetricsBox"></div>
+                        <div class="c4-gm-col">
+                            <div class="c4-gm-box goals-box">
+                                <div class="c4-gm-box-header text-center">Activities</div>
+                                <div id="activitiesGoalsBox"></div>
+                            </div>
+                            <div class="c4-gm-box metrics-box">
+                                <div id="activitiesMetricsBox"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="c4-page-footer">
-                    <div class="c4-page-num">31</div>
-                    <div>© 2007 IT Governance Institute. All rights reserved. www.itgi.org</div>
                 </div>
             </div>
         </div>
@@ -1329,7 +1167,7 @@
         <!-- ====================================================================
              PAGE 4: MATURITY MODEL
              ==================================================================== -->
-        <div class="c4-book-page c4-view-section" id="c4-section-page4">
+        <div class="c4-book-page c4-view-section" id="c4-section-page4" style="display: none;">
             <div class="c4-header-banner banner-left">
                 <div class="c4-banner-code">{{ $processCode }}</div>
                 <div class="c4-banner-info">
@@ -1342,67 +1180,122 @@
                 <div class="c4-serif-heading">Maturity Model</div>
                 <div class="c4-process-title" id="processTitlePage4">{{ $processCode }} {{ $cobit4Data['title'] }}</div>
 
-                <div class="c4-maturity-preamble">
-                    <span class="c4-view-field" id="viewMaturityIntro">{{ $cobit4Data['maturity_model']['intro'] ?? '' }}</span>
-                    <div class="c4-edit-field mb-3">
+                <div class="c4-maturity-intro">
+                    <span class="c4-view-field" id="viewMaturityIntro">{{ $cobit4Data['maturity_model']['intro'] ?? "Management of the process of {$cobit4Data['title']} is:" }}</span>
+                    <div class="c4-edit-field">
                         <label class="form-label small fw-bold text-muted mb-1">Pengantar Maturity Model:</label>
-                        <textarea class="c4-inline-input" rows="2" 
-                                  oninput="DATA.maturity_model.intro = this.value">{{ $cobit4Data['maturity_model']['intro'] ?? '' }}</textarea>
+                        <input type="text" class="c4-inline-input" id="inputMaturityIntro" 
+                               value="{{ $cobit4Data['maturity_model']['intro'] ?? "Management of the process of {$cobit4Data['title']} is:" }}"
+                               oninput="DATA.maturity_model.intro = this.value">
                     </div>
                 </div>
 
-                <div class="c4-maturity-levels" id="maturityLevelsContainer">
-                    <!-- Populated via JS -->
-                </div>
-
-                <div class="c4-page-footer">
-                    <div class="c4-page-num">32</div>
-                    <div>© 2007 IT Governance Institute. All rights reserved. www.itgi.org</div>
-                </div>
+                <div id="maturityLevelsContainer"></div>
             </div>
         </div>
 
     </div>
 </div>
 
+<!-- ====================================================================
+     MODAL TAMBAH GAMO COBIT 4.1
+     ==================================================================== -->
+<div class="modal fade" id="modalCreateCobit4Gamo" tabindex="-1" aria-labelledby="modalCreateCobit4GamoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title fw-bold" id="modalCreateCobit4GamoLabel">
+                    <i class="fas fa-plus-circle me-1"></i> Tambah GAMO Baru (COBIT 4.1)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formCreateCobit4Gamo" onsubmit="handleCreateCobit4Gamo(event)">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="newGamoCode" class="form-label fw-bold text-dark">
+                            Kode Proses <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control font-monospace fw-bold" id="newGamoCode" placeholder="Contoh: PO11, AI8, DS14, ME5" required>
+                        <div class="form-text">Gunakan kode awalan domain (PO, AI, DS, ME) dan nomor urut.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newGamoTitle" class="form-label fw-bold text-dark">
+                            Nama GAMO / Judul Proses <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="newGamoTitle" placeholder="Contoh: Manage Cloud & AI Integration" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newGamoDomain" class="form-label fw-bold text-dark">
+                            Domain <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="newGamoDomain" required>
+                            <option value="PO">PO - Plan and Organise</option>
+                            <option value="AI">AI - Acquire and Implement</option>
+                            <option value="DS">DS - Deliver and Support</option>
+                            <option value="ME">ME - Monitor and Evaluate</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-0">
+                        <label for="newGamoDesc" class="form-label fw-bold text-dark">
+                            Isi / Deskripsi Ringkasan Proses
+                        </label>
+                        <textarea class="form-control" id="newGamoDesc" rows="4" placeholder="Jelaskan tujuan dan ruang lingkup proses ini..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSubmitNewGamo">
+                        <i class="fas fa-save me-1"></i> Simpan GAMO
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Global Master Data loaded from PHP
-    const DATA = @json($cobit4Data);
     const PROCESS_CODE = @json($processCode);
     const OBJECTIVE_ID = @json($objective->objective_id);
-    const FOCUS_AREA_ID = @json($focusAreaId);
+    const FOCUS_AREA_ID = @json((int)$focusAreaId);
+    let DATA = @json($cobit4Data);
 
     let isInputMode = false;
 
-    // Toggle Input Mode
+    // Toggle Input Mode (Live Editing to MySQL)
     function toggleCobit4InputMode(forceState = null) {
         isInputMode = (forceState !== null) ? forceState : !isInputMode;
         
         const container = document.getElementById('c4Container');
         const banner = document.getElementById('c4InputModeBanner');
-        const statusText = document.getElementById('inputModeStatusText');
         const toggleBtn = document.getElementById('btnInputModeToggle');
 
         if (isInputMode) {
-            container.classList.add('input-mode-on');
-            banner.classList.add('active');
-            statusText.textContent = 'ON';
-            toggleBtn.classList.remove('btn-outline-warning');
-            toggleBtn.classList.add('btn-warning');
+            if (container) container.classList.add('input-mode-on');
+            if (banner) banner.classList.add('active');
+            if (toggleBtn) {
+                toggleBtn.classList.remove('btn-outline-warning');
+                toggleBtn.classList.add('btn-warning');
+                toggleBtn.innerHTML = '<i class="fas fa-check me-1"></i> Edit (Aktif)';
+            }
         } else {
-            container.classList.remove('input-mode-on');
-            banner.classList.remove('active');
-            statusText.textContent = 'OFF';
-            toggleBtn.classList.remove('btn-warning');
-            toggleBtn.classList.add('btn-outline-warning');
+            if (container) container.classList.remove('input-mode-on');
+            if (banner) banner.classList.remove('active');
+            if (toggleBtn) {
+                toggleBtn.classList.remove('btn-warning');
+                toggleBtn.classList.add('btn-outline-warning');
+                toggleBtn.innerHTML = '<i class="fas fa-edit me-1"></i> Edit';
+            }
         }
 
         renderAllDynamicSections();
     }
 
-    // Switch between Tab 1, 2, 3, 4 or Book Mode (All Pages)
+    // Switch between Tab 1, 2, 3, 4
     function switchCobit4Page(pageId, btnElement) {
-        document.querySelectorAll('.c4-nav-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.c4-nav-pills .c4-nav-btn').forEach(btn => btn.classList.remove('active'));
         if (btnElement) btnElement.classList.add('active');
 
         const sections = {
@@ -1412,12 +1305,15 @@
             'page4': document.getElementById('c4-section-page4'),
         };
 
-        if (pageId === 'all') {
-            Object.values(sections).forEach(sec => { if (sec) sec.style.display = 'block'; });
-        } else {
-            Object.keys(sections).forEach(key => {
-                if (sections[key]) sections[key].style.display = (key === pageId) ? 'block' : 'none';
-            });
+        Object.keys(sections).forEach(key => {
+            if (sections[key]) sections[key].style.display = (key === pageId) ? 'block' : 'none';
+        });
+    }
+
+    // Navigate to selected objective
+    function handleCobit4ObjectiveSelect(url) {
+        if (url) {
+            window.location.href = url;
         }
     }
 
@@ -1477,10 +1373,10 @@
     // Pentagon Segments Cycling (Primary -> Secondary -> Neutral)
     function cyclePentagon(segmentKey) {
         if (!isInputMode) return;
-        const current = DATA.it_governance_focus[segmentKey] || '';
+        const current = (DATA.it_governance_focus[segmentKey] || '').toLowerCase();
         let next = '';
-        if (current === '') next = 'Primary';
-        else if (current === 'Primary') next = 'Secondary';
+        if (current === '' || current === 'none') next = 'Primary';
+        else if (current === 'primary') next = 'Secondary';
         else next = '';
 
         DATA.it_governance_focus[segmentKey] = next;
@@ -1489,28 +1385,26 @@
 
     function updatePentagonUI(key, val) {
         const poly = document.getElementById(`poly_${key}`);
-        const txt = document.getElementById(`txt_${key}`);
+        const txts = document.querySelectorAll(`.c4-txt-${key}`);
         if (!poly) return;
 
-        let fill = '#f1f5f9';
-        let stroke = '#94a3b8';
-        let textFill = '#334155';
+        let fill = '#ffffff';
+        let textFill = '#0f2338';
 
-        if (val === 'Primary') {
-            fill = '#13467b';
-            stroke = '#3b6998';
+        const normalized = (val || '').toLowerCase();
+        if (normalized === 'primary' || normalized === 'p') {
+            fill = '#1b4b83';
             textFill = '#ffffff';
-        } else if (val === 'Secondary') {
-            fill = '#8bb4de';
-            stroke = '#3b6998';
-            textFill = '#0f2942';
+        } else if (normalized === 'secondary' || normalized === 's') {
+            fill = '#a6bdd7';
+            textFill = '#0f2338';
+        } else {
+            fill = '#ffffff';
+            textFill = '#0f2338';
         }
 
         poly.setAttribute('fill', fill);
-        poly.setAttribute('stroke', stroke);
-        if (txt) {
-            txt.setAttribute('fill', textFill);
-        }
+        txts.forEach(t => t.setAttribute('fill', textFill));
     }
 
     // IT Resources Checklist Toggle
@@ -1601,7 +1495,7 @@
             container.innerHTML = list.map(co => `
                 <div class="c4-obj-item">
                     <div class="c4-obj-item-title">${escapeHtml(co.code)} ${escapeHtml(co.title)}</div>
-                    <div class="c4-obj-item-desc">${escapeHtml(co.desc)}</div>
+                    <div class="c4-obj-item-desc">${escapeHtml(co.desc || co.description || '')}</div>
                 </div>
             `).join('');
         } else {
@@ -1619,7 +1513,7 @@
                         </button>
                     </div>
                     <textarea class="c4-inline-input" rows="3" 
-                              oninput="DATA.control_objectives[${idx}].desc = this.value" placeholder="Deskripsi Objective...">${escapeHtml(co.desc)}</textarea>
+                              oninput="DATA.control_objectives[${idx}].desc = this.value" placeholder="Deskripsi Objective...">${escapeHtml(co.desc || co.description || '')}</textarea>
                 </div>
             `).join('');
         }
@@ -1790,31 +1684,17 @@
         renderGmBox('processGoalsBox', gm.process_goals || [], 'process_goals', 'Tambah Process Goal');
         renderGmBox('activitiesGoalsBox', gm.activities_goals || [], 'activities_goals', 'Tambah Activity Goal');
 
-        renderGmBox('itMetricsBox', gm.it_metrics || [], 'it_metrics', 'Tambah IT Metric', `
-            <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2 small">
-                <span class="c4-gm-arrow-badge">⇕ measure</span>
-                <span class="c4-gm-arrow-badge">drive ↗</span>
-            </div>
-        `);
-        renderGmBox('processMetricsBox', gm.process_metrics || [], 'process_metrics', 'Tambah Process Metric', `
-            <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2 small">
-                <span class="c4-gm-arrow-badge">⇕ measure</span>
-                <span class="c4-gm-arrow-badge">drive ↗</span>
-            </div>
-        `);
-        renderGmBox('activitiesMetricsBox', gm.activities_metrics || [], 'activities_metrics', 'Tambah Activity Metric', `
-            <div class="d-flex justify-content-start align-items-center pt-2 border-top mt-2 small">
-                <span class="c4-gm-arrow-badge">⇕ measure</span>
-            </div>
-        `);
+        renderGmBox('itMetricsBox', gm.it_metrics || [], 'it_metrics', 'Tambah IT Metric');
+        renderGmBox('processMetricsBox', gm.process_metrics || [], 'process_metrics', 'Tambah Process Metric');
+        renderGmBox('activitiesMetricsBox', gm.activities_metrics || [], 'activities_metrics', 'Tambah Activity Metric');
     }
 
-    function renderGmBox(containerId, list, key, addLabel, footerHtml = '') {
+    function renderGmBox(containerId, list, key, addLabel) {
         const box = document.getElementById(containerId);
         if (!box) return;
 
         if (!isInputMode) {
-            box.innerHTML = `<ul>${list.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>` + footerHtml;
+            box.innerHTML = `<ul>${list.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`;
         } else {
             box.innerHTML = `
                 <div>
@@ -1829,7 +1709,7 @@
                         <i class="fas fa-plus me-1"></i> ${addLabel}
                     </button>
                 </div>
-            ` + footerHtml;
+            `;
         }
     }
 
@@ -1856,7 +1736,7 @@
                 return `
                     <div class="c4-maturity-level-item">
                         <span class="c4-maturity-badge">${lvl} ${escapeHtml(item.name)}</span> when<br>
-                        <span class="text-dark">${escapeHtml(item.desc)}</span>
+                        <span class="text-dark">${escapeHtml(item.desc || item.description || '')}</span>
                     </div>
                 `;
             } else {
@@ -1870,7 +1750,7 @@
                             <span class="text-muted fw-bold">when</span>
                         </div>
                         <textarea class="c4-inline-input" rows="3" 
-                                  oninput="DATA.maturity_model.levels[${lvl}].desc = this.value">${escapeHtml(item.desc)}</textarea>
+                                  oninput="DATA.maturity_model.levels[${lvl}].desc = this.value">${escapeHtml(item.desc || item.description || '')}</textarea>
                     </div>
                 `;
             }
@@ -1892,12 +1772,70 @@
         });
     }
 
-    // AJAX: Save Data to Server
+    // AJAX: Tambah GAMO Baru (Create)
+    async function handleCreateCobit4Gamo(e) {
+        e.preventDefault();
+        const code = document.getElementById('newGamoCode').value.trim();
+        const title = document.getElementById('newGamoTitle').value.trim();
+        const domain_code = document.getElementById('newGamoDomain').value;
+        const description = document.getElementById('newGamoDesc').value.trim();
+
+        if (!code || !title) {
+            Swal.fire({ icon: 'warning', title: 'Data Kurang', text: 'Kode proses dan nama GAMO wajib diisi!' });
+            return;
+        }
+
+        try {
+            Swal.fire({
+                title: 'Menyimpan GAMO Baru...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const res = await fetch("{{ route('cobit4.create') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    code: code,
+                    title: title,
+                    domain_code: domain_code,
+                    description: description,
+                    focus_area_id: FOCUS_AREA_ID
+                })
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'GAMO Berhasil Dibuat!',
+                    text: result.message,
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+                if (result.redirect_url) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                throw new Error(result.message || 'Gagal menambahkan GAMO.');
+            }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+        }
+    }
+
+    // AJAX: Save Data to MySQL Database
     async function saveCobit4Data() {
         try {
             Swal.fire({
-                title: 'Menyimpan...',
-                text: 'Sedang menyimpan data COBIT 4.1 ke database & storage.',
+                title: 'Menyimpan ke Database...',
+                text: 'Sedang menyimpan data COBIT 4.1 ke database MySQL.',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -1922,7 +1860,7 @@
                 await Swal.fire({
                     icon: 'success',
                     title: 'Berhasil Disimpan!',
-                    text: result.message || 'Perubahan COBIT 4.1 berhasil disimpan.',
+                    text: result.message || 'Perubahan COBIT 4.1 berhasil disimpan ke database.',
                     timer: 2000,
                     showConfirmButton: false,
                 });
@@ -1939,55 +1877,43 @@
         }
     }
 
-    // AJAX: Reset to Baseline
-    async function resetCobit4Data() {
+
+    // AJAX: Hapus GAMO
+    async function deleteCurrentGamo() {
         const confirm = await Swal.fire({
-            title: 'Reset ke Standar ISACA?',
-            text: 'Semua perubahan kustom untuk proses ini akan dikembalikan ke data resmi buku COBIT 4.1.',
+            title: `Hapus GAMO ${PROCESS_CODE}?`,
+            text: `Proses ${PROCESS_CODE} - ${DATA.title} beserta seluruh datanya akan dihapus dari database.`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, Reset Sekarang!',
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Ya, Hapus Sekarang!',
             cancelButtonText: 'Batal'
         });
 
         if (!confirm.isConfirmed) return;
 
         try {
-            Swal.fire({
-                title: 'Mereset...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
+            Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-            const res = await fetch("{{ route('cobit4.reset') }}", {
-                method: 'POST',
+            const res = await fetch("{{ url('objectives/cobit4') }}/" + encodeURIComponent(PROCESS_CODE), {
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({
-                    process_code: PROCESS_CODE,
-                    objective_id: OBJECTIVE_ID,
-                    focus_area_id: FOCUS_AREA_ID,
-                })
+                body: JSON.stringify({ focus_area_id: FOCUS_AREA_ID })
             });
 
             const result = await res.json();
             if (result.success) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil di-Reset!',
-                    text: 'Data telah dikembalikan ke standar ISACA.',
-                    timer: 1800,
-                    showConfirmButton: false,
-                });
-                window.location.reload();
+                await Swal.fire({ icon: 'success', title: 'Terhapus!', text: result.message, timer: 1800, showConfirmButton: false });
+                window.location.href = "{{ url('objectives') }}?focus_area=" + FOCUS_AREA_ID;
+            } else {
+                throw new Error(result.message || 'Gagal menghapus proses.');
             }
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Error', text: err.message });
+            Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
         }
     }
 

@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models\Cobit4;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Cobit4Output extends Model
+{
+    use HasFactory;
+
+    protected $table = 'trs_cobit4_outputs';
+
+    protected $fillable = [
+        'process_id',
+        'output_description',
+        'to_target',
+        'order_no',
+    ];
+
+    public function process()
+    {
+        return $this->belongsTo(Cobit4Process::class, 'process_id');
+    }
+}
