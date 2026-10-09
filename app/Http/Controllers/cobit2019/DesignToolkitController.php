@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Services\Cobit\CobitAssessmentAccessService;
 use App\Services\Organization\OrganizationRegistryService;
+use App\Support\Organization\OrganizationNameNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
