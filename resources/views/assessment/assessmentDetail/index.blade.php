@@ -8,6 +8,9 @@
 --}}
 
 @section('content')
+    @php
+        $canManageAssessment = (bool) ($canManageAssessment ?? false);
+    @endphp
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- Loading Overlay with Progress --}}
@@ -99,7 +102,7 @@
                             <a href="{{ route('assessment.evidence.index', $evalId) }}"
                                 class="domain-tab text-decoration-none d-flex align-items-center"
                                 style="background-color: #0f2b5c; color: #fff;">
-                                <i class="fas fa-plus me-2"></i>Evidence
+                                <i class="fas {{ $canManageAssessment ? 'fa-plus' : 'fa-folder-open' }} me-2"></i>Evidence
                             </a>
                             @if (($canManageAssessment ?? false) && $evaluation->status !== 'finished')
                                 <button type="button" class="d-flex align-items-center px-3 py-2 me-1 border-0 fw-bold"
@@ -128,7 +131,11 @@
                     </div>
                 </div>
 
-                {{-- Selected domains scope display removed per request --}}
+                @unless ($canManageAssessment)
+                    <div class="alert alert-info mt-3 mb-0" role="status">
+                        <i class="fas fa-eye me-2"></i>Mode baca saja. Rating, evidence, dan catatan tidak dapat diubah.
+                    </div>
+                @endunless
 
                 <div id="domain-overview-wrapper" class="domain-overview-wrapper mt-3" style="display: none;">
                     <button class="domain-overview-toggle" type="button" id="domain-overview-toggle"
@@ -205,6 +212,7 @@
         </div>
 
         {{-- Edit Scope Modal --}}
+        @if ($canManageAssessment)
         <div class="modal fade" id="editScopeModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
@@ -651,6 +659,8 @@
             });
         </script>
 
+        @endif
+
         {{-- Ensure SweetAlert2 is loaded --}}
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -1016,7 +1026,8 @@
                                                                     </td>
                                                                     <td class="rating-cell">
                                                                         <select
-                                                                            class="form-select form-select-sm activity-rating-select"
+                                                                            class="form-select form-select-sm activity-rating-select {{ $canManageAssessment ? '' : 'd-none' }}"
+                                                                            @disabled(! $canManageAssessment)
                                                                             data-activity-id="{{ $activity->activity_id }}"
                                                                             data-objective-id="{{ $objective->objective_id }}"
                                                                             data-level="{{ $level }}">
@@ -1026,6 +1037,9 @@
                                                                             <option value="L">Largely</option>
                                                                             <option value="F">Fully</option>
                                                                         </select>
+                                                                        @unless ($canManageAssessment)
+                                                                            <span class="activity-rating-display" data-activity-id="{{ $activity->activity_id }}">—</span>
+                                                                        @endunless
                                                                     </td>
                                                                     @if ($loop->first)
                                                                         <td class="reference-cell reference-column-cell"
@@ -1058,12 +1072,14 @@
                                                                                 id="evidence_{{ $activity->activity_id }}" name="evidence_{{ $activity->activity_id }}"
                                                                                 data-field-type="evidence" data-activity-id="{{ $activity->activity_id }}"
                                                                                 data-objective-id="{{ $objective->objective_id }}" data-level="{{ $level }}" rows="2" readonly
+                                                                                @disabled(! $canManageAssessment)
                                                                                 style="background-color: #f8f9fa;" placeholder="Select evidence from the list..."></textarea>
                                                                             <div class="evidence-display"
                                                                                 data-activity-id="{{ $activity->activity_id }}">
                                                                                 <span class="text-muted small">No evidence
                                                                                     added</span>
                                                                             </div>
+                                                                            @if ($canManageAssessment)
                                                                             <div class="d-flex gap-2 align-items-center">
                                                                                 <button type="button"
                                                                                     class="btn btn-outline-secondary btn-sm evidence-modal-trigger"
@@ -1082,14 +1098,19 @@
                                                                                         evidence...</option>
                                                                                 </select>
                                                                             </div>
+                                                                            @endif
                                                                         </div>
                                                                     </td>
 
                                                                     <td class="notes-cell">
-                                                                        <textarea class="form-control form-control-sm assessment-textarea note-input" id="note_{{ $activity->activity_id }}"
+                                                                        <textarea class="form-control form-control-sm assessment-textarea note-input {{ $canManageAssessment ? '' : 'd-none' }}" id="note_{{ $activity->activity_id }}"
+                                                                            @disabled(! $canManageAssessment) @readonly(! $canManageAssessment)
                                                                             name="note_{{ $activity->activity_id }}" data-field-type="note" data-activity-id="{{ $activity->activity_id }}"
                                                                             data-objective-id="{{ $objective->objective_id }}" data-level="{{ $level }}" rows="2"
                                                                             placeholder="Enter additional notes or comments..."></textarea>
+                                                                        @unless ($canManageAssessment)
+                                                                            <div class="activity-note-display" data-activity-id="{{ $activity->activity_id }}" style="white-space: pre-wrap;">—</div>
+                                                                        @endunless
                                                                     </td>
                                                                 </tr>
                                                                 @php $activityCounter++; @endphp
@@ -1130,6 +1151,7 @@
     </div>
 
     <!-- Evidence modal -->
+    @if ($canManageAssessment)
     <div class="modal fade" id="evidenceModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
             <div class="modal-content">
@@ -1206,7 +1228,7 @@
         </div>
     </div>
 
-    @php($canManageAssessment = (bool) ($canManageAssessment ?? false))
+    @endif
 
     <div class="sticky-action-group">
         @if ($canManageAssessment)
@@ -1354,6 +1376,7 @@
             }
 
             init() {
+                if (!this.canManageAssessment) this.lockInterface();
                 this.cacheLoadingElements();
                 this.buildElementCache();
                 this.initializeEvidenceLibrary();
@@ -2017,6 +2040,7 @@
             }
 
             async saveAssessment() {
+                if (!this.canManageAssessment) return;
                 this.showLoading('Collecting assessment data...', 0);
 
                 try {
@@ -2196,7 +2220,9 @@
                     updateProgressFn('Complete!', 100);
                     hideLoadingFn();
 
-                    // If viewer is not owner, force read-only mode after data is loaded
+                    this.updateReadOnlyDisplays();
+
+                    // Keep read-only access locked after data is loaded.
                     if (!this.canManageAssessment) {
                         this.setActionButtonsDisabled(true);
                         this.lockInterface();
@@ -2758,6 +2784,19 @@
             setActivityNote(objectiveId, level, activityId, note) {
                 this.initializeLevelScore(objectiveId, level);
                 this.levelScores[objectiveId][level].notes[activityId] = note;
+            }
+
+            updateReadOnlyDisplays() {
+                if (this.canManageAssessment) return;
+                const ratingLabels = {N: 'None', P: 'Partially', L: 'Largely', F: 'Fully'};
+                document.querySelectorAll('.activity-rating-display').forEach(display => {
+                    const select = this.elementCache.ratingSelects.get(display.dataset.activityId);
+                    display.textContent = ratingLabels[select?.value] || '—';
+                    display.className = `activity-rating-display ${select?.className.match(/rating-(?:full|high|medium|low)/)?.[0] || ''}`;
+                });
+                document.querySelectorAll('.activity-note-display').forEach(display => {
+                    display.textContent = this.elementCache.noteInputs.get(display.dataset.activityId)?.value || '—';
+                });
             }
 
             clearActivityRating(objectiveId, level, activityId) {
@@ -3915,6 +3954,7 @@
             }
 
             async finishAssessment() {
+                if (!this.canManageAssessment) return;
                 this.setActionButtonsDisabled(true);
                 try {
                     const response = await fetch(`/assessment/${this.currentEvalId}/finish`, {
@@ -3951,6 +3991,7 @@
             }
 
             async unlockAssessment() {
+                if (!this.canManageAssessment) return;
                 this.setActionButtonsDisabled(true);
                 try {
                     const response = await fetch(`/assessment/${this.currentEvalId}/unlock`, {
@@ -4006,6 +4047,7 @@
             }
 
             unlockInterface() {
+                if (!this.canManageAssessment) return;
                 const selectors = [
                     '.activity-rating-select',
                     '.evidence-input',
@@ -5236,25 +5278,36 @@
         }
 
 
-        .activity-rating-select.rating-full {
+        .activity-rating-display {
+            display: inline-block;
+            padding: 0.35rem 0.65rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+        }
+
+        .activity-rating-select.rating-full,
+        .activity-rating-display.rating-full {
             background-color: #198754;
             border-color: #198754;
             color: #fff;
         }
 
-        .activity-rating-select.rating-high {
+        .activity-rating-select.rating-high,
+        .activity-rating-display.rating-high {
             background-color: #0dcaf0;
             border-color: #0dcaf0;
             color: #042c55;
         }
 
-        .activity-rating-select.rating-medium {
+        .activity-rating-select.rating-medium,
+        .activity-rating-display.rating-medium {
             background-color: #ffe69c;
             border-color: #ffe69c;
             color: #5c4705;
         }
 
-        .activity-rating-select.rating-low {
+        .activity-rating-select.rating-low,
+        .activity-rating-display.rating-low {
             background-color: #f8d7da;
             border-color: #f8d7da;
             color: #842029;

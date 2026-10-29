@@ -7,7 +7,7 @@ use App\Http\Requests\AssessmentEval\PreviousEvidenceRequest;
 use App\Http\Requests\AssessmentEval\UpsertEvidenceRequest;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Evidence\AssessmentEvidenceService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Eval\EvaluationReadService;
 use App\Models\MstEvidence;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 class EvidenceController extends Controller
 {
     public function __construct(
-        protected EvaluationService $evaluationService,
+        protected EvaluationReadService $evaluationReader,
         protected AssessmentEvidenceService $assessmentEvidenceService,
         protected AssessmentAccessService $assessmentAccessService
     ) {
@@ -24,7 +24,7 @@ class EvidenceController extends Controller
     public function index($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
             
             if (!$evaluation) {
                 return redirect()->route('assessment.index')->withErrors(['error' => 'Assessment not found']);
@@ -48,7 +48,7 @@ class EvidenceController extends Controller
     public function previous(PreviousEvidenceRequest $request, $evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
             if (!$evaluation) return response()->json(['success' => false, 'message' => 'Assessment not found'], 404);
 
             $currentUser = Auth::user();
@@ -76,7 +76,7 @@ class EvidenceController extends Controller
     public function store(UpsertEvidenceRequest $request, $evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
             
             if (!$evaluation || ! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -100,7 +100,7 @@ class EvidenceController extends Controller
     {
         try {
             $evidence = MstEvidence::findOrFail($evidenceId);
-            $evaluation = $this->evaluationService->getEvaluationById($evidence->eval_id);
+            $evaluation = $this->evaluationReader->getEvaluationById($evidence->eval_id);
 
             if (!$evaluation || ! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);

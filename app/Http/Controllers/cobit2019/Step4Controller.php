@@ -3,18 +3,20 @@
 namespace App\Http\Controllers\cobit2019;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Assessment;
 use App\Models\DfStep2;
 use App\Models\DfStep3;
 use App\Models\TrsStep2;
 use App\Models\TrsStep3;
 use App\Models\TrsStep4;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Step4Controller extends Controller
 {
     private const DEFAULT_WEIGHTS_STEP2 = [1, 1, 1, 1];
+
     private const DEFAULT_WEIGHTS_STEP3 = [1, 1, 1, 1, 1, 1];
 
     /**
@@ -23,7 +25,7 @@ class Step4Controller extends Controller
     public function index(Request $request)
     {
         $assessmentId = session('assessment_id');
-        if (!$assessmentId) {
+        if (! $assessmentId) {
             return redirect()->back()->with('error', 'Assessment ID tidak ditemukan.');
         }
 
@@ -35,13 +37,7 @@ class Step4Controller extends Controller
         // Get step data from trs_step2 and trs_step3 tables
         $stepData = $this->getStepData($assessmentId, $userId);
 
-        // Get adjustment & reason dari session
-        $step4Session = $this->getStep4Session();
         $step4Db = $this->getStep4Db($assessmentId, $userId);
-
-        $step4Adjust = $this->mergeStep4Data($step4Session['adjustment'], $step4Db['adjustment']);
-        $step4ReasonAdj = $this->mergeStep4Data($step4Session['reason_adjust'], $step4Db['reason_adjust']);
-        $step4ReasonTgt = $this->mergeStep4Data($step4Session['reason_target'], $step4Db['reason_target']);
 
         return view('design_factor.step4.step4sumaryblade', [
             'step2' => [
@@ -56,9 +52,9 @@ class Step4Controller extends Controller
             'combinedTotals' => $stepData['combinedTotals'],
             'refinedScopes' => $stepData['refinedScopes'],
             'initialScopes' => $stepData['initialScopes'],
-            'step4Adjust' => $step4Adjust,
-            'step4ReasonAdj' => $step4ReasonAdj,
-            'step4ReasonTgt' => $step4ReasonTgt,
+            'step4Adjust' => $step4Db['adjustment'],
+            'step4ReasonAdj' => $step4Db['reason_adjust'],
+            'step4ReasonTgt' => $step4Db['reason_target'],
             'step4Selected' => $step4Db['selected'],
             'step4Agreed' => $step4Db['agreed_level'],
             'assessment' => $this->getAssessment($assessmentId),
@@ -73,20 +69,21 @@ class Step4Controller extends Controller
         $assessmentId = session('assessment_id');
         $userId = Auth::id();
 
-        // Update weights if provided
-        $this->updateWeightsIfProvided($request, $assessmentId, $userId);
-
-        // Save adjustments/reasons to session
-        session([
-            'step4.adjustment' => $request->input('adjustment', []),
-            'step4.reason_adjust' => $request->input('reason_adjust', []),
-            'step4.reason_target' => $request->input('reason_target', []),
+        $request->validate([
+            'adjustment' => 'sometimes|array', 'adjustment.*' => 'nullable|integer|between:-100,100',
+            'reason_adjust' => 'sometimes|array', 'reason_adjust.*' => 'nullable|string|max:5000',
+            'reason_target' => 'sometimes|array', 'reason_target.*' => 'nullable|string|max:5000',
+            'agreed_level' => 'sometimes|array', 'agreed_level.*' => 'nullable|integer|between:0,5',
+            'suggested_level' => 'sometimes|array', 'suggested_level.*' => 'nullable|integer|between:0,5',
+            'concluded_priority' => 'sometimes|array', 'concluded_priority.*' => 'nullable|numeric',
+            'selected' => 'sometimes|array', 'selected.*' => 'nullable|in:0,1',
         ]);
-
-        $this->saveStep4($request, $assessmentId, $userId);
+        DB::transaction(function () use ($request, $assessmentId, $userId): void {
+            $this->saveStep4($request, $assessmentId, $userId);
+        });
 
         return redirect()->route('step4.index')
-            ->with('success', 'Data Step 4 berhasil disimpan sementara.');
+            ->with('success', 'Hasil Step 4 berhasil disimpan ke database.');
     }
 
     /**
@@ -105,11 +102,11 @@ class Step4Controller extends Controller
             ->first();
 
         return [
-            'step2' => is_array($dfStep2->weights ?? null) 
-                ? $dfStep2->weights 
+            'step2' => is_array($dfStep2->weights ?? null)
+                ? $dfStep2->weights
                 : self::DEFAULT_WEIGHTS_STEP2,
-            'step3' => is_array($dfStep3->weights ?? null) 
-                ? $dfStep3->weights 
+            'step3' => is_array($dfStep3->weights ?? null)
+                ? $dfStep3->weights
                 : self::DEFAULT_WEIGHTS_STEP3,
         ];
     }
@@ -180,18 +177,6 @@ class Step4Controller extends Controller
     }
 
     /**
-     * Get Step 4 session data
-     */
-    private function getStep4Session(): array
-    {
-        return [
-            'adjustment' => session('step4.adjustment', []),
-            'reason_adjust' => session('step4.reason_adjust', []),
-            'reason_target' => session('step4.reason_target', []),
-        ];
-    }
-
-    /**
      * Load Step 4 data from database
      */
     private function getStep4Db(int $assessmentId, int $userId): array
@@ -221,60 +206,11 @@ class Step4Controller extends Controller
     }
 
     /**
-     * Merge session and DB values (DB wins when present)
-     */
-    private function mergeStep4Data(array $sessionData, array $dbData): array
-    {
-        if (empty($dbData)) return $sessionData;
-
-        foreach ($dbData as $key => $value) {
-            $sessionData[$key] = $value;
-        }
-
-        return $sessionData;
-    }
-
-    /**
      * Get assessment model
      */
     private function getAssessment(int $assessmentId): ?Assessment
     {
         return Assessment::where('assessment_id', $assessmentId)->first();
-    }
-
-    /**
-     * Update weights if provided in request
-     */
-    private function updateWeightsIfProvided(Request $request, int $assessmentId, int $userId): void
-    {
-        if ($request->has('weight2')) {
-            $w2 = $this->sanitizeWeights($request->input('weight2'));
-            DfStep2::updateOrCreate(
-                ['assessment_id' => $assessmentId, 'user_id' => $userId],
-                ['weights' => $w2]
-            );
-            session(['step2.weights' => $w2]);
-        }
-
-        if ($request->has('weight3')) {
-            $w3 = $this->sanitizeWeights($request->input('weight3'));
-            DfStep3::updateOrCreate(
-                ['assessment_id' => $assessmentId, 'user_id' => $userId],
-                ['weights' => $w3]
-            );
-            session(['step3.weights' => $w3]);
-        }
-    }
-
-    /**
-     * Sanitize weight values
-     */
-    private function sanitizeWeights(mixed $input): array
-    {
-        return array_values(array_map(
-            fn($v) => is_numeric($v) ? (float) $v : 0,
-            (array) $input
-        ));
     }
 
     /**
@@ -294,7 +230,9 @@ class Step4Controller extends Controller
 
         for ($code = 1; $code <= 40; $code++) {
             $objectiveId = $objectiveMap[$code] ?? null;
-            if (!$objectiveId) continue;
+            if (! $objectiveId) {
+                continue;
+            }
 
             $suggestedLevel = isset($suggested[$code]) ? (int) $suggested[$code] : 1;
             $agreedLevel = isset($agreed[$code]) ? (int) $agreed[$code] : $suggestedLevel;
@@ -313,7 +251,7 @@ class Step4Controller extends Controller
                     'suggested_level' => $suggestedLevel,
                     'agreed_level' => $agreedLevel,
                     'reason_target' => $reasonTarget[$code] ?? null,
-                    'is_selected' => isset($selected[$code]) ? 1 : 0,
+                    'is_selected' => (int) ($selected[$code] ?? 0) === 1 ? 1 : 0,
                 ]
             );
         }

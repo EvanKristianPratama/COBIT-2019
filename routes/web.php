@@ -132,6 +132,9 @@ Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
 });
 
 Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
+    Route::put('/objectives/evolution/gamo/{evolution}', [MstObjectiveController::class, 'updateGamoEvolution'])
+        ->name('cobit.evolution.update');
+
     // Focus Area CRUD
     Route::post('/focus-areas', [FocusAreaController::class, 'store'])->name('focus-areas.store');
     Route::put('/focus-areas/{id}', [FocusAreaController::class, 'update'])->name('focus-areas.update');
@@ -306,6 +309,14 @@ Route::get('/design_factor/cobit_home', [DesignToolkitController::class, 'showJo
     ->name('cobit.home')
     ->middleware(['auth', 'permission:cobit.view']);
 
+Route::middleware(['auth', 'permission:design-factors.view'])->group(function () {
+    Route::get('/design_factor/list', [DesignToolkitController::class, 'listDesignFactors'])->name('cobit.design-factors.index');
+    Route::post('/design_factor/{assessment}/open', [DesignToolkitController::class, 'open'])->name('cobit.design-factors.open');
+});
+Route::delete('/design_factor/{assessment}', [DesignToolkitController::class, 'destroy'])
+    ->name('cobit.design-factors.destroy')
+    ->middleware(['auth', 'permission:design-factors.input']);
+
 // Target capability routes
 Route::middleware(['auth', 'permission:design-factors.view'])->group(function () {
     Route::get('/design_factor/target-capability/{id?}', [TargetCapabilityController::class, 'edit'])
@@ -331,7 +342,7 @@ Route::get('/step3', [Step3Controller::class, 'index'])
     ->name('step3.index')
     ->middleware(['auth', 'permission:design-factors.view', 'cobit.assessment.access:view']);
 
-// Route POST untuk simpan Step 3 ke session
+// Simpan hasil Step 3 ke database
 Route::post('/step3/store', [Step3Controller::class, 'store'])
     ->name('step3.store')
     ->middleware(['auth', 'permission:design-factors.input', 'cobit.assessment.access:input']);
@@ -341,7 +352,7 @@ Route::get('/step4', [Step4Controller::class, 'index'])
     ->name('step4.index')
     ->middleware(['auth', 'permission:design-factors.view', 'cobit.assessment.access:view']);
 
-// Route POST untuk simpan Step 4 ke session
+// Simpan hasil Step 4 ke database
 Route::post('/step4/store', [Step4Controller::class, 'store'])
     ->name('step4.store')
     ->middleware(['auth', 'permission:design-factors.input', 'cobit.assessment.access:input']);
@@ -439,13 +450,17 @@ Route::prefix('design_factor/roadmap')
     ->middleware(['auth', 'approved.user'])
     ->name('roadmap.')
     ->group(function () {
-        Route::get('/', [RoadmapController::class, 'index'])->name('index');
-        Route::get('/report', [RoadmapController::class, 'report'])->name('report');
-        Route::post('/store', [RoadmapController::class, 'store'])->name('store');
-        Route::post('/add-year', [RoadmapController::class, 'addYear'])->name('add-year');
-        Route::get('/step4-scope', [RoadmapController::class, 'step4Scope'])->name('step4-scope');
-        Route::get('/scopes', [RoadmapController::class, 'scopingOptions'])->name('scopes');
-        Route::post('/delete-year', [RoadmapController::class, 'deleteYear'])->name('delete-year');
+        Route::middleware('permission:design-factors.view')->group(function () {
+            Route::get('/', [RoadmapController::class, 'index'])->name('index');
+            Route::get('/report', [RoadmapController::class, 'report'])->name('report');
+            Route::get('/step4-scope', [RoadmapController::class, 'step4Scope'])->name('step4-scope');
+            Route::get('/scopes', [RoadmapController::class, 'scopingOptions'])->name('scopes');
+        });
+        Route::middleware('permission:design-factors.input')->group(function () {
+            Route::post('/store', [RoadmapController::class, 'store'])->name('store');
+            Route::post('/add-year', [RoadmapController::class, 'addYear'])->name('add-year');
+            Route::post('/delete-year', [RoadmapController::class, 'deleteYear'])->name('delete-year');
+        });
     });
 
 // Assessment routes

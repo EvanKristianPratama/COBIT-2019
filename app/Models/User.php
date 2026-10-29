@@ -367,34 +367,61 @@ class User extends Authenticatable
         return collect();
     }
 
-    public function activeOrganizationId(): ?int
+    /**
+     * @return list<int>
+     */
+    public function activeOrganizationIds(?Collection $assignedOrganizations = null): array
     {
-        $sessionOrgId = session('active_organization_id');
+        $assigned = $assignedOrganizations ?? $this->assignedOrganizations();
+        $availableIds = $assigned
+            ->pluck('organization_id')
+            ->map(fn ($organizationId): int => (int) $organizationId)
+            ->filter(fn (int $organizationId): bool => $organizationId > 0)
+            ->unique()
+            ->values();
 
-        if ($sessionOrgId !== null && $sessionOrgId !== '') {
-            $sessionOrgId = (int) $sessionOrgId;
-            if ($this->isAdmin() || $this->hasOrganizationId($sessionOrgId)) {
-                return $sessionOrgId;
-            }
+        $requestedIds = session('active_organization_ids');
+        if (! is_array($requestedIds)) {
+            $requestedIds = [session('active_organization_id')];
         }
 
-        $assigned = $this->assignedOrganizations();
-        $primary = $assigned->firstWhere('pivot.is_primary', 1)
-            ?? $this->primaryOrganization
-            ?? $assigned->first();
+        $selectedIds = collect($requestedIds)
+            ->map(fn ($organizationId): int => (int) $organizationId)
+            ->filter(fn (int $organizationId): bool => $organizationId > 0 && $availableIds->contains($organizationId))
+            ->unique()
+            ->values();
 
-        return $primary?->organization_id ?? $this->rawOrganizationId();
+        if ($selectedIds->isNotEmpty()) {
+            return $selectedIds->all();
+        }
+
+        $primary = $assigned->firstWhere('pivot.is_primary', 1) ?? $assigned->first();
+        $primaryId = (int) ($primary?->organization_id ?? $this->rawOrganizationId());
+
+        return $primaryId > 0 && $availableIds->contains($primaryId) ? [$primaryId] : [];
+    }
+
+    public function activeOrganizationId(?Collection $assignedOrganizations = null): ?int
+    {
+        $assigned = $assignedOrganizations ?? $this->assignedOrganizations();
+        $selectedIds = $this->activeOrganizationIds($assigned);
+        $sessionOrgId = (int) session('active_organization_id');
+
+        return in_array($sessionOrgId, $selectedIds, true)
+            ? $sessionOrgId
+            : ($selectedIds[0] ?? null);
     }
 
     public function activeOrganization(): ?MstOrganization
     {
-        $orgId = $this->activeOrganizationId();
+        $assigned = $this->assignedOrganizations();
+        $orgId = $this->activeOrganizationId($assigned);
 
         if (! $orgId) {
             return $this->primaryOrganization;
         }
 
-        return $this->assignedOrganizations()->firstWhere('organization_id', $orgId)
+        return $assigned->firstWhere('organization_id', $orgId)
             ?? MstOrganization::find($orgId);
     }
 

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Assessment;
 use App\Http\Controllers\Controller;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Report\AssessmentReportService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Eval\EvaluationReadService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 class AssessmentReportController extends Controller
 {
     public function __construct(
-        protected EvaluationService $evaluationService,
+        protected EvaluationReadService $evaluationReader,
         protected AssessmentAccessService $assessmentAccessService,
         protected AssessmentReportService $assessmentReportService
     ) {
@@ -22,7 +22,7 @@ class AssessmentReportController extends Controller
     public function show($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation) {
                 return redirect()->route('assessment.index')->withErrors(['error' => 'Assessment not found']);
@@ -131,10 +131,16 @@ class AssessmentReportController extends Controller
             unset($data);
 
             $includeRoadmap = $request->input('include_roadmap') == '1';
-            $roadmap = [];
+            $companyRoadmaps = [];
             if ($includeRoadmap) {
                 $assessmentSummaryService = app(\App\Services\Assessment\Summary\AssessmentSummaryService::class);
-                $roadmap = $assessmentSummaryService->getRoadmapTargetCapability();
+                foreach (collect($selectedData)->filter(fn ($item) => ! empty($item['organization_id']))->groupBy('organization_id') as $organizationId => $companyData) {
+                    $companyRoadmaps[] = [
+                        'organization_id' => (int) $organizationId,
+                        'organization_name' => $companyData->first()['organization_name'] ?? 'Organisasi '.$organizationId,
+                        'roadmap' => $assessmentSummaryService->getRoadmapTargetCapability(null, (int) $organizationId),
+                    ];
+                }
             }
 
             $pdf = Pdf::loadView('assessment.report.export.all-pdf', [
@@ -142,7 +148,7 @@ class AssessmentReportController extends Controller
                 'selectedData' => $selectedData,
                 'showMaxLevel' => $request->input('show_max_level') == '1',
                 'includeRoadmap' => $includeRoadmap,
-                'roadmap' => $roadmap,
+                'companyRoadmaps' => $companyRoadmaps,
             ]);
 
             // Set paper size to landscape for better table view

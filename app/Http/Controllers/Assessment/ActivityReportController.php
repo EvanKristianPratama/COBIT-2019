@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Assessment;
 use App\Http\Controllers\Controller;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Report\ActivityReportService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Eval\EvaluationReadService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 class ActivityReportController extends Controller
 {
     public function __construct(
-        protected EvaluationService $evaluationService,
+        protected EvaluationReadService $evaluationReader,
         protected AssessmentAccessService $assessmentAccessService,
         protected ActivityReportService $activityReportService
     ) {
@@ -62,7 +62,7 @@ class ActivityReportController extends Controller
     private function prepareActivityData($evalId, $objectiveId, $filterLevel = null)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation) {
                 return redirect()->route('assessment.index')->withErrors(['error' => 'Assessment not found']);

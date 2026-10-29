@@ -8,12 +8,18 @@ use App\Models\TrsEvalDetail;
 use App\Models\TrsScoping;
 use App\Models\User;
 use App\Services\Assessment\Access\AssessmentAccessService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Eval\EvaluationReadService;
+use App\Services\Assessment\Objective\AssessmentObjectiveService;
+use App\Services\Assessment\Scoring\ObjectiveAssessmentService;
+use App\Services\Assessment\Target\TargetCapabilityService;
 
 class AssessmentReportService
 {
     public function __construct(
-        private readonly EvaluationService $evaluationService,
+        private readonly EvaluationReadService $evaluationReader,
+        private readonly AssessmentObjectiveService $assessmentObjectives,
+        private readonly ObjectiveAssessmentService $objectiveAssessment,
+        private readonly TargetCapabilityService $targetCapabilities,
         private readonly AssessmentAccessService $assessmentAccessService
     ) {
     }
@@ -32,7 +38,7 @@ class AssessmentReportService
             ->values()
             ->all();
 
-        $objectives = $this->evaluationService->getSortedObjectives($evaluation->focus_area_id ?: 1)
+        $objectives = $this->assessmentObjectives->getSortedObjectives($evaluation->focus_area_id ?: 1)
             ->when(
                 $scopedObjectiveIds !== [],
                 fn ($collection) => $collection->filter(
@@ -40,9 +46,9 @@ class AssessmentReportService
                 )
             )
             ->values();
-        $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
+        $targetCapabilityMap = $this->targetCapabilities->fetchTargetCapabilities($evaluation);
 
-        $loadedData = $this->evaluationService->loadEvaluation($evalId);
+        $loadedData = $this->evaluationReader->loadEvaluation($evalId);
         $activityData = $loadedData['activity_evaluations'] ?? [];
 
         $scopeMaturityData = [];
@@ -53,7 +59,7 @@ class AssessmentReportService
             foreach ($objectives as $objective) {
                 $isInScope = in_array($objective->objective_id, $scopeDomains, true);
                 $scopeMaturityData[$scope->id][$objective->objective_id] = $isInScope
-                    ? $this->evaluationService->calculateObjectiveMaturity($objective, $activityData)
+                    ? $this->objectiveAssessment->calculateObjectiveMaturity($objective, $activityData)
                     : null;
             }
         }
@@ -96,15 +102,15 @@ class AssessmentReportService
             ->with(['user', 'organization', 'maturityScore'])
             ->orderBy('created_at', 'desc');
 
-        $activeOrgId = $user->activeOrganizationId();
-        if ($activeOrgId) {
-            $assessmentsQuery->where(function ($builder) use ($activeOrgId) {
-                $builder->where('mst_eval.organization_id', $activeOrgId)
-                    ->orWhere(function ($fallbackQuery) use ($activeOrgId) {
+        $activeOrgIds = $user->activeOrganizationIds();
+        if ($activeOrgIds !== []) {
+            $assessmentsQuery->where(function ($builder) use ($activeOrgIds) {
+                $builder->whereIn('mst_eval.organization_id', $activeOrgIds)
+                    ->orWhere(function ($fallbackQuery) use ($activeOrgIds) {
                         $fallbackQuery->whereNull('mst_eval.organization_id')
-                            ->whereHas('user', function ($ownerQuery) use ($activeOrgId) {
-                                $ownerQuery->where('organization_id', $activeOrgId)
-                                    ->orWhereHas('organizations', fn ($organizationQuery) => $organizationQuery->where('mst_organization.organization_id', $activeOrgId));
+                            ->whereHas('user', function ($ownerQuery) use ($activeOrgIds) {
+                                $ownerQuery->whereIn('organization_id', $activeOrgIds)
+                                    ->orWhereHas('organizations', fn ($organizationQuery) => $organizationQuery->whereIn('mst_organization.organization_id', $activeOrgIds));
                             });
                     });
             });
@@ -116,7 +122,7 @@ class AssessmentReportService
             return ['error' => 'No assessments found.'];
         }
 
-        $objectives = $this->evaluationService->getSortedObjectives();
+        $objectives = $this->assessmentObjectives->getSortedObjectives();
         $processedData = [];
 
         $allYears = $assessments->pluck('tahun')->filter()->unique()->values()->all();
@@ -158,7 +164,7 @@ class AssessmentReportService
                 continue;
             }
 
-            $loadedData = $this->evaluationService->loadEvaluation($evaluation->eval_id);
+            $loadedData = $this->evaluationReader->loadEvaluation($evaluation->eval_id);
             $activityData = $loadedData['activity_evaluations'] ?? [];
             $year = $evaluation->tahun ?? $evaluation->year ?? $evaluation->assessment_year ?? $evaluation->created_at->format('Y');
             $targetMaturity = $evaluation->organization_id !== null
@@ -171,12 +177,14 @@ class AssessmentReportService
 
                 foreach ($objectives as $objective) {
                     $maturityScores[$objective->objective_id] = in_array($objective->objective_id, $scopeDomains, true)
-                        ? $this->evaluationService->calculateObjectiveMaturity($objective, $activityData)
+                        ? $this->objectiveAssessment->calculateObjectiveMaturity($objective, $activityData)
                         : null;
                 }
 
                 $processedData[] = [
                     'assessment_id' => $evaluation->eval_id,
+                    'organization_id' => $evaluation->organization_id,
+                    'organization_name' => $evaluation->organization?->organization_name,
                     'year' => $year,
                     'scope_id' => $scope->id,
                     'scope_name' => $scope->nama_scope,

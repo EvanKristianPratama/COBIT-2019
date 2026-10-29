@@ -123,6 +123,8 @@
                                                 @php
                                                     $profileHasPermission = in_array($permissionOption['permission'], $accessProfileSummary['permissions'], true);
                                                     $permissionFieldId = 'profile-' . $accessProfileSummary['key'] . '-' . str_replace(['.', '_'], '-', $permissionOption['permission']);
+                                                    $fixedAuditeePermission = $accessProfileSummary['key'] === 'viewer'
+                                                        && in_array($permissionOption['permission'], ['assessments.view', 'assessments.input'], true);
                                                 @endphp
                                                 <div class="form-check">
                                                     <input
@@ -132,6 +134,7 @@
                                                         name="permissions[]"
                                                         value="{{ $permissionOption['permission'] }}"
                                                         {{ $profileHasPermission ? 'checked' : '' }}
+                                                        @disabled($fixedAuditeePermission)
                                                     >
                                                     <label class="form-check-label" for="{{ $permissionFieldId }}">
                                                         {{ $permissionOption['label'] }}
@@ -139,6 +142,10 @@
                                                 </div>
                                             @endforeach
                                         </div>
+
+                                        @if ($accessProfileSummary['key'] === 'viewer')
+                                            <div class="small text-muted mb-3">Akses assessment untuk Auditee selalu baca saja.</div>
+                                        @endif
 
                                         <button type="submit" class="btn btn-sm btn-primary w-100">
                                             <i class="fas fa-save me-2"></i>Simpan

@@ -15,6 +15,7 @@
                 </div>
             @endif
 
+            @can('assessments.input')
             <form action="{{ route('target-maturity.store') }}" method="POST" class="row g-3 align-items-end mb-5">
                 @csrf
                  <div class="col-md-4">
@@ -48,6 +49,7 @@
                     </button>
                 </div>
             </form>
+            @endcan
 
             <h6 class="fw-bold text-muted mb-3 text-uppercase small border-bottom pb-2">History Target Maturity</h6>
             <div class="table-responsive">
@@ -71,6 +73,7 @@
                                 </td>
                                 <td class="small text-muted">{{ $target->updated_at->format('d M Y H:i') }}</td>
                                 <td class="text-center">
+                                    @can('assessments.input')
                                     <form action="{{ route('target-maturity.destroy', $target->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?');">
                                         @csrf
                                         @method('DELETE')
@@ -78,6 +81,7 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty

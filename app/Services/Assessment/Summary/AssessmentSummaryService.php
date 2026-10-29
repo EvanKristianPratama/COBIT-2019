@@ -9,12 +9,15 @@ use App\Models\TrsEvalDetail;
 use App\Models\TrsRoadmap;
 use App\Models\TrsSummaryActivity;
 use App\Models\TrsSummaryReport;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Scoring\ObjectiveAssessmentService;
+use App\Services\Assessment\Target\TargetCapabilityService;
+use App\Services\Cobit\CobitCoreModelService;
 
 class AssessmentSummaryService
 {
     public function __construct(
-        private readonly EvaluationService $evaluationService
+        private readonly ObjectiveAssessmentService $objectiveAssessment,
+        private readonly TargetCapabilityService $targetCapabilities
     ) {
     }
 
@@ -85,10 +88,10 @@ class AssessmentSummaryService
         $activityData = TrsActivityeval::where('eval_id', $evalId)
             ->get()
             ->keyBy('activity_id');
-        $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
+        $targetCapabilityMap = $this->targetCapabilities->fetchTargetCapabilities($evaluation);
 
         $objectives->map(function ($objective) use ($activityData, $maxLevels, $mappedEvidence, $targetCapabilityMap, $savedNotes) {
-            $metrics = $this->evaluationService->calculateObjectiveAssessmentMetrics($objective, $activityData);
+            $metrics = $this->objectiveAssessment->calculateObjectiveAssessmentMetrics($objective, $activityData);
 
             $objective->current_score = $metrics['final_level'];
             $objective->display_value = $metrics['display_value_label'];
@@ -241,22 +244,13 @@ class AssessmentSummaryService
     /**
      * @return array<string, mixed>
      */
-    public function getRoadmapTargetCapability(?string $objectiveId = null, ?int $focusAreaId = 1): array
+    public function getRoadmapTargetCapability(?string $objectiveId = null, ?int $organizationId = null): array
     {
-        $objectivesQuery = MstObjective::where('focus_area_id', $focusAreaId ?: 1)
-            ->orderByRaw("FIELD(SUBSTRING(objective_id, 1, 3), 'EDM', 'APO', 'BAI', 'DSS', 'MEA')")
-            ->orderBy('objective_id');
-
-        if ($objectiveId) {
-            $objectivesQuery->where('objective_id', $objectiveId);
-        }
-
-        $objectives = $objectivesQuery->get();
-
-        $roadmapsQuery = TrsRoadmap::query();
-        if ($objectiveId) {
-            $roadmapsQuery->where('objective_id', $objectiveId);
-        }
+        $objectives = app(CobitCoreModelService::class)->objectives()
+            ->when($objectiveId, fn ($items) => $items->where('objective_id', $objectiveId));
+        $organizationId ??= auth()->user()?->activeOrganizationId();
+        $roadmapsQuery = TrsRoadmap::where('organization_id', $organizationId ?: 0)
+            ->whereIn('objective_id', $objectives->pluck('objective_id'));
         $roadmaps = $roadmapsQuery->get();
 
         $mappedRoadmaps = [];

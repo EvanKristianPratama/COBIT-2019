@@ -164,7 +164,6 @@
                 <div class="section-header mb-4 d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="section-title">
-                            <i class="fas fa-share-alt me-2 text-info"></i>
                             Assessment Ditugaskan ({{ $assignedAssessments->total() }})
                         </h4>
                     </div>

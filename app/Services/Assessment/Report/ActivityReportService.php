@@ -7,13 +7,17 @@ use App\Models\MstEvidence;
 use App\Models\MstObjective;
 use App\Models\TrsActivityeval;
 use App\Models\TrsDomain;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Scoring\ObjectiveAssessmentService;
+use App\Services\Assessment\Scoring\AssessmentRatingService;
+use App\Services\Assessment\Target\TargetCapabilityService;
 use InvalidArgumentException;
 
 class ActivityReportService
 {
     public function __construct(
-        private readonly EvaluationService $evaluationService
+        private readonly ObjectiveAssessmentService $objectiveAssessment,
+        private readonly AssessmentRatingService $ratingService,
+        private readonly TargetCapabilityService $targetCapabilities
     ) {
     }
 
@@ -129,7 +133,7 @@ class ActivityReportService
         $evaluationActivityData = TrsActivityeval::where('eval_id', $evalId)
             ->get()
             ->keyBy('activity_id');
-        $metrics = $this->evaluationService->calculateObjectiveAssessmentMetrics($objective, $evaluationActivityData);
+        $metrics = $this->objectiveAssessment->calculateObjectiveAssessmentMetrics($objective, $evaluationActivityData);
         $currentLevel = $metrics['final_level'];
         [$practiceSummaryRows, $practiceSummaryTotals] = $this->buildPracticeSummary($objective);
         $practiceSummaryLevelMetrics = $this->buildPracticeSummaryLevelMetrics(
@@ -142,7 +146,7 @@ class ActivityReportService
             'level' => (string) ($metrics['final_level'] ?? 0),
         ];
 
-        $targetCapabilityMap = $this->evaluationService->fetchTargetCapabilities($evaluation);
+        $targetCapabilityMap = $this->targetCapabilities->fetchTargetCapabilities($evaluation);
         $targetLevel = $targetCapabilityMap[$objectiveId] ?? null;
         $ratingString = $metrics['rating_string'];
         $displayValue = $metrics['display_value_label'];
@@ -231,13 +235,13 @@ class ActivityReportService
             $count = 0;
 
             foreach ($activities as $activity) {
-                $totalScore += $this->evaluationService->getRatingNumericValue($activity['answer']);
+                $totalScore += $this->ratingService->getRatingNumericValue($activity['answer']);
                 $count++;
             }
 
             if ($count > 0) {
                 $averageScore = $totalScore / $count;
-                $letter = $this->evaluationService->getScoreLetter($averageScore);
+                $letter = $this->ratingService->getScoreLetter($averageScore);
 
                 $levelRatings[$level] = [
                     'rating' => $level.$letter,
@@ -425,7 +429,7 @@ class ActivityReportService
             $ratingData = $levelRatings[$currentLevel] ?? null;
             $separatorScore = $ratingData ? number_format(($ratingData['score'] ?? 0) / 100, 2) : '0.00';
             $separatorLetter = $ratingData
-                ? $this->evaluationService->getScoreLetter(($ratingData['score'] ?? 0) / 100)
+                ? $this->ratingService->getScoreLetter(($ratingData['score'] ?? 0) / 100)
                 : 'N';
 
             $previousLevel = $currentLevel;

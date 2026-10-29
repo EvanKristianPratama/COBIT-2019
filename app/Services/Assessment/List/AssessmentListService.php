@@ -27,17 +27,18 @@ class AssessmentListService
     public function getIndexData(User $user): array
     {
         $organizationOptions = $user->assignedOrganizations();
-        $activeOrgId = $user->activeOrganizationId();
+        $activeOrgIds = $user->activeOrganizationIds($organizationOptions);
+        $activeOrgId = $user->activeOrganizationId($organizationOptions);
 
-        $applyOrgFilter = function (Builder $query) use ($activeOrgId) {
-            if ($activeOrgId) {
-                $query->where(function (Builder $builder) use ($activeOrgId) {
-                    $builder->where('mst_eval.organization_id', $activeOrgId)
-                        ->orWhere(function (Builder $fallbackQuery) use ($activeOrgId) {
+        $applyOrgFilter = function (Builder $query) use ($activeOrgIds) {
+            if ($activeOrgIds !== []) {
+                $query->where(function (Builder $builder) use ($activeOrgIds) {
+                    $builder->whereIn('mst_eval.organization_id', $activeOrgIds)
+                        ->orWhere(function (Builder $fallbackQuery) use ($activeOrgIds) {
                             $fallbackQuery->whereNull('mst_eval.organization_id')
-                                ->whereHas('user', function (Builder $ownerQuery) use ($activeOrgId) {
-                                    $ownerQuery->where('organization_id', $activeOrgId)
-                                        ->orWhereHas('organizations', fn (Builder $organizationQuery) => $organizationQuery->where('mst_organization.organization_id', $activeOrgId));
+                                ->whereHas('user', function (Builder $ownerQuery) use ($activeOrgIds) {
+                                    $ownerQuery->whereIn('organization_id', $activeOrgIds)
+                                        ->orWhereHas('organizations', fn (Builder $organizationQuery) => $organizationQuery->whereIn('mst_organization.organization_id', $activeOrgIds));
                                 });
                         });
                 });

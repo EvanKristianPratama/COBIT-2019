@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-    @php($routeEvalId = $evaluation->encrypted_id)
+    @php
+        $routeEvalId = $evaluation->encrypted_id;
+        $canManageAssessment = (bool) ($canManageAssessment ?? false);
+    @endphp
     <!-- JSpreadsheet v5 CDN -->
     <script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
     <script src="https://jsuites.net/v5/jsuites.js"></script>
@@ -359,18 +362,24 @@
                 </div>
 
                 <div class="mt-2">
+                    @if ($canManageAssessment)
                     <form action="{{ route('assessment.summary.save-note', ['evalId' => $evaluation->eval_id]) }}"
                         method="POST">
                         @csrf
                         <input type="hidden" name="objective_id" value="{{ $objective->objective_id }}">
+                    @endif
 
                         {{-- Kesimpulan --}}
                         <div class="text-white px-2 py-1" style="background-color: #0f2b5c;">
                             <div class="fw-bold small">Kesimpulan</div>
                         </div>
                         <div class="p-2 bg-white border">
+                            @if ($canManageAssessment)
                             <textarea name="kesimpulan" class="form-control border-0" rows="3"
                                 placeholder="Masukkan kesimpulan untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['kesimpulan'] : '' }}</textarea>
+                            @else
+                                <div style="white-space: pre-wrap;">{{ $objective->saved_note['kesimpulan'] ?? '—' }}</div>
+                            @endif
                         </div>
 
                         {{-- Rekomendasi --}}
@@ -378,8 +387,12 @@
                             <div class="fw-bold small">Rekomendasi</div>
                         </div>
                         <div class="p-2 bg-white border">
+                            @if ($canManageAssessment)
                             <textarea name="rekomendasi" class="form-control border-0" rows="3"
                                 placeholder="Masukkan rekomendasi untuk {{ $objective->objective_id }}...">{{ is_array($objective->saved_note) ? $objective->saved_note['rekomendasi'] : '' }}</textarea>
+                            @else
+                                <div style="white-space: pre-wrap;">{{ $objective->saved_note['rekomendasi'] ?? '—' }}</div>
+                            @endif
                         </div>
 
                         {{-- Roadmap Target Capability --}}
@@ -466,13 +479,41 @@
                         <div class="text-white px-2 py-1 mt-2" style="background-color: #0f2b5c;">
                             <div class="fw-bold small">Lembar Kerja</div>
                         </div>
+                        @if ($canManageAssessment)
                         <div id="roadmap-rekomendasi-container-{{ $objective->objective_id }}"
                             style="overflow: auto; max-height: 350px; border: 1px solid #ddd; border-radius: 4px;"></div>
                         <input type="hidden" name="roadmap_rekomendasi"
                             id="roadmap-rekomendasi-data-{{ $objective->objective_id }}"
                             value="{{ is_array($objective->saved_note) && isset($objective->saved_note['roadmap_rekomendasi']) ? json_encode($objective->saved_note['roadmap_rekomendasi']) : '' }}">
+                        @else
+                            @php
+                                $savedRoadmap = $objective->saved_note['roadmap_rekomendasi'] ?? [];
+                                $roadmapCells = $savedRoadmap['cells'] ?? $savedRoadmap;
+                                $roadmapRows = collect(is_array($roadmapCells) ? $roadmapCells : [])
+                                    ->filter(fn ($row) => is_array($row) && collect($row)->contains(fn ($cell) => filled($cell)));
+                            @endphp
+                            <div class="table-responsive">
+                                @if ($roadmapRows->isNotEmpty())
+                                    <table class="table table-bordered table-sm mb-0">
+                                        <tbody>
+                                            @foreach ($roadmapRows as $row)
+                                                <tr>
+                                                    @foreach ($row as $cell)
+                                                        <td style="white-space: pre-wrap;">{{ $cell }}</td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                @else
+                                    <div class="p-2">Belum ada rekomendasi roadmap.</div>
+                                @endif
+                            </div>
+                        @endif
 
+                    @if ($canManageAssessment)
                     </form>
+                    @endif
                 </div>
             </div>
 
@@ -488,6 +529,7 @@
                     <i class="fas fa-file-pdf"></i>
                     <span>PDF Per Practice</span>
                 </a>
+                @if ($canManageAssessment)
                 <a href="{{ url('design_factor/roadmap') }}" class="btn btn-success sticky-action-btn"
                     title="Add Roadmap Target">
                     <i class="fas fa-plus"></i>
@@ -498,6 +540,7 @@
                     <i class="fas fa-save"></i>
                     <span>Simpan Semua</span>
                 </button>
+                @endif
             </div>
         @endforeach
 

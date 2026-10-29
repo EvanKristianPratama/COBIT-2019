@@ -7,7 +7,7 @@ use App\Http\Requests\AssessmentEval\SaveSummaryNoteRequest;
 use App\Models\MstEval;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Summary\AssessmentSummaryService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Eval\EvaluationReadService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,7 +16,7 @@ class AssessmentSummaryController extends Controller
     public function __construct(
         private readonly AssessmentSummaryService $assessmentSummaryService,
         private readonly AssessmentAccessService $assessmentAccessService,
-        private readonly EvaluationService $evaluationService
+        private readonly EvaluationReadService $evaluationReader
     ) {
     }
 
@@ -28,9 +28,10 @@ class AssessmentSummaryController extends Controller
         }
 
         $data = $this->assessmentSummaryService->getSummary($evaluation, $objectiveId);
-        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId);
+        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId, $evaluation->organization_id);
+        $canManageAssessment = $this->assessmentAccessService->canManage(Auth::user(), $evaluation);
 
-        return view('assessment.report.summary', array_merge($data, compact('roadmap')));
+        return view('assessment.report.summary', array_merge($data, compact('roadmap', 'canManageAssessment')));
     }
 
     public function saveNote(SaveSummaryNoteRequest $request, $evalId)
@@ -65,7 +66,7 @@ class AssessmentSummaryController extends Controller
         $this->preparePdfRuntime();
 
         $data = $this->assessmentSummaryService->getSummary($evaluation, $objectiveId);
-        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId);
+        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId, $evaluation->organization_id);
         
         $includeRoadmap = $request->input('include_roadmap', '1') == '1';
         $data = array_merge($data, compact('roadmap', 'includeRoadmap'));
@@ -86,7 +87,7 @@ class AssessmentSummaryController extends Controller
         }
 
         $data = $this->assessmentSummaryService->getSummary($evaluation, $objectiveId);
-        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId);
+        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId, $evaluation->organization_id);
         
         $includeRoadmap = $request->input('include_roadmap', '1') == '1';
         $data = array_merge($data, compact('roadmap', 'includeRoadmap'));
@@ -104,7 +105,7 @@ class AssessmentSummaryController extends Controller
         $this->preparePdfRuntime();
 
         $data = $this->assessmentSummaryService->getSummary($evaluation, $objectiveId);
-        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId);
+        $roadmap = $this->assessmentSummaryService->getRoadmapTargetCapability($objectiveId, $evaluation->organization_id);
         
         $includeRoadmap = $request->input('include_roadmap', '1') == '1';
         $data = array_merge($data, compact('roadmap', 'includeRoadmap'));
@@ -119,7 +120,7 @@ class AssessmentSummaryController extends Controller
 
     private function resolveEvaluation($evalId): MstEval
     {
-        $evaluation = $this->evaluationService->getEvaluationById($evalId);
+        $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
         abort_if(! $evaluation, 404);
 

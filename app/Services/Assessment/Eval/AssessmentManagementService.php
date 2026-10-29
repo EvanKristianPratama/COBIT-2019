@@ -8,13 +8,18 @@ use App\Models\MstObjective;
 use App\Models\TrsEvalDetail;
 use App\Models\TrsScoping;
 use App\Services\Assessment\Scope\AssessmentScopeService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Scoring\MaturityScoreService;
+use App\Services\Assessment\Target\TargetCapabilityService;
 use Illuminate\Support\Facades\DB;
 
 class AssessmentManagementService
 {
     public function __construct(
-        private readonly EvaluationService $evaluationService,
+        private readonly EvaluationReadService $evaluationReader,
+        private readonly EvaluationWriteService $evaluationWriter,
+        private readonly AssessmentDataConverter $dataConverter,
+        private readonly MaturityScoreService $maturityScores,
+        private readonly TargetCapabilityService $targetCapabilities,
         private readonly AssessmentScopeService $scopeService
     ) {
     }
@@ -22,7 +27,7 @@ class AssessmentManagementService
     public function createAssessment(int $userId, array $attributes): MstEval
     {
         return DB::transaction(function () use ($userId, $attributes) {
-            $evaluation = $this->evaluationService->createNewEvaluation(
+            $evaluation = $this->evaluationWriter->createNewEvaluation(
                 $userId,
                 isset($attributes['organization_id']) ? (int) $attributes['organization_id'] : null
             );
@@ -77,7 +82,7 @@ class AssessmentManagementService
             'evalId' => $evaluation->eval_id,
             'evaluation' => $evaluation,
             'evidences' => MstEvidence::where('eval_id', $evaluation->eval_id)->orderBy('created_at', 'desc')->get(),
-            'targetCapabilityMap' => $this->evaluationService->fetchTargetCapabilities($evaluation),
+            'targetCapabilityMap' => $this->targetCapabilities->fetchTargetCapabilities($evaluation),
             'allScopes' => $allScopes,
             'activeScope' => $activeScope,
             'scopeDetails' => $this->scopeService->buildScopeDetails($allScopes),
@@ -87,12 +92,12 @@ class AssessmentManagementService
 
     public function saveAssessment(MstEval $evaluation, array $payload): MstEval
     {
-        $data = $this->evaluationService->convertAssessmentData($payload);
+        $data = $this->dataConverter->convertAssessmentData($payload);
         $data['user_id'] = $evaluation->user_id;
         $data['organization_id'] = $evaluation->organization_id;
         $data['eval_id'] = $evaluation->eval_id;
 
-        return $this->evaluationService->saveEvaluation($data);
+        return $this->evaluationWriter->saveEvaluation($data);
     }
 
     /**
@@ -100,7 +105,7 @@ class AssessmentManagementService
      */
     public function loadAssessment(MstEval $evaluation): array
     {
-        $data = $this->evaluationService->loadEvaluation($evaluation->eval_id);
+        $data = $this->evaluationReader->loadEvaluation($evaluation->eval_id);
 
         $notes = [];
         $evidence = [];
@@ -132,7 +137,7 @@ class AssessmentManagementService
 
     public function delete(MstEval $evaluation): void
     {
-        $this->evaluationService->deleteEvaluation($evaluation->eval_id);
+        $this->evaluationWriter->deleteEvaluation($evaluation->eval_id);
     }
 
     public function getMaturityScore(?MstEval $evaluation): float
@@ -141,6 +146,6 @@ class AssessmentManagementService
             return 0.0;
         }
 
-        return round($this->evaluationService->calculateMaturityScore($evaluation->eval_id), 2);
+        return round($this->maturityScores->calculateMaturityScore($evaluation->eval_id), 2);
     }
 }

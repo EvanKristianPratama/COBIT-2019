@@ -241,9 +241,13 @@
     </table>
 
     @if(isset($includeRoadmap) && $includeRoadmap)
+        @forelse(($companyRoadmaps ?? []) as $companyRoadmap)
+        @php $roadmap = $companyRoadmap['roadmap']; @endphp
+        <section data-roadmap-organization="{{ $companyRoadmap['organization_id'] }}">
         <div style="page-break-before: always;"></div>
         <div class="header">
             <h2>Roadmap Target Capability</h2>
+            <p>{{ $companyRoadmap['organization_name'] }}</p>
         </div>
         
         @if (isset($roadmap) && isset($roadmap['objectives']) && $roadmap['objectives']->isNotEmpty())
@@ -276,6 +280,7 @@
                         @php
                             $isSelected = false;
                             foreach($normalizedSelectedData as $data) {
+                                if ((int) ($data['organization_id'] ?? 0) !== (int) $companyRoadmap['organization_id']) continue;
                                 if (isset($data['_score_map'][$obj->objective_id]) && $data['_score_map'][$obj->objective_id] !== null) {
                                     $isSelected = true;
                                     break;
@@ -298,6 +303,10 @@
         @else
             <p style="text-align: center; color: #666; font-style: italic;">Belum ada data roadmap</p>
         @endif
+        </section>
+        @empty
+            <p style="text-align: center; color: #666;">Roadmap belum tersedia untuk perusahaan assessment yang dipilih.</p>
+        @endforelse
     @endif
 
 </body>

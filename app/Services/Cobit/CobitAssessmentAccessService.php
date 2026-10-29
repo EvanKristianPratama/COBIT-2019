@@ -8,14 +8,15 @@ use App\Models\Assessment;
 use App\Models\User;
 use App\Services\Auth\AccessProfilePermissionService;
 use App\Support\Authorization\PermissionCatalog;
+use App\Support\Organization\OrganizationNameNormalizer;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class CobitAssessmentAccessService
 {
     public function __construct(
         private readonly AccessProfilePermissionService $accessProfilePermissionService
-    ) {
-    }
+    ) {}
 
     public function queryAccessible(User $user): Builder
     {
@@ -32,6 +33,42 @@ class CobitAssessmentAccessService
                 });
 
             $this->applyOrganizationScope($builder, $user);
+        });
+    }
+
+    public function queryForActiveOrganizations(User $user): Builder
+    {
+        $organizations = $user->assignedOrganizations();
+        $ids = $user->activeOrganizationIds($organizations);
+        $names = $organizations->whereIn('organization_id', $ids)
+            ->pluck('organization_name')->map(fn ($name) => OrganizationNameNormalizer::key($name))
+            ->filter()->values()->all();
+
+        return Assessment::query()->with('organization')->where(function (Builder $query) use ($ids, $names): void {
+            $query->whereIn('organization_id', $ids);
+            if ($names !== []) {
+                $query->orWhere(fn (Builder $legacy) => $legacy->whereNull('organization_id')
+                    ->whereIn(DB::raw('LOWER(TRIM(instansi))'), $names));
+            }
+        });
+    }
+
+    public function isInActiveOrganizations(User $user, Assessment $assessment): bool
+    {
+        return $this->queryForActiveOrganizations($user)
+            ->where('assessment_id', $assessment->assessment_id)->exists();
+    }
+
+    public function queryForOrganization(User $user, int $organizationId): Builder
+    {
+        $name = $user->assignedOrganizations()->firstWhere('organization_id', $organizationId)?->organization_name;
+
+        return $this->queryForActiveOrganizations($user)->where(function (Builder $query) use ($organizationId, $name): void {
+            $query->where('organization_id', $organizationId);
+            if ($name) {
+                $query->orWhere(fn (Builder $legacy) => $legacy->whereNull('organization_id')
+                    ->whereRaw('LOWER(TRIM(instansi)) = ?', [OrganizationNameNormalizer::key($name)]));
+            }
         });
     }
 

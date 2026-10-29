@@ -1,19 +1,22 @@
 <?php
+
 namespace App\Http\Controllers\cobit2019;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\DfStep2;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\DfStep3;
 use App\Models\TrsStep2;
 use App\Models\TrsStep3;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class Step3Controller extends Controller
 {
     private const DEFAULT_WEIGHTS = [1, 1, 1, 1, 1, 1];
+
     private const DF_RANGE = [5, 6, 7, 8, 9, 10]; // DF5 to DF10
 
     /**
@@ -22,21 +25,21 @@ class Step3Controller extends Controller
     public function index(Request $request): View
     {
         $assessmentId = session('assessment_id');
-        if (!$assessmentId) {
+        if (! $assessmentId) {
             return $this->handleAssessmentNotFound();
         }
 
         $assessment = $this->getAssessmentWithRelativeImportances();
-        if (!$assessment) {
+        if (! $assessment) {
             return $this->handleAssessmentNotFound();
         }
 
         $userId = Auth::id();
         $savedWeights3 = $this->getSavedWeights($assessmentId);
-        
+
         // Get Step 2 data from database (trs_step2)
         $step2Data = $this->getStep2DataFromDatabase($assessmentId, $userId);
-        
+
         // Get Step 2 weights from database
         $step2Weights = $this->getStep2Weights($assessmentId, $userId);
 
@@ -62,19 +65,25 @@ class Step3Controller extends Controller
         $userId = Auth::id();
         $weights3 = json_decode($request->input('weights3'), true);
         $refinedScopes = json_decode($request->input('refinedScopes'), true);
+        validator(['weights' => $weights3, 'scopes' => $refinedScopes], [
+            'weights' => 'required|array|size:6', 'weights.*' => 'required|numeric',
+            'scopes' => 'required|array|max:40', 'scopes.*' => 'numeric',
+        ])->validate();
 
-        DfStep3::updateOrCreate(
-            ['assessment_id' => $assessmentId, 'user_id' => $userId],
-            ['weights' => $weights3]
-        );
+        DB::transaction(function () use ($assessmentId, $userId, $weights3, $refinedScopes): void {
+            DfStep3::updateOrCreate(
+                ['assessment_id' => $assessmentId, 'user_id' => $userId],
+                ['weights' => $weights3]
+            );
 
-        // Save to trs_step3 table (per objective)
-        $this->saveTrsStep3($assessmentId, $userId, $weights3, $refinedScopes);
+            // Save to trs_step3 table (per objective)
+            $this->saveTrsStep3($assessmentId, $userId, $weights3, $refinedScopes);
+        });
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
-                'status' => 'success', 
-                'message' => 'Data Step 3 berhasil disimpan.'
+                'status' => 'success',
+                'message' => 'Data Step 3 berhasil disimpan.',
             ]);
         }
 
@@ -85,8 +94,8 @@ class Step3Controller extends Controller
      * Save data to trs_step3 table per objective
      */
     private function saveTrsStep3(
-        int $assessmentId, 
-        int $userId, 
+        int $assessmentId,
+        int $userId,
         ?array $weights,
         ?array $refinedScopes
     ): void {
@@ -107,11 +116,11 @@ class Step3Controller extends Controller
             $relImpRow = [];
             for ($n = 5; $n <= 10; $n++) {
                 $dfIndex = $n - 5;
-                $rec = $assessment ? $assessment->{'df' . $n . 'RelativeImportances'}->first() : null;
+                $rec = $assessment ? $assessment->{'df'.$n.'RelativeImportances'}->first() : null;
                 $col = "r_df{$n}_{$code}";
                 $relImpRow[$dfIndex] = ($rec && isset($rec->$col)) ? $rec->$col : 0;
             }
-            
+
             // Calculate total for step3 (sum of weighted rel_imp DF5-10)
             $totalStep3Objective = 0;
             for ($i = 0; $i < 6; $i++) {
@@ -119,8 +128,8 @@ class Step3Controller extends Controller
             }
 
             // Get step2 total for this objective from trs_step2
-            $step2Total = $step2Records->has($code) 
-                ? (float) $step2Records->get($code)->total_objective 
+            $step2Total = $step2Records->has($code)
+                ? (float) $step2Records->get($code)->total_objective
                 : 0;
 
             // Combined total = step2 + step3
@@ -153,13 +162,13 @@ class Step3Controller extends Controller
     private function getAssessmentWithRelativeImportances(): ?Assessment
     {
         $assessmentId = session('assessment_id');
-        if (!$assessmentId) {
+        if (! $assessmentId) {
             return null;
         }
 
         $relations = [];
         foreach (self::DF_RANGE as $n) {
-            $relations["df{$n}RelativeImportances"] = fn($q) => $q->latest();
+            $relations["df{$n}RelativeImportances"] = fn ($q) => $q->latest();
         }
 
         return Assessment::with($relations)
@@ -172,7 +181,7 @@ class Step3Controller extends Controller
      */
     private function getSavedWeights(?int $assessmentId): array
     {
-        if (!$assessmentId) {
+        if (! $assessmentId) {
             return self::DEFAULT_WEIGHTS;
         }
 
@@ -213,8 +222,8 @@ class Step3Controller extends Controller
 
         $totals = [];
         for ($code = 1; $code <= 40; $code++) {
-            $totals[$code] = $records->has($code) 
-                ? (float) $records->get($code)->total_objective 
+            $totals[$code] = $records->has($code)
+                ? (float) $records->get($code)->total_objective
                 : 0;
         }
 

@@ -23,6 +23,7 @@
 
   <form action="{{ route('step4.store') }}" method="POST" id="step4Form">
     @csrf
+    <input type="hidden" name="assessment_id" value="{{ $assessment->assessment_id }}">
 
     <div class="container-fluid px-4 py-3">
       
@@ -32,7 +33,7 @@
           <h4 class="text-primary fw-bold mb-1">
             <i class="bi bi-diagram-3 me-2"></i>COBIT 2019 Design Factor Analysis
           </h4>
-          <p class="text-muted mb-0 small">Summary of Steps 2, 3 & 4 - Governance System Scope</p>
+          <p class="text-muted mb-0 small">Summary of Steps 2, 3 & 4 - Governance System Scope · Bobot mengikuti hasil tersimpan Step 2 dan Step 3.</p>
         </div>
         <button type="submit" class="btn btn-primary btn-lg shadow-sm">
           <i class="bi bi-save me-2"></i>Save Progress
@@ -72,7 +73,7 @@
                       <td class="text-center small fw-bold text-warning">Weight</td>
                       @for ($i = 0; $i < 4; $i++)
                         <td class="text-center p-1">
-                          <input type="number" name="weight2[{{ $i + 1 }}]" value="{{ $weights2[$i] ?? 1 }}"
+                          <input type="number" value="{{ $weights2[$i] ?? 1 }}" readonly title="Ubah bobot pada Step 2"
                             class="form-control form-control-sm text-center border-0 bg-transparent weight2-input fw-bold" 
                             style="width:45px; margin:0 auto;" data-index="{{ $i }}">
                         </td>
@@ -143,7 +144,7 @@
                       <td class="text-center small fw-bold text-warning">Weight</td>
                       @for ($i = 0; $i < 6; $i++)
                         <td class="text-center p-1">
-                          <input type="number" name="weight3[{{ $i + 1 }}]" value="{{ $weights3[$i] ?? 1 }}"
+                          <input type="number" value="{{ $weights3[$i] ?? 1 }}" readonly title="Ubah bobot pada Step 3"
                             class="form-control form-control-sm text-center border-0 bg-transparent weight3-input fw-bold" 
                             style="width:45px; margin:0 auto;" data-index="{{ $i }}">
                         </td>

@@ -4,6 +4,7 @@
 
   <form action="{{ route('step3.store') }}" method="POST" id="step3Form">
     @csrf
+    <input type="hidden" name="assessment_id" value="{{ $assessment->assessment_id }}">
     <input type="hidden" name="weights3" id="weights3Input">
     <input type="hidden" name="refinedScopes" id="refinedScopesInput">
 
@@ -244,7 +245,7 @@
           body: new FormData(form),
           headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error('Save failed'); return r.json(); })
         .then(() => {
           document.getElementById('saveStatus').textContent = 'Saved ✓';
           setTimeout(() => document.getElementById('saveStatus').textContent = '', 3000);

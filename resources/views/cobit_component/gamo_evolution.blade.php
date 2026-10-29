@@ -39,13 +39,6 @@
         margin: 0;
     }
 
-    .evo-hero p {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.95rem;
-        margin: 0.4rem 0 0 0;
-        max-width: 780px;
-    }
-
     /* Stats Grid */
     .evo-stat-card {
         background: #fff;
@@ -55,7 +48,7 @@
         box-shadow: 0 4px 15px rgba(15, 43, 92, 0.04);
         display: flex;
         align-items: center;
-        gap: 1.1rem;
+        gap: 0;
         height: 100%;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -63,17 +56,6 @@
     .evo-stat-card:hover {
         transform: translateY(-3px);
         box-shadow: 0 12px 25px rgba(15, 43, 92, 0.08);
-    }
-
-    .evo-stat-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.45rem;
-        flex-shrink: 0;
     }
 
     .evo-stat-val {
@@ -314,41 +296,33 @@
     <!-- Hero Banner -->
     <div class="evo-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="badge bg-white text-primary fw-bold px-3 py-1 rounded-pill" style="font-size: 0.76rem;">
-                    <i class="fas fa-sitemap me-1"></i> MATRIKS EVOLUSI FRAMEWORK
-                </span>
-                <span class="badge bg-warning text-dark fw-bold px-2 py-1 rounded-pill" style="font-size: 0.76rem;">
-                    ISACA COBIT Standard
-                </span>
-            </div>
             <h1>COBIT GAMO Mapping Evolution</h1>
-            <p>
-                Pelacakan silsilah dan evolusi komprehensif <strong>Governance and Management Objectives (GAMO)</strong> dari 
-                <strong>COBIT 4.1 (2007)</strong> &rarr; <strong>COBIT 5 (2012)</strong> &rarr; <strong>COBIT 2019 (2019)</strong>.
-            </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{{ route('focus-areas.index') }}" class="btn btn-light fw-bold shadow-sm px-3">
-                <i class="fas fa-cubes me-1 text-primary"></i> Pilih Model
+                Pilih Model
             </a>
             <a href="{{ route('cobit_component.show', 'EDM01') }}" class="btn btn-outline-light fw-bold shadow-sm px-3">
-                <i class="fas fa-book-open me-1"></i> Kamus Komponen
+                Kamus Komponen
             </a>
             <a href="{{ route('cobit_component.gamoanalysis') }}" class="btn btn-outline-light fw-bold shadow-sm px-3">
-                <i class="fas fa-project-diagram me-1"></i> Analisis Alur
+                Analisis Alur
             </a>
         </div>
     </div>
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
+        </div>
+    @endif
 
     <!-- Summary KPI Metric Cards -->
     <div class="row g-3 mb-4">
         <!-- 2019 Total -->
         <div class="col-sm-6 col-xl">
             <div class="evo-stat-card">
-                <div class="evo-stat-icon bg-primary-subtle text-primary">
-                    <i class="fas fa-cubes"></i>
-                </div>
                 <div>
                     <div class="evo-stat-val">{{ $stats['total_2019'] }}</div>
                     <div class="evo-stat-label">COBIT 2019 GAMO</div>
@@ -359,9 +333,6 @@
         <!-- COBIT 5 Total -->
         <div class="col-sm-6 col-xl">
             <div class="evo-stat-card">
-                <div class="evo-stat-icon bg-success-subtle text-success">
-                    <i class="fas fa-sitemap"></i>
-                </div>
                 <div>
                     <div class="evo-stat-val">{{ $stats['total_5'] }}</div>
                     <div class="evo-stat-label">COBIT 5 Proses</div>
@@ -372,9 +343,6 @@
         <!-- COBIT 4.1 Total -->
         <div class="col-sm-6 col-xl">
             <div class="evo-stat-card">
-                <div class="evo-stat-icon bg-warning-subtle text-warning">
-                    <i class="fas fa-clipboard-check"></i>
-                </div>
                 <div>
                     <div class="evo-stat-val">{{ $stats['total_4'] }}</div>
                     <div class="evo-stat-label">COBIT 4.1 Proses</div>
@@ -385,9 +353,6 @@
         <!-- New in 2019 -->
         <div class="col-sm-6 col-xl">
             <div class="evo-stat-card border-success">
-                <div class="evo-stat-icon bg-emerald text-white" style="background:#10b981;">
-                    <i class="fas fa-star"></i>
-                </div>
                 <div>
                     <div class="evo-stat-val text-success">{{ $stats['new_2019'] }}</div>
                     <div class="evo-stat-label">Baru di 2019 (Data, Projects, Assurance)</div>
@@ -398,9 +363,6 @@
         <!-- Restructured -->
         <div class="col-sm-6 col-xl">
             <div class="evo-stat-card border-warning">
-                <div class="evo-stat-icon bg-warning text-dark">
-                    <i class="fas fa-code-branch"></i>
-                </div>
                 <div>
                     <div class="evo-stat-val text-warning">{{ $stats['restructured'] }}</div>
                     <div class="evo-stat-label">Pemisahan Program & Proyek</div>
@@ -411,9 +373,7 @@
 
     <!-- Visual Architecture Evolution Banner -->
     <div class="evo-flow-box">
-        <h5 class="fw-bold text-dark mb-3">
-            <i class="fas fa-history text-primary me-2"></i>Garis Waktu Pergeseran Arsitektur Framework COBIT
-        </h5>
+        <h5 class="fw-bold text-dark mb-3">Garis Waktu Pergeseran Arsitektur Framework COBIT</h5>
         <div class="row g-3 align-items-stretch">
             <!-- COBIT 4.1 -->
             <div class="col-md-3">
@@ -491,10 +451,10 @@
                     <span class="small text-muted fw-bold me-1">Status:</span>
                     <span class="status-pill active" onclick="setStatusFilter('all', this)">Semua (40)</span>
                     <span class="status-pill text-success" onclick="setStatusFilter('new', this)">
-                        <i class="fas fa-star me-1"></i> Baru di 2019 (3)
+                        Baru di 2019 (3)
                     </span>
                     <span class="status-pill text-warning" onclick="setStatusFilter('restructured', this)">
-                        <i class="fas fa-code-branch me-1"></i> Restrukturisasi (1)
+                        Restrukturisasi (1)
                     </span>
                     <span class="status-pill" onclick="setStatusFilter('evolved', this)">Evolusi COBIT 5 (36)</span>
                 </div>
@@ -605,6 +565,11 @@
                                     <a href="{{ route('cobit_component.show', $item['id']) }}" class="btn btn-sm btn-light border py-0 px-2 text-secondary fw-semibold" style="font-size: 0.72rem;" title="Buka Kamus Komponen">
                                         Kamus
                                     </a>
+                                    @if($canManageEvolution && !empty($item['mapping_id']))
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 fw-semibold" style="font-size: 0.72rem;" onclick='openEvolutionEditor(@json($item))' title="Ubah pemetaan">
+                                            Ubah
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -626,6 +591,79 @@
         </div>
     </div>
 </div>
+
+@if($canManageEvolution)
+<!-- EVOLUTION MAPPING MANAGEMENT MODAL -->
+<div class="modal fade" id="evolutionEditorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form id="evolutionEditorForm" method="POST" class="modal-content">
+            @csrf
+            @method('PUT')
+            <div class="modal-header bg-primary text-white">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">Ubah Pemetaan Evolusi</h5>
+                    <small id="editMappingCode"></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Domain</label>
+                        <select name="domain" id="editDomain" class="form-select" required>
+                            <option value="EDM">EDM</option>
+                            <option value="APO">APO</option>
+                            <option value="BAI">BAI</option>
+                            <option value="DSS">DSS</option>
+                            <option value="MEA">MEA</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">Status Perubahan</label>
+                        <select name="status" id="editStatus" class="form-select" required>
+                            <option value="new">New</option>
+                            <option value="restructured">Restructured</option>
+                            <option value="evolved">Evolved</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Nama Objektif COBIT 2019</label>
+                        <input type="text" name="title_2019" id="editTitle2019" class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Deskripsi COBIT 2019</label>
+                        <textarea name="desc_2019" id="editDesc2019" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Kode COBIT 5</label>
+                        <input type="text" name="cobit5_id" id="editCobit5Id" class="form-control" placeholder="Contoh: APO01 atau -">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nama Proses COBIT 5</label>
+                        <input type="text" name="cobit5_title" id="editCobit5Title" class="form-control" placeholder="Contoh: Manage Strategy">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Kode COBIT 4.1</label>
+                        <input type="text" name="cobit4_id" id="editCobit4Id" class="form-control" placeholder="Contoh: PO1 atau -">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nama Proses COBIT 4.1</label>
+                        <input type="text" name="cobit4_title" id="editCobit4Title" class="form-control" placeholder="Contoh: Define a Strategic IT Plan">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Catatan Evolusi</label>
+                        <textarea name="notes" id="editNotes" class="form-control" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary fw-bold">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 
 <!-- LINEAGE & EVOLUTION DETAIL MODAL -->
 <div class="modal fade lineage-modal" id="lineageModal" tabindex="-1" aria-hidden="true">
@@ -809,5 +847,23 @@
 
         new bootstrap.Modal(document.getElementById('lineageModal')).show();
     }
+
+    @if($canManageEvolution)
+    function openEvolutionEditor(item) {
+        document.getElementById('evolutionEditorForm').action = `{{ url('/objectives/evolution/gamo') }}/${item.mapping_id}`;
+        document.getElementById('editMappingCode').textContent = item.id;
+        document.getElementById('editDomain').value = item.domain || 'EDM';
+        document.getElementById('editStatus').value = item.status || 'evolved';
+        document.getElementById('editTitle2019').value = item.title_2019 || '';
+        document.getElementById('editDesc2019').value = item.desc_2019 || '';
+        document.getElementById('editCobit5Id').value = item.cobit5_id || '';
+        document.getElementById('editCobit5Title').value = item.cobit5_title || '';
+        document.getElementById('editCobit4Id').value = item.cobit4_id || '';
+        document.getElementById('editCobit4Title').value = item.cobit4_title || '';
+        document.getElementById('editNotes').value = item.notes || '';
+
+        new bootstrap.Modal(document.getElementById('evolutionEditorModal')).show();
+    }
+    @endif
 </script>
 @endsection

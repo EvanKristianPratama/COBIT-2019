@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DDDiav5M.css",
+    "file": "assets/app-BZ3Kkp-Z.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -14,6 +14,15 @@
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
+  },
+  "resources/js/focus-area/index.js": {
+    "file": "assets/index-DXXGqQQ3.js",
+    "name": "index",
+    "src": "resources/js/focus-area/index.js",
+    "isEntry": true,
+    "css": [
+      "assets/index-CvO_CYYf.css"
+    ]
   },
   "resources/js/report-summary.js": {
     "file": "assets/report-summary-Ct0OKBht.js",

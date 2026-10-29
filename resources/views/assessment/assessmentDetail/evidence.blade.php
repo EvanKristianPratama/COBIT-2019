@@ -196,6 +196,7 @@
         </div>
 
         <!-- Add Evidence Modal -->
+        @if ($canManageAssessment ?? false)
         <div class="modal fade" id="addEvidenceModal" tabindex="-1" aria-labelledby="addEvidenceModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -386,6 +387,8 @@
                 </div>
             </div>
         </div>
+
+        @endif
 
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>

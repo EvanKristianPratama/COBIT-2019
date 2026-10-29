@@ -75,32 +75,52 @@ class HomeController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $validated = $request->validate([
-            'organization_id' => 'required|integer',
+            'organization_ids' => 'sometimes|required|array|min:1',
+            'organization_ids.*' => 'required|integer|distinct',
+            'organization_id' => 'required_without:organization_ids|integer',
         ]);
 
-        $organizationId = (int) $validated['organization_id'];
+        $organizationIds = isset($validated['organization_ids'])
+            ? collect($validated['organization_ids'])->map(fn ($id): int => (int) $id)->unique()->values()->all()
+            : [(int) $validated['organization_id']];
 
-        if (! $user->isAdmin() && ! $user->hasOrganizationId($organizationId)) {
+        $availableOrganizations = $user->assignedOrganizations();
+        $availableIds = $availableOrganizations
+            ->pluck('organization_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if (array_diff($organizationIds, $availableIds) !== []) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda tidak memiliki akses ke organisasi ini.',
+                'message' => 'Anda tidak memiliki akses ke salah satu perusahaan yang dipilih.',
             ], 403);
         }
 
-        $organization = \App\Models\MstOrganization::find($organizationId);
-        if (! $organization) {
+        $selectedOrganizations = $availableOrganizations->whereIn('organization_id', $organizationIds)->values();
+        if ($selectedOrganizations->count() !== count($organizationIds)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Organisasi tidak ditemukan.',
+                'message' => 'Salah satu perusahaan yang dipilih tidak ditemukan.',
             ], 404);
         }
 
-        session(['active_organization_id' => $organizationId]);
+        $previousActiveId = $user->activeOrganizationId($availableOrganizations);
+        $activeOrganizationId = in_array($previousActiveId, $organizationIds, true)
+            ? $previousActiveId
+            : $organizationIds[0];
+        $activeOrganization = $selectedOrganizations->firstWhere('organization_id', $activeOrganizationId);
+
+        session([
+            'active_organization_ids' => $organizationIds,
+            'active_organization_id' => $activeOrganizationId,
+        ]);
 
         return response()->json([
             'success' => true,
-            'organization_id' => $organizationId,
-            'organization_name' => $organization->organization_name,
+            'organization_id' => $activeOrganizationId,
+            'organization_ids' => $organizationIds,
+            'organization_name' => $activeOrganization?->organization_name,
         ]);
     }
 }

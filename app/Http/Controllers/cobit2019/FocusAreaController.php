@@ -4,11 +4,14 @@ namespace App\Http\Controllers\cobit2019;
 
 use App\Http\Controllers\Controller;
 use App\Models\MstFocusArea;
+use App\Services\Cobit\CobitModelMapService;
 use App\Models\MstEntergoals;
 use App\Models\MstAligngoals;
 use App\Models\MstObjective;
+use App\Models\MstCobitEvolution;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
@@ -405,7 +408,7 @@ class FocusAreaController extends Controller
             }
         }
 
-        foreach ($baseline->roadmaps as $roadmap) {
+        foreach ($baseline->roadmaps->whereNull('organization_id') as $roadmap) {
             DB::table('trs_roadmap')->insertOrIgnore([
                 'focus_area_id' => $focusAreaId,
                 'objective_id' => $objective->objective_id,
@@ -421,16 +424,18 @@ class FocusAreaController extends Controller
      */
     public function index(Request $request)
     {
-        $focusAreas = MstFocusArea::withCount('objectives')->get();
-        $allObjectives = MstObjective::select('objective_id', 'objective')
-            ->orderByRaw($this->objectiveOrderSql())
+        $focusAreas = MstFocusArea::withCount('objectives')
+            ->with(['objectives' => fn ($query) => $query->select('objective_id', 'objective', 'focus_area_id')->orderByRaw($this->objectiveOrderSql())])
             ->get();
-
+        $modelMap = app(CobitModelMapService::class)->build($focusAreas);
+        $modelLinks = $modelMap['modelLinks'];
+        $selectedView = $request->query('view') === 'cards' ? 'cards' : 'map';
+        $initialStep = (int) $request->query('step', $request->has('version') ? 2 : 1) === 2 ? 2 : 1;
         // Get distinct versions available in DB
-        $dbVersions = MstFocusArea::select('version')
-            ->distinct()
+        $dbVersions = $focusAreas
             ->pluck('version')
             ->filter()
+            ->unique()
             ->values()
             ->toArray();
 
@@ -459,7 +464,10 @@ class FocusAreaController extends Controller
             'availableVersions',
             'focusAreasByVersion',
             'selectedVersion',
-            'allObjectives'
+            'modelMap',
+            'modelLinks',
+            'selectedView',
+            'initialStep'
         ));
     }
 
@@ -650,10 +658,18 @@ class FocusAreaController extends Controller
     public function generateCobit5($id)
     {
         $focusArea = MstFocusArea::findOrFail($id);
-        $mapping = config('cobit-mappings.cobit5', []);
+        $mapping = Schema::hasTable('mst_cobit_evolution')
+            ? MstCobitEvolution::query()
+                ->whereNotNull('cobit5_id')
+                ->whereNotIn('cobit5_id', ['-', 'Belum ada'])
+                ->whereNotNull('cobit5_title')
+                ->orderBy('cobit2019_id')
+                ->pluck('cobit5_title', 'cobit2019_id')
+                ->all()
+            : config('cobit-mappings.cobit5', []);
 
         if (empty($mapping)) {
-            return response()->json(['success' => false, 'message' => 'Mapping COBIT 5 tidak ditemukan di config.'], 404);
+            return response()->json(['success' => false, 'message' => 'Mapping COBIT 5 tidak ditemukan.'], 404);
         }
 
         $result = $this->bulkCloneObjectives($focusArea, $mapping);

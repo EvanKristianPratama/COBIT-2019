@@ -7,7 +7,7 @@ use App\Http\Requests\AssessmentEval\DeleteScopeRequest;
 use App\Http\Requests\AssessmentEval\UpdateScopeRequest;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Scope\AssessmentScopeService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Eval\EvaluationReadService;
 use App\Models\MstObjective;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 class AssessmentScopeController extends Controller
 {
     public function __construct(
-        protected EvaluationService $evaluationService,
+        protected EvaluationReadService $evaluationReader,
         protected AssessmentScopeService $assessmentScopeService,
         protected AssessmentAccessService $assessmentAccessService
     ) {
@@ -24,7 +24,7 @@ class AssessmentScopeController extends Controller
     public function update(UpdateScopeRequest $request, $evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation || ! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);

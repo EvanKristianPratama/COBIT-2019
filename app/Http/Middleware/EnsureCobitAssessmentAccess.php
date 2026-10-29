@@ -12,12 +12,12 @@ class EnsureCobitAssessmentAccess
 {
     public function __construct(
         private readonly CobitAssessmentAccessService $cobitAssessmentAccessService
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next, string $mode = 'view'): Response
     {
-        $assessmentId = session('assessment_id') ?? $request->route('assessment_id') ?? $request->input('assessment_id');
+        $assessmentId = $request->route('assessment_id')
+            ?? $request->input('assessment_id') ?? session('assessment_id');
 
         if (! is_numeric($assessmentId)) {
             return $next($request);
@@ -36,6 +36,22 @@ class EnsureCobitAssessmentAccess
         if (! $allowed) {
             abort(403, 'Anda tidak memiliki akses ke assessment ini.');
         }
+
+        if (! $this->cobitAssessmentAccessService->isInActiveOrganizations($user, $assessment)) {
+            if ($request->isMethod('GET') && ! $request->expectsJson()) {
+                session()->forget(['assessment_id', 'instansi', 'kode_assessment', 'step2', 'step3', 'step4', 'respondent_ids']);
+
+                return redirect()->route('cobit.design-factors.index')
+                    ->with('warning', 'Pilih Design Factor milik perusahaan yang sedang dipilih.');
+            }
+            abort(403, 'Design Factor ini bukan milik perusahaan yang sedang dipilih.');
+        }
+
+        session([
+            'assessment_id' => $assessment->assessment_id,
+            'instansi' => $assessment->instansi,
+            'kode_assessment' => $assessment->kode_assessment,
+        ]);
 
         return $next($request);
     }

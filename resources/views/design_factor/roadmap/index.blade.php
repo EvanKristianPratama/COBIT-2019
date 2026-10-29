@@ -14,9 +14,6 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div class="hero-title" style="font-size:1.5rem;font-weight:700;letter-spacing:0.04em;">Roadmap Capability</div>
-                    <div class="hero-subtitle" style="font-size:1.05rem;font-weight:400;margin-top:0.25rem;color:rgba(255,255,255,0.85);">
-                        Set target levels and ratings across years
-                    </div>
                 </div>
                 <div>
                     {{-- Buttons moved inside the form for reliable submission --}}
@@ -25,14 +22,26 @@
         </div>
     </div>
 
+    @include('design_factor.partials.workspace-alerts')
+    <form method="GET" action="{{ route('roadmap.index') }}" class="d-flex gap-3 align-items-end mb-4 flex-wrap">
+        <div><label for="roadmap-company" class="form-label">Organisasi</label><select name="organization_id" id="roadmap-company" class="form-select">@foreach($organizations as $organization)<option value="{{ $organization->organization_id }}" @selected((int) $organizationId === (int) $organization->organization_id)>{{ $organization->organization_name }}</option>@endforeach</select></div>
+        <button class="btn btn-outline-primary">Tampilkan Roadmap</button>
+        <a href="{{ route('cobit.design-factors.index') }}" class="btn btn-outline-secondary">Design Factor List</a>
+    </form>
+    @if($objectives->count() !== 40)
+        <div class="alert alert-warning">Core Model di database belum memiliki 40 GAMO lengkap. Hanya objective Core Model yang tersedia yang ditampilkan.</div>
+    @endif
+
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <form id="roadmapForm" action="{{ route('roadmap.store') }}" method="POST">
                 @csrf
+                <input type="hidden" name="organization_id" value="{{ $organizationId }}">
                 <div class="p-3 d-flex justify-content-end gap-2 bg-light border-bottom">
-                    <a href="{{ route('roadmap.report') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <a href="{{ route('roadmap.report', ['organization_id' => $organizationId]) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                         <i class="fas fa-file-alt me-2"></i>View Report
                     </a>
+                    @if($canManageRoadmap)
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addYearModal">
                         <i class="fas fa-plus me-2"></i>Add Year
                     </button>
@@ -42,6 +51,7 @@
                     <button type="submit" class="btn btn-success btn-sm rounded-pill px-4">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
+                    @endif
                 </div>
 
                 <div class="p-3 border-bottom bg-white">
@@ -64,9 +74,9 @@
                             </select>
                         </div>
                         <div class="col-md-3 source-step4">
-                            <label class="form-label small mb-1">Assessment (Step 4)</label>
+                            <label class="form-label small mb-1">Design Factor (Step 4)</label>
                             <select id="step4AssessmentSelect" class="form-select form-select-sm">
-                                <option value="">Pilih assessment</option>
+                                <option value="">Pilih Design Factor</option>
                                 @foreach($assessments as $assess)
                                     <option value="{{ $assess->assessment_id }}"
                                         {{ (string) $selectedAssessmentId === (string) $assess->assessment_id ? 'selected' : '' }}>
@@ -94,7 +104,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="applySourceBtn">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="applySourceBtn" @disabled(!$canManageRoadmap)>
                                 Terapkan
                             </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="clearScopeFilterBtn">
@@ -144,12 +154,13 @@
                                                data-year="{{ $year }}"
                                                placeholder="-"
                                                value="{{ $data['level'] }}"
+                                               @readonly(!$canManageRoadmap)
                                                min="0" max="5">
                                     </td>
                                     <td class="p-0">
                                         <select name="roadmap[{{ $idx }}][{{ $year }}][rating]" 
                                                 class="form-select form-select-sm text-center border-0 bg-transparent rating-select"
-                                                data-initial="{{ $data['rating'] }}">
+                                                data-initial="{{ $data['rating'] }}" @disabled(!$canManageRoadmap)>
                                             <option value="">-</option>
                                         </select>
                                     </td>
@@ -166,6 +177,7 @@
 
 <form id="deleteYearForm" action="{{ route('roadmap.delete-year') }}" method="POST" style="display:none;">
     @csrf
+    <input type="hidden" name="organization_id" value="{{ $organizationId }}">
     <input type="hidden" name="year" id="deleteYearInput">
 </form>
 
@@ -258,7 +270,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Add Year logic
-    document.getElementById('confirmAddYear').addEventListener('click', function() {
+    document.getElementById('confirmAddYear')?.addEventListener('click', function() {
         const year = document.getElementById('newYearInput').value;
         if(!year) return;
 
@@ -269,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const url = new URL(window.location.href);
+        url.searchParams.set('organization_id', @json($organizationId));
         url.searchParams.set('add_year', year);
         window.location.href = url.toString();
     });
@@ -339,7 +352,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadScopes(evalId) {
         if (!evalId) return;
         if (scopeCache[evalId]) return scopeCache[evalId];
-        const res = await fetch(`${scopeUrl}?eval_id=${evalId}`);
+        const res = await fetch(`${scopeUrl}?eval_id=${evalId}&organization_id={{ $organizationId }}`);
+        if (!res.ok) throw new Error('Scope tidak dapat dibuka.');
         const data = await res.json();
         scopeCache[evalId] = data.scopes || [];
         return scopeCache[evalId];
@@ -373,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!row) return;
             const input = row.querySelector(`.level-input[data-year="${year}"]`);
             if (!input) return;
-            input.value = level || '';
+            input.value = level ?? '';
             input.dispatchEvent(new Event('change'));
         });
     }
@@ -395,7 +409,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             if (infoEl) infoEl.textContent = 'Memuat Step 4...';
-            const res = await fetch(`${step4Url}?assessment_id=${assessmentId}`);
+            const res = await fetch(`${step4Url}?assessment_id=${assessmentId}&organization_id={{ $organizationId }}`);
+            if (!res.ok) { alert('Design Factor tidak dapat dibuka untuk perusahaan ini.'); return; }
             const data = await res.json();
             const objectives = data.objectives || [];
             if (!objectives.length) {
@@ -405,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const ids = objectives.map(o => o.objective_id);
             setScopeFilter(ids, year, true);
             const levelMap = {};
-            objectives.forEach(o => levelMap[o.objective_id] = o.agreed_level || '');
+            objectives.forEach(o => levelMap[o.objective_id] = o.agreed_level ?? '');
             setLevelForObjectives(levelMap, year);
             if (infoEl) infoEl.textContent = `Step 4 diterapkan: ${ids.length} GAMO untuk tahun ${year}.`;
             return;

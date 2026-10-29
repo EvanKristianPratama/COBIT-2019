@@ -9,11 +9,11 @@
                 <div>
                     <div class="hero-title" style="font-size:1.5rem;font-weight:700;letter-spacing:0.04em;">Roadmap Summary Report</div>
                     <div class="hero-subtitle" style="font-size:1.05rem;font-weight:400;margin-top:0.25rem;color:rgba(255,255,255,0.85);">
-                        Consolidated view of all capability targets
+                        {{ $organizations->firstWhere('organization_id', $organizationId)?->organization_name }} · COBIT Core Model · {{ $objectives->count() }} GAMO
                     </div>
                 </div>
                 <div>
-                    <a href="{{ route('roadmap.index') }}" class="btn btn-light btn-sm rounded-pill px-3">
+                    <a href="{{ route('roadmap.index', ['organization_id' => $organizationId]) }}" class="btn btn-light btn-sm rounded-pill px-3">
                         <i class="fas fa-edit me-2"></i>Back to Editor
                     </a>
                 </div>

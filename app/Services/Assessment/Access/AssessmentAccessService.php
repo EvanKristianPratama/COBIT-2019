@@ -42,7 +42,7 @@ class AssessmentAccessService
             return false;
         }
 
-        if ($this->canManage($user, $evaluation) || $user->isAdmin()) {
+        if ($user->isAdmin() || (string) $evaluation->user_id === (string) $user->id) {
             return true;
         }
 
@@ -108,7 +108,7 @@ class AssessmentAccessService
             return;
         }
 
-        $query->where(function (Builder $scopeQuery) use ($organizationIds) {
+        $query->orWhere(function (Builder $scopeQuery) use ($organizationIds) {
             // Evaluasi milik organisasi user
             $scopeQuery->whereIn('organization_id', $organizationIds)
                 ->orWhere(function (Builder $fallbackQuery) use ($organizationIds) {

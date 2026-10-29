@@ -11,6 +11,7 @@ use App\Models\MstInfoflowOutput;
 use App\Models\MstKeyCulture;
 use App\Models\MstEntergoals;
 use App\Models\MstGuidance;
+use App\Models\MstCobitEvolution;
 use App\Models\MstObjective;
 use App\Models\MstPolicy;
 use App\Models\MstPractice;
@@ -20,6 +21,7 @@ use App\Models\MstSkill;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MstObjectiveController extends Controller
 {
@@ -456,7 +458,31 @@ class MstObjectiveController extends Controller
     {
         $evolutionConfig = config('cobit-evolution', []);
         $domains = $evolutionConfig['domains'] ?? [];
-        $gamoList = collect($evolutionConfig['gamo'] ?? []);
+
+        $gamoList = Schema::hasTable('mst_cobit_evolution')
+            ? MstCobitEvolution::query()
+                ->orderByRaw("CASE domain WHEN 'EDM' THEN 1 WHEN 'APO' THEN 2 WHEN 'BAI' THEN 3 WHEN 'DSS' THEN 4 WHEN 'MEA' THEN 5 ELSE 6 END")
+                ->orderBy('cobit2019_id')
+                ->get()
+                ->map(fn (MstCobitEvolution $item) => [
+                    'mapping_id' => $item->id,
+                    'id' => $item->cobit2019_id,
+                    'domain' => $item->domain,
+                    'title_2019' => $item->title_2019,
+                    'desc_2019' => $item->desc_2019 ?? '',
+                    'cobit5_id' => $item->cobit5_id ?? '-',
+                    'cobit5_title' => $item->cobit5_title ?? '-',
+                    'cobit4_id' => $item->cobit4_id ?? '-',
+                    'cobit4_title' => $item->cobit4_title ?? '-',
+                    'status' => $item->status,
+                    'notes' => $item->notes ?? '',
+                ])
+                ->values()
+            : collect($evolutionConfig['gamo'] ?? [])->values();
+
+        foreach ($domains as $domainKey => $domain) {
+            $domains[$domainKey]['count'] = $gamoList->where('domain', $domainKey)->count();
+        }
 
         // Calculate summary statistics
         $stats = [
@@ -470,8 +496,33 @@ class MstObjectiveController extends Controller
 
         // Load models for quick model switching if needed
         $allFocusAreas = \App\Models\MstFocusArea::orderBy('version', 'desc')->orderBy('id')->get();
+        $canManageEvolution = auth()->user()?->can('design-factors.input') ?? false;
 
-        return view('cobit_component.gamo_evolution', compact('domains', 'gamoList', 'stats', 'allFocusAreas'));
+        return view('cobit_component.gamo_evolution', compact('domains', 'gamoList', 'stats', 'allFocusAreas', 'canManageEvolution'));
+    }
+
+    /**
+     * Persist changes to one evolution mapping from the management form.
+     */
+    public function updateGamoEvolution(Request $request, MstCobitEvolution $evolution)
+    {
+        $data = $request->validate([
+            'domain' => 'required|in:EDM,APO,BAI,DSS,MEA',
+            'title_2019' => 'required|string|max:255',
+            'desc_2019' => 'nullable|string',
+            'cobit5_id' => 'nullable|string|max:100',
+            'cobit5_title' => 'nullable|string|max:255',
+            'cobit4_id' => 'nullable|string|max:100',
+            'cobit4_title' => 'nullable|string|max:255',
+            'status' => 'required|in:new,restructured,evolved',
+            'notes' => 'nullable|string',
+        ]);
+
+        $evolution->update($data);
+
+        return redirect()
+            ->route('cobit.evolution')
+            ->with('success', "Pemetaan {$evolution->cobit2019_id} berhasil disimpan.");
     }
 
     /**

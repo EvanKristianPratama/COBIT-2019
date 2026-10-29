@@ -1,0 +1,375 @@
+@import "./model-map.css";
+
+.fa-page {
+    --fa-primary: #294b6b;
+    --fa-accent: #527fa9;
+}
+
+.fa-page {
+    background: #f7f8fa;
+    padding: 24px;
+    border-radius: 16px;
+}
+
+/* Hero Header */
+.fa-hero {
+    background: linear-gradient(135deg, #081a3d, #0f2b5c);
+    border: 0;
+    border-radius: 1rem;
+    padding: 1.6rem 2rem;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 22px rgba(9, 24, 54, 0.12);
+}
+
+.fa-hero h1 {
+    color: #ffffff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.fa-hero-action {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.65rem 1.2rem;
+    background: #f2f5fa;
+    color: #23384f;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+.fa-hero-action:hover {
+    background: #e3eaf3;
+    color: #17345d;
+}
+
+.fa-hero-action-primary {
+    background: #dce8f4;
+    color: #345d82;
+}
+
+.fa-hero-action-primary:hover {
+    background: #cbdced;
+    color: #294b6b;
+}
+
+.wizard-container {
+    animation: focusAreaFadeIn 0.22s ease-out;
+}
+
+@keyframes focusAreaFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Wizard Cards (Step 1) */
+.wizard-model-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.6rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wizard-model-card:hover {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+    border-color: #cbd5e1;
+    color: inherit;
+}
+
+.model-card-2019 {
+    border-top: 3px solid #c2d9f0;
+}
+
+.model-card-5 {
+    border-top: 3px solid #c4e3d1;
+}
+
+.model-card-4 {
+    border-top: 3px solid #eedb9d;
+}
+
+.model-card-evolution {
+    border-top: 3px solid #efc8c6;
+}
+
+.model-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.65rem;
+}
+
+.model-desc {
+    font-size: 0.92rem;
+    color: #667085;
+    line-height: 1.6;
+    margin-bottom: 1.6rem;
+    flex-grow: 1;
+}
+
+.model-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    color: #24364b;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.model-cta-2019 {
+    background: #dceafb;
+}
+
+.model-cta-2019:hover {
+    background: #cbdff4;
+    color: #24364b;
+}
+
+.model-cta-5 {
+    background: #dff2e5;
+}
+
+.model-cta-5:hover {
+    background: #cce9d6;
+    color: #24364b;
+}
+
+.model-cta-4 {
+    background: #fff0c5;
+}
+
+.model-cta-4:hover {
+    background: #ffe9ad;
+    color: #24364b;
+}
+
+.model-cta-evolution {
+    background: #fde3e1;
+}
+
+.model-cta-evolution:hover {
+    background: #f8d7d4;
+    color: #24364b;
+}
+
+/* Step 2 Toolbar & Header */
+.step2-toolbar {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.1rem 1.5rem;
+    margin-bottom: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    box-shadow: 0 4px 16px rgba(15, 43, 92, 0.04);
+}
+
+/* Focus Area Cards (Step 2 - COBIT 2019) */
+.fa-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: transform 0.22s cubic-bezier(.2, .9, .2, 1), box-shadow 0.22s cubic-bezier(.2, .9, .2, 1);
+    box-shadow: 0 6px 18px rgba(15, 43, 92, 0.05);
+    cursor: pointer;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.fa-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(15, 43, 92, 0.12);
+    border-color: #cbd5e1;
+    color: inherit;
+}
+
+.fa-card-code {
+    display: inline-block;
+    background: rgba(15, 43, 92, 0.08);
+    color: var(--fa-primary);
+    font-weight: 800;
+    font-size: 0.76rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+}
+
+.fa-card h3 {
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.4rem;
+}
+
+.fa-card p {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.fa-card-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    color: #64748b;
+    font-weight: 600;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.fa-card-stat i {
+    color: var(--fa-accent);
+}
+
+.fa-add-card {
+    border: 2px dashed #cbd5e1;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 1rem;
+    text-decoration: none;
+}
+
+.fa-add-card:hover {
+    border-color: var(--fa-accent);
+    background: #eff6ff;
+    transform: translateY(-3px);
+    color: var(--fa-accent);
+}
+
+.fa-add-card i {
+    font-size: 2.2rem;
+    color: var(--fa-accent);
+    margin-bottom: 0.6rem;
+}
+
+.fa-add-card span {
+    font-weight: 700;
+    color: #475569;
+    font-size: 0.92rem;
+}
+
+.fa-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+
+.fa-actions .btn {
+    font-size: 0.76rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+/* Framework Direct Model Box (COBIT 5 & 4.1) */
+.direct-model-box {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.2rem;
+    padding: 2.2rem;
+    box-shadow: 0 10px 30px rgba(15, 43, 92, 0.06);
+}
+
+.direct-model-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.direct-model-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.stat-chip {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.85rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.stat-chip-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+/* Modals */
+.fa-modal .modal-content {
+    border: none;
+    border-radius: 1.2rem;
+    box-shadow: 0 25px 60px rgba(9, 18, 56, 0.2);
+    overflow: hidden;
+}
+
+.fa-modal .modal-header {
+    background: linear-gradient(135deg, #081a3d, #0f2b5c);
+    color: #fff;
+    padding: 1.2rem 1.6rem;
+}
+
+.fa-notif-wrap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2100;
+    width: min(380px, calc(100vw - 40px));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}

@@ -177,26 +177,25 @@
             text-decoration: none;
         }
 
-        .top-user-btn:hover, .top-user-btn:focus, .top-user-btn[aria-expanded="true"] {
+        .top-user-btn:hover, .top-user-btn:focus-visible, .top-user-btn[aria-expanded="true"] {
             background: #f8fafc;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            border-color: #94a3b8;
+            box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.12);
         }
 
         .top-user-avatar-sq {
             width: 32px;
             height: 32px;
             border-radius: 8px;
-            background: #4f46e5;
-            color: #ffffff;
+            background: #e5e7eb;
+            color: #374151;
             font-size: 0.95rem;
-            font-weight: 800;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             line-height: 1;
             flex-shrink: 0;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
         }
 
         .top-user-name {
@@ -219,7 +218,6 @@
             transform: rotate(180deg);
         }
 
-        /* User & Company Dropdown Modal matching screenshot */
         .user-company-dropdown {
             position: absolute !important;
             top: calc(100% + 10px) !important;
@@ -229,14 +227,14 @@
             max-width: 360px !important;
             padding: 0 !important;
             background: #ffffff !important;
-            border: 2px solid #818cf8 !important;
-            border-radius: 18px !important;
-            box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.25), 0 10px 20px -8px rgba(0, 0, 0, 0.12) !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 12px !important;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12) !important;
             z-index: 99999 !important;
             display: none !important;
             opacity: 0;
-            transform: translateY(-8px);
-            transition: opacity 0.18s ease, transform 0.18s ease;
+            transform: translateY(-4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
             pointer-events: none;
         }
 
@@ -247,24 +245,20 @@
             pointer-events: auto !important;
         }
 
-        @keyframes fadeInDropdown {
-            from {
-                opacity: 0;
-                transform: translateY(-6px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .user-select-company-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            line-height: 1.2;
         }
 
-        .user-select-company-label {
-            font-size: 0.72rem;
-            font-weight: 800;
-            color: #4f46e5;
-            line-height: 1.15;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+        .org-available-badge {
+            padding: 0.25rem 0.55rem;
+            border-radius: 999px;
+            background: #f3f4f6;
+            color: #4b5563;
+            font-size: 0.75rem;
+            font-weight: 500;
         }
 
         .org-checklist-container {
@@ -274,58 +268,79 @@
         }
 
         .org-checklist-item {
-            background: #f8fafc;
-            border: 1.5px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.6rem 0.75rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #ffffff;
             cursor: pointer;
-            transition: all 0.18s ease;
             user-select: none;
+            transition: background-color 0.12s ease, border-color 0.12s ease;
         }
 
-        .org-checklist-item:hover {
-            background: #eef2ff;
-            border-color: #c7d2fe;
-            transform: translateX(2px);
-        }
-
-        .org-checklist-item.active {
-            background: #eef2ff;
-            border-color: #818cf8;
+        .org-checklist-item:hover,
+        .org-checklist-item.is-selected {
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
 
         .org-checkbox {
-            width: 22px;
-            height: 22px;
-            border-radius: 6px;
-            background: #ffffff;
-            border: 2px solid #cbd5e1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: #475569;
             flex-shrink: 0;
-            transition: all 0.18s ease;
+            cursor: pointer;
         }
 
-        .org-checklist-item:hover .org-checkbox {
-            border-color: #818cf8;
-        }
-
-        .org-checkbox.checked {
-            background: #4f46e5;
-            border-color: #4f46e5;
-            color: #ffffff;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.35);
+        .org-checkbox:focus-visible {
+            outline: 2px solid #64748b;
+            outline-offset: 2px;
         }
 
         .org-name-text {
-            font-weight: 700;
-            font-size: 0.88rem;
-            color: #334155;
-            transition: color 0.15s ease;
+            min-width: 0;
+            color: #374151;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
-        .org-checklist-item.active .org-name-text {
-            color: #312e81;
+        .org-selection-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding-top: 0.25rem;
+        }
+
+        .org-selection-status {
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .org-selection-apply {
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            background: #374151;
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background-color 0.12s ease;
+        }
+
+        .org-selection-apply:hover:not(:disabled) {
+            background: #1f2937;
+        }
+
+        .org-selection-apply:disabled {
+            border-color: #d1d5db;
+            background: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
         }
 
         .breadcrumb-wrapper {
@@ -486,70 +501,64 @@
                             @endif
                         @else
                             @php
-                                $assignedOrgs = Auth::user()->assignedOrganizations();
-                                $activeOrgId = Auth::user()->activeOrganizationId();
-                                $activeOrgName = Auth::user()->activeOrganizationName();
+                                $currentUser = Auth::user();
+                                $assignedOrgs = $currentUser->assignedOrganizations();
+                                $activeOrgIds = $currentUser->activeOrganizationIds($assignedOrgs);
+                                $activeOrgId = $currentUser->activeOrganizationId($assignedOrgs);
+                                $activeOrgName = $assignedOrgs->firstWhere('organization_id', $activeOrgId)?->organization_name
+                                    ?? $currentUser->activeOrganizationName();
+                                $topOrgChipLabel = count($activeOrgIds) > 1
+                                    ? count($activeOrgIds) . ' PERUSAHAAN'
+                                    : strtoupper($activeOrgName);
                             @endphp
                             <li class="nav-item d-flex align-items-center gap-2">
-                                <!-- Active PT Pill -->
-                                <button class="top-org-chip d-none d-sm-inline-flex" id="topOrgChip" title="Perusahaan Aktif: {{ $activeOrgName }} (Klik untuk ubah)" type="button">
-                                    <span class="top-org-text" id="topOrgChipText">{{ strtoupper($activeOrgName) }}</span>
+                                <button class="top-org-chip d-none d-sm-inline-flex" id="topOrgChip" title="{{ count($activeOrgIds) }} perusahaan dipilih. Klik untuk mengubah." type="button">
+                                    <span class="top-org-text" id="topOrgChipText">{{ $topOrgChipLabel }}</span>
                                 </button>
 
-                                <!-- User Trigger & Dropdown -->
                                 <div class="dropdown position-relative">
-                                    <button class="top-user-btn" id="userMenuDropdown" type="button" aria-expanded="false">
-                                        <span class="top-user-avatar-sq">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
-                                        <span class="top-user-name d-none d-lg-inline">{{ Auth::user()->name }}</span>
-                                        <i class="fas fa-chevron-down top-user-chevron"></i>
+                                    <button class="top-user-btn" id="userMenuDropdown" type="button" aria-expanded="false" aria-controls="userCompanyDropdownMenu">
+                                        <span class="top-user-avatar-sq">{{ strtoupper(substr($currentUser->name, 0, 1)) }}</span>
+                                        <span class="top-user-name d-none d-lg-inline">{{ $currentUser->name }}</span>
+                                        <i class="fas fa-chevron-down top-user-chevron" aria-hidden="true"></i>
                                     </button>
 
                                     <div class="user-company-dropdown" id="userCompanyDropdownMenu" aria-labelledby="userMenuDropdown">
-                                        <!-- Header: User Profile Info -->
                                         <div class="px-3 py-2 pt-3">
-                                            <div class="fw-bold text-dark fs-6" style="letter-spacing: -0.01em;">{{ Auth::user()->name }}</div>
-                                            <div class="text-muted small">{{ Auth::user()->email }}</div>
+                                            <div class="fw-bold text-dark fs-6">{{ $currentUser->name }}</div>
+                                            <div class="text-muted small">{{ $currentUser->email }}</div>
                                         </div>
 
                                         <hr class="my-1 border-light-subtle">
 
-                                        <!-- Section: PILIH PERUSAHAAN -->
                                         <div class="px-3 py-2">
                                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <i class="fas fa-building" style="color: #4f46e5; font-size: 1.05rem;"></i>
-                                                    <div class="user-select-company-label">
-                                                        <div>PILIH</div>
-                                                        <div>PERUSAHAAN</div>
-                                                    </div>
-                                                </div>
-                                                <span class="badge rounded-pill text-primary-emphasis" style="background: #eef2ff; font-weight: 600; font-size: 0.72rem; color: #4f46e5 !important;">
-                                                    {{ $assignedOrgs->count() }} tersedia
-                                                </span>
+                                                <span class="user-select-company-label">Pilih perusahaan</span>
+                                                <span class="org-available-badge">{{ $assignedOrgs->count() }} tersedia</span>
                                             </div>
 
-                                            <div class="org-checklist-container">
+                                            <div class="org-checklist-container" id="organizationChecklist">
                                                 @forelse($assignedOrgs as $assignedOrg)
                                                     @php
-                                                        $isCurrent = (int) $assignedOrg->organization_id === (int) $activeOrgId;
+                                                        $organizationId = (int) $assignedOrg->organization_id;
+                                                        $isSelected = in_array($organizationId, $activeOrgIds, true);
                                                     @endphp
-                                                    <div class="org-checklist-item d-flex align-items-center gap-2 p-2 px-3 rounded-3 mb-2 {{ $isCurrent ? 'active' : '' }}"
-                                                         data-org-id="{{ $assignedOrg->organization_id }}"
-                                                         data-org-name="{{ $assignedOrg->organization_name }}"
-                                                         role="button"
-                                                         title="Pilih {{ $assignedOrg->organization_name }}">
-                                                        <div class="org-checkbox {{ $isCurrent ? 'checked' : '' }}">
-                                                            @if($isCurrent)
-                                                                <i class="fas fa-check"></i>
-                                                            @endif
-                                                        </div>
-                                                        <div class="org-name-text text-truncate">{{ $assignedOrg->organization_name }}</div>
-                                                    </div>
+                                                    <label class="org-checklist-item {{ $isSelected ? 'is-selected' : '' }}" for="organization-option-{{ $organizationId }}">
+                                                        <input class="org-checkbox" id="organization-option-{{ $organizationId }}" type="checkbox" value="{{ $organizationId }}" {{ $isSelected ? 'checked' : '' }}>
+                                                        <span class="org-name-text text-truncate">{{ $assignedOrg->organization_name }}</span>
+                                                    </label>
                                                 @empty
-                                                    <div class="text-muted small py-2 text-center fst-italic">
+                                                    <div class="text-muted small py-2 text-center">
                                                         Belum ada perusahaan yang di-assign.
                                                     </div>
                                                 @endforelse
+                                            </div>
+
+                                            <div class="org-selection-actions">
+                                                <span class="org-selection-status" id="organizationSelectionStatus" role="status" aria-live="polite"></span>
+                                                <button class="org-selection-apply" id="applyOrganizationSelection" type="button" disabled>
+                                                    Terapkan pilihan
+                                                </button>
                                             </div>
                                         </div>
 
@@ -567,8 +576,8 @@
                                                     <span class="small fw-semibold">Admin Console</span>
                                                 </a>
                                             @endif
-                                            <a class="dropdown-item rounded-2 py-2 text-danger d-flex align-items-center gap-2 logout-btn" href="{{ route('logout') }}">
-                                                <i class="fas fa-sign-out-alt text-danger" style="width: 18px;"></i>
+                                            <a class="dropdown-item rounded-2 py-2 text-secondary d-flex align-items-center gap-2 logout-btn" href="{{ route('logout') }}">
+                                                <i class="fas fa-sign-out-alt text-secondary" style="width: 18px;"></i>
                                                 <span class="small fw-semibold">Logout</span>
                                             </a>
                                         </div>
@@ -703,7 +712,7 @@
                         <h6 class="mb-0">{{ Auth::user()->name }}</h6>
                         <small class="text-white-50">{{ Auth::user()->email }}</small>
                         <div class="sidebar-user-meta">
-                            <span class="sidebar-meta-badge" id="sidebarOrgBadge">{{ Auth::user()->activeOrganizationName() }}</span>
+                            <span class="sidebar-meta-badge" id="sidebarOrgBadge">{{ $activeOrgName }}</span>
                             <span class="sidebar-meta-badge">{{ Auth::user()->jabatan ?? 'Jabatan' }}</span>
                         </div>
                     </div>
@@ -870,44 +879,56 @@
                 }
             });
 
-            // Switch active organization via checklist
-            document.querySelectorAll('.org-checklist-item').forEach(function(item) {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+            const organizationCheckboxes = Array.from(document.querySelectorAll('.org-checkbox'));
+            const applyOrganizationSelection = document.getElementById('applyOrganizationSelection');
+            const organizationSelectionStatus = document.getElementById('organizationSelectionStatus');
+            const initialOrganizationIds = organizationCheckboxes
+                .filter(function(checkbox) { return checkbox.checked; })
+                .map(function(checkbox) { return checkbox.value; })
+                .sort();
 
-                    const orgId = this.getAttribute('data-org-id');
-                    const orgName = this.getAttribute('data-org-name');
-                    if (!orgId) return;
+            function selectedOrganizationIds() {
+                return organizationCheckboxes
+                    .filter(function(checkbox) { return checkbox.checked; })
+                    .map(function(checkbox) { return checkbox.value; });
+            }
 
-                    // Visual updates immediately
-                    document.querySelectorAll('.org-checklist-item').forEach(function(el) {
-                        el.classList.remove('active');
-                        const cb = el.querySelector('.org-checkbox');
-                        if (cb) {
-                            cb.classList.remove('checked');
-                            cb.innerHTML = '';
-                        }
-                    });
-                    this.classList.add('active');
-                    const activeCb = this.querySelector('.org-checkbox');
-                    if (activeCb) {
-                        activeCb.classList.add('checked');
-                        activeCb.innerHTML = '<i class="fas fa-check"></i>';
-                    }
+            function updateOrganizationSelection() {
+                const selectedIds = selectedOrganizationIds().sort();
+                const isChanged = selectedIds.length !== initialOrganizationIds.length
+                    || selectedIds.some(function(id, index) { return id !== initialOrganizationIds[index]; });
 
-                    const topPillText = document.getElementById('topOrgChipText');
-                    if (topPillText) {
-                        topPillText.textContent = orgName.toUpperCase();
-                    }
-                    const sidebarOrgBadge = document.getElementById('sidebarOrgBadge');
-                    if (sidebarOrgBadge) {
-                        sidebarOrgBadge.textContent = orgName;
-                    }
+                if (organizationSelectionStatus) {
+                    organizationSelectionStatus.textContent = selectedIds.length === 0
+                        ? 'Pilih minimal satu perusahaan.'
+                        : selectedIds.length + ' perusahaan dipilih';
+                }
 
-                    // AJAX post to save active organization in session
+                if (applyOrganizationSelection) {
+                    applyOrganizationSelection.disabled = selectedIds.length === 0 || !isChanged;
+                }
+            }
+
+            organizationCheckboxes.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    this.closest('.org-checklist-item').classList.toggle('is-selected', this.checked);
+                    updateOrganizationSelection();
+                });
+            });
+
+            if (applyOrganizationSelection) {
+                applyOrganizationSelection.addEventListener('click', function() {
+                    const organizationIds = selectedOrganizationIds();
+                    if (organizationIds.length === 0) return;
+
                     const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
                     const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+                    this.disabled = true;
+                    this.textContent = 'Menyimpan...';
+                    organizationCheckboxes.forEach(function(checkbox) { checkbox.disabled = true; });
+                    if (organizationSelectionStatus) {
+                        organizationSelectionStatus.textContent = 'Menyimpan pilihan...';
+                    }
 
                     fetch('{{ route("user.active-organization") }}', {
                         method: 'POST',
@@ -916,29 +937,32 @@
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ organization_id: orgId })
+                        body: JSON.stringify({ organization_ids: organizationIds })
                     })
-                    .then(function(res) {
-                        return res.json();
+                    .then(function(response) {
+                        return response.json().then(function(data) {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || 'Pilihan perusahaan gagal disimpan.');
+                            }
+
+                            return data;
+                        });
                     })
-                    .then(function(data) {
-                        if (data.success) {
-                            // Reload page so all queries/data update to the selected organization
-                            window.location.reload();
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: data.message || 'Tidak dapat memilih perusahaan tersebut.'
-                            });
-                        }
-                    })
-                    .catch(function(err) {
-                        console.error('Organization switch error:', err);
+                    .then(function() {
                         window.location.reload();
+                    })
+                    .catch(function(error) {
+                        organizationCheckboxes.forEach(function(checkbox) { checkbox.disabled = false; });
+                        applyOrganizationSelection.textContent = 'Terapkan pilihan';
+                        updateOrganizationSelection();
+                        if (organizationSelectionStatus) {
+                            organizationSelectionStatus.textContent = error.message || 'Pilihan perusahaan gagal disimpan.';
+                        }
                     });
                 });
-            });
+            }
+
+            updateOrganizationSelection();
 
             // Logout confirmation
             document.querySelectorAll('.logout-btn').forEach(function(btn) {

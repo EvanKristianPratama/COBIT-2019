@@ -10,12 +10,17 @@
                 </div>
                 <div>
                     <h2 class="h5 mb-0 fw-bold">COBIT 2019 Tools</h2>
-                    <small class="opacity-75" style="letter-spacing: 0.5px;">Design Factor Analysis</small>
+                    <small class="opacity-75" style="letter-spacing: 0.5px;">{{ session('instansi') }} - {{ session('kode_assessment', session('assessment_id')) }}</small>
                 </div>
             </div>
-            <a href="{{ route('cobit.home') }}" class="btn btn-link text-white p-2 hover-scale opacity-75 text-decoration-none">
-                <i class="fas fa-times me-1"></i> Close
-            </a>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="window.location.reload()" aria-label="Refresh halaman" title="Refresh halaman">
+                    <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                </button>
+                <a href="{{ route('cobit.design-factors.index') }}" class="btn btn-link text-white p-2 hover-scale opacity-75 text-decoration-none">
+                    <i class="fas fa-list me-1"></i> Design Factor List
+                </a>
+            </div>
         </div>
 
         <!-- Main Content Area -->

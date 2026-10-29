@@ -90,6 +90,8 @@ class AccessProfilePermissionService
             if ($map[$key] === [] && ! $profile->exists) {
                 $map[$key] = $profile->enum()?->defaultPermissions() ?? [];
             }
+
+            $map[$key] = $this->normalizeAssessmentPermissions($key, $map[$key]);
         }
 
         $this->permissionMap = $map;
@@ -98,11 +100,11 @@ class AccessProfilePermissionService
     }
 
     /**
-     * @param list<string> $permissions
+     * @param  list<string>  $permissions
      */
     public function replacePermissions(MstAccessProfile $profile, array $permissions): void
     {
-        $normalizedPermissions = collect($permissions)
+        $normalizedPermissions = collect($this->normalizeAssessmentPermissions((string) $profile->access_profile_key, $permissions))
             ->filter(fn (?string $permission): bool => in_array((string) $permission, PermissionCatalog::profileAssignable(), true))
             ->unique()
             ->values();
@@ -129,5 +131,21 @@ class AccessProfilePermissionService
         $profile = trim((string) $profile);
 
         return $profile !== '' ? $profile : null;
+    }
+
+    /**
+     * @param  list<string>  $permissions
+     * @return list<string>
+     */
+    private function normalizeAssessmentPermissions(string $profileKey, array $permissions): array
+    {
+        if ($profileKey !== UserAccessProfile::Viewer->value) {
+            return $permissions;
+        }
+
+        return array_values(array_unique([
+            ...array_diff($permissions, [PermissionCatalog::AssessmentsInput]),
+            PermissionCatalog::AssessmentsView,
+        ]));
     }
 }

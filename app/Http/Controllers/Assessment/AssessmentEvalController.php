@@ -7,14 +7,14 @@ use App\Http\Requests\AssessmentEval\CreateAssessmentRequest;
 use App\Http\Requests\AssessmentEval\SaveAssessmentRequest;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Eval\AssessmentManagementService;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Eval\EvaluationReadService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class AssessmentEvalController extends Controller
 {
     public function __construct(
-        protected EvaluationService $evaluationService,
+        protected EvaluationReadService $evaluationReader,
         protected AssessmentManagementService $assessmentManagementService,
         protected AssessmentAccessService $assessmentAccessService
     ) {
@@ -43,7 +43,7 @@ class AssessmentEvalController extends Controller
     public function showAssessment($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation) {
                 return redirect()->route('assessment.index')->withErrors(['error' => 'Assessment not found']);
@@ -79,7 +79,7 @@ class AssessmentEvalController extends Controller
     public function save(SaveAssessmentRequest $request, $evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation || ! $this->assessmentAccessService->canManage(Auth::user(), $evaluation)) {
                 return response()->json(['success' => false, 'message' => 'Assessment not found or access denied'], 404);
@@ -104,7 +104,7 @@ class AssessmentEvalController extends Controller
     public function load($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation) {
                 return response()->json(['success' => false, 'message' => 'Assessment not found'], 404);
@@ -134,7 +134,7 @@ class AssessmentEvalController extends Controller
         try {
             return response()->json([
                 'success' => true,
-                'data' => $this->evaluationService->getUserEvaluations(),
+                'data' => $this->evaluationReader->getUserEvaluations(),
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -144,7 +144,7 @@ class AssessmentEvalController extends Controller
     public function delete($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation) {
                 return redirect()->back()->withErrors(['error' => 'Assessment tidak ditemukan.']);
@@ -165,7 +165,7 @@ class AssessmentEvalController extends Controller
     public function finish($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation) {
                 return response()->json(['message' => 'Assessment not found'], 404);
@@ -187,7 +187,7 @@ class AssessmentEvalController extends Controller
     public function unlock($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
 
             if (! $evaluation) {
                 return response()->json(['message' => 'Assessment not found'], 404);
@@ -209,7 +209,7 @@ class AssessmentEvalController extends Controller
     public function getMaturityScore($evalId)
     {
         try {
-            $evaluation = $this->evaluationService->getEvaluationById($evalId);
+            $evaluation = $this->evaluationReader->getEvaluationById($evalId);
             if (! $evaluation) {
                 return response()->json(['success' => false, 'message' => 'Assessment not found'], 404);
             }

@@ -5,7 +5,7 @@ namespace App\Services\Assessment\Scope;
 use App\Models\MstEval;
 use App\Models\TrsEvalDetail;
 use App\Models\TrsScoping;
-use App\Services\EvaluationService;
+use App\Services\Assessment\Scoring\CalculatedScoreService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -13,7 +13,7 @@ use InvalidArgumentException;
 class AssessmentScopeService
 {
     public function __construct(
-        private readonly EvaluationService $evaluationService
+        private readonly CalculatedScoreService $calculatedScores
     ) {
     }
 
@@ -70,7 +70,7 @@ class AssessmentScopeService
             return $scope;
         });
 
-        $this->evaluationService->updateCalculatedScores($evaluation->eval_id);
+        $this->calculatedScores->updateCalculatedScores($evaluation->eval_id);
 
         return $scope;
     }
@@ -82,7 +82,7 @@ class AssessmentScopeService
             $scope->delete();
         });
 
-        $this->evaluationService->updateCalculatedScores($scope->eval_id);
+        $this->calculatedScores->updateCalculatedScores($scope->eval_id);
     }
 
     /**

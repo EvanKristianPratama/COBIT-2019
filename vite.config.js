@@ -10,6 +10,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/report-summary.js',
+                'resources/js/focus-area/index.js',
                 'resources/css/report-summary.css',
             ],
             refresh: true,
