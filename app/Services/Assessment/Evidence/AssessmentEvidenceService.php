@@ -4,6 +4,7 @@ namespace App\Services\Assessment\Evidence;
 
 use App\Models\MstEval;
 use App\Models\MstEvidence;
+use App\Models\MstOrganization;
 use App\Models\User;
 
 class AssessmentEvidenceService
@@ -132,6 +133,18 @@ class AssessmentEvidenceService
     {
         return MstEvidence::create([
             'eval_id' => $evaluation->eval_id,
+            ...$validated,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    public function storeForOrganization(MstOrganization $organization, array $validated): MstEvidence
+    {
+        return MstEvidence::create([
+            'eval_id' => null,
+            'organization_id' => $organization->organization_id,
             ...$validated,
         ]);
     }

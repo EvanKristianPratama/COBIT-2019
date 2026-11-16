@@ -290,8 +290,20 @@
 
     <div class="card panel-card border-0">
         <div class="card-header d-flex flex-column flex-lg-row justify-content-between gap-2 align-items-lg-center">
-            <div class="fw-bold">Assessment Evaluation Directory</div>
-            <span class="chip chip-neutral">{{ $evaluations->total() }} data</span>
+            <div>
+                <div class="fw-bold">Assessment Evaluation Directory</div>
+                <div class="eval-meta">Centang assessment yang ditampilkan pada daftar pengguna, lalu simpan untuk halaman ini.</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="chip chip-neutral">{{ $evaluations->total() }} data</span>
+                @if($evaluations->count() > 0)
+                    <form id="assessment-visibility-form" method="POST" action="{{ route('admin.assessments.visibility') }}">
+                        @csrf
+                        @method('PUT')
+                        <button type="submit" class="btn btn-primary btn-sm">Simpan tampilan</button>
+                    </form>
+                @endif
+            </div>
         </div>
         <div class="card-body">
             @if($evaluations->count() === 0)
@@ -306,6 +318,7 @@
                         <thead>
                             <tr>
                                 <th>Assessment</th>
+                                <th>Tampil di pengguna</th>
                                 <th>Owner</th>
                                 <th>Organisasi</th>
                                 <th>Status</th>
@@ -329,6 +342,14 @@
                                         <div class="eval-id">Eval #{{ $evaluation->eval_id }}</div>
                                         <div class="eval-meta">Tahun {{ $evaluation->tahun ?? '-' }}</div>
                                         <div class="eval-meta">{{ optional($evaluation->created_at)->format('d M Y H:i') }}</div>
+                                    </td>
+                                    <td>
+                                        <input type="hidden" name="assessment_ids[]" value="{{ $evaluation->eval_id }}" form="assessment-visibility-form">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="visible_ids[]" value="{{ $evaluation->eval_id }}"
+                                                id="show-evaluation-{{ $evaluation->eval_id }}" form="assessment-visibility-form" @checked($evaluation->show_on_user_page)>
+                                            <label class="form-check-label" for="show-evaluation-{{ $evaluation->eval_id }}">Tampilkan</label>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="fw-semibold">{{ $evaluation->user?->name ?? 'System' }}</div>

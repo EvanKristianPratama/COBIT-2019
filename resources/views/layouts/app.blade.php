@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>COBIT 2019</title>
+    <title>@yield('title', 'COBIT 2019')</title>
 
     <link rel="icon" href="{{ asset('images/cobit.png') }}" type="image/png">
 
@@ -19,6 +19,7 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @stack('styles')
 
     <style>
         :root {
@@ -664,6 +665,15 @@
                                             <i class="fas fa-clipboard-check"></i> Assessment Maturity & Capability
                                         </a>
                                     </li>
+                                    <li class="breadcrumb-item">
+                                        <a
+                                            href="{{ $disableBreadcrumbClick ? '#' : route('master-evidence.index') }}"
+                                            class="{{ Route::is('master-evidence.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
+                                        >
+                                            <i class="fas fa-folder-open"></i> Master Evidence
+                                        </a>
+                                    </li>
                                 @endif
                                 @if($canAccessSpreadsheet)
                                     <li class="breadcrumb-item">
@@ -747,6 +757,11 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('assessment.index') }}">
                                     <i class="fas fa-clipboard-check me-2"></i> Assessment
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Route::is('master-evidence.*') ? 'active' : '' }}" href="{{ route('master-evidence.index') }}">
+                                    <i class="fas fa-folder-open me-2"></i> Master Evidence
                                 </a>
                             </li>
                         @endif

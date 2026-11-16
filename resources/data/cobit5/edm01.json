@@ -1,0 +1,380 @@
+{
+  "source": "User-supplied COBIT 5 EDM01 reference images, 2026-11-03. Document reference, separate from editable shared master data.",
+  "code": "EDM01",
+  "title": "Ensure Governance Framework Setting and Maintenance",
+  "area": "Governance",
+  "domain": "Evaluate, Direct and Monitor",
+  "description": "Analyse and articulate the requirements for the governance of enterprise IT, and put in place and maintain effective enabling structures, principles, processes and practices, with clarity of responsibilities and authority to achieve the enterprise’s mission, goals and objectives.",
+  "purpose": "Provide a consistent approach integrated and aligned with the enterprise governance approach. To ensure that IT-related decisions are made in line with the enterprise’s strategies and objectives, ensure that IT-related processes are overseen effectively and transparently, compliance with legal and regulatory requirements is confirmed, and the governance requirements for board members are met.",
+  "it_goals": [
+    {
+      "code": "01",
+      "title": "Alignment of IT and business strategy",
+      "metrics": [
+        "Percent of enterprise strategic goals and requirements supported by IT strategic goals",
+        "Level of stakeholder satisfaction with scope of the planned portfolio of programmes and services",
+        "Percent of IT value drivers mapped to business value drivers"
+      ]
+    },
+    {
+      "code": "03",
+      "title": "Commitment of executive management for making IT-related decisions",
+      "metrics": [
+        "Percent of executive management roles with clearly defined accountabilities for IT decisions",
+        "Number of times IT is on the board agenda in a proactive manner",
+        "Frequency of IT strategy (executive) committee meetings",
+        "Rate of execution of executive IT-related decisions"
+      ]
+    },
+    {
+      "code": "07",
+      "title": "Delivery of IT services in line with business requirements",
+      "metrics": [
+        "Number of business disruptions due to IT service incidents",
+        "Percent of business stakeholders satisfied that IT service delivery meets agreed-on service levels",
+        "Percent of users satisfied with the quality of IT service delivery"
+      ]
+    }
+  ],
+  "process_goals": [
+    {
+      "title": "Strategic decision-making model for IT is effective and aligned with the enterprise’s internal and external environment and stakeholder requirements.",
+      "metrics": [
+        "Actual vs. target cycle time for key decisions",
+        "Level of stakeholder satisfaction (measured through surveys)"
+      ]
+    },
+    {
+      "title": "The governance system for IT is embedded in the enterprise.",
+      "metrics": [
+        "Number of roles, responsibilities and authorities that are defined, assigned and accepted by appropriate business and IT management",
+        "Degree by which agreed-on governance principles for IT are evidenced in processes and practices (percentage of processes and practices with clear traceability to principles)",
+        "Number of instances of non-compliance with ethical and professional behaviour guidelines"
+      ]
+    },
+    {
+      "title": "Assurance is obtained that the governance system for IT is operating effectively.",
+      "metrics": [
+        "Frequency of independent reviews of governance of IT",
+        "Frequency of governance of IT reporting to the executive committee and board",
+        "Number of governance of IT issues reported"
+      ]
+    }
+  ],
+  "roles": [
+    "Board",
+    "Chief Executive Officer",
+    "Chief Financial Officer",
+    "Chief Operating Officer",
+    "Business Executives",
+    "Business Process Owners",
+    "Strategy Executive Committee",
+    "Steering (Programmes/Projects) Committee",
+    "Project Management Office",
+    "Value Management Office",
+    "Chief Risk Officer",
+    "Chief Information Security Officer",
+    "Architecture Board",
+    "Enterprise Risk Committee",
+    "Head Human Resources",
+    "Compliance",
+    "Audit",
+    "Chief Information Officer",
+    "Head Architect",
+    "Head Development",
+    "Head IT Operations",
+    "Head IT Administration",
+    "Service Manager",
+    "Information Security Manager",
+    "Business Continuity Manager",
+    "Privacy Officer"
+  ],
+  "practices": [
+    {
+      "code": "EDM01.01",
+      "title": "Evaluate the governance system.",
+      "description": "Continually identify and engage with the enterprise’s stakeholders, document an understanding of the requirements, and make a judgement on the current and future design of governance of enterprise IT.",
+      "raci": [
+        "A",
+        "R",
+        "C",
+        "C",
+        "R",
+        "",
+        "R",
+        "",
+        "",
+        "C",
+        "",
+        "",
+        "C",
+        "C",
+        "C",
+        "C",
+        "C",
+        "R",
+        "C",
+        "C",
+        "C",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "flow_rows": [
+        {
+          "input": {
+            "from": "MEA03.02",
+            "description": "Communications of changed compliance requirements",
+            "rowspan": 1
+          },
+          "output": {
+            "description": "Enterprise governance guiding principles",
+            "to": "All EDM\nAPO01.01\nAPO01.03",
+            "rowspan": 1
+          }
+        },
+        {
+          "input": {
+            "from": "Outside COBIT",
+            "description": [
+              "Business environment trends",
+              "Regulations",
+              "Governance/decision-making model guidance",
+              "Constitution/bylaws/statutes of organisation"
+            ],
+            "rowspan": 2
+          },
+          "output": {
+            "description": "Decision-making model",
+            "to": "All EDM\nAPO01.01",
+            "rowspan": 1
+          }
+        },
+        {
+          "input": null,
+          "output": {
+            "description": "Authority levels",
+            "to": "All EDM\nAPO01.02",
+            "rowspan": 1
+          }
+        }
+      ],
+      "activities": [
+        "Analyse and identify the internal and external environmental factors (legal, regulatory and contractual obligations) and trends in the business environment that may influence governance design.",
+        "Determine the significance of IT and its role with respect to the business.",
+        "Consider external regulations, laws and contractual obligations and determine how they should be applied within the governance of enterprise IT.",
+        "Align the ethical use and processing of information and its impact on society, natural environment, and internal and external stakeholder interests with the enterprise’s direction, goals and objectives.",
+        "Determine the implications of the overall enterprise control environment with regard to IT.",
+        "Articulate principles that will guide the design of governance and decision making of IT.",
+        "Understand the enterprise’s decision-making culture and determine the optimal decision-making model for IT.",
+        "Determine the appropriate levels of authority delegation, including threshold rules, for IT decisions."
+      ]
+    },
+    {
+      "code": "EDM01.02",
+      "title": "Direct the governance system.",
+      "description": "Inform leaders and obtain their support, buy-in and commitment. Guide the structures, processes and practices for the governance of IT in line with agreed-on governance design principles, decision-making models and authority levels. Define the information required for informed decision making.",
+      "raci": [
+        "A",
+        "R",
+        "C",
+        "C",
+        "R",
+        "I",
+        "R",
+        "I",
+        "I",
+        "I",
+        "C",
+        "I",
+        "I",
+        "I",
+        "I",
+        "C",
+        "C",
+        "R",
+        "C",
+        "I",
+        "I",
+        "I",
+        "I",
+        "I",
+        "I",
+        "I"
+      ],
+      "flow_rows": [
+        {
+          "input": {
+            "from": "",
+            "description": "",
+            "rowspan": 2
+          },
+          "output": {
+            "description": "Enterprise governance communications",
+            "to": "All EDM\nAPO01.04",
+            "rowspan": 1
+          }
+        },
+        {
+          "input": null,
+          "output": {
+            "description": "Reward system approach",
+            "to": "APO07.03\nAPO07.04",
+            "rowspan": 1
+          }
+        }
+      ],
+      "activities": [
+        "Communicate governance of IT principles and agree with executive management on the way to establish informed and committed leadership.",
+        "Establish or delegate the establishment of governance structures, processes and practices in line with agreed-on design principles.",
+        "Allocate responsibility, authority and accountability in line with agreed-on governance design principles, decision-making models and delegation.",
+        "Ensure that communication and reporting mechanisms provide those responsible for oversight and decision-making with appropriate information.",
+        "Direct that staff follow relevant guidelines for ethical and professional behaviour and ensure that consequences of non-compliance are known and enforced.",
+        "Direct the establishment of a reward system to promote desirable cultural change."
+      ]
+    },
+    {
+      "code": "EDM01.03",
+      "title": "Monitor the governance system.",
+      "description": "Monitor the effectiveness and performance of the enterprise’s governance of IT. Assess whether the governance system and implemented mechanisms (including structures, principles and processes) are operating effectively and provide appropriate oversight of IT.",
+      "raci": [
+        "A",
+        "R",
+        "C",
+        "C",
+        "R",
+        "I",
+        "R",
+        "I",
+        "I",
+        "I",
+        "C",
+        "I",
+        "I",
+        "I",
+        "I",
+        "C",
+        "C",
+        "R",
+        "C",
+        "I",
+        "I",
+        "I",
+        "I",
+        "I",
+        "I",
+        "I"
+      ],
+      "flow_rows": [
+        {
+          "input": {
+            "from": "MEA01.04",
+            "description": "Performance reports",
+            "rowspan": 1
+          },
+          "output": {
+            "description": "Feedback on governance effectiveness and performance",
+            "to": "All EDM\nAPO01.07",
+            "rowspan": 8
+          }
+        },
+        {
+          "input": {
+            "from": "MEA01.05",
+            "description": "Status and results of actions",
+            "rowspan": 1
+          },
+          "output": null
+        },
+        {
+          "input": {
+            "from": "MEA02.01",
+            "description": [
+              "Results of benchmarking and other evaluations",
+              "Results of internal control monitoring and reviews"
+            ],
+            "rowspan": 1
+          },
+          "output": null
+        },
+        {
+          "input": {
+            "from": "MEA02.03",
+            "description": "Results of reviews of self-assessments",
+            "rowspan": 1
+          },
+          "output": null
+        },
+        {
+          "input": {
+            "from": "MEA02.06",
+            "description": "Assurance plans",
+            "rowspan": 1
+          },
+          "output": null
+        },
+        {
+          "input": {
+            "from": "MEA03.03",
+            "description": "Compliance confirmations",
+            "rowspan": 1
+          },
+          "output": null
+        },
+        {
+          "input": {
+            "from": "MEA03.04",
+            "description": [
+              "Reports of non-compliance issues and root causes",
+              "Compliance assurance reports"
+            ],
+            "rowspan": 1
+          },
+          "output": null
+        },
+        {
+          "input": {
+            "from": "Outside COBIT",
+            "description": [
+              "Obligations",
+              "Audit reports"
+            ],
+            "rowspan": 1
+          },
+          "output": null
+        }
+      ],
+      "activities": [
+        "Assess the effectiveness and performance of those stakeholders given delegated responsibility and authority for governance of enterprise IT.",
+        "Periodically assess whether agreed-on governance of IT mechanisms (structures, principles, processes, etc.) are established and operating effectively.",
+        "Assess the effectiveness of the governance design and identify actions to rectify any deviations found.",
+        "Maintain oversight of the extent to which IT satisfies obligations (regulatory, legislation, common law, contractual), internal policies, standards and professional guidelines.",
+        "Provide oversight of the effectiveness of, and compliance with, the enterprise’s system of control.",
+        "Monitor regular and routine mechanisms for ensuring that the use of IT complies with relevant obligations (regulatory, legislation, common law, contractual), standards and guidelines"
+      ]
+    }
+  ],
+  "guidance": [
+    {
+      "standard": "Committee of Sponsoring Organizations of the Treadway Commission (COSO)",
+      "reference": ""
+    },
+    {
+      "standard": "ISO/IEC 38500",
+      "reference": ""
+    },
+    {
+      "standard": "King III",
+      "reference": [
+        "5.1. The board should be responsible for information technology (IT) governance.",
+        "5.3. The board should delegate to management the responsibility for the implementation of an IT governance framework."
+      ]
+    },
+    {
+      "standard": "Organisation for Economic Co-operation and Development (OECD)",
+      "reference": "Corporate Governance Principles"
+    }
+  ]
+}

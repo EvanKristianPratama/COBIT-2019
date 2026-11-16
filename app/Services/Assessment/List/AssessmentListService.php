@@ -7,12 +7,15 @@ use App\Models\MstEval;
 use App\Models\TargetCapability;
 use App\Models\TargetMaturity;
 use App\Models\TrsActivityeval;
+use App\Models\TrsEvalDetail;
+use App\Models\TrsObjectiveScore;
 use App\Models\TrsScoping;
 use App\Models\User;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AssessmentListService
 {
@@ -29,6 +32,7 @@ class AssessmentListService
         $organizationOptions = $user->assignedOrganizations();
         $activeOrgIds = $user->activeOrganizationIds($organizationOptions);
         $activeOrgId = $user->activeOrganizationId($organizationOptions);
+        $hasVisibilityColumn = Schema::hasColumn('mst_eval', 'show_on_user_page');
 
         $applyOrgFilter = function (Builder $query) use ($activeOrgIds) {
             if ($activeOrgIds !== []) {
@@ -47,6 +51,7 @@ class AssessmentListService
 
         $myQuery = $this->assessmentAccessService
             ->queryAccessible($user)
+            ->when($hasVisibilityColumn, fn (Builder $query) => $query->where('mst_eval.show_on_user_page', true))
             ->with(['user', 'organization', 'maturityScore', 'accessAssignments'])
             ->where('mst_eval.user_id', $user->id)
             ->orderBy('mst_eval.created_at', 'desc');
@@ -54,6 +59,7 @@ class AssessmentListService
 
         $assignedQuery = $this->assessmentAccessService
             ->queryAccessible($user)
+            ->when($hasVisibilityColumn, fn (Builder $query) => $query->where('mst_eval.show_on_user_page', true))
             ->with(['user', 'organization', 'maturityScore', 'accessAssignments'])
             ->where('mst_eval.user_id', '!=', $user->id)
             ->orderBy('mst_eval.created_at', 'desc');
@@ -70,7 +76,8 @@ class AssessmentListService
             $evaluation->can_manage = $this->assessmentAccessService->canManage($user, $evaluation);
         }
 
-        $statsQuery = $this->assessmentAccessService->queryAccessible($user);
+        $statsQuery = $this->assessmentAccessService->queryAccessible($user)
+            ->when($hasVisibilityColumn, fn (Builder $query) => $query->where('mst_eval.show_on_user_page', true));
         $applyOrgFilter($statsQuery);
 
         $totalAssessments = (clone $statsQuery)->count();
@@ -145,11 +152,22 @@ class AssessmentListService
 
         $evalIds = $evaluations->pluck('eval_id')->unique()->values()->all();
 
-        $scopeCounts = TrsScoping::whereIn('eval_id', $evalIds)
-            ->select('eval_id', DB::raw('count(*) as scope_count'))
+        $scopesByEvaluation = TrsScoping::whereIn('eval_id', $evalIds)
+            ->orderBy('id')
+            ->get(['id', 'eval_id', 'nama_scope'])
+            ->groupBy('eval_id');
+
+        $scopeIds = $scopesByEvaluation->flatten(1)->pluck('id')->all();
+        $detailsByScope = $scopeIds === []
+            ? collect()
+            : TrsEvalDetail::whereIn('scoping_id', $scopeIds)
+                ->get(['scoping_id', 'domain_id'])
+                ->groupBy('scoping_id');
+
+        $scoresByEvaluation = TrsObjectiveScore::whereIn('eval_id', $evalIds)
+            ->get(['eval_id', 'objective_id', 'level'])
             ->groupBy('eval_id')
-            ->pluck('scope_count', 'eval_id')
-            ->toArray();
+            ->map(fn (Collection $scores) => $scores->keyBy('objective_id'));
 
         $lastActivityDates = TrsActivityeval::whereIn('eval_id', $evalIds)
             ->select('eval_id', DB::raw('MAX(updated_at) as last_activity_at'))
@@ -157,9 +175,37 @@ class AssessmentListService
             ->pluck('last_activity_at', 'eval_id');
 
         foreach ($evaluations as $evaluation) {
-            $evaluation->scope_count = $scopeCounts[$evaluation->eval_id] ?? 0;
+            $targetCapability = $this->findTargetCapability($evaluation);
+            $objectiveScores = $scoresByEvaluation->get($evaluation->eval_id, collect());
+            $scopeSummaries = ($scopesByEvaluation->get($evaluation->eval_id) ?? collect())
+                ->values()
+                ->map(function (TrsScoping $scope, int $index) use ($detailsByScope, $objectiveScores, $targetCapability): array {
+                    $objectiveIds = ($detailsByScope->get($scope->id) ?? collect())
+                        ->pluck('domain_id')
+                        ->map(fn ($id) => strtoupper(trim((string) $id)))
+                        ->filter()
+                        ->unique()
+                        ->values();
+
+                    $scopeScore = $objectiveIds->isEmpty()
+                        ? null
+                        : round($objectiveIds->sum(fn ($objectiveId) => (float) ($objectiveScores->get($objectiveId)?->level ?? 0)) / $objectiveIds->count(), 2);
+
+                    return [
+                        'id' => (int) $scope->id,
+                        'number' => $index + 1,
+                        'name' => trim((string) $scope->nama_scope),
+                        'objective_ids' => $objectiveIds->all(),
+                        'gamo_count' => $objectiveIds->count(),
+                        'maturity_score' => $scopeScore,
+                        'avg_target_capability' => $this->averageTargetCapability($targetCapability, $objectiveIds->all()),
+                    ];
+                });
+
+            $evaluation->scope_summaries = $scopeSummaries;
+            $evaluation->scope_count = $scopeSummaries->count();
             $evaluation->last_saved_at = $lastActivityDates[$evaluation->eval_id] ?? $evaluation->created_at;
-            $evaluation->avg_target_capability = $this->resolveTargetCapabilityAverage($evaluation);
+            $evaluation->avg_target_capability = $this->averageTargetCapability($targetCapability);
             $evaluation->target_maturity = $this->resolveTargetMaturity($evaluation);
         }
     }
@@ -210,9 +256,9 @@ class AssessmentListService
         }
     }
 
-    private function resolveTargetCapabilityAverage(MstEval $evaluation): float
+    private function findTargetCapability(MstEval $evaluation): ?TargetCapability
     {
-        $target = TargetCapability::query()
+        return TargetCapability::query()
             ->where('tahun', $evaluation->tahun)
             ->when(
                 filled($evaluation->organization_id),
@@ -221,7 +267,11 @@ class AssessmentListService
             )
             ->latest('target_id')
             ->first();
+    }
 
+    /** @param array<int, string>|null $objectiveIds */
+    private function averageTargetCapability(?TargetCapability $target, ?array $objectiveIds = null): float
+    {
         if (! $target) {
             return 0;
         }
@@ -237,6 +287,10 @@ class AssessmentListService
         $sum = 0;
         $count = 0;
         foreach ($domainCols as $col) {
+            if ($objectiveIds !== null && ! in_array($col, $objectiveIds, true)) {
+                continue;
+            }
+
             $value = $target->{$col};
             if ($value !== null && is_numeric($value)) {
                 $sum += $value;

@@ -1,4 +1,8 @@
 @extends('layouts.app')
+@section('title', 'COBIT 5 — Kelola Data')
+@push('styles')
+    @vite('resources/css/cobit5/document.css')
+@endpush
 
 @section('content')
     <style>
@@ -398,7 +402,8 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <div>
-                <h1 class="h4 mb-0">Kamus Component</h1>
+                <h1 class="h4 mb-0">Kelola Data Komponen COBIT 5</h1>
+                <a class="small" href="{{ route('cobit_component.show', ['id' => $objective->objective_id, 'focus_area' => $focusAreaId]) }}">Kembali ke dokumen COBIT 5</a>
                 @if($objective->focusArea)
                     @php
                         $curFa = $objective->focusArea;
@@ -525,6 +530,9 @@
         <div class="mb-3">
             <div class="btn-group w-100" role="group" aria-label="View mode">
                 <button id="modeGamoBtn" type="button" class="btn btn-outline-primary flex-fill">View by GAMO</button>
+                @if(($objective->focusArea?->version ?? '2019') === '2019')
+                    <a href="{{ route('cobit_component.helicopter', ['focus_area' => $focusAreaId, 'objective_id' => $objective->objective_id]) }}" class="btn btn-outline-primary flex-fill">Ringkasan GAMO</a>
+                @endif
                 <button id="modeComponentBtn" type="button" class="btn btn-primary flex-fill">View by Component</button>
                 <button id="masterToggleBtn" type="button" class="btn btn-outline-primary flex-fill">Master</button>
             </div>
@@ -588,9 +596,22 @@
                             <button class="nav-link" id="cap-tab" data-bs-toggle="tab" data-bs-target="#cap-pane"
                                 type="button" role="tab">Capability & Maturity Level</button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="master-evidence-tab" data-bs-toggle="tab" data-bs-target="#master-evidence-pane"
+                                type="button" role="tab" aria-controls="master-evidence-pane" aria-selected="false">Master Evidence</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#c5-work-products" type="button" role="tab">Master Work Product</button>
+                        </li>
                     </ul>
 
                     <div class="tab-content" id="masterTabContent">
+                        <div class="tab-pane fade" id="c5-work-products" role="tabpanel">
+                            @include('cobit_component.cobit5.partials.work-products')
+                        </div>
+                        <div class="tab-pane fade" id="master-evidence-pane" role="tabpanel" aria-labelledby="master-evidence-tab">
+                            @include('cobit_component.shared.partials.master-evidence-query')
+                        </div>
                         <div class="tab-pane fade show active" id="eg-pane" role="tabpanel">
                             <div class="table-responsive">
                                 <table id="masterEgTable" class="table table-sm table-bordered table-striped mb-0">
@@ -770,7 +791,8 @@
                 enterGoals: @json($masterEnterGoals ?? []),
                 alignGoals: @json($masterAlignGoals ?? []),
                 roles: @json($masterRoles ?? []),
-                practices: @json($masterPractices ?? [])
+                practices: @json($masterPractices ?? []),
+                workProducts: @json($masterWorkProducts ?? [])
             };
 
             const AUTHZ = {
@@ -2222,62 +2244,25 @@
                     objectives.forEach(obj => {
                         (obj.practices || []).forEach(practice => {
                             const inputs = practice.infoflowinput || [];
-
-                            if (!inputs.length) {
+                            const outputs = practice.infoflowoutput || [];
+                            const normalizeName = value => String(value || '').replaceAll('"', '').replace(/\s+/g, ' ').trim().toLowerCase();
+                            for (let index = 0; index < Math.max(inputs.length, outputs.length); index++) {
+                                const inp = inputs[index];
+                                const out = outputs[index];
+                                const wp = MASTER_DATA.workProducts.find(wp => wp.objective_id === obj.objective_id &&
+                                    (Number(wp.id) === Number(out?.work_product_id) || normalizeName(wp.wp) === normalizeName(out?.description)));
                                 rows.push({
                                     gamo: obj.objective_id || '',
-                                    practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
-                                        .trim(),
+                                    practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`.trim(),
                                     practiceId: practice.practice_id || '',
-                                    inputId: null,
-                                    outputId: null,
-                                    from: '',
-                                    input: '',
-                                    output: '',
-                                    to: '',
-                                    isNoInputRow: true,
-                                    showForm: STATE.inputMode ? !!STATE.showCreateRowForPractice[practice.practice_id] : false
+                                    inputId: inp?.input_id || null, outputId: out?.output_id || null,
+                                    workProductId: wp?.id || null,
+                                    from: inp?.from || '', input: inp?.description || '',
+                                    output: wp?.wp || out?.description || '', to: out?.to || '', isNoInputRow: false,
                                 });
-                                return;
                             }
 
-                            inputs.forEach(inp => {
-                                const outputs = inp.connectedoutputs || [];
-
-                                if (outputs.length) {
-                                    outputs.forEach(out => {
-                                        rows.push({
-                                            gamo: obj.objective_id || '',
-                                            practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
-                                                .trim(),
-                                            practiceId: inp.practice_id || practice.practice_id || '',
-                                            inputId: inp.input_id || null,
-                                            outputId: out.output_id || null,
-                                            from: inp.from || '',
-                                            input: inp.description || '',
-                                            output: out.description || '',
-                                            to: out.to || '',
-                                            isNoInputRow: false
-                                        });
-                                    });
-                                } else {
-                                    rows.push({
-                                        gamo: obj.objective_id || '',
-                                        practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
-                                            .trim(),
-                                        practiceId: inp.practice_id || practice.practice_id || '',
-                                        inputId: inp.input_id || null,
-                                        outputId: null,
-                                        from: inp.from || '',
-                                        input: inp.description || '',
-                                        output: '',
-                                        to: '',
-                                        isNoInputRow: false
-                                    });
-                                }
-                            });
-
-                            if (STATE.inputMode) {
+                            if (STATE.inputMode || (!inputs.length && !outputs.length)) {
                                 rows.push({
                                     gamo: obj.objective_id || '',
                                     practice: `${practice.practice_id || ''} ${practice.practice_name || ''}`
@@ -2377,8 +2362,10 @@
                             `<textarea class="form-control form-control-sm infoflow-edit-control textarea js-infoflow-field" data-field="input_description">${escapeTextarea(r.input || '')}</textarea>` :
                             `<span class="small text-muted">${Utils.formatText(r.input || '(No information flows)')}</span>`;
 
+                        const wpOptions = MASTER_DATA.workProducts.filter(wp => wp.objective_id === r.gamo)
+                            .map(wp => `<option value="${escapeAttr(wp.id)}" ${Number(wp.id) === Number(r.workProductId) ? 'selected' : ''}>${Utils.escapeHtml(wp.wp_id)} — ${Utils.escapeHtml(wp.wp)}</option>`).join('');
                         const outputEditor = canCreateOrUpdateOutput ?
-                            `<textarea class="form-control form-control-sm infoflow-edit-control textarea js-infoflow-field" data-field="output_description">${escapeTextarea(r.output || '')}</textarea>` :
+                            `<select class="form-select form-select-sm js-infoflow-field" data-field="work_product_id"><option value="">Pilih Work Product</option>${wpOptions}</select>` :
                             `<span class="small text-muted">${Utils.formatText(r.output || '(No Output)')}</span>`;
 
                         const toEditor = canCreateOrUpdateOutput ?
@@ -3959,7 +3946,7 @@
 
                     const fromField = row.querySelector('.js-infoflow-field[data-field="from"]');
                     const inputDescField = row.querySelector('.js-infoflow-field[data-field="input_description"]');
-                    const outputDescField = row.querySelector('.js-infoflow-field[data-field="output_description"]');
+                    const outputWpField = row.querySelector('.js-infoflow-field[data-field="work_product_id"]');
                     const toField = row.querySelector('.js-infoflow-field[data-field="to"]');
 
                     const normalizeText = (value) => String(value || '').trim();
@@ -3971,12 +3958,17 @@
 
                     const outputPayload = {
                         to: normalizeText(toField ? toField.value : ''),
-                        description: normalizeText(outputDescField ? outputDescField.value : '')
+                        work_product_id: outputWpField?.value ? Number(outputWpField.value) : null
                     };
 
                     const hasAnyInputValue = Boolean(inputPayload.from || inputPayload.description);
-                    const hasAnyOutputValue = Boolean(outputPayload.to || outputPayload.description);
+                    const hasAnyOutputValue = Boolean(outputPayload.to || outputPayload.work_product_id);
                     const isCreateRow = !inputId;
+
+                    if ((outputId || hasAnyOutputValue) && !outputPayload.work_product_id) {
+                        NotificationController.show('warning', 'Pilih Work Product untuk output ini.');
+                        return;
+                    }
 
                     if (isCreateRow && !hasAnyInputValue && !hasAnyOutputValue) {
                         NotificationController.show('warning',

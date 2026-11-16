@@ -4,6 +4,8 @@ namespace App\Services\Cobit;
 
 use App\Models\MstFocusArea;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class CobitModelMapService
@@ -28,7 +30,11 @@ class CobitModelMapService
             'DSS' => ['x' => 281, 'y' => 609, 'width' => 69, 'height' => 46, 'columns' => 6, 'gap_x' => 6, 'gap_y' => 5],
             'MEA' => ['x' => 756, 'y' => 391, 'width' => 72, 'height' => 54, 'columns' => 1, 'gap_x' => 0, 'gap_y' => 14],
         ];
-        $gamoDefinitions = collect(config('cobit-evolution.gamo', []));
+        // GAMO list per domain comes from the database; the config file is only the fallback while the table is missing or empty.
+        $gamoDefinitions = Schema::hasTable('mst_cobit_evolution') && DB::table('mst_cobit_evolution')->exists()
+            ? DB::table('mst_cobit_evolution')->orderBy('id')->get(['cobit2019_id', 'domain', 'title_2019'])
+                ->mapWithKeys(fn (object $row) => [$row->cobit2019_id => ['id' => $row->cobit2019_id, 'domain' => $row->domain, 'title_2019' => $row->title_2019]])
+            : collect(config('cobit-evolution.gamo', []));
         $domains = collect($layout)->map(function (array $position, string $domain) use ($gamoDefinitions, $objectives, $core, $libraryUrl): array {
             $definitions = $gamoDefinitions->filter(fn (array $item) => ($item['domain'] ?? null) === $domain);
 

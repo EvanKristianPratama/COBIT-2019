@@ -282,7 +282,7 @@ class ActivityReportService
     /**
      * @return array{0: array<int, array<string, mixed>>, 1: array<string|int, int>}
      */
-    private function buildPracticeSummary(MstObjective $objective): array
+    public function buildPracticeSummary(MstObjective $objective): array
     {
         $rows = [];
         $totals = [
@@ -339,7 +339,7 @@ class ActivityReportService
      * @param  array<int, array<string, mixed>>  $levelScores
      * @return array<int, array<string, string>>
      */
-    private function buildPracticeSummaryLevelMetrics(array $practiceSummaryTotals, array $levelScores): array
+    public function buildPracticeSummaryLevelMetrics(array $practiceSummaryTotals, array $levelScores): array
     {
         $result = [];
 

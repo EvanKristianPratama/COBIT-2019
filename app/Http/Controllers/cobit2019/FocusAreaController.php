@@ -5,6 +5,7 @@ namespace App\Http\Controllers\cobit2019;
 use App\Http\Controllers\Controller;
 use App\Models\MstFocusArea;
 use App\Services\Cobit\CobitModelMapService;
+use App\Services\Cobit4\Cobit4Service;
 use App\Models\MstEntergoals;
 use App\Models\MstAligngoals;
 use App\Models\MstObjective;
@@ -427,6 +428,12 @@ class FocusAreaController extends Controller
         $focusAreas = MstFocusArea::withCount('objectives')
             ->with(['objectives' => fn ($query) => $query->select('objective_id', 'objective', 'focus_area_id')->orderByRaw($this->objectiveOrderSql())])
             ->get();
+        $cobit4 = app(Cobit4Service::class);
+        foreach ($focusAreas->where('version', '4.1') as $model) {
+            // PO02.M27 and PO2.M27 identify the same process, not two processes.
+            $model->objectives_count = $model->objectives
+                ->unique(fn ($objective) => $cobit4->resolveProcessCode($objective->objective_id))->count();
+        }
         $modelMap = app(CobitModelMapService::class)->build($focusAreas);
         $modelLinks = $modelMap['modelLinks'];
         $selectedView = $request->query('view') === 'cards' ? 'cards' : 'map';

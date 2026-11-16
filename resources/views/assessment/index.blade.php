@@ -6,6 +6,12 @@
 @php
     // Fallback for older logic if needed, though controller provides specific counts now
     $totalRatableActivities = \App\Models\MstActivities::count();
+    $assessmentColumns = [
+        'id' => 'ID', 'organization' => 'Organisasi', 'year' => 'Tahun',
+        'scope' => 'Scope', 'gamo' => 'GAMO', 'status' => 'Status',
+        'maturity' => 'I&T Maturity Score', 'target_capability' => 'Average Target Capability',
+        'target_maturity' => 'I&T Target Maturity', 'updated' => 'Last Update',
+    ];
 @endphp
 <div class="container mx-auto p-6" id="page-top">
     {{-- Main Hero Card --}}
@@ -48,7 +54,7 @@
     @if($totalAssessments > 0)
         {{-- My Assessments Section --}}
         @if($myAssessments->count() > 0)
-            <div class="mb-5">
+            <div class="mb-5 assessment-table-section">
                 <div class="section-header mb-4 d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="section-title">
@@ -60,6 +66,9 @@
                         <div class="d-flex align-items-center gap-2">
                             <a href="{{ route('assessment.report.all') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
                                 <i class="fas fa-chart-line me-2"></i> All Reports
+                            </a>
+                            <a href="{{ route('master-evidence.index') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+                                <i class="fas fa-folder-open me-2"></i> Master Evidence
                             </a>
                             @can('assessments.input')
                                 <button type="button"
@@ -73,81 +82,20 @@
                         </div>
                     </div>
                 </div>
+                @include('assessment.partials.column-filter')
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-sm align-middle shadow-sm bg-white assessment-list-table">
                         <thead class="table-secondary text-center align-middle">
                             <tr style="border-bottom: 2px solid #dee2e6;">
-                                <th style="width: 50px;">No</th>
-                                <th style="width: 60px;">Id</th>
-                                <th>Tahun Assesment</th>
-                                <th>Organisasi</th>
-
-                                <th class="text-center">Jumlah Scope</th>
-                                <th class="text-center">Status</th>
-                                <th>Last Update</th>
-                                <th class="text-center">I&T Maturity Score</th>
-                                <th class="text-center">Average Target Capability</th>
-                                <th class="text-center">I&T Target Maturity</th>
-                                <th class="text-center" style="width: 250px;">Aksi</th>
+                                @foreach($assessmentColumns as $columnKey => $columnLabel)
+                                    <th data-column="{{ $columnKey }}">{{ $columnLabel }}</th>
+                                @endforeach
+                                <th class="text-center assessment-actions-column">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($myAssessments as $evaluation)
-                                @php
-                                    // Status Logic
-                                    if (($evaluation->status ?? '') === 'finished') {
-                                        $statusLabel = 'Finish';
-                                        $statusBadge = 'bg-success';
-                                    } else {
-                                        $statusLabel = 'Draft';
-                                        $statusBadge = 'bg-secondary';
-                                    }
-
-                                    $score = $evaluation->maturityScore->score ?? 0;
-                                    
-                                    $scoreColorClass = 'text-danger'; // Default < 2
-                                    if ($score >= 4) {
-                                        $scoreColorClass = 'text-primary';
-                                    } elseif ($score >= 3) {
-                                        $scoreColorClass = 'text-success';
-                                    } elseif ($score >= 2) {
-                                        $scoreColorClass = 'text-warning';
-                                    }
-                                @endphp
-                                <tr>
-                                    <td class="text-center">{{ $loop->iteration + ($myAssessments->currentPage() - 1) * $myAssessments->perPage() }}</td>
-                                    <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
-                                    <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
-                                    <td class="text-center">{{ $evaluation->organization?->organization_name ?? $evaluation->user->organisasi ?? '-' }}</td>
-
-                                    <td class="text-center">{{ $evaluation->scope_count ?? '-' }}</td>
-                                    <td class="text-center">
-                                        <span class="badge {{ $statusBadge }} rounded-pill">{{ $statusLabel }}</span>
-                                    </td>
-                                    <td class="small text-muted">{{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}</td>
-                                    <td class="text-center fw-bold fs-5 {{ $scoreColorClass }}">{{ number_format($score, 2) }}</td>
-                                    <td class="text-center fw-bold">{{ number_format($evaluation->avg_target_capability ?? 0, 2) }}</td>
-                                    <td class="text-center fw-bold text-info">{{ $evaluation->target_maturity ? number_format($evaluation->target_maturity, 2) : '-' }}</td>
-                                    <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1 flex-wrap">
-                                            <a href="{{ route('assessment.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
-                                                <i class="fas fa-eye me-1"></i> Detail
-                                            </a>
-                                            <a href="{{ route('assessment.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
-                                                <i class="fas fa-file-alt me-1"></i> Report
-                                            </a>
-                                            @if(($evaluation->status ?? '') !== 'finished' && ($evaluation->can_manage ?? false))
-                                                <form action="{{ route('assessment.delete', $evaluation->encrypted_id) }}" method="POST" class="d-inline delete-form" data-id="{{ $evaluation->encrypted_id }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" title="Hapus">
-                                                        <i class="fas fa-trash me-1"></i> Hapus
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
+                                @include('assessment.partials.evaluation-rows', ['evaluation' => $evaluation])
                             @endforeach
                         </tbody>
                     </table>
@@ -160,7 +108,7 @@
         @endif
 
         @if($assignedAssessments->count() > 0)
-            <div class="mb-5">
+            <div class="mb-5 assessment-table-section">
                 <div class="section-header mb-4 d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="section-title">
@@ -172,6 +120,9 @@
                             <div class="d-flex align-items-center gap-2">
                                 <a href="{{ route('assessment.report.all') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
                                     <i class="fas fa-chart-line me-2"></i> All Reports
+                                </a>
+                                <a href="{{ route('master-evidence.index') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+                                    <i class="fas fa-folder-open me-2"></i> Master Evidence
                                 </a>
                                 @can('assessments.input')
                                     <button type="button"
@@ -186,71 +137,20 @@
                         @endif
                     </div>
                 </div>
+                @include('assessment.partials.column-filter')
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-sm align-middle shadow-sm bg-white assessment-list-table">
                         <thead class="table-secondary text-center align-middle">
                             <tr style="border-bottom: 2px solid #dee2e6;">
-                                <th style="width: 50px;">No</th>
-                                <th style="width: 60px;">Id</th>
-                                <th>Tahun Assesment</th>
-                                <th>Organisasi</th>
-                                <th class="text-center">Jumlah Scope</th>
-                                <th class="text-center">Status</th>
-                                <th>Last Update</th>
-                                <th class="text-center">I&T Maturity Score</th>
-                                <th class="text-center">Average Target Capability</th>
-                                <th class="text-center">I&T Target Maturity</th>
-                                <th class="text-center" style="width: 250px;">Aksi</th>
+                                @foreach($assessmentColumns as $columnKey => $columnLabel)
+                                    <th data-column="{{ $columnKey }}">{{ $columnLabel }}</th>
+                                @endforeach
+                                <th class="text-center assessment-actions-column">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($assignedAssessments as $evaluation)
-                                @php
-                                    $statusLabel = ($evaluation->status ?? '') === 'finished' ? 'Finish' : 'Draft';
-                                    $statusBadge = ($evaluation->status ?? '') === 'finished' ? 'bg-success' : 'bg-secondary';
-                                    $score = $evaluation->maturityScore->score ?? 0;
-                                    $scoreColorClass = 'text-danger';
-                                    if ($score >= 4) {
-                                        $scoreColorClass = 'text-primary';
-                                    } elseif ($score >= 3) {
-                                        $scoreColorClass = 'text-success';
-                                    } elseif ($score >= 2) {
-                                        $scoreColorClass = 'text-warning';
-                                    }
-                                @endphp
-                                <tr>
-                                    <td class="text-center">{{ $loop->iteration + ($assignedAssessments->currentPage() - 1) * $assignedAssessments->perPage() }}</td>
-                                    <td class="text-center fw-bold">{{ $evaluation->eval_id }}</td>
-                                    <td class="text-center">{{ $evaluation->tahun ?? date('Y', strtotime($evaluation->created_at)) }}</td>
-                                    <td class="text-center">{{ $evaluation->organization?->organization_name ?? $evaluation->user->organisasi ?? '-' }}</td>
-                                    <td class="text-center">{{ $evaluation->scope_count ?? '-' }}</td>
-                                    <td class="text-center">
-                                        <span class="badge {{ $statusBadge }} rounded-pill">{{ $statusLabel }}</span>
-                                    </td>
-                                    <td class="small text-muted">{{ \Carbon\Carbon::parse($evaluation->last_saved_at)->diffForHumans() }}</td>
-                                    <td class="text-center fw-bold fs-5 {{ $scoreColorClass }}">{{ number_format($score, 2) }}</td>
-                                    <td class="text-center fw-bold">{{ number_format($evaluation->avg_target_capability ?? 0, 2) }}</td>
-                                    <td class="text-center fw-bold text-info">{{ $evaluation->target_maturity ? number_format($evaluation->target_maturity, 2) : '-' }}</td>
-                                    <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1 flex-wrap">
-                                            <a href="{{ route('assessment.show', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-primary" title="Detail">
-                                                <i class="fas fa-eye me-1"></i> Detail
-                                            </a>
-                                            <a href="{{ route('assessment.report', $evaluation->encrypted_id) }}" class="btn btn-sm btn-outline-secondary" title="Report">
-                                                <i class="fas fa-file-alt me-1"></i> Report
-                                            </a>
-                                            @if(($evaluation->status ?? '') !== 'finished' && ($evaluation->can_manage ?? false))
-                                                <form action="{{ route('assessment.delete', $evaluation->encrypted_id) }}" method="POST" class="d-inline delete-form" data-id="{{ $evaluation->encrypted_id }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" title="Hapus">
-                                                        <i class="fas fa-trash me-1"></i> Hapus
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
+                                @include('assessment.partials.evaluation-rows', ['evaluation' => $evaluation])
                             @endforeach
                         </tbody>
                     </table>
@@ -292,6 +192,42 @@
 
     {{-- Debug removed for cleaner UI --}}
 </div>
+
+@can('assessments.input')
+<div class="modal fade" id="duplicateAssessmentModal" tabindex="-1" aria-labelledby="duplicateAssessmentTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" class="modal-content" id="duplicateAssessmentForm">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="duplicateAssessmentTitle">Duplikasi Assessment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <p>Salin scope, nilai, evidence, dan catatan dari assessment <strong id="duplicateSourceId"></strong> sebagai draft baru.</p>
+                <label for="duplicateYear" class="form-label">Tahun assessment baru</label>
+                <input type="number" class="form-control" id="duplicateYear" name="tahun" min="2000" max="2099" required>
+                <div class="form-text">Tautan dokumen tetap sama. Target capability mengikuti data tahun baru dan tidak disalin. Periksa kembali nilai dan evidence.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary">Duplikasi</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+document.getElementById('duplicateAssessmentModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const sourceYear = Number(button.dataset.year);
+    document.getElementById('duplicateAssessmentForm').action = button.dataset.actionUrl;
+    document.getElementById('duplicateSourceId').textContent = '#' + button.dataset.assessmentId;
+    document.getElementById('duplicateYear').value = sourceYear >= 2000 && sourceYear < 2099 ? sourceYear + 1 : new Date().getFullYear();
+});
+document.getElementById('duplicateAssessmentForm').addEventListener('submit', function () {
+    this.querySelector('button[type="submit"]').disabled = true;
+});
+</script>
+@endcan
 
 {{-- Assessor Info Modal (POC) --}}
 <div class="modal fade" id="assessorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="assessorModalLabel" aria-hidden="true">
@@ -732,6 +668,18 @@ document.addEventListener('DOMContentLoaded', function() {
         @endif
     });
 </script>
+
+<script>
+document.querySelectorAll('.assessment-table-section').forEach((section) => {
+    section.querySelectorAll('[data-column-toggle]').forEach((checkbox) => {
+        checkbox.addEventListener('change', () => {
+            section.querySelectorAll(`[data-column="${checkbox.value}"]`).forEach((cell) => {
+                cell.hidden = !checkbox.checked;
+            });
+        });
+    });
+});
+</script>
 <style>
 .hero-card {
     border: none;
@@ -1120,8 +1068,37 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .assessment-list-table .btn {
-    font-size: 0.68rem;
-    padding: 0.16rem 0.4rem;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+    white-space: nowrap;
 }
+
+.assessment-list-table [hidden] { display: none !important; }
+.assessment-actions-column { width: 205px; }
+.assessment-row-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    max-width: 195px;
+    margin: 0 auto;
+}
+.assessment-row-actions .btn, .assessment-row-actions form { width: 100%; }
+.column-filter { position: relative; display: inline-block; margin-bottom: 0.75rem; }
+.column-filter summary { list-style: none; cursor: pointer; }
+.column-filter summary::-webkit-details-marker { display: none; }
+.column-filter-panel {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    width: 245px;
+    padding: 0.85rem 1rem;
+    background: #fff;
+    border: 1px solid #dbe3f2;
+    border-radius: 0.65rem;
+    box-shadow: 0 12px 30px rgba(15,43,92,0.15);
+}
+.column-filter-panel .form-check { margin-bottom: 0.35rem; }
+
 </style>
 @endsection

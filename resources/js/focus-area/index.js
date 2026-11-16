@@ -55,10 +55,12 @@ if (page) {
         });
 
         const badge = page.querySelector('#selectedFrameworkBadge');
+        const hint = page.querySelector('.model-view-hint');
         const addButton = page.querySelector('#step2AddFaBtn');
+        if (hint) hint.hidden = currentView !== 'map' || currentStep !== 1;
         if (badge) {
             badge.textContent = `COBIT ${currentActiveVersion}`;
-            badge.className = `badge px-3 py-2 rounded-pill fw-bold ${currentActiveVersion === '5' ? 'bg-success' : currentActiveVersion === '4.1' ? 'bg-warning text-dark' : 'bg-primary'}`;
+            badge.className = 'small text-muted';
         }
         if (addButton) addButton.hidden = currentActiveVersion !== '2019';
 

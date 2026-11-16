@@ -47,6 +47,12 @@
     </div>
 
     <div class="container mx-auto p-6" id="page-top">
+        @if(session('success'))
+            <div class="alert alert-success" role="status">{{ session('success') }}</div>
+        @endif
+        @if(session('export_error'))
+            <div class="alert alert-warning" role="alert">{{ session('export_error') }}</div>
+        @endif
         {{-- Main Card --}}
         <div class="card shadow-sm mb-4 hero-card" style="border:none;box-shadow:0 22px 45px rgba(14,33,70,0.15);">
             <div class="card-header hero-header py-4"
@@ -74,6 +80,11 @@
                     </div>
                     {{-- Right Side: Status Badge --}}
                     <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <a href="{{ route('assessment.gamo.excel', ['evalId' => $evalId, 'scope_id' => $activeScope?->id]) }}"
+                            class="btn btn-light btn-sm fw-semibold" id="export-assessment-excel"
+                            title="Export saved assessment for this scope to Excel">
+                            <i class="fas fa-file-excel me-1"></i> Export Excel
+                        </a>
                         <span id="status-badge" class="assessment-status-chip status-draft">
                             <span class="status-dot"></span>
                             <span class="status-text">Draft</span>
@@ -1409,6 +1420,7 @@
                     this.setupFinishUnlockButtons();
                     this.checkInitialStatus();
                     this.setupSaveLoadButtons();
+                    this.setupExcelExport();
                     this.setupDomainOverviewAccordion();
                     this.setupPracticeSummaryAccordions();
                     this.setupBackToTopButton();
@@ -1748,6 +1760,54 @@
                     if (this.loadingProgressBar) this.loadingProgressBar.style.width = percentage + '%';
                     if (this.loadingPercentage) this.loadingPercentage.textContent = Math.round(percentage) + '%';
                 }
+            }
+
+            setupExcelExport() {
+                const button = document.getElementById('export-assessment-excel');
+                if (!button) return;
+
+                button.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    if (button.getAttribute('aria-disabled') === 'true') return;
+                    button.setAttribute('aria-disabled', 'true');
+                    const progressContainer = this.loadingProgressBar?.parentElement;
+                    if (progressContainer) progressContainer.hidden = true;
+                    if (this.loadingPercentage) this.loadingPercentage.hidden = true;
+                    this.showLoading('Preparing Excel...', 0);
+
+                    try {
+                        const response = await fetch(button.href, { headers: { 'Accept': 'application/json' } });
+                        const contentType = response.headers.get('content-type') || '';
+                        if (!response.ok || !contentType.includes('spreadsheetml.sheet')) {
+                            let message = 'Export gagal. Silakan coba lagi.';
+                            if (contentType.includes('application/json')) {
+                                const result = await response.json();
+                                message = result.message || message;
+                            }
+                            throw new Error(message);
+                        }
+                        const blob = await response.blob();
+                        const disposition = response.headers.get('content-disposition') || '';
+                        const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] || 'Assessment.xlsx';
+                        const download = document.createElement('a');
+                        const objectUrl = URL.createObjectURL(blob);
+                        download.href = objectUrl;
+                        download.download = filename;
+                        document.body.appendChild(download);
+                        download.click();
+                        download.remove();
+                        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+                    } catch (error) {
+                        this.showNotification(this.escapeHtml(error.message || 'Export gagal. Silakan coba lagi.'), 'error');
+                    } finally {
+                        this.hideLoading();
+                        button.removeAttribute('aria-disabled');
+                        setTimeout(() => {
+                            if (progressContainer) progressContainer.hidden = false;
+                            if (this.loadingPercentage) this.loadingPercentage.hidden = false;
+                        }, 300);
+                    }
+                });
             }
 
             updateLoadingProgress(message, percentage) {

@@ -32,6 +32,14 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
+        if (! $user->isActivated) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors(['email' => User::INACTIVE_ACCOUNT_MESSAGE]);
+        }
+
         return redirect()->route('home');
     }
 
@@ -64,6 +72,10 @@ class LoginController extends Controller
             $user = $this->createPendingGoogleUser($googleUser);
         }
 
+        if (! $user->isActivated) {
+            return redirect()->route('login')->withErrors(['email' => User::INACTIVE_ACCOUNT_MESSAGE]);
+        }
+
         Auth::login($user);
         return redirect()->route('home');
     }
@@ -90,6 +102,6 @@ class LoginController extends Controller
             'email_verified_at' => now(),
         ])->saveQuietly();
 
-        return $user;
+        return $user->refresh();
     }
 }

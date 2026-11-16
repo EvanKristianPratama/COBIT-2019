@@ -20,6 +20,8 @@ class MstObjective extends Model
 
     public $timestamps = false;
 
+    protected $casts = ['cobit5_document' => 'array'];
+
     protected $fillable = [
         'objective_id',
         'focus_area_id',

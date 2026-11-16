@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 
 class UserAdminController extends Controller
@@ -131,6 +132,7 @@ class UserAdminController extends Controller
         $this->ensureAdmin();
 
         $user->isActivated = false;
+        $user->setRememberToken(Str::random(60));
         $user->save();
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil dinonaktifkan.');

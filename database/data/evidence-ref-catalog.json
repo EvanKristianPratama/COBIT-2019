@@ -1,0 +1,209 @@
+{
+  "note": "Contoh kebutuhan dokumen dalam bahasa Indonesia; sesuaikan dengan kegiatan dan istilah organisasi. Bukan daftar dokumen wajib atau terjemahan resmi ISACA.",
+  "source_url": "https://www.isaca.org/resources/news-and-trends/industry-news/2021/a-systematic-approach-to-implementing-a-governance-system-using-cobit-2019",
+  "requirements": {
+    "EDM01": [
+      ["Dokumen Perencanaan TI", "Rencana yang menjelaskan arah, sasaran, dan kegiatan TI organisasi."],
+      ["Pedoman Tata Kelola TI", "Aturan pengambilan keputusan, pengawasan, dan tanggung jawab pengelolaan TI."],
+      ["Matriks RACI Kegiatan Tata Kelola TI", "Daftar pihak yang menjalankan, bertanggung jawab, dimintai masukan, dan diberi informasi."],
+      ["Prosedur Penilaian Kinerja TI", "Cara menilai kinerja TI, indikator yang dipakai, dan jadwal penilaiannya."],
+      ["Laporan Monitoring Kinerja TI", "Hasil pemantauan kinerja TI beserta masalah dan tindak lanjutnya."],
+      ["Notulen Rapat Komite Pengarah TI", "Catatan pembahasan, keputusan, penanggung jawab, dan tindak lanjut rapat IT Steering Committee."]
+    ],
+    "EDM02": [
+      ["Kajian Manfaat Investasi TI", "Alasan investasi, manfaat yang diharapkan, biaya, dan pihak penerima manfaat."],
+      ["Rencana Realisasi Manfaat TI", "Target manfaat, penanggung jawab, ukuran keberhasilan, dan jadwal pencapaian."],
+      ["Laporan Evaluasi Manfaat TI", "Perbandingan manfaat yang direncanakan dengan hasil yang sudah tercapai."]
+    ],
+    "EDM03": [
+      ["Pedoman Batas Risiko TI", "Risiko yang dapat diterima organisasi dan batas yang memerlukan keputusan pimpinan."],
+      ["Laporan Profil Risiko TI", "Ringkasan risiko utama TI dan pengaruhnya terhadap tujuan organisasi."],
+      ["Notulen Pengarahan Penanganan Risiko TI", "Keputusan pimpinan mengenai prioritas, penanganan, dan pemantauan risiko TI."]
+    ],
+    "EDM04": [
+      ["Rencana Kebutuhan Sumber Daya TI", "Kebutuhan orang, anggaran, layanan, dan teknologi untuk mendukung tujuan organisasi."],
+      ["Kebijakan Alokasi Sumber Daya TI", "Dasar pembagian dan prioritas pemakaian sumber daya TI."],
+      ["Laporan Evaluasi Pemanfaatan Sumber Daya TI", "Penilaian kecukupan, penggunaan, dan perbaikan sumber daya TI."]
+    ],
+    "EDM05": [
+      ["Daftar Pemangku Kepentingan TI", "Pihak yang berkepentingan beserta kebutuhan informasi dan harapannya."],
+      ["Rencana Komunikasi Tata Kelola TI", "Informasi yang disampaikan, penerima, media, dan jadwal pelaporan."],
+      ["Laporan Umpan Balik Pemangku Kepentingan", "Masukan, keluhan, dan tindak lanjut atas komunikasi tata kelola TI."]
+    ],
+    "APO01": [
+      ["Kerangka Pengelolaan TI", "Susunan proses, aturan, peran, dan cara kerja pengelolaan TI."],
+      ["Struktur Organisasi dan Uraian Jabatan TI", "Pembagian unit, hubungan pelaporan, dan tanggung jawab setiap jabatan TI."],
+      ["Daftar Kebijakan dan Prosedur TI", "Inventaris kebijakan dan prosedur berikut pemilik dan jadwal peninjauannya."]
+    ],
+    "APO02": [
+      ["Rencana Strategis TI", "Arah pengembangan TI yang selaras dengan tujuan bisnis organisasi."],
+      ["Peta Jalan Pengembangan TI", "Urutan inisiatif, waktu pelaksanaan, dan sasaran pengembangan TI."],
+      ["Analisis Kesenjangan Kondisi TI", "Perbedaan kondisi TI saat ini dengan kondisi yang ingin dicapai."]
+    ],
+    "APO03": [
+      ["Dokumen Arsitektur Enterprise", "Gambaran hubungan proses bisnis, data, aplikasi, dan teknologi."],
+      ["Standar Arsitektur TI", "Prinsip dan standar yang dipakai untuk merancang dan mengembangkan TI."],
+      ["Rencana Transisi Arsitektur", "Tahapan perubahan dari arsitektur saat ini menuju arsitektur sasaran."]
+    ],
+    "APO04": [
+      ["Daftar Usulan Inovasi TI", "Ide inovasi, kebutuhan yang dituju, dan potensi manfaatnya."],
+      ["Laporan Uji Coba Inovasi", "Hasil percobaan teknologi atau solusi baru beserta batasan dan temuan."],
+      ["Hasil Evaluasi dan Keputusan Inovasi", "Penilaian kelayakan serta keputusan melanjutkan, memperbaiki, atau menghentikan inovasi."]
+    ],
+    "APO05": [
+      ["Daftar Portofolio Investasi TI", "Seluruh investasi dan program TI beserta biaya, manfaat, risiko, dan statusnya."],
+      ["Kriteria Prioritas Investasi TI", "Ukuran yang dipakai untuk memilih dan mengurutkan investasi TI."],
+      ["Laporan Kinerja Portofolio TI", "Hasil pemantauan investasi dan rekomendasi penyesuaian portofolio."]
+    ],
+    "APO06": [
+      ["Rencana Anggaran TI", "Rencana biaya operasional dan investasi TI beserta dasar perhitungannya."],
+      ["Pedoman Perhitungan dan Pembebanan Biaya TI", "Cara menghitung, mengalokasikan, dan membebankan biaya TI."],
+      ["Laporan Realisasi Anggaran TI", "Perbandingan anggaran dan realisasi biaya berikut penjelasan selisihnya."]
+    ],
+    "APO07": [
+      ["Rencana Kebutuhan SDM TI", "Jumlah, peran, dan keahlian tenaga TI yang diperlukan."],
+      ["Matriks Kompetensi Personel TI", "Daftar kompetensi yang dibutuhkan dan kemampuan personel saat ini."],
+      ["Rencana dan Laporan Pelatihan TI", "Program peningkatan kemampuan personel serta hasil pelaksanaannya."]
+    ],
+    "APO08": [
+      ["Daftar Kebutuhan Unit Bisnis terhadap TI", "Kebutuhan, prioritas, dan harapan unit bisnis atas dukungan TI."],
+      ["Notulen Koordinasi Bisnis dan TI", "Kesepakatan, isu layanan, keputusan, dan tindak lanjut koordinasi."],
+      ["Laporan Evaluasi Hubungan Bisnis dan TI", "Penilaian kepuasan, kerja sama, dan perbaikan hubungan dengan unit bisnis."]
+    ],
+    "APO09": [
+      ["Katalog Layanan TI", "Daftar layanan TI, pemilik layanan, pengguna, dan cakupannya."],
+      ["Perjanjian Tingkat Layanan TI", "Target layanan, jam layanan, tanggung jawab, dan cara pengukuran SLA."],
+      ["Laporan Pencapaian Tingkat Layanan", "Hasil pengukuran layanan terhadap target dan tindak lanjut pelanggaran."]
+    ],
+    "APO10": [
+      ["Daftar Penyedia Layanan TI", "Inventaris penyedia berikut layanan, pemilik kontrak, dan tingkat kepentingannya."],
+      ["Kontrak dan Kesepakatan Penyedia TI", "Ruang lingkup, kewajiban, target, keamanan, dan ketentuan layanan penyedia."],
+      ["Laporan Evaluasi Kinerja Penyedia TI", "Penilaian hasil layanan, risiko, kepatuhan kontrak, dan tindak lanjut penyedia."]
+    ],
+    "APO11": [
+      ["Rencana Pengelolaan Mutu TI", "Sasaran mutu, standar, pemeriksaan, dan tanggung jawab pengendalian mutu TI."],
+      ["Laporan Pemeriksaan Mutu TI", "Hasil pemeriksaan kesesuaian proses dan layanan dengan standar mutu."],
+      ["Daftar Tindakan Perbaikan Mutu TI", "Temuan mutu, penyebab, tindakan perbaikan, dan status penyelesaiannya."]
+    ],
+    "APO12": [
+      ["Daftar Risiko TI", "Risiko, penyebab, dampak, kemungkinan kejadian, dan pemilik risiko TI."],
+      ["Rencana Penanganan Risiko TI", "Tindakan penanganan risiko, penanggung jawab, dan target penyelesaian."],
+      ["Laporan Pemantauan Risiko TI", "Perubahan tingkat risiko, indikator risiko, dan kemajuan penanganannya."]
+    ],
+    "APO13": [
+      ["Kebijakan Keamanan Informasi", "Aturan dan tanggung jawab perlindungan informasi organisasi."],
+      ["Hasil Penilaian Risiko Keamanan Informasi", "Ancaman, kerentanan, dampak, dan prioritas risiko keamanan informasi."],
+      ["Rencana Penerapan Pengamanan Informasi", "Pengamanan yang dipilih, rencana penerapan, dan hasil peninjauannya."]
+    ],
+    "APO14": [
+      ["Pedoman Tata Kelola Data", "Peran pemilik data, aturan pengelolaan, dan tanggung jawab sepanjang siklus data."],
+      ["Kamus dan Klasifikasi Data", "Arti elemen data, sumber, pemilik, dan tingkat kerahasiaannya."],
+      ["Laporan Kualitas Data", "Hasil pemeriksaan kelengkapan, ketepatan, konsistensi, dan perbaikan data."]
+    ],
+    "BAI01": [
+      ["Dokumen Pengesahan Program TI", "Tujuan, ruang lingkup, manfaat, sponsor, dan tata kelola program."],
+      ["Rencana Pengelolaan Program TI", "Keterkaitan proyek, sumber daya, risiko, jadwal, dan pengendalian program."],
+      ["Laporan Kemajuan dan Manfaat Program TI", "Kemajuan program, hambatan, keputusan, dan manfaat yang dicapai."]
+    ],
+    "BAI02": [
+      ["Dokumen Kebutuhan Bisnis dan Sistem", "Kebutuhan pengguna, fungsi, kinerja, keamanan, dan batasan solusi."],
+      ["Matriks Penelusuran Kebutuhan", "Hubungan kebutuhan dengan rancangan, pengujian, dan hasil penerimaan."],
+      ["Berita Acara Persetujuan Kebutuhan", "Bukti kesepakatan pemilik proses dan pengguna atas kebutuhan yang akan dipenuhi."]
+    ],
+    "BAI03": [
+      ["Dokumen Rancangan Solusi TI", "Rancangan aplikasi, data, integrasi, dan infrastruktur solusi."],
+      ["Rencana dan Hasil Pengujian Solusi", "Skenario, hasil, temuan, serta perbaikan pengujian solusi."],
+      ["Dokumentasi Teknis Solusi TI", "Informasi teknis untuk membangun, mengoperasikan, dan memelihara solusi."]
+    ],
+    "BAI04": [
+      ["Rencana Kapasitas TI", "Perkiraan kebutuhan dan rencana kapasitas layanan serta infrastruktur TI."],
+      ["Rencana Ketersediaan Layanan TI", "Target ketersediaan layanan dan tindakan untuk mencapainya."],
+      ["Laporan Pemantauan Kapasitas dan Ketersediaan", "Hasil pemantauan beban, gangguan, kapasitas, dan ketersediaan layanan."]
+    ],
+    "BAI05": [
+      ["Rencana Perubahan Organisasi", "Dampak perubahan terhadap orang, peran, cara kerja, dan kesiapan organisasi."],
+      ["Rencana Komunikasi dan Pelatihan Perubahan", "Komunikasi dan pembelajaran untuk membantu pengguna menerima perubahan."],
+      ["Hasil Penilaian Kesiapan dan Penerimaan Perubahan", "Hasil penilaian kesiapan pengguna, hambatan, dan tindak lanjut perubahan."]
+    ],
+    "BAI06": [
+      ["Formulir Permintaan Perubahan TI", "Alasan perubahan, dampak, risiko, kebutuhan sumber daya, dan rencana pelaksanaan."],
+      ["Catatan Persetujuan Perubahan TI", "Hasil penilaian dan persetujuan pihak berwenang sebelum perubahan dijalankan."],
+      ["Daftar dan Evaluasi Perubahan TI", "Riwayat perubahan, hasil pelaksanaan, dan peninjauan perubahan darurat."]
+    ],
+    "BAI07": [
+      ["Berita Acara Uji Penerimaan Pengguna", "Bukti hasil UAT dan penerimaan solusi oleh pengguna."],
+      ["Rencana Migrasi dan Implementasi Layanan", "Tahapan pemindahan data, penerapan solusi, dan langkah pemulihan bila gagal."],
+      ["Berita Acara Serah Terima ke Operasional", "Bukti penyerahan layanan, dokumentasi, dan tanggung jawab ke tim operasional."]
+    ],
+    "BAI08": [
+      ["Pedoman Pengelolaan Pengetahuan TI", "Cara membuat, memeriksa, membagikan, dan memperbarui pengetahuan TI."],
+      ["Daftar Artikel dan Panduan Pengetahuan TI", "Inventaris panduan kerja, solusi masalah, dan materi pembelajaran TI."],
+      ["Laporan Peninjauan Pengetahuan TI", "Hasil penilaian kelengkapan, ketepatan, dan pemanfaatan materi pengetahuan."]
+    ],
+    "BAI09": [
+      ["Daftar Inventaris Aset TI", "Identitas aset, pemilik, lokasi, nilai, dan status aset TI."],
+      ["Rencana Siklus Hidup Aset TI", "Rencana pengadaan, penggunaan, pemeliharaan, dan penggantian aset."],
+      ["Berita Acara Pemeriksaan dan Penghapusan Aset TI", "Bukti pemeriksaan fisik, pengembalian, pemindahan, atau penghapusan aset."]
+    ],
+    "BAI10": [
+      ["Daftar Item Konfigurasi TI", "Catatan komponen konfigurasi dan hubungan antarperangkat, aplikasi, serta layanan."],
+      ["Standar Konfigurasi TI", "Konfigurasi acuan yang disetujui untuk komponen TI."],
+      ["Laporan Verifikasi Konfigurasi TI", "Hasil pemeriksaan kesesuaian data konfigurasi dengan kondisi sebenarnya."]
+    ],
+    "BAI11": [
+      ["Rencana Proyek TI", "Ruang lingkup, jadwal, biaya, tim, risiko, dan hasil yang akan diserahkan."],
+      ["Laporan Kemajuan Proyek TI", "Kemajuan terhadap rencana, masalah, perubahan, dan keputusan proyek."],
+      ["Laporan Penutupan dan Evaluasi Proyek TI", "Hasil akhir, penerimaan, pembelajaran, dan tindak lanjut penutupan proyek."]
+    ],
+    "DSS01": [
+      ["Prosedur Operasional TI", "Langkah kerja rutin dan penanganan kondisi operasional layanan TI."],
+      ["Jadwal Pekerjaan Operasional TI", "Jadwal pemrosesan, pencadangan, pemeliharaan, dan penanggung jawabnya."],
+      ["Catatan Pelaksanaan Operasional TI", "Bukti pekerjaan rutin, hasil pemantauan, dan penyimpangan operasional."]
+    ],
+    "DSS02": [
+      ["Prosedur Penanganan Permintaan dan Insiden TI", "Cara menerima, mencatat, mengelompokkan, menangani, dan menutup tiket."],
+      ["Daftar Tiket Permintaan dan Insiden TI", "Catatan laporan pengguna, prioritas, penanganan, dan waktu penyelesaian."],
+      ["Laporan Penyelesaian Permintaan dan Insiden TI", "Ringkasan pencapaian target, kejadian berulang, dan perbaikan penanganan."]
+    ],
+    "DSS03": [
+      ["Daftar Permasalahan TI", "Masalah yang mendasari insiden berulang, pemilik, dan status penanganannya."],
+      ["Laporan Analisis Akar Penyebab", "Hasil penyelidikan penyebab utama masalah dan dampaknya."],
+      ["Daftar Solusi Sementara dan Penyelesaian Permanen", "Cara mengurangi dampak masalah dan tindakan untuk menghilangkan penyebabnya."]
+    ],
+    "DSS04": [
+      ["Rencana Keberlangsungan Bisnis", "Prioritas proses penting dan langkah menjaga kegiatan saat terjadi gangguan."],
+      ["Rencana Pemulihan Layanan TI", "Prosedur pemulihan sistem, data, fasilitas, dan target waktu pemulihan."],
+      ["Laporan Uji Keberlangsungan dan Pemulihan", "Hasil simulasi, kendala, evaluasi target, dan perbaikan rencana pemulihan."]
+    ],
+    "DSS05": [
+      ["Prosedur Operasional Keamanan TI", "Langkah pengamanan jaringan, perangkat, sistem, dan informasi sehari-hari."],
+      ["Laporan Pemantauan dan Penanganan Insiden Keamanan", "Catatan deteksi, penyelidikan, penanganan, dan evaluasi kejadian keamanan."],
+      ["Laporan Peninjauan Hak Akses", "Bukti pemeriksaan kesesuaian, persetujuan, dan pencabutan akses pengguna."]
+    ],
+    "DSS06": [
+      ["Matriks Pengendalian Proses Bisnis", "Risiko proses, pengendalian, pemilik, serta cara membuktikan pelaksanaannya."],
+      ["Bukti Pelaksanaan Pengendalian Transaksi", "Bukti pemeriksaan, persetujuan, dan penelusuran transaksi bisnis."],
+      ["Laporan Pengecualian dan Tindak Lanjut Pengendalian", "Penyimpangan pengendalian proses bisnis dan tindakan penyelesaiannya."]
+    ],
+    "MEA01": [
+      ["Daftar Indikator dan Target Kinerja TI", "Ukuran kinerja TI, rumus, sumber data, target, dan pemilik pengukuran."],
+      ["Laporan Pemantauan Kinerja dan Kesesuaian TI", "Hasil pengukuran, perbandingan target, serta penjelasan penyimpangan."],
+      ["Rencana Tindak Lanjut Perbaikan Kinerja TI", "Tindakan koreksi, penanggung jawab, dan waktu penyelesaian perbaikan."]
+    ],
+    "MEA02": [
+      ["Rencana Evaluasi Pengendalian Internal TI", "Ruang lingkup, metode, jadwal, dan tanggung jawab evaluasi pengendalian."],
+      ["Laporan Penilaian Pengendalian Internal TI", "Hasil pemeriksaan rancangan dan pelaksanaan pengendalian internal."],
+      ["Daftar Temuan dan Perbaikan Pengendalian Internal", "Kelemahan pengendalian, tingkat kepentingan, dan status perbaikannya."]
+    ],
+    "MEA03": [
+      ["Daftar Kewajiban Kepatuhan TI", "Peraturan, kontrak, dan persyaratan eksternal yang berlaku beserta pemiliknya."],
+      ["Laporan Penilaian Kepatuhan TI", "Hasil pemeriksaan pemenuhan kewajiban dan bukti pendukungnya."],
+      ["Rencana Tindak Lanjut Ketidakpatuhan TI", "Tindakan untuk menutup kekurangan kepatuhan, penanggung jawab, dan tenggatnya."]
+    ],
+    "MEA04": [
+      ["Rencana Audit dan Assurance TI", "Tujuan, ruang lingkup, kriteria, jadwal, dan pihak pelaksana penilaian independen."],
+      ["Laporan Hasil Audit dan Assurance TI", "Kesimpulan, temuan, bukti, dan rekomendasi hasil penilaian."],
+      ["Laporan Pemantauan Tindak Lanjut Audit TI", "Kemajuan penyelesaian rekomendasi dan bukti verifikasi tindak lanjutnya."]
+    ]
+  }
+}

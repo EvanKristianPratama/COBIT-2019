@@ -23,7 +23,7 @@
     }
 
     .c4-wrapper {
-        background-color: #f1f5f9;
+        background-color: #f8fafc;
         min-height: 100vh;
         padding: 1.5rem 0 3.5rem;
         font-family: var(--c4-font-sans);
@@ -32,21 +32,32 @@
 
     .c4-toolbar {
         background: #ffffff;
-        border-radius: 12px;
-        padding: 0.85rem 1.25rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        padding: 1.15rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
         margin-bottom: 1.25rem;
         border: 1px solid #e2e8f0;
     }
 
+    .c4-framework-label { color: #64748b; font-size: .8rem; margin-bottom: .3rem; }
+    .c4-objective-nav { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .c4-objective-field { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+    .c4-objective-select { width: 360px; max-width: 100%; font-weight: 400; }
+    @media (max-width: 767px) {
+        .c4-objective-nav { width: 100%; }
+        .c4-objective-field { order: -1; flex-basis: 100%; }
+        .c4-objective-select { width: 100%; min-width: 0; }
+    }
+
     /* Floating / Sticky Input Mode Action Bar */
     .c4-input-mode-banner {
-        background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%);
-        border: 2px solid #f59e0b;
-        border-radius: 10px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
         padding: 0.75rem 1.25rem;
         margin-bottom: 1.25rem;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
         display: none;
         align-items: center;
         justify-content: space-between;
@@ -62,19 +73,20 @@
     .c4-nav-pills {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 0.75rem;
+        gap: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0;
         margin-bottom: 1.5rem;
     }
 
     .c4-nav-btn {
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
-        color: #334155;
-        padding: 0.55rem 1.15rem;
-        border-radius: 8px;
-        font-weight: 600;
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        color: #64748b;
+        padding: 0.65rem 0.25rem;
+        border-radius: 0;
+        font-weight: 500;
         font-size: 0.88rem;
         display: inline-flex;
         align-items: center;
@@ -84,16 +96,18 @@
     }
 
     .c4-nav-btn:hover {
-        background: #f8fafc;
-        border-color: var(--c4-blue);
+        border-bottom-color: #cbd5e1;
         color: var(--c4-blue);
     }
 
     .c4-nav-btn.active {
-        background: var(--c4-navy);
-        border-color: var(--c4-navy);
-        color: #ffffff;
-        box-shadow: 0 2px 8px rgba(10, 61, 104, 0.25);
+        border-bottom-color: var(--c4-navy);
+        color: var(--c4-navy);
+    }
+
+    .c4-nav-btn:focus-visible {
+        outline: 2px solid var(--c4-blue);
+        outline-offset: 3px;
     }
 
     /* The Authentic White Book Page (Paper Layout) */
@@ -619,6 +633,43 @@
         cursor: pointer;
     }
     .btn-action-add:hover { background: #bfdbfe; }
+
+    .c4-wp-content { padding: 2rem; }
+    .c4-wp-heading {
+        margin: 0 0 1.5rem;
+        color: #111;
+        font: 800 1.7rem/1.25 var(--c4-font-sans);
+    }
+    .c4-wp-scroll { overflow-x: auto; }
+    .c4-wp-table {
+        width: 100%;
+        min-width: 680px;
+        table-layout: fixed;
+        border-collapse: collapse;
+        color: #111;
+        font-family: 'Arial Narrow', 'Liberation Sans Narrow', Arial, sans-serif;
+        font-size: 1.05rem;
+        line-height: 1.35;
+    }
+    .c4-wp-table th, .c4-wp-table td {
+        border: 2px solid #111;
+        padding: 0.4rem 0.65rem;
+        vertical-align: top;
+        background: #fff;
+    }
+    .c4-wp-table th {
+        background: #e7ebf2;
+        text-align: center;
+        font-weight: 700;
+    }
+    .c4-wp-table td:first-child { white-space: nowrap; }
+    .c4-wp-description { white-space: pre-line; overflow-wrap: anywhere; }
+    .c4-wp-scope-note { margin: 1rem 0 0; }
+    .c4-wp-table .c4-wp-empty { padding: 2rem 1rem; text-align: center; white-space: normal; }
+    @media (max-width: 767px) {
+        .c4-wp-content { padding: 1rem; }
+        .c4-wp-heading { font-size: 1.3rem; }
+    }
 </style>
 
 <div class="c4-wrapper" id="c4Container">
@@ -627,30 +678,33 @@
         <!-- ====================================================================
              TOP CONTROLS & MODEL SWITCHER
              ==================================================================== -->
-        <div class="c4-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-warning text-dark px-3 py-2 fw-bold fs-6">
-                    <i class="fas fa-certificate me-1"></i> COBIT 4.1 Framework
-                </span>
-                <div>
-                    <h5 class="mb-0 fw-bold text-dark">
-                        <span class="text-primary">{{ $processCode }}</span> - 
-                        <span id="displayHeaderTitle">{{ $cobit4Data['title'] }}</span>
-                    </h5>
-
-                </div>
+        <div class="c4-toolbar">
+            <div>
+                <div class="c4-framework-label">COBIT 4.1</div>
+                <h5 class="mb-0 fw-bold text-dark">
+                    <span class="text-primary">{{ $processCode }}</span> -
+                    <span id="displayHeaderTitle">{{ $cobit4Data['title'] }}</span>
+                </h5>
             </div>
 
             <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('cobit4.goal-mapping') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-bullseye me-1"></i> Business &amp; IT Goals
+                </a>
+                <a href="{{ route('cobit4.cobit5-mapping') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-code-branch me-1"></i> Mapping ke COBIT 5
+                </a>
+                @can('design-factors.input')
                 <!-- BUTTON TAMBAH GAMO COBIT 4 -->
-                <button type="button" class="btn btn-primary fw-bold btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateCobit4Gamo">
-                    <i class="fas fa-plus me-1"></i> Tambah GAMO COBIT 4
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCreateCobit4Gamo">
+                    Tambah GAMO
                 </button>
 
                 <!-- BUTTON ACTION: EDIT -->
-                <button type="button" class="btn btn-outline-warning fw-bold btn-sm shadow-sm" id="btnInputModeToggle" onclick="toggleCobit4InputMode()">
-                    <i class="fas fa-edit me-1"></i> Edit
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnInputModeToggle" onclick="toggleCobit4InputMode()">
+                    Edit
                 </button>
+                @endcan
 
                 @php
                     $procList = $allCobit4Processes ?? [];
@@ -662,26 +716,25 @@
                 @endphp
 
                 <!-- PILIH OBJECTIVE SELECTOR (INTERAKTIF & PASTI WORK) -->
-                <div class="d-flex align-items-center bg-light border border-primary-subtle rounded-3 p-1 shadow-sm gap-1">
+                <div class="c4-objective-nav">
                     @if($prevProcess)
                         <a href="{{ route('cobit_component.show', ['id' => $prevProcess->objective_id ?: $prevProcess->code, 'focus_area' => $focusAreaId]) }}" 
-                           class="btn btn-sm btn-white border shadow-xs text-primary px-2 py-1" 
+                           class="btn btn-sm btn-link text-decoration-none"
                            title="Sebelumnya: {{ $prevProcess->code }} - {{ $prevProcess->title }}">
-                            <i class="fas fa-chevron-left"></i>
+                            Sebelumnya
                         </a>
                     @else
-                        <button class="btn btn-sm btn-white border text-muted px-2 py-1" disabled>
-                            <i class="fas fa-chevron-left"></i>
+                        <button class="btn btn-sm btn-link text-decoration-none" disabled>
+                            Sebelumnya
                         </button>
                     @endif
 
-                    <div class="d-flex align-items-center gap-1">
-                        <label for="selectCobit4Objective" class="form-label mb-0 fw-bold small text-dark px-1 text-nowrap d-none d-sm-inline">
-                            <i class="fas fa-list-check text-primary me-1"></i> Objective:
+                    <div class="c4-objective-field">
+                        <label for="selectCobit4Objective" class="form-label mb-0 small text-muted">
+                            Proses
                         </label>
                         <select id="selectCobit4Objective" 
-                                class="form-select form-select-sm fw-bold border-0 bg-transparent text-primary" 
-                                style="min-width: 240px; max-width: 340px; cursor: pointer;" 
+                                class="form-select form-select-sm c4-objective-select"
                                 onchange="handleCobit4ObjectiveSelect(this.value)">
                             @php
                                 $domainGroups = [
@@ -712,13 +765,13 @@
 
                     @if($nextProcess)
                         <a href="{{ route('cobit_component.show', ['id' => $nextProcess->objective_id ?: $nextProcess->code, 'focus_area' => $focusAreaId]) }}" 
-                           class="btn btn-sm btn-white border shadow-xs text-primary px-2 py-1" 
+                           class="btn btn-sm btn-link text-decoration-none"
                            title="Selanjutnya: {{ $nextProcess->code }} - {{ $nextProcess->title }}">
-                            <i class="fas fa-chevron-right"></i>
+                            Selanjutnya
                         </a>
                     @else
-                        <button class="btn btn-sm btn-white border text-muted px-2 py-1" disabled>
-                            <i class="fas fa-chevron-right"></i>
+                        <button class="btn btn-sm btn-link text-decoration-none" disabled>
+                            Selanjutnya
                         </button>
                     @endif
                 </div>
@@ -730,39 +783,41 @@
              ==================================================================== -->
         <div class="c4-input-mode-banner" id="c4InputModeBanner">
             <div class="d-flex align-items-center gap-2">
-                <i class="fas fa-pen-fancy text-warning fs-4"></i>
                 <div>
                     <strong class="text-dark">Mode Edit Aktif</strong>
                     <div class="small text-muted">
-                        Anda dapat mengubah data proses, kriteria informasi, control objectives, alur input/output, dan RACI.
+                        Anda dapat mengubah data proses, kriteria informasi, control objectives, alur input/output, RACI, dan Work Product.
                     </div>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm px-3" onclick="saveCobit4Data()">
-                    <i class="fas fa-save me-1"></i> Simpan
+                <button type="button" class="btn btn-success btn-sm px-3" onclick="saveCobit4Data()">
+                    Simpan
                 </button>
-                <button type="button" class="btn btn-danger btn-sm fw-bold shadow-sm px-3" onclick="deleteCurrentGamo()">
-                    <i class="fas fa-trash me-1"></i> Hapus
+                <button type="button" class="btn btn-outline-danger btn-sm px-3" onclick="deleteCurrentGamo()">
+                    Hapus
                 </button>
             </div>
         </div>
 
         <!-- ====================================================================
-             TAB SWITCHER BUTTONS (4 BUKU HALAMAN COBIT 4.1)
+             TAB SWITCHER BUTTONS (5 HALAMAN COBIT 4.1)
              ==================================================================== -->
         <div class="c4-nav-pills">
             <button class="c4-nav-btn active" id="btnPage1" onclick="switchCobit4Page('page1', this)">
-                <i class="fas fa-file-alt"></i> 1. Process Description
+                1. Process Description
             </button>
             <button class="c4-nav-btn" id="btnPage2" onclick="switchCobit4Page('page2', this)">
-                <i class="fas fa-bullseye"></i> 2. Control Objectives
+                2. Control Objectives
             </button>
             <button class="c4-nav-btn" id="btnPage3" onclick="switchCobit4Page('page3', this)">
-                <i class="fas fa-project-diagram"></i> 3. Management Guidelines
+                3. Management Guidelines
             </button>
             <button class="c4-nav-btn" id="btnPage4" onclick="switchCobit4Page('page4', this)">
-                <i class="fas fa-chart-line"></i> 4. Maturity Model
+                4. Maturity Model
+            </button>
+            <button class="c4-nav-btn" id="btnPage5" onclick="switchCobit4Page('page5', this)">
+                5. Master Work Product
             </button>
         </div>
 
@@ -833,7 +888,7 @@
                                 </tr>
                             </table>
                             <div class="c4-edit-field mt-1 small text-warning-emphasis">
-                                <i class="fas fa-info-circle me-1"></i> Klik pada kotak di atas untuk beralih: <strong>P</strong> (Primary) ➔ <strong>S</strong> (Secondary) ➔ Kosong.
+                                Klik pada kotak di atas untuk beralih: <strong>P</strong> (Primary) ➔ <strong>S</strong> (Secondary) ➔ Kosong.
                             </div>
                         </div>
                     </div>
@@ -1034,7 +1089,7 @@
 
                 <div class="c4-edit-field mt-3">
                     <button class="btn btn-outline-primary btn-sm fw-bold" onclick="addControlObjective()">
-                        <i class="fas fa-plus me-1"></i> Tambah Control Objective Baru
+                        Tambah Control Objective Baru
                     </button>
                 </div>
             </div>
@@ -1070,7 +1125,7 @@
                             <tbody id="inputsTableBody"></tbody>
                         </table>
                         <div class="c4-edit-field mb-2">
-                            <button class="btn-action-add" onclick="addInputRow()"><i class="fas fa-plus me-1"></i> Tambah Input</button>
+                            <button class="btn-action-add" onclick="addInputRow()">Tambah Input</button>
                         </div>
                         <div class="small text-muted">* Inputs from outside COBIT</div>
                     </div>
@@ -1087,7 +1142,7 @@
                             <tbody id="outputsTableBody"></tbody>
                         </table>
                         <div class="c4-edit-field mb-2">
-                            <button class="btn-action-add" onclick="addOutputRow()"><i class="fas fa-plus me-1"></i> Tambah Output</button>
+                            <button class="btn-action-add" onclick="addOutputRow()">Tambah Output</button>
                         </div>
                     </div>
                 </div>
@@ -1122,7 +1177,7 @@
                     </div>
                     <div class="small text-muted">A <strong>RACI chart</strong> identifies who is <strong>R</strong>esponsible, <strong>A</strong>ccountable, <strong>C</strong>onsulted and/or <strong>I</strong>nformed.</div>
                     <div class="c4-edit-field mt-2">
-                        <button class="btn-action-add" onclick="addRaciActivity()"><i class="fas fa-plus me-1"></i> Tambah Aktivitas RACI</button>
+                        <button class="btn-action-add" onclick="addRaciActivity()">Tambah Aktivitas RACI</button>
                     </div>
                 </div>
 
@@ -1194,6 +1249,13 @@
             </div>
         </div>
 
+        <div class="c4-book-page c4-view-section" id="c4-section-page5" style="display: none;">
+            <div class="c4-wp-content">
+                <h2 class="c4-wp-heading">B.2 LEVEL 1 OUTPUT WORK PRODUCTS</h2>
+                @include('cobit_component.cobit4_1.partials.work-products')
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -1205,7 +1267,7 @@
         <div class="modal-content shadow-lg border-0">
             <div class="modal-header bg-primary text-white py-3">
                 <h5 class="modal-title fw-bold" id="modalCreateCobit4GamoLabel">
-                    <i class="fas fa-plus-circle me-1"></i> Tambah GAMO Baru (COBIT 4.1)
+                    Tambah GAMO Baru (COBIT 4.1)
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -1248,7 +1310,7 @@
                 <div class="modal-footer bg-light py-2">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSubmitNewGamo">
-                        <i class="fas fa-save me-1"></i> Simpan GAMO
+                        Simpan GAMO
                     </button>
                 </div>
             </form>
@@ -1261,6 +1323,13 @@
     const OBJECTIVE_ID = @json($objective->objective_id);
     const FOCUS_AREA_ID = @json((int)$focusAreaId);
     let DATA = @json($cobit4Data);
+    let processSnapshot = JSON.stringify(DATA);
+    const CAN_EDIT_WORK_PRODUCTS = @json(auth()->user()?->can('design-factors.input') ?? false);
+    const WORK_PRODUCTS_READY = @json($workProductsReady);
+    let workProductsRevision = @json($workProductsRevision);
+    let workProductRows = @json($workProducts);
+    workProductRows = workProductRows.map(row => ({...row, original_wp_id: row.wp_id}));
+    let savedWorkProductIds = workProductRows.map(row => row.wp_id);
 
     let isInputMode = false;
 
@@ -1276,24 +1345,24 @@
             if (container) container.classList.add('input-mode-on');
             if (banner) banner.classList.add('active');
             if (toggleBtn) {
-                toggleBtn.classList.remove('btn-outline-warning');
-                toggleBtn.classList.add('btn-warning');
-                toggleBtn.innerHTML = '<i class="fas fa-check me-1"></i> Edit (Aktif)';
+                toggleBtn.classList.remove('btn-outline-secondary');
+                toggleBtn.classList.add('btn-secondary');
+                toggleBtn.textContent = 'Edit (Aktif)';
             }
         } else {
             if (container) container.classList.remove('input-mode-on');
             if (banner) banner.classList.remove('active');
             if (toggleBtn) {
-                toggleBtn.classList.remove('btn-warning');
-                toggleBtn.classList.add('btn-outline-warning');
-                toggleBtn.innerHTML = '<i class="fas fa-edit me-1"></i> Edit';
+                toggleBtn.classList.remove('btn-secondary');
+                toggleBtn.classList.add('btn-outline-secondary');
+                toggleBtn.textContent = 'Edit';
             }
         }
 
         renderAllDynamicSections();
     }
 
-    // Switch between Tab 1, 2, 3, 4
+    // Switch between the five COBIT 4.1 pages.
     function switchCobit4Page(pageId, btnElement) {
         document.querySelectorAll('.c4-nav-pills .c4-nav-btn').forEach(btn => btn.classList.remove('active'));
         if (btnElement) btnElement.classList.add('active');
@@ -1303,6 +1372,7 @@
             'page2': document.getElementById('c4-section-page2'),
             'page3': document.getElementById('c4-section-page3'),
             'page4': document.getElementById('c4-section-page4'),
+            'page5': document.getElementById('c4-section-page5'),
         };
 
         Object.keys(sections).forEach(key => {
@@ -1417,6 +1487,7 @@
 
     // Render Dynamic Sections (Waterfalls, Objectives, RACI, Inputs/Outputs, Goals/Metrics, Maturity)
     function renderAllDynamicSections() {
+        renderWorkProducts();
         renderWaterfallBullets();
         renderControlObjectives();
         renderInputsOutputs();
@@ -1424,6 +1495,52 @@
         renderGoalsAndMetrics();
         renderMaturityLevels();
         initPentagonColors();
+    }
+
+    function markWorkProductsChanged() {
+        DATA.work_products = workProductRows;
+        DATA.work_products_revision = workProductsRevision;
+    }
+
+    function addWorkProductRow() {
+        if (!isInputMode || !CAN_EDIT_WORK_PRODUCTS || !WORK_PRODUCTS_READY) return;
+        const ids = [...savedWorkProductIds, ...workProductRows.map(row => row.wp_id)];
+        const numbers = ids.map(id => Number(String(id).match(/WP(\d+)$/i)?.[1] || 0));
+        const number = Math.max(0, ...numbers) + 1;
+        workProductRows.push({original_wp_id: null, wp_id: `${PROCESS_CODE}-WP${number}`, wp: '', description: ''});
+        markWorkProductsChanged();
+        renderWorkProducts();
+        document.querySelector('#workProductsTableBody tr:last-child input[data-wp-field="wp"]')?.focus();
+    }
+
+    function removeWorkProductRow(index) {
+        if (!isInputMode || !CAN_EDIT_WORK_PRODUCTS || !WORK_PRODUCTS_READY) return;
+        workProductRows.splice(index, 1);
+        markWorkProductsChanged();
+        renderWorkProducts();
+    }
+
+    function renderWorkProducts() {
+        const body = document.getElementById('workProductsTableBody');
+        if (!body) return;
+        if (!workProductRows.length) {
+            body.innerHTML = `<tr><td colspan="3" class="c4-wp-empty">Belum ada Work Product untuk proses ${escapeHtml(PROCESS_CODE)}.</td></tr>`;
+            return;
+        }
+        const editable = isInputMode && CAN_EDIT_WORK_PRODUCTS && WORK_PRODUCTS_READY;
+        body.innerHTML = workProductRows.map((row, index) => {
+            if (editable) return `<tr>
+                <td><input class="form-control form-control-sm" aria-label="WP ID baris ${index + 1}" maxlength="30" data-wp-index="${index}" data-wp-field="wp_id" value="${escapeHtml(row.wp_id)}">
+                    <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeWorkProductRow(${index})">Hapus</button></td>
+                <td><input class="form-control form-control-sm" aria-label="Nama WP baris ${index + 1}" maxlength="255" data-wp-index="${index}" data-wp-field="wp" value="${escapeHtml(row.wp)}"></td>
+                <td><textarea class="form-control form-control-sm" aria-label="Deskripsi WP baris ${index + 1}" rows="5" maxlength="20000" data-wp-index="${index}" data-wp-field="description">${escapeHtml(row.description)}</textarea></td>
+            </tr>`;
+            const description = String(row.description || '');
+            const scope = description.indexOf('Scope note:');
+            const text = scope < 0 ? description : description.slice(0, scope).trim();
+            const note = scope < 0 ? '' : `<p class="c4-wp-description c4-wp-scope-note"><strong>Scope note:</strong> ${escapeHtml(description.slice(scope + 11).trim())}</p>`;
+            return `<tr><td>${escapeHtml(row.wp_id)}</td><td>${escapeHtml(row.wp)}</td><td><div class="c4-wp-description">${escapeHtml(text)}</div>${note}</td></tr>`;
+        }).join('');
     }
 
     // 1. Waterfall Bullets
@@ -1437,13 +1554,11 @@
             <div class="c4-bullet-edit-row">
                 <input type="text" class="c4-inline-input" value="${escapeHtml(item)}" 
                        oninput="DATA.control_statement.achieved_by[${idx}] = this.value">
-                <button class="btn-action-del" onclick="removeAchievedItem(${idx})" title="Hapus Butir">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="btn-action-del" onclick="removeAchievedItem(${idx})" title="Hapus Butir">Hapus</button>
             </div>
         `).join('') + `
             <button class="btn-action-add mt-1" onclick="addAchievedItem()">
-                <i class="fas fa-plus me-1"></i> Tambah Butir Achieved By
+                Tambah Butir Achieved By
             </button>
         `;
 
@@ -1456,13 +1571,11 @@
             <div class="c4-bullet-edit-row">
                 <input type="text" class="c4-inline-input" value="${escapeHtml(item)}" 
                        oninput="DATA.control_statement.measured_by[${idx}] = this.value">
-                <button class="btn-action-del" onclick="removeMeasuredItem(${idx})" title="Hapus Butir">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="btn-action-del" onclick="removeMeasuredItem(${idx})" title="Hapus Butir">Hapus</button>
             </div>
         `).join('') + `
             <button class="btn-action-add mt-1" onclick="addMeasuredItem()">
-                <i class="fas fa-plus me-1"></i> Tambah Butir Measured By
+                Tambah Butir Measured By
             </button>
         `;
     }
@@ -1509,7 +1622,7 @@
                                    oninput="DATA.control_objectives[${idx}].title = this.value" placeholder="Judul Objective">
                         </div>
                         <button class="btn btn-sm btn-outline-danger" onclick="removeControlObjective(${idx})">
-                            <i class="fas fa-trash me-1"></i> Hapus
+                            Hapus
                         </button>
                     </div>
                     <textarea class="c4-inline-input" rows="3" 
@@ -1571,7 +1684,7 @@
                                oninput="DATA.management_guidelines.inputs[${idx}].input = this.value">
                     </td>
                     <td class="text-center">
-                        <button class="btn-action-del" onclick="removeInputRow(${idx})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-action-del" onclick="removeInputRow(${idx})">Hapus</button>
                     </td>
                 </tr>
             `).join('');
@@ -1587,7 +1700,7 @@
                                oninput="DATA.management_guidelines.outputs[${idx}].to = this.value" placeholder="e.g. PO2, AI1">
                     </td>
                     <td class="text-center">
-                        <button class="btn-action-del" onclick="removeOutputRow(${idx})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-action-del" onclick="removeOutputRow(${idx})">Hapus</button>
                     </td>
                 </tr>
             `).join('');
@@ -1640,7 +1753,7 @@
                 }).join('')}
                 ${isInputMode ? `
                     <td class="text-center align-middle">
-                        <button class="btn-action-del" onclick="removeRaciActivity(${actIdx})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-action-del" onclick="removeRaciActivity(${actIdx})">Hapus</button>
                     </td>
                 ` : ''}
             </tr>
@@ -1702,11 +1815,11 @@
                         <div class="c4-bullet-edit-row">
                             <input type="text" class="c4-inline-input" value="${escapeHtml(item)}" 
                                    oninput="DATA.management_guidelines.goals_and_metrics['${key}'][${idx}] = this.value">
-                            <button class="btn-action-del" onclick="removeGmItem('${key}', ${idx})"><i class="fas fa-times"></i></button>
+                            <button class="btn-action-del" onclick="removeGmItem('${key}', ${idx})">Hapus</button>
                         </div>
                     `).join('')}
                     <button class="btn-action-add mt-1" onclick="addGmItem('${key}')">
-                        <i class="fas fa-plus me-1"></i> ${addLabel}
+                        ${addLabel}
                     </button>
                 </div>
             `;
@@ -1833,6 +1946,10 @@
     // AJAX: Save Data to MySQL Database
     async function saveCobit4Data() {
         try {
+            const processData = {...DATA};
+            delete processData.work_products;
+            delete processData.work_products_revision;
+            const workProductsOnly = Array.isArray(DATA.work_products) && JSON.stringify(processData) === processSnapshot;
             Swal.fire({
                 title: 'Menyimpan ke Database...',
                 text: 'Sedang menyimpan data COBIT 4.1 ke database MySQL.',
@@ -1852,6 +1969,7 @@
                     objective_id: OBJECTIVE_ID,
                     focus_area_id: FOCUS_AREA_ID,
                     data: DATA,
+                    work_products_only: workProductsOnly,
                 })
             });
 
@@ -1864,9 +1982,17 @@
                     timer: 2000,
                     showConfirmButton: false,
                 });
+                if (Array.isArray(result.work_products)) {
+                    workProductRows = result.work_products.map(row => ({...row, original_wp_id: row.wp_id}));
+                    savedWorkProductIds = workProductRows.map(row => row.wp_id);
+                    workProductsRevision = result.work_products_revision;
+                    delete DATA.work_products;
+                    delete DATA.work_products_revision;
+                }
+                processSnapshot = JSON.stringify(DATA);
                 toggleCobit4InputMode(false);
             } else {
-                throw new Error(result.message || 'Gagal menyimpan perubahan.');
+                throw new Error(Object.values(result.errors || {}).flat()[0] || result.message || 'Gagal menyimpan perubahan.');
             }
         } catch (err) {
             Swal.fire({
@@ -1929,6 +2055,15 @@
 
     // Initialize on document ready
     document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('workProductsTableBody')?.addEventListener('input', event => {
+            if (!isInputMode || !CAN_EDIT_WORK_PRODUCTS || !WORK_PRODUCTS_READY) return;
+            const field = event.target.dataset.wpField;
+            const row = workProductRows[Number(event.target.dataset.wpIndex)];
+            if (row && ['wp_id', 'wp', 'description'].includes(field)) {
+                row[field] = event.target.value;
+                markWorkProductsChanged();
+            }
+        });
         renderAllDynamicSections();
         switchCobit4Page('page1', document.getElementById('btnPage1'));
     });

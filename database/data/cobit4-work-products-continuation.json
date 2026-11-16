@@ -1,0 +1,871 @@
+{
+  "source": "Six user-supplied Figure 17 continuation images, 2026-11-03",
+  "notes": [
+    "WP ID, WP and Description transcribed from images; layout-only line wrapping is joined with spaces. Paragraphs, bullets, Scope note and repeated-source notes retained.",
+    "PO9-WP43 and PO9-WP54 retained literally as printed; not renumbered.",
+    "Continuation starts at PO2-WP4. Earlier PO1 and PO2-WP1..WP3 remain unchanged."
+  ],
+  "rows": [
+    {
+      "wp_id": "PO2-WP4",
+      "wp": "Information architecture",
+      "description": "A component of IT architecture (together with applications and technology)",
+      "source_image": 1,
+      "order_no": 10
+    },
+    {
+      "wp_id": "PO2-WP5",
+      "wp": "Assigned data classifications",
+      "description": "An enterprise scheme for classifying data by factors such as criticality, sensitivity and ownership",
+      "source_image": 1,
+      "order_no": 11
+    },
+    {
+      "wp_id": "PO2-WP6",
+      "wp": "Classification procedures and tools",
+      "description": "Procedures and tools to enable data to be classified, created in line with organisation policies",
+      "source_image": 1,
+      "order_no": 12
+    },
+    {
+      "wp_id": "PO3-WP1",
+      "wp": "Technology opportunities",
+      "description": "Identification of technology opportunities for the business",
+      "source_image": 1,
+      "order_no": 13
+    },
+    {
+      "wp_id": "PO3-WP2",
+      "wp": "Technology standards",
+      "description": "Organisational standards for infrastructure products and practices together with guidance on the selection of technology",
+      "source_image": 1,
+      "order_no": 14
+    },
+    {
+      "wp_id": "PO3-WP3",
+      "wp": "Regular ‘state of technology’ updates",
+      "description": "An assessment of current and future technology trends and the potential opportunities and risks to the organisation",
+      "source_image": 1,
+      "order_no": 15
+    },
+    {
+      "wp_id": "PO3-WP4",
+      "wp": "Technology infrastructure plan",
+      "description": "A plan for the technology, human resources and facilities that enables the current and future processing and use of applications",
+      "source_image": 1,
+      "order_no": 16
+    },
+    {
+      "wp_id": "PO3-WP5",
+      "wp": "Infrastructure requirements",
+      "description": "The required set of hardware, software and facilities that integrates an organisation’s IT assets\n\nScope note:  Specifically, this includes the equipment (including servers, routers, switches and cabling), software, services and products used in storing, processing, transmitting and displaying all forms of information for the organisation’s users.",
+      "source_image": 1,
+      "order_no": 17
+    },
+    {
+      "wp_id": "PO4-WP1",
+      "wp": "IT process framework",
+      "description": "A process framework that includes IT process structure and relationships (e.g., to manage process gaps and overlaps), ownership, maturity, performance measurement, improvement, compliance, quality targets, and plans to achieve them. It should provide integration amongst the processes that are specific to IT, enterprise portfolio management, business processes and business change processes. The IT process framework should be integrated into a quality management system (QMS) and the internal control framework.",
+      "source_image": 1,
+      "order_no": 18
+    },
+    {
+      "wp_id": "PO4-WP2",
+      "wp": "Documented system owners",
+      "description": "An application system owner is the individual who has been assigned ultimate responsibility for a system.",
+      "source_image": 1,
+      "order_no": 19
+    },
+    {
+      "wp_id": "PO4-WP3",
+      "wp": "IT organisation and relationships",
+      "description": "A specification of internal and external IT organisational structure and responsibilities",
+      "source_image": 1,
+      "order_no": 20
+    },
+    {
+      "wp_id": "PO4-WP4",
+      "wp": "Documented roles and responsibilities",
+      "description": "Roles and responsibilities for IT personnel and end users that delineate between IT personnel and end-user authority, responsibilities and accountability for meeting the organisation’s needs",
+      "source_image": 1,
+      "order_no": 21
+    },
+    {
+      "wp_id": "PO5-WP1",
+      "wp": "Cost-benefit reports",
+      "description": "A report weighing the total expected costs against the total expected benefits of one or more actions to choose the best or most profitable option",
+      "source_image": 1,
+      "order_no": 22
+    },
+    {
+      "wp_id": "PO5-WP2",
+      "wp": "IT budgets",
+      "description": "A budget reflecting the priorities established by the enterprise’s portfolio of IT-enabled investment programmes, and including the ongoing costs of operating and maintaining the current infrastructure",
+      "source_image": 1,
+      "order_no": 23
+    },
+    {
+      "wp_id": "PO5-WP3",
+      "wp": "Updated IT service portfolio",
+      "description": "A grouping of IT services managed and monitored to optimise business value",
+      "source_image": 1,
+      "order_no": 24
+    },
+    {
+      "wp_id": "PO5-WP4",
+      "wp": "Updated IT project portfolio",
+      "description": "A grouping of IT projects managed and monitored to optimise business value",
+      "source_image": 1,
+      "order_no": 25
+    },
+    {
+      "wp_id": "PO6-WP1",
+      "wp": "Enterprise IT control framework",
+      "description": "A set of fundamental controls that facilitates the discharge of business process owner responsibilities to prevent financial or information loss in an organisation",
+      "source_image": 1,
+      "order_no": 26
+    },
+    {
+      "wp_id": "PO6-WP2",
+      "wp": "IT policies, standardised procedures",
+      "description": "High-level statements of management intent and direction",
+      "source_image": 1,
+      "order_no": 27
+    },
+    {
+      "wp_id": "PO7-WP1",
+      "wp": "IT HR policy and procedures",
+      "description": "Policies and procedures for IT HR, including recruitment and selection, conditions of employment, performance learning and development, behaviour and code of conduct, administration and support",
+      "source_image": 1,
+      "order_no": 28
+    },
+    {
+      "wp_id": "PO7-WP2",
+      "wp": "IT skills matrix",
+      "description": "Details of skills required by the IT organisation to meet business objectives",
+      "source_image": 1,
+      "order_no": 29
+    },
+    {
+      "wp_id": "PO7-WP3",
+      "wp": "Job descriptions",
+      "description": "Outline of responsibilities of a position. It may often include to whom the position reports and specifications such as the qualifications or skills needed by the person in the job.",
+      "source_image": 1,
+      "order_no": 30
+    },
+    {
+      "wp_id": "PO7-WP4",
+      "wp": "Users’ skills and competencies, including individual training",
+      "description": "Identification of IT knowledge or skill required to produce outputs in an organisation using IT. It should identify the individual competencies that need to be attained by a specific staff and the training required to achieve those competencies.",
+      "source_image": 1,
+      "order_no": 31
+    },
+    {
+      "wp_id": "PO7-WP5",
+      "wp": "Roles and responsibilities",
+      "description": "Roles and responsibilities for IT personnel and end users that delineate between IT personnel and end-user authority, responsibilities and accountability for meeting the organisation’s needs",
+      "source_image": 2,
+      "order_no": 32
+    },
+    {
+      "wp_id": "PO8-WP1",
+      "wp": "Acquisition standards",
+      "description": "Standards that define the process and activities required to acquire application software or an upgrade, including evaluation of the supplier’s financial stability, track record, resources and references from existing customers",
+      "source_image": 2,
+      "order_no": 33
+    },
+    {
+      "wp_id": "PO8-WP2",
+      "wp": "Development standards",
+      "description": "Standards that define the process and activities necessary to produce quality software. It should include detailed procedures and practices for key IT development practices.",
+      "source_image": 2,
+      "order_no": 34
+    },
+    {
+      "wp_id": "PO8-WP3",
+      "wp": "Quality standards and metrics requirements",
+      "description": "A system that outlines the policies and procedures necessary to improve and control the various processes that will ultimately lead to improved organisation performance",
+      "source_image": 2,
+      "order_no": 35
+    },
+    {
+      "wp_id": "PO8-WP4",
+      "wp": "Quality improvement actions",
+      "description": "The quality improvement actions that are planned, who will be responsible and when they will be implemented",
+      "source_image": 2,
+      "order_no": 36
+    },
+    {
+      "wp_id": "PO9-WP1",
+      "wp": "Risk assessment",
+      "description": "A process used to identify and evaluate risks and their potential effects\n\nScope note:  Risk assessment includes assessing the critical functions necessary for an organisation to continue business operations, defining the controls in place to reduce organisation exposure and evaluating the cost for such controls. Risk analysis often involves an evaluation of the probabilities of a particular event.",
+      "source_image": 2,
+      "order_no": 37
+    },
+    {
+      "wp_id": "PO9-WP2",
+      "wp": "Risk reporting",
+      "description": "A report to senior management of high-risk actions, responsibilities and proposed actions",
+      "source_image": 2,
+      "order_no": 38
+    },
+    {
+      "wp_id": "PO9-WP43",
+      "wp": "IT-related risk management guidelines",
+      "description": "The co-ordinated activities to direct and control an organisation with regard to risk [ISO/IEC Guide 73:2002]",
+      "source_image": 2,
+      "order_no": 39
+    },
+    {
+      "wp_id": "PO9-WP54",
+      "wp": "IT-related risk remedial action plans",
+      "description": "The actions planned to address identified risks, who will be responsible and when they will be implemented",
+      "source_image": 2,
+      "order_no": 40
+    },
+    {
+      "wp_id": "PO10-WP1",
+      "wp": "Project performance reports",
+      "description": "Reports on the status of projects against planned milestones and resource usage, highlighting any issues potentially impacting the achievement of planned outcomes",
+      "source_image": 2,
+      "order_no": 41
+    },
+    {
+      "wp_id": "PO10-WP2",
+      "wp": "Project risk management plan",
+      "description": "Describes how risk management will be structured and performed on the project. It becomes a subset of the project management plan.",
+      "source_image": 2,
+      "order_no": 42
+    },
+    {
+      "wp_id": "PO10-WP3",
+      "wp": "Project management guidelines",
+      "description": "Guidance on the approach to be adopted for defining the scope and boundaries of managing projects, as well as the method to be adopted and applied to each project undertaken",
+      "source_image": 2,
+      "order_no": 43
+    },
+    {
+      "wp_id": "PO10-WP4",
+      "wp": "Detailed project plans",
+      "description": "A formal, approved document used to guide both project execution and project control. The primary uses of the project plan are to document planning assumptions and decisions, facilitate communication among stakeholders, and document approved scope, cost and schedule baselines. A project plan may be summarised or detailed.",
+      "source_image": 2,
+      "order_no": 44
+    },
+    {
+      "wp_id": "PO10-WP5",
+      "wp": "Updated IT project portfolio",
+      "description": "A grouping of IT projects managed and monitored to optimise business value (see PO1)",
+      "source_image": 2,
+      "order_no": 45
+    },
+    {
+      "wp_id": "AI1-WP1",
+      "wp": "Business requirements feasibility study",
+      "description": "A phase of a system development life cycle (SDLC) methodology that researches the feasibility and adequacy of resources for the development or acquisition of a system solution to a user need",
+      "source_image": 2,
+      "order_no": 46
+    },
+    {
+      "wp_id": "AI2-WP1",
+      "wp": "Application security controls specification",
+      "description": "Controls that achieve the business objectives of timely, accurate and reliable information. They consist of the manual and automated activities that ensure that information conforms to certain criteria—what COBIT refers to as business requirements for information. Those criteria are effectiveness, efficiency, confidentiality, integrity, availability, compliance and reliability.",
+      "source_image": 2,
+      "order_no": 47
+    },
+    {
+      "wp_id": "AI2-WP2",
+      "wp": "Application and package software knowledge",
+      "description": "Also known as an application or application system, it is computer software designed to help the user to perform singular or multiple related specific tasks. An application differs from an operating system (which runs a computer), a utility (which performs maintenance or general-purpose chores) and a programming language (with which computer programs are created).",
+      "source_image": 2,
+      "order_no": 48
+    },
+    {
+      "wp_id": "AI2-WP3",
+      "wp": "Procurement decisions",
+      "description": "Documented specification (at a high level) of the software and services to be acquired. It is used as a basis for procurement action.",
+      "source_image": 2,
+      "order_no": 49
+    },
+    {
+      "wp_id": "AI2-WP4",
+      "wp": "Initial planned SLAs",
+      "description": "An agreement, preferably documented, between a service provider and the customer(s)/user(s) that defines minimum performance targets for a service and how they will be measured",
+      "source_image": 2,
+      "order_no": 50
+    },
+    {
+      "wp_id": "AI2-WP5",
+      "wp": "Availability, continuity and recovery specification",
+      "description": "Availability and service continuity requirements should be identified on the basis of business plans, SLAs and risk assessments. Requirements should include access rights and response times as well as end-to-end availability of system components. Requirements should include, but not be limited to, access rights, service response times and end-to-end availability of services.",
+      "source_image": 2,
+      "order_no": 51
+    },
+    {
+      "wp_id": "AI3-WP1",
+      "wp": "Procurement decisions",
+      "description": "Acquired (or developed) system configured to meet business-defined requirements",
+      "source_image": 2,
+      "order_no": 52
+    },
+    {
+      "wp_id": "AI3-WP2",
+      "wp": "Configured system that is tested/installed",
+      "description": "System configured to meet the business-defined requirements after testing and installation in the production environment",
+      "source_image": 2,
+      "order_no": 53
+    },
+    {
+      "wp_id": "AI3-WP3",
+      "wp": "Physical environment requirements",
+      "description": "The physical environment required for IT assets. It includes:\n• The physical sites for IT equipment\n• Physical security measures—Definition and implementation of procedures to grant, limit and revoke access to premises, buildings and areas\n• Protection against environmental factors\n• Physical facilities management, including power and communications equipment",
+      "source_image": 3,
+      "order_no": 54
+    },
+    {
+      "wp_id": "AI3-WP4",
+      "wp": "Updates for technology standards",
+      "description": "Changes to organisational standards for infrastructure products and practices based on decisions made during acquiring and maintaining technology infrastructure",
+      "source_image": 3,
+      "order_no": 55
+    },
+    {
+      "wp_id": "AI3-WP5",
+      "wp": "System monitoring requirements",
+      "description": "The specification of the information required to be provided to enable effective monitoring of the application, system or infrastructure",
+      "source_image": 3,
+      "order_no": 56
+    },
+    {
+      "wp_id": "AI3-WP6",
+      "wp": "Infrastructure knowledge",
+      "description": "Knowledge about available IT infrastructure, where IT infrastructure is the set of hardware, software and facilities that integrates an organisation’s IT assets (see PO3)",
+      "source_image": 3,
+      "order_no": 57
+    },
+    {
+      "wp_id": "AI3-WP7",
+      "wp": "Initial planned OLAs",
+      "description": "An internal agreement covering the delivery of services that support the IT organisation in its delivery of services",
+      "source_image": 3,
+      "order_no": 58
+    },
+    {
+      "wp_id": "AI4-WP1",
+      "wp": "User, operational, support, technical and administration manuals",
+      "description": "Technical communication documents intended to give assistance to people using, supporting or administering a particular system",
+      "source_image": 3,
+      "order_no": 59
+    },
+    {
+      "wp_id": "AI4-WP2",
+      "wp": "Knowledge transfer requirements for a solution’s implementation",
+      "description": "The specification of the knowledge that needs to be transferred to business management, end users, and operations and support staff to enable effective management, use, operation and support of the part(s) of the application system or IT infrastructure",
+      "source_image": 3,
+      "order_no": 60
+    },
+    {
+      "wp_id": "AI4-WP3",
+      "wp": "Training materials",
+      "description": "Material used to train business management, end users, and operations and support staff to enable effective management, use, operation and support of the part(s) of the application system or IT infrastructure",
+      "source_image": 3,
+      "order_no": 61
+    },
+    {
+      "wp_id": "AI5-WP1",
+      "wp": "Third-party relationship management requirements",
+      "description": "The specification of the requirements for managing customer-supplier relationships. It includes clearly defined roles, responsibilities and expectations in third-party agreements as well as monitoring processes.",
+      "source_image": 3,
+      "order_no": 62
+    },
+    {
+      "wp_id": "AI5-WP2",
+      "wp": "Procured items",
+      "description": "Hardware or software procured as part of the acquisition process",
+      "source_image": 3,
+      "order_no": 63
+    },
+    {
+      "wp_id": "AI5-WP3",
+      "wp": "Contractual arrangements",
+      "description": "A formal agreement regarding expectations and responsibilities between the parties",
+      "source_image": 3,
+      "order_no": 64
+    },
+    {
+      "wp_id": "AI6-WP1",
+      "wp": "Change process description",
+      "description": "A documented procedure to record, classify, assess and approve RFCs",
+      "source_image": 3,
+      "order_no": 65
+    },
+    {
+      "wp_id": "AI6-WP2",
+      "wp": "Change process procedures",
+      "description": "A documented procedure to apply changes to the production environment",
+      "source_image": 3,
+      "order_no": 66
+    },
+    {
+      "wp_id": "AI6-WP3",
+      "wp": "Change status reports",
+      "description": "A log of all change requests and the status in terms of assessment, approval (or rejection) and implementation",
+      "source_image": 3,
+      "order_no": 67
+    },
+    {
+      "wp_id": "AI6-WP4",
+      "wp": "Change authorisation",
+      "description": "A record of the approval (or authorisation) for a change",
+      "source_image": 3,
+      "order_no": 68
+    },
+    {
+      "wp_id": "AI7-WP1",
+      "wp": "Released configuration items (CIs)",
+      "description": "Components of an infrastructure—or an item, such as a request for change, associated with an infrastructure—that is (or is to be) under the control of configuration management\n\nScope note:  CIs may vary widely in complexity, size and type, from an entire system (including all hardware, software and documentation) to a single module or a minor hardware component.",
+      "source_image": 3,
+      "order_no": 69
+    },
+    {
+      "wp_id": "AI7-WP2",
+      "wp": "Known and accepted errors",
+      "description": "The documentation of known and accepted errors identified in testing (for identification in documented procedures together with any additional procedures required)",
+      "source_image": 3,
+      "order_no": 70
+    },
+    {
+      "wp_id": "AI7-WP3",
+      "wp": "Promotion to production",
+      "description": "Handover of a system from development to testing to operations in line with an implementation plan",
+      "source_image": 3,
+      "order_no": 71
+    },
+    {
+      "wp_id": "AI7-WP4",
+      "wp": "Software release and distribution plan",
+      "description": "Documented plan on how to roll out the release. It should include identifying requirements for ensuring sign-off, packaging, regression testing, distribution, handover, status tracking, backup procedures and user notification.",
+      "source_image": 3,
+      "order_no": 72
+    },
+    {
+      "wp_id": "AI7-WP5",
+      "wp": "Post-implementation review",
+      "description": "An assessment and review of the completed working solution performed after a period of live running",
+      "source_image": 3,
+      "order_no": 73
+    },
+    {
+      "wp_id": "AI7-WP6",
+      "wp": "Internal control monitoring",
+      "description": "Identified key controls that should be subject to monitoring, including frequency, possible procedures and thresholds for monitoring",
+      "source_image": 3,
+      "order_no": 74
+    },
+    {
+      "wp_id": "DS1-WP1",
+      "wp": "Contract review report",
+      "description": "A report reviewing contracted IT services",
+      "source_image": 3,
+      "order_no": 75
+    },
+    {
+      "wp_id": "DS1-WP2",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose",
+      "source_image": 3,
+      "order_no": 76
+    },
+    {
+      "wp_id": "DS1-WP3",
+      "wp": "New/updated service requirements",
+      "description": "New or updated specifications of services required and defined by business needs, to be addressed by IT",
+      "source_image": 4,
+      "order_no": 77
+    },
+    {
+      "wp_id": "DS1-WP4",
+      "wp": "SLAs",
+      "description": "An agreement, preferably documented, between a service provider and the customer(s)/user(s) that defines minimum performance targets for a service and how they will be measured",
+      "source_image": 4,
+      "order_no": 78
+    },
+    {
+      "wp_id": "DS1-WP5",
+      "wp": "OLAs",
+      "description": "An internal agreement covering the delivery of services that support the IT organisation in its delivery of services\n(see AI3)",
+      "source_image": 4,
+      "order_no": 79
+    },
+    {
+      "wp_id": "DS1-WP6",
+      "wp": "Updated IT service portfolio",
+      "description": "The updated set of services that are managed by a service provider; is used to manage the entire life cycle of all IT services",
+      "source_image": 4,
+      "order_no": 80
+    },
+    {
+      "wp_id": "DS2-WP1",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 4,
+      "order_no": 81
+    },
+    {
+      "wp_id": "DS2-WP2",
+      "wp": "Supplier catalogue",
+      "description": "A catalogue of third-party suppliers of IT products and services",
+      "source_image": 4,
+      "order_no": 82
+    },
+    {
+      "wp_id": "DS2-WP3",
+      "wp": "Supplier risks",
+      "description": "Risks associated with the engagement or provisioning of third-party IT products and services",
+      "source_image": 4,
+      "order_no": 83
+    },
+    {
+      "wp_id": "DS3-WP1",
+      "wp": "Performance and capacity information",
+      "description": "Information on IT resources available or needed to process IT workloads",
+      "source_image": 4,
+      "order_no": 84
+    },
+    {
+      "wp_id": "DS3-WP2",
+      "wp": "Performance and capacity plan (requirements)",
+      "description": "A plan for the review of performance and capacity of IT resources to ensure that cost-justifiable capacity and performance are available to process the agreed-upon workloads as determined by the SLAs",
+      "source_image": 4,
+      "order_no": 85
+    },
+    {
+      "wp_id": "DS3-WP3",
+      "wp": "Required changes",
+      "description": "Changes required to be made to infrastructure and applications",
+      "source_image": 4,
+      "order_no": 86
+    },
+    {
+      "wp_id": "DS3-WP4",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 4,
+      "order_no": 87
+    },
+    {
+      "wp_id": "DS4-WP1",
+      "wp": "Contingency test results",
+      "description": "Test results for contingency arrangements that ensure that IT systems can effectively recover from systems failure or disruption in the case of an adverse event",
+      "source_image": 4,
+      "order_no": 88
+    },
+    {
+      "wp_id": "DS4-WP2",
+      "wp": "Criticality of IT configuration items",
+      "description": "The criticality of particular IT infrastructure components that are under the control of configuration management",
+      "source_image": 4,
+      "order_no": 89
+    },
+    {
+      "wp_id": "DS4-WP3",
+      "wp": "Backup storage and protection plan",
+      "description": "A plan for copying and storing data and other IT resources to protect against loss of integrity or availability of the original that includes procedures for backup and restoration of systems, applications, data and documentation according to business need, continuity plan and security requirements",
+      "source_image": 4,
+      "order_no": 90
+    },
+    {
+      "wp_id": "DS4-WP4",
+      "wp": "Incident/disaster thresholds",
+      "description": "The trigger points marking a major disruption on key functions and processes",
+      "source_image": 4,
+      "order_no": 91
+    },
+    {
+      "wp_id": "DS4-WP5",
+      "wp": "Disaster service requirements, including roles and responsibilities",
+      "description": "Definition of requirements designed to return the organisation to an acceptable condition, including restoration of critical business functions, from an interruption in services",
+      "source_image": 4,
+      "order_no": 92
+    },
+    {
+      "wp_id": "DS4-WP6",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 4,
+      "order_no": 93
+    },
+    {
+      "wp_id": "DS5-WP1",
+      "wp": "Security incident definition",
+      "description": "Specification of the characteristics of security incidents that are used by the incident and problem management process",
+      "source_image": 4,
+      "order_no": 94
+    },
+    {
+      "wp_id": "DS5-WP2",
+      "wp": "Specific training requirements on security awareness",
+      "description": "Requirements definition for the awareness training of individuals who potentially have access to the organisation’s information",
+      "source_image": 4,
+      "order_no": 95
+    },
+    {
+      "wp_id": "DS5-WP3",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 4,
+      "order_no": 96
+    },
+    {
+      "wp_id": "DS5-WP4",
+      "wp": "Required security changes",
+      "description": "Change requirements in the context of IT security",
+      "source_image": 4,
+      "order_no": 97
+    },
+    {
+      "wp_id": "DS5-WP5",
+      "wp": "Security threats and vulnerabilities",
+      "description": "Potential for threat sources to successfully exploit lapses in security either accidentally or intentionally",
+      "source_image": 4,
+      "order_no": 98
+    },
+    {
+      "wp_id": "DS5-WP6",
+      "wp": "IT security plan and policies",
+      "description": "A high-level document defining an organisation’s information security philosophy, commitment preparedness and response in the context of business, risk and compliance requirements",
+      "source_image": 4,
+      "order_no": 99
+    },
+    {
+      "wp_id": "DS6-WP1",
+      "wp": "IT financials",
+      "description": "Financial information pertaining to IT-related activities and operations",
+      "source_image": 5,
+      "order_no": 100
+    },
+    {
+      "wp_id": "DS6-WP2",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 101
+    },
+    {
+      "wp_id": "DS7-WP1",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 102
+    },
+    {
+      "wp_id": "DS7-WP2",
+      "wp": "Required documentation updates",
+      "description": "Requirements for documentation updates pertaining to IT operations and use",
+      "source_image": 5,
+      "order_no": 103
+    },
+    {
+      "wp_id": "DS8-WP1",
+      "wp": "Service requests/RFCs",
+      "description": "A user request for advice or information; for a standard change; for access to an IT service, e.g., to reset a password; to provide standard IT services for a new user. Service requests are usually handled by a service desk, and do not require a formal RFC to be submitted.",
+      "source_image": 5,
+      "order_no": 104
+    },
+    {
+      "wp_id": "DS8-WP2",
+      "wp": "Incident reports",
+      "description": "Reports of unexpected events, an interruption or unplanned quality reduction to an IT service, which may involve an attack or series of attacks (compromise and/or breach of security)",
+      "source_image": 5,
+      "order_no": 105
+    },
+    {
+      "wp_id": "DS8-WP3",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 106
+    },
+    {
+      "wp_id": "DS8-WP4",
+      "wp": "User satisfaction reports",
+      "description": "Reports on satisfaction levels of IT users on one or more of the following: IT services, application performance, incident/problem resolution, education and training",
+      "source_image": 5,
+      "order_no": 107
+    },
+    {
+      "wp_id": "DS9-WP1",
+      "wp": "IT configuration/asset details",
+      "description": "Details regarding a component of an infrastructure—or an item, such as a request for change, associated with an infrastructure—that is (or is to be) under the control of configuration management",
+      "source_image": 5,
+      "order_no": 108
+    },
+    {
+      "wp_id": "DS9-WP2",
+      "wp": "RFC (where and how to apply the fix)",
+      "description": "A formal proposal for a change to be made, which includes details of the proposed change",
+      "source_image": 5,
+      "order_no": 109
+    },
+    {
+      "wp_id": "DS9-WP3",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 110
+    },
+    {
+      "wp_id": "DS10-WP1",
+      "wp": "RFC (where and how to apply the fix)",
+      "description": "A formal proposal for a change to be made, which includes details of the proposed change\n(Repeated from DS9-WP2)",
+      "source_image": 5,
+      "order_no": 111
+    },
+    {
+      "wp_id": "DS10-WP2",
+      "wp": "Problem records",
+      "description": "Records of the unknown underlying cause of one or more incidents. The cause is not usually known at the time a problem record is created, and the problem management process is responsible for further investigation.",
+      "source_image": 5,
+      "order_no": 112
+    },
+    {
+      "wp_id": "DS10-WP3",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 113
+    },
+    {
+      "wp_id": "DS10-WP4",
+      "wp": "Known problems, known errors and workarounds",
+      "description": "Known error:  A problem that has a documented root cause and a workaround. Known errors are created and managed throughout their life cycle by problem management.",
+      "source_image": 5,
+      "order_no": 114
+    },
+    {
+      "wp_id": "DS11-WP1",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 115
+    },
+    {
+      "wp_id": "DS11-WP2",
+      "wp": "Operator instructions for data management outcomes",
+      "description": "Procedural instructions for data storage/retention/archival arrangements, disposal, backup/restoration, and compliance with security requirements",
+      "source_image": 5,
+      "order_no": 116
+    },
+    {
+      "wp_id": "DS12-WP1",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 117
+    },
+    {
+      "wp_id": "DS13-WP1",
+      "wp": "Incident tickets",
+      "description": "An acknowledgement generated upon the initial lodgment of an incident",
+      "source_image": 5,
+      "order_no": 118
+    },
+    {
+      "wp_id": "DS13-WP2",
+      "wp": "Error logs",
+      "description": "A serial or chronological record of design flaws or malfunctions that cause failures of one or more configuration items or IT services. Errors include mistakes made by persons or a faulty process that affects a configuration item or IT service.",
+      "source_image": 5,
+      "order_no": 119
+    },
+    {
+      "wp_id": "DS13-WP3",
+      "wp": "Process performance reports",
+      "description": "Reports for the extent to which the execution of processes achieve their purpose\n\n(Repeated from DS1-WP2)",
+      "source_image": 5,
+      "order_no": 120
+    },
+    {
+      "wp_id": "ME1-WP1",
+      "wp": "Performance input to IT planning",
+      "description": "Performance in terms of IT’s contribution to business objectives, functionality, stability, complexity, costs, strengths and weaknesses",
+      "source_image": 6,
+      "order_no": 121
+    },
+    {
+      "wp_id": "ME1-WP2",
+      "wp": "Remedial action plans",
+      "description": "Plan (including timeframe) showing remedial action in place to address non-compliance issues",
+      "source_image": 6,
+      "order_no": 122
+    },
+    {
+      "wp_id": "ME1-WP3",
+      "wp": "Historic risk trends and events",
+      "description": "A monitoring report that is part of the enterprise risk management (ERM) system that continuously identifies risk trends and events",
+      "source_image": 6,
+      "order_no": 123
+    },
+    {
+      "wp_id": "ME1-WP4",
+      "wp": "Process performance reports",
+      "description": "Reporting on the performance of selected processes against agreed performance indicators",
+      "source_image": 6,
+      "order_no": 124
+    },
+    {
+      "wp_id": "ME2-WP1",
+      "wp": "Report on effectiveness of IT controls",
+      "description": "Report outlining effectiveness of IT controls based on management assessment and independent assurance reviews",
+      "source_image": 6,
+      "order_no": 125
+    },
+    {
+      "wp_id": "ME3-WP1",
+      "wp": "Catalogue of legal and regulatory requirements related to IT service delivery",
+      "description": "Reporting outlining legal and regulatory requirements and their impact on IT service delivery",
+      "source_image": 6,
+      "order_no": 126
+    },
+    {
+      "wp_id": "ME3-WP2",
+      "wp": "Report on compliance of IT activities with external legal and regulatory requirements",
+      "description": "Report outlining compliance of IT activities with external legal and regulatory requirements based on management assessment and independent assurance reviews",
+      "source_image": 6,
+      "order_no": 127
+    },
+    {
+      "wp_id": "ME4-WP1",
+      "wp": "Process framework improvements",
+      "description": "Action taken to change an enterprise’s framework (its strategies, goals, policies responsibilities and activities) so that they meet the enterprise’s business goals",
+      "source_image": 6,
+      "order_no": 128
+    },
+    {
+      "wp_id": "ME4-WP2",
+      "wp": "Report on IT governance status",
+      "description": "An assessment of the effectiveness of IT governance based on independent assurance",
+      "source_image": 6,
+      "order_no": 129
+    },
+    {
+      "wp_id": "ME4-WP3",
+      "wp": "Expected business outcomes of IT-enabled business investments",
+      "description": "Documentation of an observable result or change in business performance, possibly supported by transaction-based metrics, resulting from new initiatives based on new or changed IT",
+      "source_image": 6,
+      "order_no": 130
+    },
+    {
+      "wp_id": "ME4-WP4",
+      "wp": "Enterprise strategic direction for IT",
+      "description": "A monitoring report of the enterprise governance of IT that identifies strategic issues such as technology capabilities, which creates a shared understanding between business and IT",
+      "source_image": 6,
+      "order_no": 131
+    },
+    {
+      "wp_id": "ME4-WP5",
+      "wp": "Enterprise appetite for IT risks",
+      "description": "A statement of approved risk appetite for IT based on and consistent with the enterprise risk appetite statement",
+      "source_image": 6,
+      "order_no": 132
+    }
+  ]
+}

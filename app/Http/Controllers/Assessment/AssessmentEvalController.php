@@ -7,7 +7,9 @@ use App\Http\Requests\AssessmentEval\CreateAssessmentRequest;
 use App\Http\Requests\AssessmentEval\SaveAssessmentRequest;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Eval\AssessmentManagementService;
+use App\Services\Assessment\Eval\AssessmentDuplicationService;
 use App\Services\Assessment\Eval\EvaluationReadService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -37,6 +39,25 @@ class AssessmentEvalController extends Controller
             ]);
 
             return redirect()->back()->withErrors(['error' => 'Failed to create assessment: '.$e->getMessage()]);
+        }
+    }
+
+    public function duplicate(Request $request, $evalId, AssessmentDuplicationService $duplicator)
+    {
+        $source = $this->evaluationReader->getEvaluationById($evalId);
+        abort_unless($source && $this->assessmentAccessService->canManage($request->user(), $source), 404);
+
+        $validated = $request->validate(['tahun' => ['required', 'integer', 'min:2000', 'max:2099']]);
+
+        try {
+            $copy = $duplicator->duplicate($source, $request->user(), (int) $validated['tahun']);
+
+            return redirect()->route('assessment.show', ['evalId' => $copy->encrypted_id])
+                ->with('success', 'Assessment berhasil diduplikasi. Periksa kembali nilai dan evidence untuk tahun baru.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to duplicate assessment', ['eval_id' => $source->eval_id, 'error' => $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Assessment gagal diduplikasi. Silakan coba lagi.']);
         }
     }
 

@@ -23,6 +23,10 @@ class MstEval extends Model
 
     protected $keyType = 'int';
 
+    protected $casts = [
+        'show_on_user_page' => 'boolean',
+    ];
+
     protected $fillable = [
         'focus_area_id',
         'user_id',

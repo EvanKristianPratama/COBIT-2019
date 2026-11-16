@@ -12,6 +12,8 @@ export default defineConfig({
                 'resources/js/report-summary.js',
                 'resources/js/focus-area/index.js',
                 'resources/css/report-summary.css',
+                'resources/css/cobit5/document.css',
+                'resources/js/cobit5/document-editor.js',
             ],
             refresh: true,
         }),

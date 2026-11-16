@@ -22,6 +22,8 @@ class User extends Authenticatable
     use HasRoles;
     use Notifiable;
 
+    public const INACTIVE_ACCOUNT_MESSAGE = 'Maaf, akun Anda sedang dinonaktifkan.';
+
     protected $fillable = [
         'id', 'name', 'email', 'password', 'organisasi', 'organization_id', 'jabatan', 'role', 'access_profile',
     ];

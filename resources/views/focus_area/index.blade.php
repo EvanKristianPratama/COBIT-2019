@@ -31,15 +31,15 @@
                 <a href="{{ route('focus-areas.index', ['view' => 'map']) }}" data-model-view="map"
                     class="model-view-option {{ $selectedView === 'map' && $initialStep === 1 ? 'is-active' : '' }}"
                     aria-current="{{ $selectedView === 'map' && $initialStep === 1 ? 'page' : 'false' }}">
-                    <i class="fas fa-project-diagram" aria-hidden="true"></i> Map View
+                    Map View
                 </a>
                 <a href="{{ route('focus-areas.index', ['view' => 'cards']) }}" data-model-view="cards"
                     class="model-view-option {{ $selectedView === 'cards' || $initialStep === 2 ? 'is-active' : '' }}"
                     aria-current="{{ $selectedView === 'cards' || $initialStep === 2 ? 'page' : 'false' }}">
-                    <i class="fas fa-th-large" aria-hidden="true"></i> Card View
+                    Card View
                 </a>
             </div>
-            <p class="model-view-hint"><i class="fas fa-mouse-pointer" aria-hidden="true"></i> Klik bagian peta untuk membuka komponennya.</p>
+            <p class="model-view-hint" @if($selectedView !== 'map' || $initialStep !== 1) hidden @endif>Klik bagian peta untuk membuka komponennya.</p>
         </div>
 
         <div id="modelMapContainer" @if($selectedView !== 'map' || $initialStep !== 1) hidden @endif>

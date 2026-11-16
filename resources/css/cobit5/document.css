@@ -1,0 +1,58 @@
+.c5-component { max-width: 1280px; }
+.c5-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.2rem 1.5rem; background: #fff; border: 1px solid #dce3eb; border-radius: 10px; margin-bottom: 1.25rem; }
+.c5-toolbar h1 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+.c5-process-navigation { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; width: 100%; }
+.c5-process-navigation select { flex: 1; max-width: 580px; min-width: 220px; }
+.c5-navigation { margin-bottom: 1.5rem; gap: .5rem; }
+.c5-navigation .nav-link { color: #526174; border: 0; border-radius: 0; border-bottom: 2px solid transparent; background: transparent; }
+.c5-navigation .nav-link.active { color: #073f78; border-bottom-color: #073f78; background: transparent; }
+.c5-sheet { max-width: 940px; background: #fff; padding: 16px; margin: 0 auto 1.5rem; border: 1px solid #e2e6ec; }
+.c5-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: 'Arial Narrow', 'Liberation Sans Narrow', 'Roboto Condensed', Arial, sans-serif; font-stretch: condensed; font-size: 16px; line-height: 1.13; color: #111; }
+.c5-table th, .c5-table td { border: 1.5px solid #333; padding: 5px 6px; vertical-align: top; font-weight: 400; overflow-wrap: break-word; background: #fff; }
+.c5-table th, .c5-table strong { font-weight: 700; }
+.c5-table .c5-section-title { background: #073f78; color: #fff; text-align: left; padding: 5px 6px; }
+.c5-table .c5-header-cell { padding: 0; }
+.c5-process-header { display: grid; grid-template-columns: 64.5% 35.5%; align-items: stretch; }
+.c5-process-header > span { padding: 5px 6px; align-content: end; }
+.c5-process-header > span + span { border-left: 1.5px solid #fff; }
+.c5-table .c5-description td { background: #dddde9; }
+.c5-table .c5-band th { background: #b0b9d1; }
+.c5-table .c5-subhead th { background: #c3cadd; }
+.c5-bullets { padding-left: 1.05em; margin: 0; }
+.c5-bullets li { margin: 0; padding: 0; }
+.c5-text { white-space: pre-line; }
+.c5-raci-scroll { overflow-x: auto; margin-top: 1.5rem; }
+.c5-raci { width: 100%; }
+.c5-table .c5-raci-practice { vertical-align: bottom; }
+.c5-table .c5-raci-role { background: #bec6dc; padding: 4px 2px; height: 270px; vertical-align: bottom; text-align: center; }
+.c5-raci-role span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; display: inline-block; font-size: 14px; font-weight: 400; }
+.c5-table .c5-raci-value { text-align: center; vertical-align: middle; padding: 5px 2px; }
+.c5-table .c5-flow-heading th, .c5-table .c5-flow-label, .c5-table .c5-activities-heading th { text-align: center; }
+.c5-table .c5-activities-heading th { background: #dddde9; }
+.c5-table .c5-activity { padding: 5px 6px; }
+.c5-guidance { margin-top: 1.5rem; }
+.c5-table .c5-empty { color: #64748b; padding: 1rem; text-align: center; }
+.c5-evidence-panel { background: #fff; border: 1px solid #dce3eb; padding: 1.25rem; }
+.c5-wp-panel { max-width: 1040px; padding: 1.25rem; margin: 0 auto 1.5rem; background: #fff; border: 1px solid #dce3eb; }
+.c5-wp-table .c5-subhead th { background: #cbd0e0; text-align: center; }
+.c5-wp-table td { padding: 6px; }
+.c5-flow-edit { float: right; margin-left: .4rem; padding: 0 .3rem; border: 1px solid #68758a; border-radius: 3px; background: #fff; color: #073f78; font-family: Arial, sans-serif; font-size: 12px; font-weight: 400; }
+.c5-flow-edit:focus-visible { outline: 2px solid #007bca; outline-offset: 2px; }
+.c5-wp-code { margin-bottom: .2rem; color: #596579; font: 11px Arial, sans-serif; }
+#c5DocumentError, #c5FlowError { white-space: pre-line; }
+@media (max-width: 767px) {
+    .c5-sheet { padding: .5rem; overflow-x: auto; }
+    .c5-overview, .c5-practices, .c5-guidance { min-width: 780px; }
+    .c5-raci { min-width: 904px; }
+    .c5-toolbar { padding: 1rem; }
+    .c5-process-navigation select { width: 100%; max-width: none; }
+}
+@media print {
+    .c5-toolbar, .c5-navigation, .c5-evidence-panel, .c5-flow-edit { display: none !important; }
+    .c5-component { padding: 0 !important; max-width: none; }
+    .c5-sheet { max-width: none; border: 0; padding: 0; break-after: page; }
+    .c5-sheet:last-child { break-after: auto; }
+    .c5-table { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .c5-raci { min-width: 0; }
+    .c5-table tr { break-inside: avoid; }
+}

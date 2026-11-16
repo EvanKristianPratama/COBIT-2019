@@ -8,6 +8,7 @@ use App\Models\MstOrganization;
 use App\Models\User;
 use App\Services\Assessment\Access\AssessmentAccessService;
 use App\Services\Assessment\Eval\AssessmentManagementService;
+use App\Services\Assessment\Eval\AssessmentDuplicationService;
 use App\Services\Assessment\Eval\EvaluationReadService;
 use App\Services\Auth\AccessProfilePermissionService;
 use App\Support\Authorization\PermissionCatalog;
@@ -36,6 +37,7 @@ class AuditeeAssessmentAccessTest extends TestCase
             $table->string('role')->nullable();
             $table->string('access_profile')->nullable();
             $table->unsignedBigInteger('organization_id')->nullable();
+            $table->boolean('isActivated')->default(true);
             $table->timestamps();
         });
         Schema::create('mst_organization', function (Blueprint $table): void {
@@ -96,6 +98,7 @@ class AuditeeAssessmentAccessTest extends TestCase
         $this->actingAs($user);
         foreach ([
             ['post', '/assessment/create'],
+            ['post', '/assessment/1/duplicate'],
             ['post', '/assessment/1/update-scope'],
             ['delete', '/assessment/delete-scope'],
             ['post', '/assessment/1/save'],
@@ -127,6 +130,21 @@ class AuditeeAssessmentAccessTest extends TestCase
             $this->assertTrue($user->can(PermissionCatalog::AssessmentsView));
             $this->assertTrue($user->can(PermissionCatalog::AssessmentsInput));
         }
+    }
+
+    public function test_duplicate_requires_access_and_a_valid_year(): void
+    {
+        $assessor = $this->user(['access_profile' => 'assessor']);
+        $assessor->givePermissionTo([PermissionCatalog::AssessmentsView, PermissionCatalog::AssessmentsInput]);
+        $source = MstEval::create(['user_id' => $assessor->id, 'organization_id' => 1, 'tahun' => 2025]);
+        $other = MstEval::create(['user_id' => $this->user(['organization_id' => 2])->id, 'organization_id' => 2]);
+        $this->actingAs($assessor)->post('/assessment/'.$other->eval_id.'/duplicate', ['tahun' => 2026])->assertNotFound();
+        $this->post('/assessment/'.$source->eval_id.'/duplicate', ['tahun' => 2100])->assertSessionHasErrors('tahun');
+
+        $copy = MstEval::create(['user_id' => $assessor->id, 'organization_id' => 1, 'tahun' => 2026]);
+        $this->mock(AssessmentDuplicationService::class)->shouldReceive('duplicate')->once()->andReturn($copy);
+        $this->post('/assessment/'.$source->eval_id.'/duplicate', ['tahun' => 2026])
+            ->assertRedirect()->assertSessionHas('success');
     }
 
     public function test_auditee_can_list_and_load_an_assessment_in_their_organization(): void
@@ -167,6 +185,81 @@ class AuditeeAssessmentAccessTest extends TestCase
         $this->assertSame([$owned->eval_id, $assigned->eval_id], $access->queryAccessible($user)->orderBy('eval_id')->pluck('eval_id')->all());
     }
 
+    public function test_gamo_excel_requires_assessment_access_and_valid_scope(): void
+    {
+        $user = $this->user();
+        $evaluation = MstEval::create(['user_id' => $this->user()->id, 'organization_id' => 1]);
+        $other = MstEval::create(['user_id' => $this->user(['organization_id' => 2])->id, 'organization_id' => 2]);
+        $reader = $this->mock(EvaluationReadService::class);
+        $reader->shouldReceive('getEvaluationById')->andReturnUsing(
+            fn ($id) => (int) $id === $evaluation->eval_id ? $evaluation : $other
+        );
+        $management = $this->mock(AssessmentManagementService::class);
+        $management->shouldReceive('buildShowData')->once()->with($evaluation, 99)->andReturn([
+            'activeScope' => (object) ['id' => 5],
+            'objectives' => collect([(object) ['objective_id' => 'EDM01']]),
+        ]);
+
+        $this->actingAs($user)->get('/assessment/'.$other->eval_id.'/gamo/excel')->assertNotFound();
+        $this->get('/assessment/'.$evaluation->eval_id.'/gamo/excel?scope_id=99')->assertNotFound();
+    }
+
+    public function test_auditee_can_download_gamo_excel(): void
+    {
+        Schema::create('trs_activityeval', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('eval_id');
+            $table->unsignedBigInteger('activity_id');
+            $table->string('level_achieved')->nullable();
+            $table->text('evidence')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+        $user = $this->user();
+        $evaluation = MstEval::create(['user_id' => $this->user()->id, 'organization_id' => 1]);
+        $objective = (new \App\Models\MstObjective)->forceFill(['objective_id' => 'EDM01', 'objective' => 'Governance']);
+        $objective->setRelation('practices', collect());
+        $second = (new \App\Models\MstObjective)->forceFill(['objective_id' => 'APO01', 'objective' => 'Management']);
+        $second->setRelation('practices', collect());
+        $this->mock(EvaluationReadService::class)->shouldReceive('getEvaluationById')->once()->andReturn($evaluation);
+        $this->mock(AssessmentManagementService::class)->shouldReceive('buildShowData')->once()->with($evaluation, 5)->andReturn([
+            'activeScope' => (object) ['id' => 5],
+            'selectedDomains' => ['EDM01', 'APO01'],
+            'objectives' => collect([$second, $objective]),
+        ]);
+
+        $response = $this->actingAs($user)->get('/assessment/'.$evaluation->eval_id.'/gamo/excel?scope_id=5');
+        $response->assertOk()->assertDownload('Assessment-'.$evaluation->eval_id.'-Scope-5.xlsx');
+        $path = tempnam(sys_get_temp_dir(), 'gamo-scope-');
+        try {
+            file_put_contents($path, $response->streamedContent());
+            $book = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+            $this->assertSame(['EDM01', 'APO01'], $book->getSheetNames());
+            $this->assertSame('EDM01 - Governance', $book->getSheet(0)->getCell('A1')->getValue());
+            $this->assertSame('APO01 - Management', $book->getSheet(1)->getCell('A1')->getValue());
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_empty_scope_does_not_export_all_objectives(): void
+    {
+        $user = $this->user();
+        $evaluation = MstEval::create(['user_id' => $user->id, 'organization_id' => 1]);
+        $this->mock(EvaluationReadService::class)->shouldReceive('getEvaluationById')->twice()->andReturn($evaluation);
+        $this->mock(AssessmentManagementService::class)->shouldReceive('buildShowData')->twice()->with($evaluation, 5)->andReturn([
+            'activeScope' => (object) ['id' => 5],
+            'selectedDomains' => [],
+            'objectives' => collect([(object) ['objective_id' => 'EDM01']]),
+        ]);
+
+        $this->actingAs($user)->get('/assessment/'.$evaluation->eval_id.'/gamo/excel?scope_id=5')
+            ->assertRedirect()->assertSessionHas('export_error');
+        $this->getJson('/assessment/'.$evaluation->eval_id.'/gamo/excel?scope_id=5')
+            ->assertStatus(422)->assertJsonPath('message', 'Scope belum memiliki GAMO untuk diekspor.');
+    }
+
     public function test_permission_matrix_and_saved_auditee_profile_remain_read_only(): void
     {
         $profile = MstAccessProfile::where('access_profile_key', 'viewer')->firstOrFail();
@@ -194,6 +287,8 @@ class AuditeeAssessmentAccessTest extends TestCase
         $this->assertSame(0, $xpath->query('//button[contains(@class,"evidence-modal-trigger")]')->length);
         $this->assertStringContainsString('activity-rating-display', $html);
         $this->assertStringContainsString('activity-note-display', $html);
+        $this->assertSame(1, $xpath->query('//*[@id="export-assessment-excel"]')->length);
+        $this->assertSame(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " hero-header ")]//*[@id="export-assessment-excel"]')->length);
 
         $html = view('assessment.assessmentDetail.index', [...$data, 'canManageAssessment' => true])->render();
         $this->assertStringContainsString('id="save-assessment"', $html);
@@ -203,6 +298,7 @@ class AuditeeAssessmentAccessTest extends TestCase
     private function user(array $attributes = []): User
     {
         $user = User::create([...['name' => 'Test user', 'role' => 'user', 'access_profile' => 'viewer', 'organization_id' => 1], ...$attributes]);
+        $user->isActivated = true;
         $user->setRelation('organizations', collect([(new MstOrganization)->forceFill(['organization_id' => $user->organization_id])]));
 
         return $user;

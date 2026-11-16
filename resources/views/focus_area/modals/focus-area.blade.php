@@ -37,7 +37,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
                 <button type="button" class="btn btn-primary" id="faSaveBtn" onclick="saveFocusArea()">
-                    <i class="fas fa-save me-1"></i>Simpan
+                    Simpan
                 </button>
             </div>
         </div>

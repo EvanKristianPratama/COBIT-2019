@@ -24,6 +24,7 @@ class MstInfoflowOutput extends Model
         'practice_id',
         'to',
         'description',
+        'work_product_id',
         // 'skill',
         // 'objective_purpose',
     ];
@@ -31,6 +32,11 @@ class MstInfoflowOutput extends Model
     public function practice()
     {
         return $this->belongsTo(MstPractice::class, 'practice_id', 'practice_id');
+    }
+
+    public function workProduct()
+    {
+        return $this->belongsTo(MstEvidenceRef::class, 'work_product_id');
     }
 
     public function connectedinputs()

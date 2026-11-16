@@ -10,9 +10,12 @@ use App\Http\Controllers\Assessment\ActivityReportController;
 use App\Http\Controllers\Assessment\AssessmentEvalController;
 use App\Http\Controllers\Assessment\AssessmentListController;
 use App\Http\Controllers\Assessment\AssessmentReportController;
+use App\Http\Controllers\Assessment\GamoExcelExportController;
 use App\Http\Controllers\Assessment\AssessmentScopeController;
 use App\Http\Controllers\Assessment\AssessmentSummaryController;
 use App\Http\Controllers\Assessment\EvidenceController;
+use App\Http\Controllers\Assessment\MasterEvidenceController;
+use App\Http\Controllers\Assessment\MasterEvidenceDictionaryController;
 use App\Http\Controllers\Assessment\TargetMaturityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\cobit2019\DesignToolkitController;
@@ -27,7 +30,17 @@ use App\Http\Controllers\cobit2019\Df8Controller;
 use App\Http\Controllers\cobit2019\Df9Controller;
 use App\Http\Controllers\cobit2019\DfController;
 use App\Http\Controllers\cobit2019\FocusAreaController;
+use App\Http\Controllers\cobit2019\EvidenceReferenceController;
+use App\Http\Controllers\cobit2019\Cobit4Cobit5MappingController;
 use App\Http\Controllers\cobit2019\MstObjectiveController;
+use App\Http\Controllers\Cobit4\ProcessController as Cobit4ProcessController;
+use App\Http\Controllers\cobit2019\CobitApiController;
+use App\Http\Controllers\cobit2019\GamoController;
+use App\Http\Controllers\cobit2019\InfoflowController;
+use App\Http\Controllers\cobit2019\ObjectiveContentController;
+use App\Http\Controllers\cobit2019\ObjectiveGoalController;
+use App\Http\Controllers\cobit2019\PracticeController;
+use App\Http\Controllers\cobit2019\MasterEvidenceQueryController;
 use App\Http\Controllers\cobit2019\RoadmapController;
 use App\Http\Controllers\cobit2019\Step2Controller;
 use App\Http\Controllers\cobit2019\Step3Controller;
@@ -56,26 +69,26 @@ Route::bind('evalId', function ($value) {
 });
 
 // Public routes
-Route::get('/api/cobit/roles-matrix', [MstObjectiveController::class, 'getRolesMatrix'])->name('cobit.roles-matrix');
-Route::get('/api/cobit/gamo-infoflow', [MstObjectiveController::class, 'getGamoInfoflow'])->name('cobit.gamo-infoflow');
+Route::get('/api/cobit/roles-matrix', [CobitApiController::class, 'getRolesMatrix'])->name('cobit.roles-matrix');
+Route::get('/api/cobit/gamo-infoflow', [CobitApiController::class, 'getGamoInfoflow'])->name('cobit.gamo-infoflow');
 
 // Public component API routes
-Route::get('/api/cobit/components', [MstObjectiveController::class, 'getComponentsList'])->name('cobit.components.list');
-Route::get('/api/cobit/components/{component}', [MstObjectiveController::class, 'getComponentApi'])->name('cobit.components.show');
+Route::get('/api/cobit/components', [CobitApiController::class, 'getComponentsList'])->name('cobit.components.list');
+Route::get('/api/cobit/components/{component}', [CobitApiController::class, 'getComponentApi'])->name('cobit.components.show');
 
 // Component API route aliases
-Route::get('/api/cobit/overview', [MstObjectiveController::class, 'getOverviewApi'])->name('cobit.api.overview');
-Route::get('/api/cobit/goals', [MstObjectiveController::class, 'getGoalsApi'])->name('cobit.api.goals');
-Route::get('/api/cobit/domains', [MstObjectiveController::class, 'getDomainsApi'])->name('cobit.api.domains');
-Route::get('/api/cobit/practices', [MstObjectiveController::class, 'getPracticesApi'])->name('cobit.api.practices');
-Route::get('/api/cobit/processes', [MstObjectiveController::class, 'getPracticesApi'])->name('cobit.api.processes');
-Route::get('/api/cobit/organizational', [MstObjectiveController::class, 'getOrganizationalApi'])->name('cobit.api.organizational');
-Route::get('/api/cobit/infoflows', [MstObjectiveController::class, 'getInfoflowsApi'])->name('cobit.api.infoflows');
-Route::get('/api/cobit/information-flows', [MstObjectiveController::class, 'getInfoflowsApi'])->name('cobit.api.information-flows');
-Route::get('/api/cobit/policies', [MstObjectiveController::class, 'getPoliciesApi'])->name('cobit.api.policies');
-Route::get('/api/cobit/skills', [MstObjectiveController::class, 'getSkillsApi'])->name('cobit.api.skills');
-Route::get('/api/cobit/culture', [MstObjectiveController::class, 'getCultureApi'])->name('cobit.api.culture');
-Route::get('/api/cobit/services', [MstObjectiveController::class, 'getServicesApi'])->name('cobit.api.services');
+Route::get('/api/cobit/overview', [CobitApiController::class, 'getOverviewApi'])->name('cobit.api.overview');
+Route::get('/api/cobit/goals', [CobitApiController::class, 'getGoalsApi'])->name('cobit.api.goals');
+Route::get('/api/cobit/domains', [CobitApiController::class, 'getDomainsApi'])->name('cobit.api.domains');
+Route::get('/api/cobit/practices', [CobitApiController::class, 'getPracticesApi'])->name('cobit.api.practices');
+Route::get('/api/cobit/processes', [CobitApiController::class, 'getPracticesApi'])->name('cobit.api.processes');
+Route::get('/api/cobit/organizational', [CobitApiController::class, 'getOrganizationalApi'])->name('cobit.api.organizational');
+Route::get('/api/cobit/infoflows', [CobitApiController::class, 'getInfoflowsApi'])->name('cobit.api.infoflows');
+Route::get('/api/cobit/information-flows', [CobitApiController::class, 'getInfoflowsApi'])->name('cobit.api.information-flows');
+Route::get('/api/cobit/policies', [CobitApiController::class, 'getPoliciesApi'])->name('cobit.api.policies');
+Route::get('/api/cobit/skills', [CobitApiController::class, 'getSkillsApi'])->name('cobit.api.skills');
+Route::get('/api/cobit/culture', [CobitApiController::class, 'getCultureApi'])->name('cobit.api.culture');
+Route::get('/api/cobit/services', [CobitApiController::class, 'getServicesApi'])->name('cobit.api.services');
 
 // Public Focus Area API routes
 Route::get('/api/cobit/focus-areas', [FocusAreaController::class, 'apiList'])->name('cobit.api.focus-areas');
@@ -95,27 +108,49 @@ Route::post('/assessment/request', [DesignToolkitController::class, 'requestAsse
 
 Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
     Route::get('/objectives', [MstObjectiveController::class, 'index']);
+
+    Route::get('/objectives/mapping/cobit4-to-cobit5', [Cobit4Cobit5MappingController::class, 'index'])
+        ->name('cobit4.cobit5-mapping');
+    Route::get('/objectives/mapping/cobit5-to-cobit4', [Cobit4Cobit5MappingController::class, 'reverse'])
+        ->name('cobit5.cobit4-mapping');
+
+    Route::get('/objectives/cobit4/goal-mapping', [\App\Http\Controllers\Cobit4\GoalMappingController::class, 'index'])
+        ->name('cobit4.goal-mapping');
+
+    Route::get('/objectives/cobit2019/goal-cascade', [\App\Http\Controllers\cobit2019\GoalCascadeController::class, 'index'])
+        ->name('cobit2019.goal-cascade');
+
+    Route::get('/objectives/cobit5/goal-mapping', [\App\Http\Controllers\Cobit5\GoalMappingController::class, 'index'])
+        ->name('cobit5.goal-mapping');
+
+    Route::get('/objectives/master/evidence', MasterEvidenceQueryController::class)
+        ->name('cobit_component.master-evidence.query');
+    Route::get('/objectives/master/evidence/tracking', [MasterEvidenceQueryController::class, 'tracking'])
+        ->name('cobit_component.master-evidence.tracking');
+
+    Route::get('/objectives/overview/gamo', [EvidenceReferenceController::class, 'index'])
+        ->name('cobit_component.helicopter');
     
     // COBIT 4.1 Input Mode save, reset, create, delete, and component data
-    Route::post('/objectives/cobit4/create', [MstObjectiveController::class, 'createCobit4Process'])
+    Route::post('/objectives/cobit4/create', [Cobit4ProcessController::class, 'createCobit4Process'])
         ->name('cobit4.create');
-    Route::post('/objectives/cobit4/save', [MstObjectiveController::class, 'saveCobit4Data'])
+    Route::post('/objectives/cobit4/save', [Cobit4ProcessController::class, 'saveCobit4Data'])
         ->name('cobit4.save');
-    Route::post('/objectives/cobit4/reset', [MstObjectiveController::class, 'resetCobit4Data'])
+    Route::post('/objectives/cobit4/reset', [Cobit4ProcessController::class, 'resetCobit4Data'])
         ->name('cobit4.reset');
-    Route::delete('/objectives/cobit4/{code}', [MstObjectiveController::class, 'deleteCobit4Process'])
+    Route::delete('/objectives/cobit4/{code}', [Cobit4ProcessController::class, 'deleteCobit4Process'])
         ->name('cobit4.destroy');
-    Route::get('/objectives/cobit4/component-data', [MstObjectiveController::class, 'getCobit4ComponentData'])
+    Route::get('/objectives/cobit4/component-data', [Cobit4ProcessController::class, 'getCobit4ComponentData'])
         ->name('cobit4.component-data');
 
     Route::get('objectives/{id}', [MstObjectiveController::class, 'show'])->name('cobit_component.show');
 
     // Visual flow analysis for a selected GAMO (Information Flow & RACI)
-    Route::get('/objectives/analysis/gamo', [MstObjectiveController::class, 'gamoAnalysis'])
+    Route::get('/objectives/analysis/gamo', [GamoController::class, 'gamoAnalysis'])
         ->name('cobit_component.gamoanalysis');
 
     // COBIT GAMO Mapping Evolution matrix (COBIT 4.1 -> COBIT 5 -> COBIT 2019)
-    Route::get('/objectives/evolution/gamo', [MstObjectiveController::class, 'gamoEvolution'])
+    Route::get('/objectives/evolution/gamo', [GamoController::class, 'gamoEvolution'])
         ->name('cobit.evolution');
 
     // View aggregated data per component (server-side)
@@ -123,7 +158,7 @@ Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
         ->name('cobit_component.bycomponent');
 
     // Get practices list for infoflow dropdown
-    Route::get('/objectives/practices-list', [MstObjectiveController::class, 'getPracticesList'])
+    Route::get('/objectives/practices-list', [PracticeController::class, 'getPracticesList'])
         ->name('cobit_component.practices-list');
 
     // Focus Area pages
@@ -132,8 +167,20 @@ Route::middleware(['auth', 'permission:cobit.view'])->group(function () {
 });
 
 Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
-    Route::put('/objectives/evolution/gamo/{evolution}', [MstObjectiveController::class, 'updateGamoEvolution'])
-        ->name('cobit.evolution.update');
+    Route::put('/objectives/cobit5/{objectiveId}/document', [\App\Http\Controllers\Cobit5\DocumentController::class, 'overview'])
+        ->middleware('permission:cobit.view')->name('cobit5.document.update');
+    Route::put('/objectives/cobit5/{objectiveId}/information-flow', [\App\Http\Controllers\Cobit5\DocumentController::class, 'flow'])
+        ->middleware('permission:cobit.view')->name('cobit5.flow.update');
+    Route::post('/objectives/cobit5/{objectiveId}/work-products', [\App\Http\Controllers\Cobit5\WorkProductController::class, 'save'])
+        ->middleware('permission:cobit.view')->name('cobit5.work-products.save');
+
+    Route::post('/objectives/evidence-ref', [EvidenceReferenceController::class, 'store'])
+        ->name('cobit_component.evidence-ref.store');
+    Route::put('/objectives/evidence-ref/{referenceId}', [EvidenceReferenceController::class, 'update'])
+        ->whereNumber('referenceId')->name('cobit_component.evidence-ref.update');
+
+    Route::put('/objectives/evolution', [GamoController::class, 'saveEvolution'])
+        ->name('cobit.evolution.save');
 
     // Focus Area CRUD
     Route::post('/focus-areas', [FocusAreaController::class, 'store'])->name('focus-areas.store');
@@ -153,79 +200,79 @@ Route::middleware(['auth', 'permission:design-factors.input'])->group(function (
 });
 
 Route::middleware(['auth', 'permission:design-factors.input'])->group(function () {
-    Route::post('/objectives/infoflow-input', [MstObjectiveController::class, 'createInfoflowInput'])
+    Route::post('/objectives/infoflow-input', [InfoflowController::class, 'createInfoflowInput'])
         ->name('cobit_component.infoflow-input.store');
-    Route::put('/objectives/infoflow-input/{inputId}', [MstObjectiveController::class, 'updateInfoflowInput'])
+    Route::put('/objectives/infoflow-input/{inputId}', [InfoflowController::class, 'updateInfoflowInput'])
         ->name('cobit_component.infoflow-input.update');
-    Route::delete('/objectives/infoflow-input/{inputId}', [MstObjectiveController::class, 'deleteInfoflowInput'])
+    Route::delete('/objectives/infoflow-input/{inputId}', [InfoflowController::class, 'deleteInfoflowInput'])
         ->name('cobit_component.infoflow-input.destroy');
-    Route::post('/objectives/infoflow-output', [MstObjectiveController::class, 'createInfoflowOutput'])
+    Route::post('/objectives/infoflow-output', [InfoflowController::class, 'createInfoflowOutput'])
         ->name('cobit_component.infoflow-output.store');
-    Route::put('/objectives/infoflow-output/{outputId}', [MstObjectiveController::class, 'updateInfoflowOutput'])
+    Route::put('/objectives/infoflow-output/{outputId}', [InfoflowController::class, 'updateInfoflowOutput'])
         ->name('cobit_component.infoflow-output.update');
-    Route::delete('/objectives/infoflow-output/{outputId}', [MstObjectiveController::class, 'deleteInfoflowOutput'])
+    Route::delete('/objectives/infoflow-output/{outputId}', [InfoflowController::class, 'deleteInfoflowOutput'])
         ->name('cobit_component.infoflow-output.destroy');
-    Route::post('/objectives/policies', [MstObjectiveController::class, 'createPolicy'])
+    Route::post('/objectives/policies', [ObjectiveContentController::class, 'createPolicy'])
         ->name('cobit_component.policies.store');
-    Route::put('/objectives/policies/{policyId}', [MstObjectiveController::class, 'updatePolicy'])
+    Route::put('/objectives/policies/{policyId}', [ObjectiveContentController::class, 'updatePolicy'])
         ->name('cobit_component.policies.update');
-    Route::delete('/objectives/policies/{policyId}', [MstObjectiveController::class, 'destroyPolicy'])
+    Route::delete('/objectives/policies/{policyId}', [ObjectiveContentController::class, 'destroyPolicy'])
         ->name('cobit_component.policies.destroy');
-    Route::put('/objectives/entergoals/{entergoalsId}', [MstObjectiveController::class, 'updateEnterGoal'])
+    Route::put('/objectives/entergoals/{entergoalsId}', [ObjectiveGoalController::class, 'updateEnterGoal'])
         ->name('cobit_component.entergoals.update');
-    Route::put('/objectives/entergoals-metrics/{metricId}', [MstObjectiveController::class, 'updateEnterGoalMetric'])
+    Route::put('/objectives/entergoals-metrics/{metricId}', [ObjectiveGoalController::class, 'updateEnterGoalMetric'])
         ->name('cobit_component.entergoals.metrics.update');
-    Route::put('/objectives/aligngoals/{aligngoalsId}', [MstObjectiveController::class, 'updateAlignGoal'])
+    Route::put('/objectives/aligngoals/{aligngoalsId}', [ObjectiveGoalController::class, 'updateAlignGoal'])
         ->name('cobit_component.aligngoals.update');
-    Route::put('/objectives/aligngoals-metrics/{metricId}', [MstObjectiveController::class, 'updateAlignGoalMetric'])
+    Route::put('/objectives/aligngoals-metrics/{metricId}', [ObjectiveGoalController::class, 'updateAlignGoalMetric'])
         ->name('cobit_component.aligngoals.metrics.update');
-    Route::post('/objectives/practices', [MstObjectiveController::class, 'createPractice'])
+    Route::post('/objectives/practices', [PracticeController::class, 'createPractice'])
         ->name('cobit_component.practices.store');
-    Route::put('/objectives/practices/{practiceId}', [MstObjectiveController::class, 'updatePractice'])
+    Route::put('/objectives/practices/{practiceId}', [PracticeController::class, 'updatePractice'])
         ->name('cobit_component.practices.update');
-    Route::delete('/objectives/practices/{practiceId}', [MstObjectiveController::class, 'destroyPractice'])
+    Route::delete('/objectives/practices/{practiceId}', [PracticeController::class, 'destroyPractice'])
         ->name('cobit_component.practices.destroy');
-    Route::post('/objectives/practices/{practiceId}/metrics', [MstObjectiveController::class, 'createPracticeMetric'])
+    Route::post('/objectives/practices/{practiceId}/metrics', [PracticeController::class, 'createPracticeMetric'])
         ->name('cobit_component.practices.metrics.store');
-    Route::put('/objectives/practices/metrics/{metricId}', [MstObjectiveController::class, 'updatePracticeMetric'])
+    Route::put('/objectives/practices/metrics/{metricId}', [PracticeController::class, 'updatePracticeMetric'])
         ->name('cobit_component.practices.metrics.update');
-    Route::delete('/objectives/practices/metrics/{metricId}', [MstObjectiveController::class, 'destroyPracticeMetric'])
+    Route::delete('/objectives/practices/metrics/{metricId}', [PracticeController::class, 'destroyPracticeMetric'])
         ->name('cobit_component.practices.metrics.destroy');
-    Route::put('/objectives/practices/{practiceId}/roles/{roleId}', [MstObjectiveController::class, 'updatePracticeRole'])
+    Route::put('/objectives/practices/{practiceId}/roles/{roleId}', [PracticeController::class, 'updatePracticeRole'])
         ->name('cobit_component.practices.roles.update');
-    Route::delete('/objectives/{objectiveId}/roles/{roleId}', [MstObjectiveController::class, 'destroyObjectiveRole'])
+    Route::delete('/objectives/{objectiveId}/roles/{roleId}', [PracticeController::class, 'destroyObjectiveRole'])
         ->name('cobit_component.objectives.roles.destroy');
-    Route::put('/objectives/roles/{roleId}', [MstObjectiveController::class, 'updateMasterRole'])
+    Route::put('/objectives/roles/{roleId}', [PracticeController::class, 'updateMasterRole'])
         ->name('cobit_component.master_roles.update');
-    Route::post('/objectives/activities', [MstObjectiveController::class, 'createActivity'])
+    Route::post('/objectives/activities', [PracticeController::class, 'createActivity'])
         ->name('cobit_component.activities.store');
-    Route::put('/objectives/activities/{activityId}', [MstObjectiveController::class, 'updateActivity'])
+    Route::put('/objectives/activities/{activityId}', [PracticeController::class, 'updateActivity'])
         ->name('cobit_component.activities.update');
-    Route::delete('/objectives/activities/{activityId}', [MstObjectiveController::class, 'destroyActivity'])
+    Route::delete('/objectives/activities/{activityId}', [PracticeController::class, 'destroyActivity'])
         ->name('cobit_component.activities.destroy');
-    Route::post('/objectives/policies/{policyId}/guidance', [MstObjectiveController::class, 'createPolicyGuidance'])
+    Route::post('/objectives/policies/{policyId}/guidance', [ObjectiveContentController::class, 'createPolicyGuidance'])
         ->name('cobit_component.policies.guidance.store');
-    Route::post('/objectives/skills', [MstObjectiveController::class, 'createSkill'])
+    Route::post('/objectives/skills', [ObjectiveContentController::class, 'createSkill'])
         ->name('cobit_component.skills.store');
-    Route::put('/objectives/skills/{skillId}', [MstObjectiveController::class, 'updateSkill'])
+    Route::put('/objectives/skills/{skillId}', [ObjectiveContentController::class, 'updateSkill'])
         ->name('cobit_component.skills.update');
-    Route::delete('/objectives/skills/{skillId}', [MstObjectiveController::class, 'destroySkill'])
+    Route::delete('/objectives/skills/{skillId}', [ObjectiveContentController::class, 'destroySkill'])
         ->name('cobit_component.skills.destroy');
-    Route::post('/objectives/skills/{skillId}/guidance', [MstObjectiveController::class, 'createSkillGuidance'])
+    Route::post('/objectives/skills/{skillId}/guidance', [ObjectiveContentController::class, 'createSkillGuidance'])
         ->name('cobit_component.skills.guidance.store');
-    Route::post('/objectives/key-culture', [MstObjectiveController::class, 'createKeyCulture'])
+    Route::post('/objectives/key-culture', [ObjectiveContentController::class, 'createKeyCulture'])
         ->name('cobit_component.key-culture.store');
-    Route::put('/objectives/key-culture/{keyCultureId}', [MstObjectiveController::class, 'updateKeyCulture'])
+    Route::put('/objectives/key-culture/{keyCultureId}', [ObjectiveContentController::class, 'updateKeyCulture'])
         ->name('cobit_component.key-culture.update');
-    Route::post('/objectives/key-culture/{keyCultureId}/guidance', [MstObjectiveController::class, 'createKeyCultureGuidance'])
+    Route::post('/objectives/key-culture/{keyCultureId}/guidance', [ObjectiveContentController::class, 'createKeyCultureGuidance'])
         ->name('cobit_component.key-culture.guidance.store');
-    Route::post('/objectives/sia', [MstObjectiveController::class, 'createSia'])
+    Route::post('/objectives/sia', [ObjectiveContentController::class, 'createSia'])
         ->name('cobit_component.sia.store');
-    Route::put('/objectives/sia/{siaId}', [MstObjectiveController::class, 'updateSia'])
+    Route::put('/objectives/sia/{siaId}', [ObjectiveContentController::class, 'updateSia'])
         ->name('cobit_component.sia.update');
-    Route::put('/objectives/guidance/{guidanceId}', [MstObjectiveController::class, 'updateGuidance'])
+    Route::put('/objectives/guidance/{guidanceId}', [ObjectiveContentController::class, 'updateGuidance'])
         ->name('cobit_component.guidance.update');
-    Route::delete('/objectives/guidance/{guidanceId}', [MstObjectiveController::class, 'destroyGuidance'])
+    Route::delete('/objectives/guidance/{guidanceId}', [ObjectiveContentController::class, 'destroyGuidance'])
         ->name('cobit_component.guidance.destroy');
 });
 
@@ -240,6 +287,8 @@ Route::prefix('admin')
             ->name('dashboard');
         Route::get('assessments', [AdminAssessment::class, 'index'])
             ->name('assessments.index');
+        Route::put('assessments/visibility', [AdminAssessment::class, 'updateVisibility'])
+            ->name('assessments.visibility');
 
         // Page users
         Route::get('users', [UserAdminController::class, 'index'])
@@ -480,6 +529,12 @@ Route::middleware(['auth', 'permission:assessments.view'])->group(function () {
     Route::get('/assessment/report-spiderweb', [AssessmentReportController::class, 'spiderweb'])
         ->name('assessment.report.spiderweb');
 
+    Route::get('/master-evidence', [MasterEvidenceController::class, 'index'])
+        ->name('master-evidence.index');
+
+    Route::get('/master-evidence/dictionary', [MasterEvidenceDictionaryController::class, 'index'])
+        ->name('master-evidence.dictionary');
+
     Route::resource('assessment/target-maturity', TargetMaturityController::class)
         ->only(['index']);
 
@@ -516,6 +571,9 @@ Route::middleware(['auth', 'permission:assessments.view'])->group(function () {
     Route::get('/assessment/{evalId}/report-activity/{objectiveId}', [ActivityReportController::class, 'show'])
         ->name('assessment.report-activity');
 
+    Route::get('/assessment/{evalId}/gamo/excel', GamoExcelExportController::class)
+        ->name('assessment.gamo.excel');
+
     Route::get('/assessment/{evalId}/report-activity-pdf/{objectiveId}', [ActivityReportController::class, 'downloadPdf'])
         ->name('assessment.report-activity-pdf');
 
@@ -524,11 +582,25 @@ Route::middleware(['auth', 'permission:assessments.view'])->group(function () {
 });
 
 Route::middleware(['auth', 'permission:assessments.input'])->group(function () {
+    Route::post('/master-evidence', [MasterEvidenceController::class, 'store'])
+        ->name('master-evidence.store');
+
+    Route::put('/master-evidence/{evidenceId}', [MasterEvidenceController::class, 'update'])
+        ->whereNumber('evidenceId')
+        ->name('master-evidence.update');
+
+    Route::delete('/master-evidence/{evidenceId}', [MasterEvidenceController::class, 'destroy'])
+        ->whereNumber('evidenceId')
+        ->name('master-evidence.destroy');
+
     Route::resource('assessment/target-maturity', TargetMaturityController::class)
         ->only(['store', 'destroy']);
 
     Route::post('/assessment/create', [AssessmentEvalController::class, 'createAssessment'])
         ->name('assessment.create');
+
+    Route::post('/assessment/{evalId}/duplicate', [AssessmentEvalController::class, 'duplicate'])
+        ->name('assessment.duplicate');
 
     Route::post('/assessment/{evalId}/update-scope', [AssessmentScopeController::class, 'update'])
         ->name('assessment.update-scope');

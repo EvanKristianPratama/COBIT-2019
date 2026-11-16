@@ -11,6 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->web(append: [\App\Http\Middleware\EnsureActiveUser::class]);
+
         $middleware->alias([
             'jabatan.df' => \App\Http\Middleware\JabatanDFMiddleware::class,
             'cobit.assessment.access' => \App\Http\Middleware\EnsureCobitAssessmentAccess::class,

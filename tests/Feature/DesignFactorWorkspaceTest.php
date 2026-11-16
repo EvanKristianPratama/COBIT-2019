@@ -34,6 +34,7 @@ class DesignFactorWorkspaceTest extends TestCase
             $table->string('role');
             $table->string('access_profile');
             $table->unsignedBigInteger('organization_id');
+            $table->boolean('isActivated')->default(true);
             $table->string('organisasi')->nullable();
             $table->string('jabatan')->nullable();
             $table->timestamps();
@@ -170,6 +171,7 @@ class DesignFactorWorkspaceTest extends TestCase
             ['organization_id' => 1, 'organization_name' => 'Company Alpha'], ['organization_id' => 2, 'organization_name' => 'Company Beta'], ['organization_id' => 3, 'organization_name' => 'Company Other'],
         ]);
         $this->editor = User::create(['name' => 'DF Editor', 'role' => 'user', 'access_profile' => 'df_editor', 'organization_id' => 1, 'organisasi' => 'Company Alpha', 'jabatan' => 'IT Managers']);
+        $this->editor->isActivated = true;
         $this->editor->givePermissionTo(['cobit.view', 'design-factors.view', 'design-factors.input', 'assessments.view']);
         $this->editor->organizations()->attach([1 => ['is_primary' => true], 2 => ['is_primary' => false]]);
         $this->actingAs($this->editor)->withSession(['active_organization_ids' => [1], 'active_organization_id' => 1]);

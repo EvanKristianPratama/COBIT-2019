@@ -16,6 +16,14 @@ class UpsertEvidenceRequest extends FormRequest
      */
     public function rules(): array
     {
+        return self::evidenceRules();
+    }
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    public static function evidenceRules(): array
+    {
         return [
             'judul_dokumen' => ['required', 'string', 'max:255'],
             'no_dokumen' => ['nullable', 'string', 'max:100'],

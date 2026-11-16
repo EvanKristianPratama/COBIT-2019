@@ -134,11 +134,10 @@
     </div>
 
     <div class="model-map-footer">
-        <span>COBIT Core → Design Factors &amp; Focus Area → Tailored Governance System</span>
         <nav aria-label="Model dan pemetaan lainnya">
             <a href="{{ route('focus-areas.index', ['view' => 'cards', 'step' => 2, 'version' => '5']) }}" data-framework="5">COBIT 5</a>
             <a href="{{ route('focus-areas.index', ['view' => 'cards', 'step' => 2, 'version' => '4.1']) }}" data-framework="4.1">COBIT 4.1</a>
-            <a href="{{ route('cobit.evolution') }}">GAMO Evolution <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+            <a href="{{ route('cobit.evolution') }}">GAMO Evolution</a>
         </nav>
     </div>
 </section>
