@@ -47,7 +47,7 @@ class CobitEvolutionService
     /**
      * COBIT 5 catalog plus the COBIT 5 -> COBIT 4.1 control objectives, loaded once per request.
      *
-     * @return array{links: array, controls: array, cobit5Gamos: array<string,string>, cobit5Practices: array<string,array>}
+     * @return array{links: array, controls: array, cobit5Gamos: array<string,string>, cobit5Practices: array<string,array>, wps: array}
      */
     private function reference(): array
     {
@@ -75,7 +75,12 @@ class CobitEvolutionService
             }
         }
 
-        return $this->reference = compact('links', 'controls', 'cobit5Gamos', 'cobit5Practices');
+        $wps = [
+            'cobit5' => $this->source->cobit5PracticeWorkProducts(),
+            'cobit4' => $this->source->cobit4WorkProductsByProcess(),
+        ];
+
+        return $this->reference = compact('links', 'controls', 'cobit5Gamos', 'cobit5Practices', 'wps');
     }
 
     /**
@@ -89,7 +94,7 @@ class CobitEvolutionService
             return collect();
         }
 
-        ['links' => $links, 'controls' => $controls, 'cobit5Gamos' => $cobit5Gamos, 'cobit5Practices' => $cobit5Practices] = $this->reference();
+        ['links' => $links, 'controls' => $controls, 'cobit5Gamos' => $cobit5Gamos, 'cobit5Practices' => $cobit5Practices, 'wps' => $wps] = $this->reference();
 
         $coreFocusAreaId = $this->coreFocusAreaId();
         $evolutions = MstCobitEvolution::query()
@@ -111,7 +116,7 @@ class CobitEvolutionService
         $manual = $this->manualMappings();
 
         return $evolutions->map(function (MstCobitEvolution $evolution) use (
-            $names, $practices, $manual, $cobit5Gamos, $cobit5Practices, $controls, $links, $coreFocusAreaId
+            $names, $practices, $manual, $cobit5Gamos, $cobit5Practices, $controls, $links, $coreFocusAreaId, $wps
         ) {
             $gamoCode = $evolution->cobit2019_id;
             $gamoName = $this->clean($names[$gamoCode] ?? $evolution->title_2019);
@@ -125,7 +130,7 @@ class CobitEvolutionService
                 ->all();
 
             $practiceRows = collect($practices[$gamoCode] ?? [])
-                ->map(function (MstPractice $practice) use ($manual, $candidates, $cobit5Practices, $controls, $links, $gamoUrl) {
+                ->map(function (MstPractice $practice) use ($manual, $candidates, $cobit5Practices, $controls, $links, $gamoUrl, $wps) {
                     $code = $this->clean($practice->practice_id);
                     $title = $this->clean($practice->practice_name);
 
@@ -144,12 +149,14 @@ class CobitEvolutionService
                             'code' => $targetCode,
                             'title' => $cobit5Practices[$targetCode]['title'],
                             'url' => $links['cobit5'][$targetCode] ?? null,
+                            'wps' => $wps['cobit5'][$targetCode] ?? [],
                             'controls' => collect($controls[$targetCode] ?? [])
                                 ->map(fn (object $control) => [
                                     'code' => $control->code,
                                     'title' => $control->title,
                                     'note' => $control->note,
                                     'url' => $control->url,
+                                    'wps' => $wps['cobit4'][strtoupper(explode('.', $control->code)[0])] ?? [],
                                 ])
                                 ->all(),
                         ])
@@ -238,6 +245,8 @@ class CobitEvolutionService
             'cobit4' => $cobit4,
             'groups' => $groups,
             'gamoTitles' => $reference['cobit5Gamos'],
+            'wp5' => $reference['wps']['cobit5'],
+            'wp4' => $reference['wps']['cobit4'],
             'cobit5' => collect($reference['cobit5Practices'])
                 ->map(fn (array $practice, string $code) => [
                     'title' => $practice['title'],

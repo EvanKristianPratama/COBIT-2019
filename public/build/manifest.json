@@ -1,7 +1,12 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BZ3Kkp-Z.css",
+    "file": "assets/app-C9DlAhPr.css",
     "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/cobit5/document.css": {
+    "file": "assets/document-DXZmlLcp.css",
+    "src": "resources/css/cobit5/document.css",
     "isEntry": true
   },
   "resources/css/report-summary.css": {
@@ -15,13 +20,19 @@
     "src": "resources/js/app.js",
     "isEntry": true
   },
+  "resources/js/cobit5/document-editor.js": {
+    "file": "assets/document-editor-DZQf5mQg.js",
+    "name": "document-editor",
+    "src": "resources/js/cobit5/document-editor.js",
+    "isEntry": true
+  },
   "resources/js/focus-area/index.js": {
-    "file": "assets/index-DXXGqQQ3.js",
+    "file": "assets/index-BwMdrq07.js",
     "name": "index",
     "src": "resources/js/focus-area/index.js",
     "isEntry": true,
     "css": [
-      "assets/index-CvO_CYYf.css"
+      "assets/index-CnPGaGqy.css"
     ]
   },
   "resources/js/report-summary.js": {

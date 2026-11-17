@@ -46,6 +46,19 @@
     .evo-mini { border: 1px solid #c9ced6; background: #fff; border-radius: 3px; font-size: .64rem; padding: 0 .35rem; margin-right: .25rem; cursor: pointer; color: #495057; }
     .evo-mini:hover { background: #eef0f6; }
     .evo-select { min-width: 260px; font-size: .74rem; }
+    /* Column toggles: a hidden column is just display:none on its tagged cells. */
+    .evo-cols { position: relative; display: inline-block; font-size: .74rem; margin-bottom: .6rem; }
+    .evo-cols summary { list-style: none; cursor: pointer; user-select: none; }
+    .evo-cols summary::-webkit-details-marker { display: none; }
+    .evo-cols-panel { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; min-width: 170px; padding: .4rem .7rem; background: #fff; border: 1px solid #c9ced6; border-radius: 6px; box-shadow: 0 4px 14px rgba(0, 0, 0, .12); }
+    .evo-cols-panel .form-check { margin: 0; padding: .1rem 0 .1rem 1.5em; min-height: 0; }
+    .evo-cols-panel .form-check-label { cursor: pointer; }
+    #evoTable.hide-c2019 [data-col="c2019"], #evoTable.hide-c5 [data-col="c5"], #evoTable.hide-c41 [data-col="c41"],
+    #evoTable.hide-c5wp [data-col="c5wp"], #evoTable.hide-c41wp [data-col="c41wp"],
+    #evoTable.hide-status [data-col="status"], #evoTable.hide-note [data-col="note"], #evoTable.hide-action [data-col="action"] { display: none; }
+    .evo-page .map-table .evo-wp-cell { font-size: .68rem; min-width: 190px; max-width: 260px; }
+    .evo-wp + .evo-wp { margin-top: .15rem; }
+    .evo-wp strong { color: #495057; white-space: nowrap; }
     .evo-editing .evo-input { font-size: .72rem; padding: .1rem .3rem; }
     .evo-editing textarea.evo-input { min-width: 170px; }
     .evo-editing select.evo-input { min-width: 118px; padding-right: 1.6rem; }
@@ -53,7 +66,7 @@
 
 @php
     $statusLabel = ['evolved' => 'Evolved', 'restructured' => 'Restructured', 'new' => 'New'];
-    $colspan = $canManageEvolution ? 9 : 8;
+    $colspan = $canManageEvolution ? 11 : 10;
 @endphp
 
 <div class="container-fluid py-3 px-lg-3 map-page evo-page">
@@ -110,16 +123,30 @@
             @endif
         </div>
 
+        <details class="evo-cols" id="evoCols">
+            <summary class="map-pill" id="evoColsLabel">Kolom</summary>
+            <div class="evo-cols-panel">
+            @foreach(['c2019' => 'COBIT 2019', 'c5' => 'COBIT 5', 'c5wp' => 'WP COBIT 5', 'c41' => 'COBIT 4.1', 'c41wp' => 'WP COBIT 4.1', 'status' => 'Status', 'note' => 'Note'] + ($canManageEvolution ? ['action' => 'Aksi'] : []) as $colKey => $colLabel)
+                <label class="form-check">
+                    <input type="checkbox" class="form-check-input" value="{{ $colKey }}" checked>
+                    <span class="form-check-label">{{ $colLabel }}</span>
+                </label>
+            @endforeach
+            </div>
+        </details>
+
         <div class="map-box">
             <table class="map-table" id="evoTable">
                 <thead>
                     <tr>
-                        <th colspan="2">COBIT 2019</th>
-                        <th colspan="2">COBIT 5</th>
-                        <th colspan="2">COBIT 4.1</th>
-                        <th class="map-center">Status</th>
-                        <th>Note</th>
-                        @if($canManageEvolution)<th class="map-center">Aksi</th>@endif
+                        <th colspan="2" data-col="c2019">COBIT 2019</th>
+                        <th colspan="2" data-col="c5">COBIT 5</th>
+                        <th data-col="c5wp">WP COBIT 5</th>
+                        <th colspan="2" data-col="c41">COBIT 4.1</th>
+                        <th data-col="c41wp">WP COBIT 4.1</th>
+                        <th class="map-center" data-col="status">Status</th>
+                        <th data-col="note">Note</th>
+                        @if($canManageEvolution)<th class="map-center" data-col="action">Aksi</th>@endif
                     </tr>
                 </thead>
 
@@ -160,28 +187,30 @@
                         <tbody class="evo-gamo" data-id="{{ $gamo['mapping_id'] }}" data-code="{{ $gamo['code'] }}" data-domain="{{ $domainKey }}"
                             data-status="{{ $gamo['status'] }}" data-notes="{{ $gamo['notes'] }}" data-cobit5="{{ $gamo['cobit5_id'] }}" data-search="{{ $search }}">
                             <tr class="evo-gamo-row" id="gamo-{{ $gamo['code'] }}">
-                                <td class="map-code"><a class="map-link" href="{{ $gamo['url'] }}" title="Buka COBIT 2019 {{ $gamo['code'] }}">{{ $gamo['code'] }}</a></td>
-                                <td>{{ $gamo['name'] }}</td>
+                                <td class="map-code" data-col="c2019"><a class="map-link" href="{{ $gamo['url'] }}" title="Buka COBIT 2019 {{ $gamo['code'] }}">{{ $gamo['code'] }}</a></td>
+                                <td data-col="c2019">{{ $gamo['name'] }}</td>
                                 @if($gamo['cobit5_gamos'])
-                                    <td class="map-code" data-cell="c5code">
+                                    <td class="map-code" data-col="c5" data-cell="c5code">
                                         @foreach($gamo['cobit5_gamos'] as $cobit5Gamo)
                                             <div class="evo-line">@if($cobit5Gamo['url'])<a class="map-link" href="{{ $cobit5Gamo['url'] }}" title="Buka COBIT 5 {{ $cobit5Gamo['code'] }}">{{ $cobit5Gamo['code'] }}</a>@else{{ $cobit5Gamo['code'] }}@endif</div>
                                         @endforeach
                                     </td>
-                                    <td data-cell="c5name">
+                                    <td data-col="c5" data-cell="c5name">
                                         @foreach($gamo['cobit5_gamos'] as $cobit5Gamo)
                                             <div class="evo-line">@if($cobit5Gamo['url'])<a class="map-link" href="{{ $cobit5Gamo['url'] }}">{{ $cobit5Gamo['title'] }}</a>@else{{ $cobit5Gamo['title'] }}@endif</div>
                                         @endforeach
                                     </td>
                                 @else
-                                    <td class="map-code map-muted" data-cell="c5code">-</td>
-                                    <td class="map-muted" data-cell="c5name">{{ $gamo['cobit5_text'] ?: '-' }}</td>
+                                    <td class="map-code map-muted" data-col="c5" data-cell="c5code">-</td>
+                                    <td class="map-muted" data-col="c5" data-cell="c5name">{{ $gamo['cobit5_text'] ?: '-' }}</td>
                                 @endif
-                                <td colspan="2" class="map-muted">{{ $gamo['cobit4_fallback'] ? 'Level proses: '.$gamo['cobit4_fallback'] : '-' }}</td>
-                                <td class="evo-merged" rowspan="{{ $mergedSpan }}" data-cell="status"><span class="map-status {{ $gamo['status'] }}">{{ $statusLabel[$gamo['status']] ?? $gamo['status'] }}</span></td>
-                                <td class="evo-merged evo-note" rowspan="{{ $mergedSpan }}" data-cell="notes">{{ $gamo['notes'] }}</td>
+                                <td class="map-muted" data-col="c5wp">-</td>
+                                <td colspan="2" class="map-muted" data-col="c41">{{ $gamo['cobit4_fallback'] ? 'Level proses: '.$gamo['cobit4_fallback'] : '-' }}</td>
+                                <td class="map-muted" data-col="c41wp">-</td>
+                                <td class="evo-merged" rowspan="{{ $mergedSpan }}" data-col="status" data-cell="status"><span class="map-status {{ $gamo['status'] }}">{{ $statusLabel[$gamo['status']] ?? $gamo['status'] }}</span></td>
+                                <td class="evo-merged evo-note" rowspan="{{ $mergedSpan }}" data-col="note" data-cell="notes">{{ $gamo['notes'] }}</td>
                                 @if($canManageEvolution)
-                                    <td class="evo-merged" rowspan="{{ $mergedSpan }}" data-cell="action">
+                                    <td class="evo-merged" rowspan="{{ $mergedSpan }}" data-col="action" data-cell="action">
                                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 js-gamo-edit" style="font-size:.72rem">Edit</button>
                                     </td>
                                 @endif
@@ -198,40 +227,48 @@
                                             data-targets="{{ implode(',', $practice['target_codes']) }}" data-auto="{{ implode(',', $practice['auto_target_codes']) }}"
                                         @endif>
                                         @if($index === 0)
-                                            <td class="map-code" rowspan="{{ count($lines) }}"><a class="map-link" href="{{ $practice['url'] }}" title="Buka COBIT 2019 {{ $gamo['code'] }}">{{ $practice['code'] }}</a></td>
-                                            <td rowspan="{{ count($lines) }}" style="min-width:200px">
+                                            <td class="map-code" rowspan="{{ count($lines) }}" data-col="c2019"><a class="map-link" href="{{ $practice['url'] }}" title="Buka COBIT 2019 {{ $gamo['code'] }}">{{ $practice['code'] }}</a></td>
+                                            <td rowspan="{{ count($lines) }}" style="min-width:200px" data-col="c2019">
                                                 {{ $practice['title'] }}
                                             </td>
                                         @endif
 
                                         @if($line['first'])
                                             @if($target)
-                                                <td class="map-code" rowspan="{{ $line['span'] }}">
+                                                <td class="map-code" rowspan="{{ $line['span'] }}" data-col="c5">
                                                     @if($target['url'])<a class="map-link" href="{{ $target['url'] }}" title="Buka COBIT 5 {{ $target['code'] }}">{{ $target['code'] }}</a>@else{{ $target['code'] }}@endif
                                                 </td>
-                                                <td rowspan="{{ $line['span'] }}">
+                                                <td rowspan="{{ $line['span'] }}" data-col="c5">
                                                     @if($target['url'])<a class="map-link" href="{{ $target['url'] }}">{{ $target['title'] }}</a>@else{{ $target['title'] }}@endif
                                                 </td>
+                                                <td class="evo-wp-cell" rowspan="{{ $line['span'] }}" data-col="c5wp">
+                                                    @forelse($target['wps'] as $wp)<div class="evo-wp">@if($wp['id'] !== '')<strong>{{ $wp['id'] }}</strong> @endif{{ $wp['name'] }}</div>@empty<span class="map-muted">-</span>@endforelse
+                                                </td>
                                             @else
-                                                <td class="map-code map-muted" rowspan="{{ $line['span'] }}">-</td>
-                                                <td class="map-muted" rowspan="{{ $line['span'] }}">{{ $gamo['cobit5_gamos'] ? 'Belum dipetakan ke COBIT 5' : 'Baru di COBIT 2019, tanpa padanan COBIT 5' }}</td>
+                                                <td class="map-code map-muted" rowspan="{{ $line['span'] }}" data-col="c5">-</td>
+                                                <td class="map-muted" rowspan="{{ $line['span'] }}" data-col="c5">{{ $gamo['cobit5_gamos'] ? 'Belum dipetakan ke COBIT 5' : 'Baru di COBIT 2019, tanpa padanan COBIT 5' }}</td>
+                                                <td class="map-muted" rowspan="{{ $line['span'] }}" data-col="c5wp">-</td>
                                             @endif
                                         @endif
 
                                         @if($control)
-                                            <td class="map-code">@if($control['url'])<a class="map-link" href="{{ $control['url'] }}" title="Buka COBIT 4.1 {{ $control['code'] }}">{{ $control['code'] }}</a>@else{{ $control['code'] }}@endif</td>
-                                            <td>
+                                            <td class="map-code" data-col="c41">@if($control['url'])<a class="map-link" href="{{ $control['url'] }}" title="Buka COBIT 4.1 {{ $control['code'] }}">{{ $control['code'] }}</a>@else{{ $control['code'] }}@endif</td>
+                                            <td data-col="c41">
                                                 @if($control['url'])<a class="map-link" href="{{ $control['url'] }}">{{ $control['title'] }}</a>@else{{ $control['title'] }}@endif
                                                 @if($control['note'])<span class="map-sub">{{ $control['note'] }}</span>@endif
                                             </td>
+                                            <td class="evo-wp-cell" data-col="c41wp">
+                                                @forelse($control['wps'] as $wp)<div class="evo-wp">@if($wp['id'] !== '')<strong>{{ $wp['id'] }}</strong> @endif{{ $wp['name'] }}</div>@empty<span class="map-muted">-</span>@endforelse
+                                            </td>
                                         @else
-                                            <td class="map-code map-muted">-</td>
-                                            <td class="map-muted">-</td>
+                                            <td class="map-code map-muted" data-col="c41">-</td>
+                                            <td class="map-muted" data-col="c41">-</td>
+                                            <td class="map-muted" data-col="c41wp">-</td>
                                         @endif
                                     </tr>
                                 @endforeach
                             @empty
-                                <tr><td colspan="6" class="map-muted">Belum ada practice COBIT 2019 untuk {{ $gamo['code'] }}.</td></tr>
+                                <tr><td colspan="8" class="map-muted">Belum ada practice COBIT 2019 untuk {{ $gamo['code'] }}.</td></tr>
                             @endforelse
                         </tbody>
                     @endforeach
@@ -292,6 +329,35 @@
         });
         if (search) search.addEventListener('input', apply);
         if (domain) domain.addEventListener('change', apply);
+    })();
+
+    // Column toggles: each checkbox shows/hides one column group (choice is remembered in this browser).
+    (function () {
+        const table = document.getElementById('evoTable');
+        const boxes = Array.from(document.querySelectorAll('#evoCols input'));
+        if (!table || !boxes.length) return;
+        const KEY = 'evoHiddenCols2';
+        let hidden = ['c5wp', 'c41wp']; // WP columns start hidden
+        try { const saved = localStorage.getItem(KEY); if (saved !== null) hidden = JSON.parse(saved); } catch (e) { /* keep default */ }
+
+        function apply() {
+            boxes.forEach(function (box) { table.classList.toggle('hide-' + box.value, !box.checked); });
+            const shown = boxes.filter(function (b) { return b.checked; }).length;
+            document.getElementById('evoColsLabel').textContent = 'Kolom' + (shown < boxes.length ? ' ' + shown + '/' + boxes.length : '');
+            try { localStorage.setItem(KEY, JSON.stringify(boxes.filter(function (b) { return !b.checked; }).map(function (b) { return b.value; }))); } catch (e) { /* storage blocked */ }
+        }
+        boxes.forEach(function (box) {
+            box.checked = hidden.indexOf(box.value) === -1;
+            box.addEventListener('change', function () {
+                if (!boxes.some(function (b) { return b.checked; })) box.checked = true; // keep at least one column
+                apply();
+            });
+        });
+        apply();
+
+        // The panel is closed by default and closes again on an outside click.
+        const details = document.getElementById('evoCols');
+        document.addEventListener('click', function (e) { if (!details.contains(e.target)) details.removeAttribute('open'); });
     })();
 
     // The table header sticks right below the fixed navbar.
@@ -558,16 +624,28 @@
             ];
         }
 
+        // COBIT 5: the output work products of that practice. COBIT 4.1: the work products of its process (PO1.1 -> PO1).
+        function wpCell(list, span) {
+            list = list || [];
+            return el('td', { class: 'evo-wp-cell' + (list.length ? '' : ' map-muted'), rowspan: span },
+                list.length ? list.map(function (wp) { return el('div', { class: 'evo-wp' }, wp.id ? el('strong', null, wp.id) : null, (wp.id ? ' ' : '') + wp.name); }) : '-');
+        }
+
         function renderPractice(p) {
             const lines = lineList(p);
             return lines.map(function (line, i) {
                 const tr = el('tr', { 'data-practice': p.code });
+                const add = function (col, cells) { cells.forEach(function (cell) { cell.setAttribute('data-col', col); tr.append(cell); }); };
                 if (i === 0) {
                     tr.id = 'practice-' + p.code;
-                    tr.append(el('td', { class: 'map-code', rowspan: lines.length }, link(p.url, p.code)), titleCell(p, lines.length));
+                    add('c2019', [el('td', { class: 'map-code', rowspan: lines.length }, link(p.url, p.code)), titleCell(p, lines.length)]);
                 }
-                if (line.first) targetCells(p, line).forEach(function (cell) { tr.append(cell); });
-                controlCells(line).forEach(function (cell) { tr.append(cell); });
+                if (line.first) {
+                    add('c5', targetCells(p, line));
+                    add('c5wp', [wpCell(DATA.wp5[line.code], line.span)]);
+                }
+                add('c41', controlCells(line));
+                add('c41wp', [wpCell(line.control && line.control.code ? DATA.wp4[line.control.code.split('.')[0].toUpperCase()] : null, 1)]);
                 return tr;
             });
         }

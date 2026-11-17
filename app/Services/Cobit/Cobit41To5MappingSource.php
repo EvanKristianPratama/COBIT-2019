@@ -285,6 +285,81 @@ class Cobit41To5MappingSource
         );
     }
 
+    /**
+     * COBIT 5 practice code => its output work products, exactly as the COBIT 5 component page shows them
+     * (Outputs column of "Process Practices, Inputs/Outputs and Activities"): WP ID (when matched) plus description.
+     *
+     * @return array<string, list<array{id:string,name:string}>>
+     */
+    public function cobit5PracticeWorkProducts(): array
+    {
+        if (! Schema::hasTable('mst_objective') || ! Schema::hasTable('mst_focusarea')) {
+            return [];
+        }
+
+        $focusAreaIds = MstFocusArea::where('version', '5')->orderBy('id')->pluck('id');
+        $objectives = MstObjective::query()
+            ->whereIn('focus_area_id', $focusAreaIds)
+            ->orderBy('focus_area_id')
+            ->with(['focusArea', 'practices.infoflowinput', 'practices.infoflowoutput'])
+            ->get()
+            ->unique(fn (MstObjective $objective) => preg_match('/(?:EDM|APO|BAI|DSS|MEA)\d{2}/', (string) $objective->objective_id, $match) ? $match[0] : $objective->objective_id);
+
+        $documents = app(\App\Services\Cobit5\DocumentService::class);
+        $byPractice = [];
+        foreach ($objectives as $objective) {
+            try {
+                $document = $documents->build($objective);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            foreach ($document['practices'] ?? [] as $practice) {
+                $list = [];
+                foreach ($practice['flow_rows'] ?? [] as $flow) {
+                    $output = $flow['output'] ?? null;
+                    if (! is_array($output)) {
+                        continue;
+                    }
+                    $name = $output['description'] ?? '';
+                    $name = trim(is_array($name) ? implode(' ', $name) : (string) $name);
+                    $wpId = trim((string) ($output['wp_id'] ?? ''));
+                    if ($name !== '' || $wpId !== '') {
+                        $list[$wpId.'|'.$name] = ['id' => $wpId, 'name' => $name];
+                    }
+                }
+                $byPractice[$practice['code']] = array_values($list);
+            }
+        }
+
+        return $byPractice;
+    }
+
+    /**
+     * COBIT 4.1 work products (mst_wp_4.1) per process. COBIT 4.1 links a WP to a process only,
+     * so every control objective of a process shows the same WPs.
+     *
+     * @return array<string, list<array{id:string,name:string}>>
+     */
+    public function cobit4WorkProductsByProcess(): array
+    {
+        $cobit4 = [];
+        if (in_array('mst_wp_4.1', Schema::getTableListing(), true)) {
+            $rows = DB::table(DB::raw('`mst_wp_4.1`'))->orderBy('order_no')->orderBy('wp_id')->get(['wp_id', 'wp']);
+            foreach ($rows as $row) {
+                if (preg_match('/^([A-Z]+\d+)\s*-/i', $row->wp_id, $match)) {
+                    $cobit4[strtoupper($match[1])][$row->wp_id] ??= ['id' => $row->wp_id, 'name' => (string) $row->wp];
+                }
+            }
+        }
+
+        return array_map(function (array $list) {
+            uksort($list, 'strnatcmp');
+
+            return array_values($list);
+        }, $cobit4);
+    }
+
     /** COBIT 4.1 process code => process name, e.g. PO1 => Define a Strategic IT Plan. */
     public function cobit41ProcessTitles(): array
     {

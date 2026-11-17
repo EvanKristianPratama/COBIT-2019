@@ -26,7 +26,7 @@
             @endforeach
             <tr class="c5-activities-heading"><th colspan="5">Activities</th></tr>
             @forelse($practice['activities'] as $activity)
-                <tr><td colspan="5" class="c5-activity">{{ $loop->iteration }}. {{ $activity }}</td></tr>
+                <tr><td colspan="5" class="c5-activity" style="padding-left:24px">{{ $loop->iteration }}. {{ $activity }}</td></tr>
             @empty
                 <tr><td colspan="5" class="c5-empty">Belum ada activity untuk practice ini.</td></tr>
             @endforelse
