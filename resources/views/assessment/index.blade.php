@@ -88,7 +88,33 @@
                         <thead class="table-secondary text-center align-middle">
                             <tr style="border-bottom: 2px solid #dee2e6;">
                                 @foreach($assessmentColumns as $columnKey => $columnLabel)
-                                    <th data-column="{{ $columnKey }}">{{ $columnLabel }}</th>
+                                    @php
+                                        $isSortable = in_array($columnKey, ['year', 'id', 'updated'], true);
+                                        $isActive = ($sortBy ?? 'year') === $columnKey || (($columnKey === 'year') && ($sortBy ?? '') === 'tahun');
+                                        $currentDir = $sortDirection ?? 'desc';
+                                        $nextDir = ($isActive && $currentDir === 'desc') ? 'asc' : 'desc';
+                                        $sortUrl = request()->fullUrlWithQuery(['sort_by' => $columnKey, 'sort_direction' => $nextDir, 'my_page' => 1, 'assigned_page' => 1]);
+                                    @endphp
+                                    @if($isSortable)
+                                        <th data-column="{{ $columnKey }}" class="text-center align-middle sortable-column-header">
+                                            <a href="{{ $sortUrl }}" class="sortable-header-link text-dark text-decoration-none d-inline-flex align-items-center justify-content-center gap-1" title="Urutkan berdasarkan {{ $columnLabel }} ({{ $nextDir === 'asc' ? 'Terlama ke Terbaru' : 'Terbaru ke Terlama' }})">
+                                                <span>{{ $columnLabel }}</span>
+                                                <span class="sort-icon-wrapper">
+                                                    @if($isActive)
+                                                        @if($currentDir === 'asc')
+                                                            <i class="fas fa-sort-up text-primary"></i>
+                                                        @else
+                                                            <i class="fas fa-sort-down text-primary"></i>
+                                                        @endif
+                                                    @else
+                                                        <i class="fas fa-sort text-muted opacity-40"></i>
+                                                    @endif
+                                                </span>
+                                            </a>
+                                        </th>
+                                    @else
+                                        <th data-column="{{ $columnKey }}">{{ $columnLabel }}</th>
+                                    @endif
                                 @endforeach
                                 <th class="text-center assessment-actions-column">Aksi</th>
                             </tr>
@@ -143,7 +169,33 @@
                         <thead class="table-secondary text-center align-middle">
                             <tr style="border-bottom: 2px solid #dee2e6;">
                                 @foreach($assessmentColumns as $columnKey => $columnLabel)
-                                    <th data-column="{{ $columnKey }}">{{ $columnLabel }}</th>
+                                    @php
+                                        $isSortable = in_array($columnKey, ['year', 'id', 'updated'], true);
+                                        $isActive = ($sortBy ?? 'year') === $columnKey || (($columnKey === 'year') && ($sortBy ?? '') === 'tahun');
+                                        $currentDir = $sortDirection ?? 'desc';
+                                        $nextDir = ($isActive && $currentDir === 'desc') ? 'asc' : 'desc';
+                                        $sortUrl = request()->fullUrlWithQuery(['sort_by' => $columnKey, 'sort_direction' => $nextDir, 'my_page' => 1, 'assigned_page' => 1]);
+                                    @endphp
+                                    @if($isSortable)
+                                        <th data-column="{{ $columnKey }}" class="text-center align-middle sortable-column-header">
+                                            <a href="{{ $sortUrl }}" class="sortable-header-link text-dark text-decoration-none d-inline-flex align-items-center justify-content-center gap-1" title="Urutkan berdasarkan {{ $columnLabel }} ({{ $nextDir === 'asc' ? 'Terlama ke Terbaru' : 'Terbaru ke Terlama' }})">
+                                                <span>{{ $columnLabel }}</span>
+                                                <span class="sort-icon-wrapper">
+                                                    @if($isActive)
+                                                        @if($currentDir === 'asc')
+                                                            <i class="fas fa-sort-up text-primary"></i>
+                                                        @else
+                                                            <i class="fas fa-sort-down text-primary"></i>
+                                                        @endif
+                                                    @else
+                                                        <i class="fas fa-sort text-muted opacity-40"></i>
+                                                    @endif
+                                                </span>
+                                            </a>
+                                        </th>
+                                    @else
+                                        <th data-column="{{ $columnKey }}">{{ $columnLabel }}</th>
+                                    @endif
                                 @endforeach
                                 <th class="text-center assessment-actions-column">Aksi</th>
                             </tr>
@@ -1083,22 +1135,95 @@ document.querySelectorAll('.assessment-table-section').forEach((section) => {
     margin: 0 auto;
 }
 .assessment-row-actions .btn, .assessment-row-actions form { width: 100%; }
-.column-filter { position: relative; display: inline-block; margin-bottom: 0.75rem; }
-.column-filter summary { list-style: none; cursor: pointer; }
-.column-filter summary::-webkit-details-marker { display: none; }
-.column-filter-panel {
-    position: absolute;
-    z-index: 10;
-    top: calc(100% + 0.35rem);
-    right: 0;
-    width: 245px;
-    padding: 0.85rem 1rem;
-    background: #fff;
-    border: 1px solid #dbe3f2;
-    border-radius: 0.65rem;
-    box-shadow: 0 12px 30px rgba(15,43,92,0.15);
+.table-filter-btn {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.45rem;
+    border: 1px solid #0f6ad9;
+    color: #0f6ad9;
+    background-color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    line-height: 1.4;
+    transition: all 0.18s ease-in-out;
 }
-.column-filter-panel .form-check { margin-bottom: 0.35rem; }
+
+.table-filter-btn:hover,
+.table-filter-btn:focus,
+.table-filter-btn[aria-expanded="true"] {
+    background-color: #0f6ad9;
+    color: #ffffff;
+    border-color: #0f6ad9;
+}
+
+.table-filter-btn:hover i,
+.table-filter-btn:focus i,
+.table-filter-btn[aria-expanded="true"] i {
+    color: #ffffff !important;
+}
+
+.table-filter-dropdown {
+    border: 1px solid #dbe3f2 !important;
+    border-radius: 0.65rem !important;
+    box-shadow: 0 12px 30px rgba(15, 43, 92, 0.14) !important;
+    padding: 0.5rem 0.35rem !important;
+    font-size: 0.82rem !important;
+}
+
+.table-filter-dropdown .dropdown-item {
+    border-radius: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    color: #334155;
+    transition: all 0.15s ease-in-out;
+}
+
+.table-filter-dropdown .dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #0f6ad9;
+}
+
+.table-filter-dropdown .dropdown-item.active {
+    background-color: #0f6ad9;
+    color: #ffffff;
+}
+
+.table-filter-dropdown .dropdown-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    padding: 0.25rem 0.75rem 0.4rem;
+}
+
+.sortable-column-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease-in-out;
+}
+.sortable-column-header:hover {
+    background-color: #dce4ee !important;
+}
+.sortable-header-link {
+    color: inherit !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.sortable-header-link:hover {
+    color: #0f6ad9 !important;
+}
+.sort-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    font-size: 0.82rem;
+}
 
 </style>
 @endsection

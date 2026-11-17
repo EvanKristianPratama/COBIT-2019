@@ -25,14 +25,18 @@ class AssessmentListService
     }
 
     /**
+     * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
-    public function getIndexData(User $user): array
+    public function getIndexData(User $user, array $filters = []): array
     {
         $organizationOptions = $user->assignedOrganizations();
         $activeOrgIds = $user->activeOrganizationIds($organizationOptions);
         $activeOrgId = $user->activeOrganizationId($organizationOptions);
         $hasVisibilityColumn = Schema::hasColumn('mst_eval', 'show_on_user_page');
+
+        $sortBy = strtolower((string) ($filters['sort_by'] ?? $filters['sort'] ?? 'year'));
+        $sortDirection = strtolower((string) ($filters['sort_direction'] ?? $filters['direction'] ?? $filters['order'] ?? 'desc')) === 'asc' ? 'asc' : 'desc';
 
         $applyOrgFilter = function (Builder $query) use ($activeOrgIds) {
             if ($activeOrgIds !== []) {
@@ -49,21 +53,49 @@ class AssessmentListService
             }
         };
 
+        $applyYearFilter = function (Builder $query) use ($filters) {
+            if (filled($filters['year'] ?? null)) {
+                $year = (string) $filters['year'];
+                $query->where(function (Builder $builder) use ($year) {
+                    $builder->where('mst_eval.tahun', $year)
+                        ->orWhere(function (Builder $fallback) use ($year) {
+                            $fallback->whereNull('mst_eval.tahun')
+                                ->whereRaw("SUBSTR(mst_eval.created_at, 1, 4) = ?", [$year]);
+                        });
+                });
+            }
+        };
+
+        $applySorting = function (Builder $query) use ($sortBy, $sortDirection) {
+            if (in_array($sortBy, ['id', 'eval_id'], true)) {
+                $query->orderBy('mst_eval.eval_id', $sortDirection);
+            } elseif (in_array($sortBy, ['updated', 'updated_at', 'created_at', 'date'], true)) {
+                $query->orderBy('mst_eval.created_at', $sortDirection);
+            } else {
+                // Default: Urutkan berdasarkan tahun (effective year dari mst_eval.tahun, fallback ke created_at)
+                $query->orderByRaw(
+                    "COALESCE(NULLIF(mst_eval.tahun, ''), SUBSTR(mst_eval.created_at, 1, 4)) {$sortDirection}"
+                )->orderBy('mst_eval.eval_id', 'desc');
+            }
+        };
+
         $myQuery = $this->assessmentAccessService
             ->queryAccessible($user)
             ->when($hasVisibilityColumn, fn (Builder $query) => $query->where('mst_eval.show_on_user_page', true))
             ->with(['user', 'organization', 'maturityScore', 'accessAssignments'])
-            ->where('mst_eval.user_id', $user->id)
-            ->orderBy('mst_eval.created_at', 'desc');
+            ->where('mst_eval.user_id', $user->id);
         $applyOrgFilter($myQuery);
+        $applyYearFilter($myQuery);
+        $applySorting($myQuery);
 
         $assignedQuery = $this->assessmentAccessService
             ->queryAccessible($user)
             ->when($hasVisibilityColumn, fn (Builder $query) => $query->where('mst_eval.show_on_user_page', true))
             ->with(['user', 'organization', 'maturityScore', 'accessAssignments'])
-            ->where('mst_eval.user_id', '!=', $user->id)
-            ->orderBy('mst_eval.created_at', 'desc');
+            ->where('mst_eval.user_id', '!=', $user->id);
         $applyOrgFilter($assignedQuery);
+        $applyYearFilter($assignedQuery);
+        $applySorting($assignedQuery);
 
         $myAssessments = $myQuery->paginate(10, ['*'], 'my_page');
         $assignedAssessments = $assignedQuery->paginate(10, ['*'], 'assigned_page');
@@ -83,6 +115,13 @@ class AssessmentListService
         $totalAssessments = (clone $statsQuery)->count();
         $finishedAssessments = (clone $statsQuery)->where('mst_eval.status', 'finished')->count();
 
+        $yearOptions = (clone $statsQuery)
+            ->selectRaw("DISTINCT COALESCE(NULLIF(mst_eval.tahun, ''), SUBSTR(mst_eval.created_at, 1, 4)) as opt_year")
+            ->orderByDesc('opt_year')
+            ->pluck('opt_year')
+            ->filter()
+            ->values();
+
         return [
             'myAssessments' => $myAssessments,
             'assignedAssessments' => $assignedAssessments,
@@ -91,6 +130,9 @@ class AssessmentListService
             'draftAssessments' => max(0, $totalAssessments - $finishedAssessments),
             'organizationOptions' => $organizationOptions,
             'selectedOrganizationId' => $activeOrgId ?: $organizationOptions->first()?->organization_id,
+            'sortBy' => $sortBy,
+            'sortDirection' => $sortDirection,
+            'yearOptions' => $yearOptions,
         ];
     }
 
@@ -100,10 +142,22 @@ class AssessmentListService
      */
     public function getAdminIndexData(array $filters = []): array
     {
+        $sortBy = strtolower((string) ($filters['sort_by'] ?? $filters['sort'] ?? 'created_at'));
+        $sortDirection = strtolower((string) ($filters['sort_direction'] ?? $filters['direction'] ?? $filters['order'] ?? 'desc')) === 'asc' ? 'asc' : 'desc';
+
         $query = MstEval::query()
             ->with(['user', 'organization', 'maturityScore'])
-            ->withCount('accessAssignments')
-            ->orderByDesc('created_at');
+            ->withCount('accessAssignments');
+
+        if (in_array($sortBy, ['year', 'tahun'], true)) {
+            $query->orderByRaw(
+                "COALESCE(NULLIF(mst_eval.tahun, ''), SUBSTR(mst_eval.created_at, 1, 4)) {$sortDirection}"
+            )->orderByDesc('created_at');
+        } elseif (in_array($sortBy, ['id', 'eval_id'], true)) {
+            $query->orderBy('mst_eval.eval_id', $sortDirection);
+        } else {
+            $query->orderBy('mst_eval.created_at', $sortDirection);
+        }
 
         $this->applyAdminFilters($query, $filters);
 
@@ -134,10 +188,13 @@ class AssessmentListService
                 ->orderBy('organization_name')
                 ->get(['organization_id', 'organization_name']),
             'yearOptions' => MstEval::query()
-                ->whereNotNull('tahun')
-                ->distinct()
-                ->orderByDesc('tahun')
-                ->pluck('tahun'),
+                ->selectRaw("DISTINCT COALESCE(NULLIF(mst_eval.tahun, ''), SUBSTR(mst_eval.created_at, 1, 4)) as opt_year")
+                ->orderByDesc('opt_year')
+                ->pluck('opt_year')
+                ->filter()
+                ->values(),
+            'sortBy' => $sortBy,
+            'sortDirection' => $sortDirection,
         ];
     }
 

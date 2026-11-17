@@ -25,7 +25,7 @@ class EvaluationAdminController extends Controller
         $this->ensureAdmin();
 
         return view('admin.evaluations.index', $this->assessmentListService->getAdminIndexData(
-            $request->only(['q', 'year', 'organization_id', 'status'])
+            $request->only(['q', 'year', 'organization_id', 'status', 'sort_by', 'sort_direction'])
         ));
     }
 
