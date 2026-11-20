@@ -19,6 +19,7 @@ use App\Http\Controllers\Assessment\MasterEvidenceDictionaryController;
 use App\Http\Controllers\Assessment\TargetMaturityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\cobit2019\DesignToolkitController;
+use App\Http\Controllers\Cobit5\AssessmentScopeController as Cobit5ScopeController;
 use App\Http\Controllers\cobit2019\Df10Controller;
 use App\Http\Controllers\cobit2019\Df2Controller;
 use App\Http\Controllers\cobit2019\Df3Controller;
@@ -365,6 +366,21 @@ Route::middleware(['auth', 'permission:design-factors.view'])->group(function ()
 Route::delete('/design_factor/{assessment}', [DesignToolkitController::class, 'destroy'])
     ->name('cobit.design-factors.destroy')
     ->middleware(['auth', 'permission:design-factors.input']);
+
+// COBIT 5 Assessment Scope
+Route::middleware(['auth', 'permission:cobit.view|design-factors.view'])->group(function () {
+    Route::get('/design_factor/cobit5/scope', [Cobit5ScopeController::class, 'index'])
+        ->name('cobit5.scope.index');
+    Route::get('/design_factor/cobit5/scope/export', [Cobit5ScopeController::class, 'export'])
+        ->name('cobit5.scope.export');
+});
+
+Route::middleware(['auth', 'permission:cobit.view|design-factors.input'])->group(function () {
+    Route::post('/design_factor/cobit5/scope/save', [Cobit5ScopeController::class, 'save'])
+        ->name('cobit5.scope.save');
+    Route::post('/design_factor/cobit5/scope/reset', [Cobit5ScopeController::class, 'reset'])
+        ->name('cobit5.scope.reset');
+});
 
 // Target capability routes
 Route::middleware(['auth', 'permission:design-factors.view'])->group(function () {

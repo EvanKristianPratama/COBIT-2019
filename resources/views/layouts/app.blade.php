@@ -648,12 +648,17 @@
                                     <li class="breadcrumb-item">
                                         <a
                                             href="{{ $disableBreadcrumbClick ? '#' : route('cobit.home') }}"
-                                            class="{{ Route::is('cobit.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
+                                            class="{{ Route::is('cobit.*') && !Route::is('cobit5.scope.*') ? 'active' : '' }} {{ $disableBreadcrumbClick ? 'breadcrumb-link-disabled' : '' }}"
                                             @if($disableBreadcrumbClick) tabindex="-1" aria-disabled="true" @endif
                                         >
                                             <i class="fas fa-tools"></i> Design I&T Tailored Governance System
                                         </a>
                                     </li>
+                                    @if(Route::is('cobit5.scope.*'))
+                                        <li class="breadcrumb-item active" aria-current="page">
+                                            <i class="fas fa-tasks"></i> COBIT 5 Assessment Scope
+                                        </li>
+                                    @endif
                                 @endif
                                 @if($canAccessAssessments)
                                     <li class="breadcrumb-item">
@@ -748,9 +753,27 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('cobit.home') }}">
-                                    <i class="fas fa-tools me-2"></i> Design Factor
+                                <a class="nav-link d-flex align-items-center justify-content-between {{ Route::is('cobit.home', 'cobit.design-factors.*', 'cobit5.scope.*') ? 'active' : '' }}" 
+                                   data-bs-toggle="collapse" href="#designFactorMenu" role="button" 
+                                   aria-expanded="{{ Route::is('cobit.home', 'cobit.design-factors.*', 'cobit5.scope.*') ? 'true' : 'false' }}" 
+                                   aria-controls="designFactorMenu">
+                                    <span><i class="fas fa-tools me-2"></i> Design Factor</span>
+                                    <i class="fas fa-chevron-down" style="font-size: 0.72rem;"></i>
                                 </a>
+                                <div class="collapse {{ Route::is('cobit.home', 'cobit.design-factors.*', 'cobit5.scope.*') ? 'show' : '' }}" id="designFactorMenu">
+                                    <ul class="nav flex-column ps-3 mt-1 gap-1">
+                                        <li class="nav-item">
+                                            <a class="nav-link py-1 {{ Route::is('cobit.home', 'cobit.design-factors.*') && !Route::is('cobit5.scope.*') ? 'active fw-bold' : '' }}" href="{{ route('cobit.home') }}" style="font-size: 0.86rem;">
+                                                <i class="fas fa-layer-group me-2 text-info"></i> COBIT 2019
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link py-1 {{ Route::is('cobit5.scope.*') ? 'active fw-bold' : '' }}" href="{{ route('cobit5.scope.index') }}" style="font-size: 0.86rem;">
+                                                <i class="fas fa-tasks me-2 text-warning"></i> COBIT 5 (Assessment Scope)
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </li>
                         @endif
                         @if($canAccessAssessments)

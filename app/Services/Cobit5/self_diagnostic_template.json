@@ -1,0 +1,360 @@
+[
+  {
+    "name": "Evaluate, Direct and Monitor",
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      }
+    ]
+  },
+  {
+    "name": "Align, Plan and Organise",
+    "processes": [
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Suppliers",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      }
+    ]
+  },
+  {
+    "name": "Build, Acquire and Implement",
+    "processes": [
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      }
+    ]
+  },
+  {
+    "name": "Deliver, Service and Support",
+    "processes": [
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      }
+    ]
+  },
+  {
+    "name": "Monitor, Evaluate and Assess",
+    "processes": [
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "importance": "",
+        "performance": "",
+        "formality": "",
+        "audited": "",
+        "accountable": ""
+      }
+    ]
+  }
+]

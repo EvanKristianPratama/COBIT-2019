@@ -1,0 +1,987 @@
+{
+  "financial": {
+    "dimension": "Financial",
+    "eg_count": 5,
+    "total_score": 44,
+    "enterprise_goals": [
+      {
+        "id": 1,
+        "code": "1",
+        "title": "Stakeholder value of business investments",
+        "weight": 1,
+        "subtotal": 13,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 03",
+            "title": "Commitment of executive management for making IT-related decisions",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 06",
+            "title": "Transparency of IT costs, benefits and risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 13",
+            "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 14",
+            "title": "Availability of reliable and useful information for decision making",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "S",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "code": "2",
+        "title": "Portfolio of competitive products and services",
+        "weight": 1,
+        "subtotal": 12,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 03",
+            "title": "Commitment of executive management for making IT-related decisions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 13",
+            "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 14",
+            "title": "Availability of reliable and useful information for decision making",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "P",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "code": "3",
+        "title": "Managed business risk (safeguarding of assets)",
+        "weight": 1,
+        "subtotal": 12,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 04",
+            "title": "Managed IT-related business risk",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 06",
+            "title": "Transparency of IT costs, benefits and risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 10",
+            "title": "Security of information, processing infrastructure and applications",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 13",
+            "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 14",
+            "title": "Availability of reliable and useful information for decision making",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 15",
+            "title": "IT compliance with internal policies",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "P",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "code": "4",
+        "title": "Compliance with external laws and regulations",
+        "weight": 1,
+        "subtotal": 6,
+        "itrgs": [
+          {
+            "code": "ITRG 02",
+            "title": "IT compliance and support for business compliance with external laws and regulations",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 04",
+            "title": "Managed IT-related business risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 10",
+            "title": "Security of information, processing infrastructure and applications",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 14",
+            "title": "Availability of reliable and useful information for decision making",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 15",
+            "title": "IT compliance with internal policies",
+            "level": "P",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "code": "5",
+        "title": "Financial transparency",
+        "weight": 1,
+        "subtotal": 1,
+        "itrgs": [
+          {
+            "code": "ITRG 06",
+            "title": "Transparency of IT costs, benefits and risk",
+            "level": "P",
+            "score": 1
+          }
+        ]
+      }
+    ]
+  },
+  "customer": {
+    "dimension": "Customer",
+    "eg_count": 5,
+    "total_score": 36,
+    "enterprise_goals": [
+      {
+        "id": 6,
+        "code": "6",
+        "title": "Customer-oriented service culture",
+        "weight": 1,
+        "subtotal": 9,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 13",
+            "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "S",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "code": "7",
+        "title": "Business service continuity and availability",
+        "weight": 1,
+        "subtotal": 4,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 04",
+            "title": "Managed IT-related business risk",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 10",
+            "title": "Security of information, processing infrastructure and applications",
+            "level": "P",
+            "score": 0
+          },
+          {
+            "code": "ITRG 14",
+            "title": "Availability of reliable and useful information for decision making",
+            "level": "P",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "code": "8",
+        "title": "Agile responses to a changing business environment",
+        "weight": 1,
+        "subtotal": 9,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 03",
+            "title": "Commitment of executive management for making IT-related decisions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 04",
+            "title": "Managed IT-related business risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "S",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "code": "9",
+        "title": "Information-based strategic decision making",
+        "weight": 1,
+        "subtotal": 7,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 03",
+            "title": "Commitment of executive management for making IT-related decisions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 06",
+            "title": "Transparency of IT costs, benefits and risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 14",
+            "title": "Availability of reliable and useful information for decision making",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "S",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "code": "10",
+        "title": "Optimisation of service delivery costs",
+        "weight": 1,
+        "subtotal": 7,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 06",
+            "title": "Transparency of IT costs, benefits and risk",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 13",
+            "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+            "level": "S",
+            "score": 1
+          }
+        ]
+      }
+    ]
+  },
+  "internal": {
+    "dimension": "Internal",
+    "eg_count": 5,
+    "total_score": 23,
+    "enterprise_goals": [
+      {
+        "id": 11,
+        "code": "11",
+        "title": "Optimisation of business process functionality",
+        "weight": 1,
+        "subtotal": 9,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 03",
+            "title": "Commitment of executive management for making IT-related decisions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 14",
+            "title": "Availability of reliable and useful information for decision making",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "S",
+            "score": 1
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "code": "12",
+        "title": "Optimisation of business process costs",
+        "weight": 1,
+        "subtotal": 3,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 06",
+            "title": "Transparency of IT costs, benefits and risk",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 0
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 0
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "P",
+            "score": 0
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 0
+          },
+          {
+            "code": "ITRG 13",
+            "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+            "level": "S",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "code": "13",
+        "title": "Managed business change programmes",
+        "weight": 1,
+        "subtotal": 5,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 03",
+            "title": "Commitment of executive management for making IT-related decisions",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 04",
+            "title": "Managed IT-related business risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "S",
+            "score": 0
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 0
+          },
+          {
+            "code": "ITRG 13",
+            "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+            "level": "P",
+            "score": 0
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "S",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "code": "14",
+        "title": "Operational and staff productivity",
+        "weight": 1,
+        "subtotal": 4,
+        "itrgs": [
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 0
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "P",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "code": "15",
+        "title": "Compliance with internal policies",
+        "weight": 1,
+        "subtotal": 2,
+        "itrgs": [
+          {
+            "code": "ITRG 02",
+            "title": "IT compliance and support for business compliance with external laws and regulations",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 04",
+            "title": "Managed IT-related business risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 10",
+            "title": "Security of information, processing infrastructure and applications",
+            "level": "P",
+            "score": 0
+          },
+          {
+            "code": "ITRG 15",
+            "title": "IT compliance with internal policies",
+            "level": "P",
+            "score": 0
+          }
+        ]
+      }
+    ]
+  },
+  "learning": {
+    "dimension": "Learning",
+    "eg_count": 2,
+    "total_score": 12,
+    "enterprise_goals": [
+      {
+        "id": 16,
+        "code": "16",
+        "title": "Skilled and motivated people",
+        "weight": 1,
+        "subtotal": 6,
+        "itrgs": [
+          {
+            "code": "ITRG 01",
+            "title": "Alignment of IT and business strategy",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 03",
+            "title": "Commitment of executive management for making IT-related decisions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 04",
+            "title": "Managed IT-related business risk",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "P",
+            "score": 0
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "S",
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "code": "17",
+        "title": "Product and business innovation culture",
+        "weight": 1,
+        "subtotal": 6,
+        "itrgs": [
+          {
+            "code": "ITRG 05",
+            "title": "Realised benefits from IT-enabled investments and services portfolio",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 07",
+            "title": "Delivery of IT services in line with business requirements",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 08",
+            "title": "Adequate use of applications, information and technology solutions",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 09",
+            "title": "IT agility",
+            "level": "P",
+            "score": 1
+          },
+          {
+            "code": "ITRG 11",
+            "title": "Optimisation of IT assets, resources and capabilities",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 12",
+            "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+            "level": "S",
+            "score": 1
+          },
+          {
+            "code": "ITRG 16",
+            "title": "Competent and motivated business and IT personnel",
+            "level": "S",
+            "score": 0
+          },
+          {
+            "code": "ITRG 17",
+            "title": "Knowledge, expertise and initiatives for business innovation",
+            "level": "P",
+            "score": 0
+          }
+        ]
+      }
+    ]
+  }
+}

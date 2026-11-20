@@ -2,6 +2,8 @@
 
 @section('content')
 <div class="df-workspace container-fluid py-4">
+    @include('design_factor.cobit5.partials.version-switch', ['active' => 'cobit2019'])
+
     <header class="df-page-hero">
         <div>
             <h1>Design I&amp;T Tailored Governance System</h1>

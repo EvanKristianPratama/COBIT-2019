@@ -1,0 +1,2203 @@
+[
+  {
+    "raw": "ITRG   01 Alignment of IT and business strategy",
+    "code": "ITRG 01",
+    "title": "Alignment of IT and business strategy",
+    "count": 23,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "P"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "P"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "P"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "P"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "P"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "S"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "P"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "P"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "P"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "P"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   02 IT compliance and support for business compliance with external laws and regulations",
+    "code": "ITRG 02",
+    "title": "IT compliance and support for business compliance with external laws and regulations",
+    "count": 20,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "P"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "P"
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "S"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "P"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "P"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "P"
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "level": "P"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   03 Commitment of executive management for making IT-related decisions",
+    "code": "ITRG 03",
+    "title": "Commitment of executive management for making IT-related decisions",
+    "count": 17,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "P"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "P"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "S"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "S"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   04 Managed IT-related business risk",
+    "code": "ITRG 04",
+    "title": "Managed IT-related business risk",
+    "count": 33,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "P"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "S"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "S"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "P"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "P"
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "level": "P"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "P"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "S"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "P"
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "level": "P"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "P"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "P"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "P"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "P"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "P"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "P"
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "level": "P"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   05 Realised benefits from IT-enabled investments and services portfolio",
+    "code": "ITRG 05",
+    "title": "Realised benefits from IT-enabled investments and services portfolio",
+    "count": 24,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "P"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "P"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "P"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "P"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "P"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "level": "P"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   06 Transparency of IT costs, benefits and risk",
+    "code": "ITRG 06",
+    "title": "Transparency of IT costs, benefits and risk",
+    "count": 18,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "P"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "P"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "P"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "P"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "P"
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "level": "P"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "S"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "P"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   07 Delivery of IT services in line with business requirements",
+    "code": "ITRG 07",
+    "title": "Delivery of IT services in line with business requirements",
+    "count": 34,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "P"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "P"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "P"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "P"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "S"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "P"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "P"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "P"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "P"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "S"
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "level": "S"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "S"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "P"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "P"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "P"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "P"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "S"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "P"
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "level": "P"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "P"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "P"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "P"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "P"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "S"
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   08 Adequate use of applications, information and technology solutions",
+    "code": "ITRG 08",
+    "title": "Adequate use of applications, information and technology solutions",
+    "count": 31,
+    "processes": [
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "P"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "S"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "S"
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "level": "S"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "S"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "S"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "P"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "P"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "S"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "level": "S"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and conformance",
+        "level": "S"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   09 IT agility",
+    "code": "ITRG 09",
+    "title": "IT agility",
+    "count": 24,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "P"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "P"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "P"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "P"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "S"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "S"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "P"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "S"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   10 Security of information, processing infrastructure and applications",
+    "code": "ITRG 10",
+    "title": "Security of information, processing infrastructure and applications",
+    "count": 21,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "P"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "P"
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "P"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "S"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "S"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "S"
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   11 Optimisation of IT assets, resources and capabilities",
+    "code": "ITRG 11",
+    "title": "Optimisation of IT assets, resources and capabilities",
+    "count": 29,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "P"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "P"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "P"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "P"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "P"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "S"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "P"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "S"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "P"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "P"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "P"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "P"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "P"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   12 Enablement and support of business processes by integrating applications and\n                 technology into business processes",
+    "code": "ITRG 12",
+    "title": "Enablement and support of business processes by integrating applications and technology into business processes",
+    "count": 16,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "S"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "P"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "P"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "P"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   13 Delivery of programmes delivering benefits, on time, on budget, and meeting \n                 requirements and quality standards",
+    "code": "ITRG 13",
+    "title": "Delivery of programmes delivering benefits, on time, on budget, and meeting requirements and quality standards",
+    "count": 23,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "P"
+      },
+      {
+        "code": "APO06",
+        "title": "Manage Budget and Costs",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "P"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "P"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "P"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "S"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "P"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   14 Availability of reliable and useful information for decision making",
+    "code": "ITRG 14",
+    "title": "Availability of reliable and useful information for decision making",
+    "count": 29,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "S"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "P"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "S"
+      },
+      {
+        "code": "APO13",
+        "title": "Manage Security",
+        "level": "P"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "P"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "P"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "S"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "P"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "level": "S"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "P"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "P"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   15 IT compliance with internal policies",
+    "code": "ITRG 15",
+    "title": "IT compliance with internal policies",
+    "count": 24,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "P"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "P"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "S"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO09",
+        "title": "Manage Service Agreements",
+        "level": "S"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "S"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "BAI09",
+        "title": "Manage Assets",
+        "level": "S"
+      },
+      {
+        "code": "BAI10",
+        "title": "Manage Configuration",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "level": "S"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS05",
+        "title": "Manage Security Services",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "P"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "P"
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   16 Competent and motivated business and IT personnel",
+    "code": "ITRG 16",
+    "title": "Competent and motivated business and IT personnel",
+    "count": 16,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "S"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "P"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "P"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "P"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "S"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "S"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      }
+    ]
+  },
+  {
+    "raw": "ITRG   17 Knowledge, expertise and initiatives for business innovation",
+    "code": "ITRG 17",
+    "title": "Knowledge, expertise and initiatives for business innovation",
+    "count": 31,
+    "processes": [
+      {
+        "code": "EDM01",
+        "title": "Ensure Governance Framework Setting and Maintenance",
+        "level": "S"
+      },
+      {
+        "code": "EDM02",
+        "title": "Ensure Benefits Delivery",
+        "level": "P"
+      },
+      {
+        "code": "EDM03",
+        "title": "Ensure Risk Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM04",
+        "title": "Ensure Resource Optimisation",
+        "level": "S"
+      },
+      {
+        "code": "EDM05",
+        "title": "Ensure Stakeholder Transparency",
+        "level": "S"
+      },
+      {
+        "code": "APO01",
+        "title": "Manage the IT Management Framework",
+        "level": "P"
+      },
+      {
+        "code": "APO02",
+        "title": "Manage Strategy",
+        "level": "P"
+      },
+      {
+        "code": "APO03",
+        "title": "Manage Enterprise Architecture",
+        "level": "S"
+      },
+      {
+        "code": "APO04",
+        "title": "Manage Innovation",
+        "level": "P"
+      },
+      {
+        "code": "APO05",
+        "title": "Manage Portfolio",
+        "level": "S"
+      },
+      {
+        "code": "APO07",
+        "title": "Manage Human Resources",
+        "level": "P"
+      },
+      {
+        "code": "APO08",
+        "title": "Manage Relationships",
+        "level": "P"
+      },
+      {
+        "code": "APO10",
+        "title": "Manage Supplies",
+        "level": "S"
+      },
+      {
+        "code": "APO11",
+        "title": "Manage Quality",
+        "level": "S"
+      },
+      {
+        "code": "APO12",
+        "title": "Manage Risk",
+        "level": "S"
+      },
+      {
+        "code": "BAI01",
+        "title": "Manage Programmes and Projects",
+        "level": "S"
+      },
+      {
+        "code": "BAI02",
+        "title": "Manage Requirements Definition",
+        "level": "S"
+      },
+      {
+        "code": "BAI03",
+        "title": "Manage Solutions Identification and Build",
+        "level": "S"
+      },
+      {
+        "code": "BAI04",
+        "title": "Manage Availability and Capacity",
+        "level": "S"
+      },
+      {
+        "code": "BAI05",
+        "title": "Manage Organisational Change Enablement",
+        "level": "P"
+      },
+      {
+        "code": "BAI06",
+        "title": "Manage Changes",
+        "level": "S"
+      },
+      {
+        "code": "BAI07",
+        "title": "Manage Change Acceptance and Transitioning",
+        "level": "S"
+      },
+      {
+        "code": "BAI08",
+        "title": "Manage Knowledge",
+        "level": "P"
+      },
+      {
+        "code": "DSS01",
+        "title": "Manage Operations",
+        "level": "S"
+      },
+      {
+        "code": "DSS02",
+        "title": "Manage Service Requests and Incidents",
+        "level": "S"
+      },
+      {
+        "code": "DSS03",
+        "title": "Manage Problems",
+        "level": "S"
+      },
+      {
+        "code": "DSS04",
+        "title": "Manage Continuity",
+        "level": "S"
+      },
+      {
+        "code": "DSS06",
+        "title": "Manage Business Process Controls",
+        "level": "S"
+      },
+      {
+        "code": "MEA01",
+        "title": "Monitor, Evaluate and Assess Performance and Conformance",
+        "level": "S"
+      },
+      {
+        "code": "MEA02",
+        "title": "Monitor, Evaluate and Assess the System of Internal Control",
+        "level": "S"
+      },
+      {
+        "code": "MEA03",
+        "title": "Monitor, Evaluate and Assess Compliance with External Requirements",
+        "level": "S"
+      }
+    ]
+  }
+]
