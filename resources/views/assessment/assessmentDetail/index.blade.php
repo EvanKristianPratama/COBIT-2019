@@ -2811,11 +2811,47 @@
 
                 cleanValues.forEach(val => {
                     const li = document.createElement('li');
-                    li.textContent = val;
+                    li.textContent = this.formatEvidenceWithYear(val);
                     list.appendChild(li);
                 });
 
                 displayElement.appendChild(list);
+            }
+
+            normalizeEvidenceKey(value) {
+                return (value || '')
+                    .toString()
+                    .replace(/^[\s\-–—•*]+/, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase();
+            }
+
+            getEvidenceYearMap() {
+                if (this.evidenceYearMap) {
+                    return this.evidenceYearMap;
+                }
+
+                this.evidenceYearMap = new Map();
+                (this.evidenceModalData || []).forEach(item => {
+                    const key = this.normalizeEvidenceKey(item?.judul_dokumen);
+                    const year = (item?.tahun_terbit ?? '').toString().trim();
+                    if (key && year && !this.evidenceYearMap.has(key)) {
+                        this.evidenceYearMap.set(key, year);
+                    }
+                });
+
+                return this.evidenceYearMap;
+            }
+
+            // Display "judul/tahun" for evidence that exists in the evidence list with a tahun terbit.
+            // The stored value stays the plain title so modal selections keep matching.
+            formatEvidenceWithYear(value) {
+                const year = this.getEvidenceYearMap().get(this.normalizeEvidenceKey(value));
+                if (!year || value.endsWith(`/${year}`)) {
+                    return value;
+                }
+                return `${value}/${year}`;
             }
 
 
