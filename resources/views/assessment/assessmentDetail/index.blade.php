@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 {{-- 
@@ -1017,6 +1018,7 @@
                                                                         ];
                                                                     })
                                                                     ->filter()
+                                                                    ->unique(fn ($item) => $item['description'] . '|' . $item['to'])
                                                                     ->values();
                                                             @endphp
                                                             @foreach ($activities as $activity)
