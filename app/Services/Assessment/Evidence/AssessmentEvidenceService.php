@@ -5,6 +5,7 @@ namespace App\Services\Assessment\Evidence;
 use App\Models\MstEval;
 use App\Models\MstEvidence;
 use App\Models\MstOrganization;
+use App\Models\TrsActivityeval;
 use App\Models\User;
 
 class AssessmentEvidenceService
@@ -154,8 +155,60 @@ class AssessmentEvidenceService
      */
     public function update(MstEvidence $evidence, array $validated): MstEvidence
     {
+        $oldTitle = $evidence->judul_dokumen;
         $evidence->update($validated);
 
+        // When judul_dokumen changes, sync the text stored in trs_activityeval.evidence
+        // so the assessment view reflects the updated evidence name.
+        $newTitle = $evidence->judul_dokumen;
+        if ($oldTitle !== null && $newTitle !== null && $oldTitle !== $newTitle) {
+            if ($evidence->eval_id) {
+                // Evidence belongs to a specific assessment: sync that assessment only
+                $this->syncActivityEvalEvidence([$evidence->eval_id], $oldTitle, $newTitle);
+            } elseif ($evidence->organization_id) {
+                // Master evidence (org-level): sync all assessments in the organization
+                $evalIds = \App\Models\MstEval::where('organization_id', $evidence->organization_id)
+                    ->pluck('eval_id')
+                    ->all();
+
+                if ($evalIds !== []) {
+                    $this->syncActivityEvalEvidence($evalIds, $oldTitle, $newTitle);
+                }
+            }
+        }
+
         return $evidence->fresh();
+    }
+
+    /**
+     * When an evidence document title is renamed, update every trs_activityeval row
+     * that references the old name (stored as newline-separated plain text).
+     *
+     * @param  array<int, string|int>  $evalIds
+     */
+    private function syncActivityEvalEvidence(array $evalIds, string $oldTitle, string $newTitle): void
+    {
+        $activityEvals = TrsActivityeval::whereIn('eval_id', $evalIds)
+            ->whereNotNull('evidence')
+            ->where('evidence', 'like', '%' . addcslashes($oldTitle, '%_\\') . '%')
+            ->get();
+
+        foreach ($activityEvals as $activityEval) {
+            $lines = preg_split('/\r\n|\r|\n/', $activityEval->evidence);
+            $updated = false;
+
+            foreach ($lines as &$line) {
+                if (mb_strtolower(trim($line)) === mb_strtolower(trim($oldTitle))) {
+                    $line = $newTitle;
+                    $updated = true;
+                }
+            }
+            unset($line);
+
+            if ($updated) {
+                $activityEval->evidence = implode("\n", $lines);
+                $activityEval->save();
+            }
+        }
     }
 }
